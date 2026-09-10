@@ -51,12 +51,16 @@ pnpm db:gen-types    # regenerate packages/core/src/types/database.ts
 pnpm db:stop
 ```
 
-Put the values from `db:status` into `apps/mobile/.env.local`:
+Put the values from `db:status` into `apps/mobile/.env.local` (use the new-format
+`sb_publishable_...` key, not the legacy JWT anon key):
 
 ```
 EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon key from db:status>
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key from db:status>
 ```
+
+`apps/mobile/.env.example` has ready-to-copy blocks for the local stack and a
+hosted project.
 
 ### Schema notes
 

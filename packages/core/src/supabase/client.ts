@@ -7,12 +7,13 @@ import type { Database } from '../types/database';
 import { authStorage } from './storage';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// New-format publishable key (`sb_publishable_...`), not the legacy JWT anon key.
+const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabasePublishableKey) {
   throw new Error(
     'Missing Supabase env vars. Set EXPO_PUBLIC_SUPABASE_URL and ' +
-      'EXPO_PUBLIC_SUPABASE_ANON_KEY (see apps/mobile/.env.example).',
+      'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY (see apps/mobile/.env.example).',
   );
 }
 
@@ -23,7 +24,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * (localStorage), and no-ops during web static rendering. `detectSessionInUrl`
  * is off — the MVP uses email/password only, no OAuth redirects.
  */
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
   auth: {
     storage: authStorage,
     autoRefreshToken: true,
