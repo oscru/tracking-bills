@@ -1,0 +1,10 @@
+-- Local-development seed data. Runs on `supabase db reset` / `supabase start`.
+-- NOT applied to hosted environments (those get migrations only).
+--
+-- The system default categories are created by a migration
+-- (20260907120500_default_categories.sql), so they are always present and are
+-- intentionally NOT repeated here.
+--
+-- Per-user sample data (a demo account + transactions) needs a real auth user.
+-- That is added here once the auth flow lands (Phase 4); for now, sign up
+-- through the app against the local stack to create data.

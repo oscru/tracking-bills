@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+.pnp.*
+
+# build / caches
+.turbo/
+dist/
+web-build/
+apps/*/.expo/
+apps/*/expo-env.d.ts
+apps/*/.expo-shared/
+
+# native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# env
+.env
+.env*.local
+
+# misc
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+coverage/
+
+# supabase local
+supabase/.branches/
+supabase/.temp/

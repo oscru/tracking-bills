@@ -1,0 +1,9 @@
+node_modules
+.turbo
+dist
+web-build
+**/.expo
+pnpm-lock.yaml
+apps/mobile/assets
+docs
+packages/core/src/types/database.ts

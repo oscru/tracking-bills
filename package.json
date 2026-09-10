@@ -1,0 +1,41 @@
+{
+  "name": "finance-app",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.11.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "mobile": "pnpm --filter mobile",
+    "supabase": "./scripts/supabase.sh",
+    "db:start": "./scripts/supabase.sh start",
+    "db:stop": "./scripts/supabase.sh stop",
+    "db:reset": "./scripts/supabase.sh db reset",
+    "db:status": "./scripts/supabase.sh status",
+    "db:gen-types": "pnpm --filter @repo/core gen:types"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "turbo": "^2.10.12",
+    "typescript": "~6.0.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "unrs-resolver"
+    ],
+    "peerDependencyRules": {
+      "//": "Optional peer of @react-native/community-cli-plugin; unused under Expo's Metro config.",
+      "allowedVersions": {
+        "@react-native/metro-config": "0.87.1"
+      }
+    }
+  }
+}
