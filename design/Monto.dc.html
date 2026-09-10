@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  :root{--bg:#F6F7F9;--surface:#FFFFFF;--ink:#1A1D21;--ink2:#6B7280;--ink3:#9CA3AF;--line:#EDEFF2;
+    --accent:#1A1D21; --lime:#B9F227; --lime-ink:#4D7C0F; --lime-tint:#F2FBDC}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--surface);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .screen{width:390px;min-height:844px;background:var(--surface);display:flex;flex-direction:column;padding:20px 0 0}
+  .h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0}
+  .seg{display:flex;background:#EEF0F2;border-radius:12px;padding:4px;gap:4px;margin:16px 20px 0}
+  .seg>div{flex:1;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--ink2)}
+  .seg>div.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  .close{width:34px;height:34px;border-radius:999px;background:#F1F2F4;display:flex;align-items:center;justify-content:center}
+
+  .pad{background:var(--bg);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:14px 12px 0;
+       display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .key{height:56px;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:600;border-radius:14px;
+       background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(16,24,40,.06)}
+  .key:active{background:var(--lime-tint)}
+  .op{background:var(--lime-tint);color:var(--lime-ink);font-weight:700;box-shadow:none}
+  .eq{background:var(--lime);color:var(--ink);font-weight:800;grid-column:4;grid-row:4 / span 2}
+  .z{grid-column:1 / span 2}
+
+  .btn{height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;background:var(--accent);color:#fff}
+</style>
+</helmet>
+
+<div class="screen">
+
+  <div style="display:flex;align-items:center;gap:12px;padding:0 20px">
+    <div class="close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1D21" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </div>
+    <h1 class="h1">Nuevo movimiento</h1>
+  </div>
+
+  <div class="seg">
+    <div class="on">Gasto</div>
+    <div>Ingreso</div>
+    <div>Transferencia</div>
+  </div>
+
+  <!-- amount + live calculation -->
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 24px">
+    <span style="font-size:13px;font-weight:600;color:var(--ink2)">Monto</span>
+
+    <!-- pending expression -->
+    <div style="font-size:15px;font-weight:600;color:var(--lime-ink)">$ 1,250.00 &nbsp;+</div>
+
+    <!-- current operand -->
+    <div style="display:flex;align-items:baseline;gap:3px">
+      <span style="font-size:28px;font-weight:600;color:var(--ink3)">$</span>
+      <span style="font-size:52px;font-weight:700;letter-spacing:-.02em">340</span>
+      <span style="width:3px;height:44px;background:var(--lime);margin-left:3px;border-radius:2px"></span>
+    </div>
+    <div style="width:150px;height:3px;background:var(--lime);border-radius:2px;margin-top:2px"></div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+      <span style="height:34px;border-radius:999px;background:var(--lime-tint);color:var(--lime-ink);display:inline-flex;align-items:center;gap:6px;padding:0 12px;font-size:13px;font-weight:600">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4D7C0F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="12" cy="13" r="2.2"/></svg>
+        Efectivo
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4D7C0F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </span>
+    </div>
+  </div>
+
+  <!-- calculator keypad (in-app, mobile) -->
+  <div class="pad">
+    <div class="key op" style="font-size:16px;font-weight:800">C</div>
+    <div class="key op">÷</div>
+    <div class="key op">×</div>
+    <div class="key op">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4D7C0F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-5 7 5 7h13a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1Z"/><path d="M15 9l-4 6M11 9l4 6"/></svg>
+    </div>
+
+    <div class="key">7</div><div class="key">8</div><div class="key">9</div>
+    <div class="key op">−</div>
+
+    <div class="key">4</div><div class="key">5</div><div class="key">6</div>
+    <div class="key op">+</div>
+
+    <div class="key">1</div><div class="key">2</div><div class="key">3</div>
+    <div class="key eq">=</div>
+
+    <div class="key z">0</div>
+    <div class="key" style="font-size:20px">.</div>
+  </div>
+
+  <div style="padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px))">
+    <div class="btn">Continuar</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

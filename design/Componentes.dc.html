@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  :root{--bg:#F6F7F9;--surface:#FFFFFF;--ink:#1A1D21;--ink2:#6B7280;--ink3:#9CA3AF;--line:#EDEFF2;--accent:#1A1D21; --lime:#B9F227; --lime-ink:#4D7C0F;--tint:#F2FBDC;--pos:#16A34A;--danger:#E5484D}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .screen{width:390px;min-height:1420px;background:var(--bg);display:flex;flex-direction:column;gap:22px;padding:24px 20px}
+  .grouptitle{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3)}
+  .block{display:flex;flex-direction:column;gap:10px}
+  .btn{height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600}
+  .btn-p{background:var(--accent);color:#fff}
+  .btn-s{background:#F1F2F4;color:var(--ink)}
+  .btn-g{background:transparent;color:var(--accent)}
+  .btn-d{background:#EEF0F2;color:var(--ink3)}
+  .field{height:52px;border:1px solid var(--line);border-radius:14px;background:var(--surface);display:flex;align-items:center;padding:0 14px;font-size:16px}
+  .field.focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+  .field.err{border-color:var(--danger)}
+  .chip{height:38px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:inline-flex;align-items:center;gap:8px;padding:0 14px;font-size:13px;font-weight:500;color:var(--ink2)}
+  .chip.sel{background:var(--lime);border-color:var(--lime);color:var(--ink)}
+  .seg{display:flex;background:#EEF0F2;border-radius:12px;padding:4px;gap:4px}
+  .seg>div{flex:1;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--ink2)}
+  .seg>div.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  .card{background:var(--surface);border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+  .lr{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line)}
+  .lr:last-child{border-bottom:0}
+  .sw{width:44px;height:44px;border-radius:10px}
+  .tabbar{height:64px;background:var(--surface);border:1px solid var(--line);border-radius:14px;display:flex;align-items:center;justify-content:space-around}
+  .tab{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:500;color:var(--ink3)}
+  .tab.on{color:var(--ink);font-weight:600}.tab.on::after{content:"";position:absolute;bottom:-8px;width:20px;height:3px;border-radius:2px;background:var(--lime)}
+</style>
+</helmet>
+
+<div class="screen">
+
+  <div style="font-size:22px;font-weight:700;letter-spacing:-.01em">Sistema de UI</div>
+
+  <div class="block">
+    <span class="grouptitle">Botones · 52px · radio 14</span>
+    <span style="font-size:11px;color:var(--ink2);margin:-4px 0 2px">Primario = tinta. El lima aparece en FAB, chip activo, indicador de pestaña y barras.</span>
+    <div class="btn btn-p">Primario</div>
+    <div class="btn btn-s">Secundario</div>
+    <div class="btn btn-g">Ghost</div>
+    <div class="btn btn-d">Deshabilitado</div>
+  </div>
+
+  <div class="block">
+    <span class="grouptitle">Campos</span>
+    <div class="field" style="color:var(--ink3)">Placeholder</div>
+    <div class="field focus">Con foco</div>
+    <div class="field err">Con error</div>
+    <span style="font-size:13px;color:var(--danger)">Mensaje de error</span>
+  </div>
+
+  <div class="block">
+    <span class="grouptitle">Chips</span>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <span class="chip">Sin seleccionar</span>
+      <span class="chip sel">Seleccionado</span>
+      <span class="chip"><span style="width:8px;height:8px;border-radius:999px;background:#22C55E"></span>Con color</span>
+      <span class="chip sel" style="background:#22C55E;border-color:#22C55E"><span style="width:8px;height:8px;border-radius:999px;background:#fff"></span>Categoría activa</span>
+    </div>
+  </div>
+
+  <div class="block">
+    <span class="grouptitle">Selector segmentado</span>
+    <div class="seg"><div class="on">Gasto</div><div>Ingreso</div><div>Transferencia</div></div>
+  </div>
+
+  <div class="block">
+    <span class="grouptitle">Fila de lista</span>
+    <div class="card">
+      <div class="lr"><span style="width:10px;height:10px;border-radius:999px;background:#8B5CF6"></span><div style="flex:1"><div style="font-size:15px;font-weight:600">Título</div><div style="font-size:13px;color:var(--ink2)">Subtítulo</div></div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C4C8CE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
+      <div class="lr"><div style="width:34px;height:34px;border-radius:10px;background:var(--tint);flex:0 0 auto"></div><div style="flex:1"><div style="font-size:15px;font-weight:600">Con ícono</div></div><span style="font-size:14px;color:var(--ink2)">Valor</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C4C8CE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <span class="grouptitle">Navegación inferior · 3 pestañas</span>
+    <div class="tabbar">
+      <div class="tab on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>Inicio</div>
+      <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h13l-3-3"/><path d="M17 16H4l3 3"/></svg>Movimientos</div>
+      <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11"/><path d="M4 17h7"/><circle cx="18" cy="7" r="2.4"/><circle cx="14" cy="17" r="2.4"/></svg>Ajustes</div>
+    </div>
+  </div>
+
+  <div class="block">
+    <span class="grouptitle">Acción flotante</span>
+    <div style="width:56px;height:56px;border-radius:999px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 26px rgba(16,24,40,.28)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B9F227" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </div>
+  </div>
+
+  <div class="block">
+    <span class="grouptitle">Color</span>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <div style="text-align:center;font-size:10px;color:var(--ink2)"><div class="sw" style="background:#F6F7F9;border:1px solid var(--line)"></div>Fondo</div>
+      <div style="text-align:center;font-size:10px;color:var(--ink2)"><div class="sw" style="background:#FFFFFF;border:1px solid var(--line)"></div>Superficie</div>
+      <div style="text-align:center;font-size:10px;color:var(--ink2)"><div class="sw" style="background:#6B7280"></div>Texto 2</div>
+      <div style="text-align:center;font-size:10px;color:var(--ink2)"><div class="sw" style="background:#1A1D21"></div>Primario</div>
+      <div style="text-align:center;font-size:10px;color:var(--ink2)"><div class="sw" style="background:#B9F227"></div>Acento lima</div>
+      <div style="text-align:center;font-size:10px;color:var(--ink2)"><div class="sw" style="background:#F2FBDC"></div>Lima 12%</div>
+      <div style="text-align:center;font-size:10px;color:var(--ink2)"><div class="sw" style="background:#16A34A"></div>Ingreso</div>
+      <div style="text-align:center;font-size:10px;color:var(--ink2)"><div class="sw" style="background:#E5484D"></div>Destructivo</div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+      <span style="width:22px;height:22px;border-radius:6px;background:#22C55E"></span>
+      <span style="width:22px;height:22px;border-radius:6px;background:#F97316"></span>
+      <span style="width:22px;height:22px;border-radius:6px;background:#3B82F6"></span>
+      <span style="width:22px;height:22px;border-radius:6px;background:#8B5CF6"></span>
+      <span style="width:22px;height:22px;border-radius:6px;background:#EAB308"></span>
+      <span style="width:22px;height:22px;border-radius:6px;background:#EF4444"></span>
+      <span style="width:22px;height:22px;border-radius:6px;background:#EC4899"></span>
+      <span style="width:22px;height:22px;border-radius:6px;background:#14B8A6"></span>
+      <span style="width:22px;height:22px;border-radius:6px;background:#0EA5E9"></span>
+      <span style="width:22px;height:22px;border-radius:6px;background:#A855F7"></span>
+      <span style="font-size:11px;color:var(--ink3);align-self:center">Paleta de categorías</span>
+    </div>
+  </div>
+
+  <div class="block">
+    <span class="grouptitle">Tipografía · system-ui</span>
+    <div style="font-size:40px;font-weight:700;letter-spacing:-.02em">Balance $ 24,850</div>
+    <div style="font-size:22px;font-weight:700;letter-spacing:-.01em">Título de pantalla</div>
+    <div style="font-size:15px;font-weight:600">Cuerpo · 15 / 600</div>
+    <div style="font-size:13px;color:var(--ink2)">Secundario · 13 / 400</div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink2)">Etiqueta de sección · 13 / 600</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

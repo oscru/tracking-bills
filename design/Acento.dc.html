@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  :root{--bg:#F6F7F9;--surface:#FFFFFF;--ink:#1A1D21;--ink2:#6B7280;--ink3:#9CA3AF;--line:#EDEFF2}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .screen{width:390px;min-height:1180px;background:var(--bg);display:flex;flex-direction:column;gap:14px;padding:24px 20px}
+  .opt{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .top{display:flex;justify-content:space-between;align-items:baseline}
+  .name{font-size:13px;font-weight:700;letter-spacing:.03em}
+  .hex{font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums}
+  .mid{display:flex;align-items:center;gap:10px}
+  .tile{width:44px;height:44px;border-radius:12px;flex:0 0 auto}
+  .bal{flex:1}
+  .bal .l{font-size:11px;color:var(--ink2)}
+  .bal .v{font-size:19px;font-weight:700;letter-spacing:-.01em}
+  .fab{width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .pill{height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+  .note{font-size:11px;color:var(--ink2);line-height:1.4}
+</style>
+</helmet>
+
+<div class="screen">
+
+  <div style="font-size:16px;font-weight:700">Opciones de acento</div>
+  <div style="font-size:13px;color:var(--ink2);margin-top:-6px">Nada de morado/magenta (muy Mobills). Todo lo demás de la UI queda igual — solo cambia el color de marca. Elige una.</div>
+
+  <div class="opt">
+    <div class="top"><span class="name" style="color:#0E7C7B">A · PETRÓLEO</span><span class="hex">#0E7C7B</span></div>
+    <div class="mid">
+      <div class="tile" style="background:#0E7C7B"></div>
+      <div class="bal"><div class="l">Balance total</div><div class="v">$ 24,850.00</div></div>
+      <div class="fab" style="background:#0E7C7B"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+    </div>
+    <div class="pill" style="background:#0E7C7B;color:#fff">Guardar</div>
+    <div class="note">Sobrio y confiable, pero raro en finanzas (casi todos van azul). Texto blanco.</div>
+  </div>
+
+  <div class="opt">
+    <div class="top"><span class="name" style="color:#E24B2E">B · CORAL</span><span class="hex">#FF5A3C</span></div>
+    <div class="mid">
+      <div class="tile" style="background:#FF5A3C"></div>
+      <div class="bal"><div class="l">Balance total</div><div class="v">$ 24,850.00</div></div>
+      <div class="fab" style="background:#FF5A3C"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+    </div>
+    <div class="pill" style="background:#FF5A3C;color:#fff">Guardar</div>
+    <div class="note">Cálido, humano, muy visible. Se aleja por completo de Mobills. Texto blanco.</div>
+  </div>
+
+  <div class="opt">
+    <div class="top"><span class="name" style="color:#2D4EF5">C · COBALTO</span><span class="hex">#2D4EF5</span></div>
+    <div class="mid">
+      <div class="tile" style="background:#2D4EF5"></div>
+      <div class="bal"><div class="l">Balance total</div><div class="v">$ 24,850.00</div></div>
+      <div class="fab" style="background:#2D4EF5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+    </div>
+    <div class="pill" style="background:#2D4EF5;color:#fff">Guardar</div>
+    <div class="note">Azul puro y punzante — atrevido, no el azul corporativo aburrido. Texto blanco.</div>
+  </div>
+
+  <div class="opt" style="border-color:#B9F227;border-width:2px;background:#FCFEF3">
+    <div class="top"><span class="name" style="color:#4D7C0F">✓ D · LIMA + TINTA &nbsp;<span style="color:#1A1D21">(elegido)</span></span><span class="hex">#B9F227</span></div>
+    <div class="mid">
+      <div class="tile" style="background:#B9F227"></div>
+      <div class="bal"><div class="l">Balance total</div><div class="v">$ 24,850.00</div></div>
+      <div class="fab" style="background:#1A1D21"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B9F227" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+    </div>
+    <div class="pill" style="background:#B9F227;color:#1A1D21">Guardar</div>
+    <div class="note">UI casi monocroma negra + un pop lima. Muy "startup moderno". Botones negros o lima con texto negro.</div>
+  </div>
+
+  <div class="opt">
+    <div class="top"><span class="name" style="color:#B45309">E · ÁMBAR</span><span class="hex">#F5A314</span></div>
+    <div class="mid">
+      <div class="tile" style="background:#F5A314"></div>
+      <div class="bal"><div class="l">Balance total</div><div class="v">$ 24,850.00</div></div>
+      <div class="fab" style="background:#F5A314"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1A1D21" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+    </div>
+    <div class="pill" style="background:#F5A314;color:#1A1D21">Guardar</div>
+    <div class="note">Asociación con dinero/oro, optimista y cálido. Texto oscuro sobre el ámbar.</div>
+  </div>
+
+  <div class="opt">
+    <div class="top"><span class="name" style="color:#0E9F6E">F · VERDE BOSQUE</span><span class="hex">#0E9F6E</span></div>
+    <div class="mid">
+      <div class="tile" style="background:#0E9F6E"></div>
+      <div class="bal"><div class="l">Balance total</div><div class="v">$ 24,850.00</div></div>
+      <div class="fab" style="background:#0E9F6E"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+    </div>
+    <div class="pill" style="background:#0E9F6E;color:#fff">Guardar</div>
+    <div class="note">Money-green hecho moderno. Seguro, sin ser Mobills. Ojo: hay que distinguirlo del verde de "ingreso".</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

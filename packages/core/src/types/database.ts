@@ -86,6 +86,7 @@ export type Database = {
           id: string
           is_default: boolean
           name: string
+          parent_id: string | null
           slug: string | null
           sort_order: number
           type: string
@@ -99,6 +100,7 @@ export type Database = {
           id?: string
           is_default?: boolean
           name: string
+          parent_id?: string | null
           slug?: string | null
           sort_order?: number
           type: string
@@ -112,6 +114,7 @@ export type Database = {
           id?: string
           is_default?: boolean
           name?: string
+          parent_id?: string | null
           slug?: string | null
           sort_order?: number
           type?: string
@@ -119,6 +122,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "categories_user_id_fkey"
             columns: ["user_id"]
@@ -163,6 +173,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          to_account_id: string | null
           transaction_date: string
           type: string
           updated_at: string
@@ -175,6 +186,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          to_account_id?: string | null
           transaction_date?: string
           type: string
           updated_at?: string
@@ -187,6 +199,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          to_account_id?: string | null
           transaction_date?: string
           type?: string
           updated_at?: string
@@ -205,6 +218,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
           {

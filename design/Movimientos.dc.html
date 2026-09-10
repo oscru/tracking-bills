@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  :root{--bg:#F6F7F9;--surface:#FFFFFF;--ink:#1A1D21;--ink2:#6B7280;--ink3:#9CA3AF;--line:#EDEFF2;--accent:#1A1D21; --lime:#B9F227; --lime-ink:#4D7C0F;--pos:#16A34A}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .screen{width:390px;min-height:900px;background:var(--bg);position:relative;display:flex;flex-direction:column;gap:14px;padding:20px 20px 96px}
+  .h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0}
+  .daylabel{font-size:13px;font-weight:600;color:var(--ink2);margin:8px 4px 2px}
+  .card{background:var(--surface);border-radius:18px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);padding:4px 14px}
+  .txn{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .txn:last-child{border-bottom:0}
+  .ic{width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .amt{font-size:15px;font-weight:700;letter-spacing:-.01em;text-align:right}
+  .tabbar{height:64px;background:var(--surface);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;position:absolute;left:0;right:0;bottom:0}
+  .tab{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:500;color:var(--ink3)}
+  .tab.on{color:var(--ink);font-weight:600}.tab.on::after{content:"";position:absolute;bottom:-8px;width:20px;height:3px;border-radius:2px;background:var(--lime)}
+  .fab{position:absolute;right:20px;bottom:84px;width:56px;height:56px;border-radius:999px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 26px rgba(16,24,40,.28)}
+</style>
+</helmet>
+
+<div class="screen">
+
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <h1 class="h1">Movimientos</h1>
+    <div style="width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.9" stroke-linecap="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+    </div>
+  </div>
+
+  <div class="daylabel">Hoy</div>
+  <div class="card">
+    <div class="txn">
+      <div class="ic" style="background:rgba(34,197,94,.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h2l2.2 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L21 8H7"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg></div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Súper</div><div style="font-size:13px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">La Comer · Efectivo</div></div>
+      <div><div class="amt">− $ 450.00</div><div style="font-size:12px;color:var(--ink3);text-align:right">12 sep</div></div>
+    </div>
+    <div class="txn">
+      <div class="ic" style="background:rgba(59,130,246,.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16 6.5 9h11L19 16"/><path d="M4 16h16v3H4z"/><circle cx="7.5" cy="19" r="1.2"/><circle cx="16.5" cy="19" r="1.2"/></svg></div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Transporte</div><div style="font-size:13px;color:var(--ink2)">Uber · BBVA</div></div>
+      <div><div class="amt">− $ 128.00</div><div style="font-size:12px;color:var(--ink3);text-align:right">12 sep</div></div>
+    </div>
+  </div>
+
+  <div class="daylabel">Ayer</div>
+  <div class="card">
+    <div class="txn">
+      <div class="ic" style="background:rgba(22,163,74,.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.4"/></svg></div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Salario</div><div style="font-size:13px;color:var(--ink2)">Quincena · BBVA</div></div>
+      <div><div class="amt" style="color:var(--pos)">+ $ 9,200.00</div><div style="font-size:12px;color:var(--ink3);text-align:right">11 sep</div></div>
+    </div>
+    <div class="txn">
+      <div class="ic" style="background:rgba(249,115,22,.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v8a2 2 0 0 0 4 0V3M8 11v10"/><path d="M16 3c-1.5 0-2.5 2-2.5 5s1 4 2.5 4 2.5-1 2.5-4-1-5-2.5-5ZM16 16v5"/></svg></div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Comida fuera</div><div style="font-size:13px;color:var(--ink2)">Tacos El Güero · Efectivo</div></div>
+      <div><div class="amt">− $ 240.00</div><div style="font-size:12px;color:var(--ink3);text-align:right">11 sep</div></div>
+    </div>
+    <div class="txn">
+      <div class="ic" style="background:rgba(168,85,247,.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M10 9.5v5l4-2.5Z"/></svg></div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Suscripciones</div><div style="font-size:13px;color:var(--ink2)">Netflix · Nu</div></div>
+      <div><div class="amt">− $ 219.00</div><div style="font-size:12px;color:var(--ink3);text-align:right">11 sep</div></div>
+    </div>
+    <div class="txn">
+      <div class="ic" style="background:#F2FBDC"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4D7C0F" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h13l-3-3"/><path d="M17 16H4l3 3"/></svg></div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Transferencia</div><div style="font-size:13px;color:var(--ink2)">BBVA → Ahorro</div></div>
+      <div><div class="amt" style="color:var(--ink2)">$ 2,000.00</div><div style="font-size:12px;color:var(--ink3);text-align:right">11 sep</div></div>
+    </div>
+  </div>
+
+  <div class="daylabel">10 sep</div>
+  <div class="card">
+    <div class="txn">
+      <div class="ic" style="background:rgba(239,68,68,.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M4 12h16"/></svg></div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Salud</div><div style="font-size:13px;color:var(--ink2)">Farmacia · BBVA</div></div>
+      <div><div class="amt">− $ 380.00</div><div style="font-size:12px;color:var(--ink3);text-align:right">10 sep</div></div>
+    </div>
+    <div class="txn">
+      <div class="ic" style="background:rgba(34,197,94,.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h2l2.2 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L21 8H7"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg></div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">Súper</div><div style="font-size:13px;color:var(--ink2)">Costco · Nu</div></div>
+      <div><div class="amt">− $ 1,240.00</div><div style="font-size:12px;color:var(--ink3);text-align:right">10 sep</div></div>
+    </div>
+  </div>
+
+  <div class="fab">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B9F227" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>Inicio</div>
+    <div class="tab on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h13l-3-3"/><path d="M17 16H4l3 3"/></svg>Movimientos</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11"/><path d="M4 17h7"/><circle cx="18" cy="7" r="2.4"/><circle cx="14" cy="17" r="2.4"/></svg>Ajustes</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

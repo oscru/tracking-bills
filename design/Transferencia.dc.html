@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  :root{--bg:#F6F7F9;--surface:#FFFFFF;--ink:#1A1D21;--ink2:#6B7280;--ink3:#9CA3AF;--line:#EDEFF2;
+    --accent:#1A1D21;--lime:#B9F227;--lime-ink:#4D7C0F;--lime-tint:#F2FBDC}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .screen{width:390px;min-height:820px;background:var(--bg);display:flex;flex-direction:column;gap:20px;padding:20px}
+  .h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0}
+  .label{font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:8px;display:block}
+  .seg{display:flex;background:#EEF0F2;border-radius:12px;padding:4px;gap:4px}
+  .seg>div{flex:1;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--ink2)}
+  .seg>div.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  .close{width:34px;height:34px;border-radius:999px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .chip{height:38px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:inline-flex;align-items:center;gap:7px;padding:0 13px;font-size:13px;font-weight:500;color:var(--ink2)}
+  .chip.sel{background:var(--lime);border-color:var(--lime);color:var(--ink);font-weight:600}
+  .field{height:52px;border:1px solid var(--line);border-radius:14px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:16px;color:var(--ink)}
+  .btn{height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;background:var(--accent);color:#fff}
+</style>
+</helmet>
+
+<div class="screen">
+
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A1D21" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+    <h1 class="h1">Nuevo movimiento</h1>
+  </div>
+
+  <div class="seg">
+    <div>Gasto</div>
+    <div>Ingreso</div>
+    <div class="on">Transferencia</div>
+  </div>
+
+  <div style="background:var(--surface);border-radius:20px;box-shadow:0 1px 3px rgba(16,24,40,.06);padding:22px;text-align:center">
+    <div class="label" style="text-align:center;margin-bottom:4px">Monto</div>
+    <div style="font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1.1">$ 2,000<span style="color:var(--ink3)">.00</span></div>
+  </div>
+
+  <!-- from / to -->
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="flex:1">
+      <span class="label">De</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span class="chip sel">BBVA</span>
+        <span class="chip">Efectivo</span>
+        <span class="chip">Nu</span>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:center;margin:-8px 0">
+    <div style="width:34px;height:34px;border-radius:999px;background:var(--lime-tint);display:flex;align-items:center;justify-content:center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4D7C0F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+    </div>
+  </div>
+  <div>
+    <span class="label">A</span>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <span class="chip">BBVA</span>
+      <span class="chip sel">Ahorro</span>
+      <span class="chip">Efectivo</span>
+    </div>
+  </div>
+
+  <div>
+    <span class="label">Descripción</span>
+    <div class="field" style="color:var(--ink3)">Opcional · ej. Meta de ahorro</div>
+  </div>
+
+  <div>
+    <span class="label">Fecha</span>
+    <div class="field">
+      <span>Hoy · 12 sep 2026</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+    </div>
+  </div>
+
+  <div style="font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:6px">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas.
+  </div>
+
+  <div class="btn">Guardar</div>
+
+</div>
+</x-dc>
+</body>
+</html>

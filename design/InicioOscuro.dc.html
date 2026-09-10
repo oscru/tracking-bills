@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  :root{--bg:#0B0D0F;--surface:#16191D;--ink:#F2F3F5;--ink2:#9BA1A8;--ink3:#6B7178;--line:#23272C;--accent:#B9F227;--tint:#26310A;--pos:#22C55E}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent)} a:hover{color:#a3e635}
+  .screen{width:390px;min-height:980px;background:var(--bg);position:relative;display:flex;flex-direction:column;gap:16px;padding:20px 20px 96px}
+  .sec{font-size:13px;font-weight:600;color:var(--ink2);margin:0}
+  .card{background:var(--surface);border-radius:20px;border:1px solid var(--line)}
+  .tabbar{height:64px;background:var(--surface);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;position:absolute;left:0;right:0;bottom:0}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:500;color:var(--ink3)}
+  .tab.on{color:var(--accent)}
+  .fab{position:absolute;right:20px;bottom:84px;width:56px;height:56px;border-radius:999px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 26px rgba(185,242,39,.28)}
+  .mini{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+</style>
+</helmet>
+
+<div class="screen">
+
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-size:13px;color:var(--ink2)">Buen día</div>
+      <div style="font-size:18px;font-weight:700;letter-spacing:-.01em">Nicolás</div>
+    </div>
+    <div style="width:40px;height:40px;border-radius:999px;background:var(--tint);color:#B9F227;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px">N</div>
+  </div>
+
+  <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span class="sec">Balance total</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7178" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.7a2 2 0 0 0 2.8 2.8"/><path d="M9.4 5.2A9.5 9.5 0 0 1 12 5c5 0 9 4.5 9 7-.4 1-1 2-1.9 2.9"/><path d="M6.1 6.2C3.9 7.6 3 10.4 3 12c0 2.5 4 7 9 7 1 0 2-.2 2.9-.5"/></svg>
+    </div>
+    <div style="font-size:40px;font-weight:700;letter-spacing:-.02em;line-height:1">$ 24,850<span style="font-size:22px;color:var(--ink3)">.00</span></div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--pos)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+      +$ 3,200 este mes
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px">
+    <div class="mini">
+      <div style="width:30px;height:30px;border-radius:999px;background:rgba(34,197,94,.16);display:flex;align-items:center;justify-content:center;margin-bottom:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M6 13l6 6 6-6"/></svg>
+      </div>
+      <div style="font-size:12px;color:var(--ink2)">Ingresos · sept</div>
+      <div style="font-size:18px;font-weight:700;letter-spacing:-.01em;margin-top:2px">$ 18,400</div>
+    </div>
+    <div class="mini">
+      <div style="width:30px;height:30px;border-radius:999px;background:#23272C;display:flex;align-items:center;justify-content:center;margin-bottom:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F2F3F5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>
+      </div>
+      <div style="font-size:12px;color:var(--ink2)">Gastos · sept</div>
+      <div style="font-size:18px;font-weight:700;letter-spacing:-.01em;margin-top:2px">$ 15,200</div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span class="sec">Gastos por categoría</span>
+      <span style="font-size:13px;color:var(--ink3)">Septiembre ›</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:18px">
+      <svg width="112" height="112" viewBox="0 0 42 42">
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#23272C" stroke-width="7"></circle>
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#22C55E" stroke-width="7" stroke-dasharray="34 66" transform="rotate(-90 21 21)"></circle>
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#F97316" stroke-width="7" stroke-dasharray="24 76" stroke-dashoffset="-34" transform="rotate(-90 21 21)"></circle>
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#3B82F6" stroke-width="7" stroke-dasharray="18 82" stroke-dashoffset="-58" transform="rotate(-90 21 21)"></circle>
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#8B5CF6" stroke-width="7" stroke-dasharray="24 76" stroke-dashoffset="-76" transform="rotate(-90 21 21)"></circle>
+      </svg>
+      <div style="flex:1;display:flex;flex-direction:column;gap:9px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:8px;height:8px;border-radius:999px;background:#22C55E"></span><span style="flex:1">Súper</span><span style="font-weight:600">$ 5,100</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:8px;height:8px;border-radius:999px;background:#F97316"></span><span style="flex:1">Comida fuera</span><span style="font-weight:600">$ 3,650</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:8px;height:8px;border-radius:999px;background:#3B82F6"></span><span style="flex:1">Transporte</span><span style="font-weight:600">$ 2,700</span></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)"><span style="width:8px;height:8px;border-radius:999px;background:#8B5CF6"></span><span style="flex:1">Otras</span><span style="font-weight:600;color:var(--ink)">$ 3,750</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fab">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0B0D0F" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>Inicio</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h13l-3-3"/><path d="M17 16H4l3 3"/></svg>Movimientos</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11"/><path d="M4 17h7"/><circle cx="18" cy="7" r="2.4"/><circle cx="14" cy="17" r="2.4"/></svg>Ajustes</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

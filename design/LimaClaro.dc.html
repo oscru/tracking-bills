@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  :root{--bg:#F6F7F9;--surface:#FFFFFF;--ink:#1A1D21;--ink2:#6B7280;--ink3:#9CA3AF;--line:#EDEFF2;
+    --lime:#B9F227; --lime-ink:#4D7C0F; --lime-tint:#F2FBDC; --pos:#16A34A}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .screen{width:390px;min-height:960px;background:var(--bg);position:relative;display:flex;flex-direction:column;gap:16px;padding:24px 20px}
+  .sec{font-size:13px;font-weight:600;color:var(--ink2);margin:0}
+  .card{background:var(--surface);border-radius:20px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06)}
+  .mini{flex:1;background:var(--surface);border-radius:16px;padding:14px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06)}
+  .chip{height:36px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:inline-flex;align-items:center;gap:7px;padding:0 13px;font-size:13px;font-weight:500;color:var(--ink2)}
+  .chip.sel{background:var(--lime);border-color:var(--lime);color:#1A1D21;font-weight:600}
+  .btn{height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600}
+  .tabbar{height:64px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;align-items:center;justify-content:space-around}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--ink3);position:relative}
+  .tab.on{color:var(--ink)}
+  .tab.on::after{content:"";position:absolute;bottom:-10px;width:22px;height:3px;border-radius:2px;background:var(--lime)}
+  .label{font-size:12px;font-weight:700;letter-spacing:.03em;color:var(--ink3)}
+</style>
+</helmet>
+
+<div class="screen">
+
+  <div style="font-size:16px;font-weight:700">Lima en tema claro</div>
+  <div style="font-size:13px;color:var(--ink2);margin-top:-8px">El lima brillante no rinde como color de relleno sobre blanco (texto blanco encima es ilegible). En claro la UI queda <b>casi toda tinta/negra</b> y el lima es un <b>chispazo</b>: FAB, chip activo, indicador de pestaña, barras. Para texto tipo enlace se usa un lima oscuro (#4D7C0F).</div>
+
+  <!-- realistic light fragment -->
+  <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><span class="sec">Balance total</span>
+      <span style="height:22px;border-radius:999px;background:var(--lime-tint);color:var(--lime-ink);font-size:11px;font-weight:700;display:inline-flex;align-items:center;padding:0 8px">▲ 12%</span>
+    </div>
+    <div style="font-size:38px;font-weight:700;letter-spacing:-.02em;line-height:1">$ 24,850<span style="font-size:20px;color:var(--ink3)">.00</span></div>
+    <div style="height:6px;border-radius:999px;background:#EEF0F2;overflow:hidden;margin-top:4px"><div style="width:62%;height:100%;background:var(--lime)"></div></div>
+    <div style="font-size:12px;color:var(--ink2)">62% de tu meta del mes</div>
+  </div>
+
+  <div style="display:flex;gap:12px">
+    <div class="mini">
+      <div style="width:28px;height:28px;border-radius:999px;background:rgba(22,163,74,.12);display:flex;align-items:center;justify-content:center;margin-bottom:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+      <div style="font-size:12px;color:var(--ink2)">Ingresos</div><div style="font-size:17px;font-weight:700">$ 18,400</div>
+    </div>
+    <div class="mini">
+      <div style="width:28px;height:28px;border-radius:999px;background:#F1F2F4;display:flex;align-items:center;justify-content:center;margin-bottom:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1A1D21" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></div>
+      <div style="font-size:12px;color:var(--ink2)">Gastos</div><div style="font-size:17px;font-weight:700">$ 15,200</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="chip sel"><span style="width:8px;height:8px;border-radius:999px;background:#1A1D21"></span>Súper</span>
+    <span class="chip">Transporte</span>
+    <span class="chip">Casa</span>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>Inicio</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h13l-3-3M17 16H4l3 3"/></svg>Movimientos</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M4 17h7"/><circle cx="18" cy="7" r="2.4"/><circle cx="14" cy="17" r="2.4"/></svg>Ajustes</div>
+  </div>
+
+  <!-- button options -->
+  <div class="label">BOTÓN PRIMARIO — dos caminos</div>
+  <div class="btn" style="background:#1A1D21;color:#fff">Guardar · tinta (recomendado)</div>
+  <div class="btn" style="background:var(--lime);color:#1A1D21">Guardar · lima + texto negro (fuerte)</div>
+  <div style="font-size:12px;color:var(--ink2);margin-top:-6px">Lima con texto blanco = ilegible, no es opción.</div>
+
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="width:52px;height:52px;border-radius:999px;background:#1A1D21;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B9F227" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+    <span style="font-size:12px;color:var(--ink2)">FAB: círculo negro, “+” lima.</span>
+  </div>
+
+  <!-- dark strip -->
+  <div class="label">Y EN OSCURO EL LIMA SÍ BRILLA</div>
+  <div style="background:#0B0D0F;border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px">
+    <div style="flex:1"><div style="font-size:11px;color:#9BA1A8">Balance total</div><div style="font-size:20px;font-weight:700;color:#F2F3F5">$ 24,850.00</div></div>
+    <div style="height:38px;border-radius:999px;background:#B9F227;color:#0B0D0F;font-size:13px;font-weight:700;display:flex;align-items:center;padding:0 16px">Guardar</div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

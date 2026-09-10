@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  :root{--bg:#F6F7F9;--surface:#FFFFFF;--ink:#1A1D21;--ink2:#6B7280;--ink3:#9CA3AF;--line:#EDEFF2;--accent:#1A1D21; --lime:#B9F227; --lime-ink:#4D7C0F;--tint:#F2FBDC}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--lime-ink)} a:hover{color:#3f6212}
+  .screen{width:390px;min-height:844px;background:var(--bg);display:flex;flex-direction:column;justify-content:center;gap:22px;padding:28px 24px}
+  .label{font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:6px;display:block}
+  .field{height:52px;border:1px solid var(--line);border-radius:14px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:16px;color:var(--ink)}
+  .btn{height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;background:var(--accent);color:#fff}
+</style>
+</helmet>
+
+<div class="screen">
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:8px">
+    <div style="width:56px;height:56px;border-radius:18px;background:#B9F227;display:flex;align-items:center;justify-content:center">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1A1D21" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15c3 0 3-6 6-6s3 6 6 6 3-6 6-6"/></svg>
+    </div>
+    <div style="font-size:13px;color:var(--ink3)">[nombre de la app]</div>
+  </div>
+
+  <div>
+    <div style="font-size:24px;font-weight:700;letter-spacing:-.01em">Iniciar sesión</div>
+    <div style="font-size:15px;color:var(--ink2);margin-top:4px">Controla tus ingresos y gastos</div>
+  </div>
+
+  <div>
+    <span class="label">Correo</span>
+    <div class="field">nicolas@correo.com</div>
+  </div>
+
+  <div>
+    <span class="label">Contraseña</span>
+    <div class="field">
+      <span style="letter-spacing:3px">••••••••••</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+    </div>
+  </div>
+
+  <div class="btn">Entrar</div>
+
+  <div style="text-align:center;font-size:14px;color:var(--ink2)">
+    ¿No tienes cuenta? <a href="#" style="font-weight:600">Crear cuenta</a>
+  </div>
+
+  <div style="text-align:center;font-size:13px">
+    <a href="#" style="color:var(--ink3)">Olvidé mi contraseña</a>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
