@@ -3,12 +3,7 @@ import { signInSchema } from '@repo/core/validators';
 import { Button, Screen, TextField } from '@repo/ui';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { Switch, Text, View } from 'react-native';
-
-// TODO(auth): DEV-ONLY. Remove this import and the "Skip login" row below before
-// shipping, and delete src/features/auth/dev-auth-bypass.ts. Login must always
-// be required.
-import { useDevAuthBypass } from '../../features/auth/dev-auth-bypass';
+import { Text, View } from 'react-native';
 
 export default function SignIn() {
   const signIn = useSignIn();
@@ -19,9 +14,6 @@ export default function SignIn() {
     password?: string;
     form?: string;
   }>({});
-
-  // TODO(auth): DEV-ONLY bypass toggle — remove.
-  const [bypass, setBypass] = useDevAuthBypass();
 
   const onSubmit = () => {
     setErrors({});
@@ -81,20 +73,6 @@ export default function SignIn() {
               Sign up
             </Text>
           </Link>
-        </View>
-
-        {/* TODO(auth): DEV-ONLY. Delete this entire block before shipping — the
-            app must never be reachable without a real session. */}
-        <View className="mt-2 flex-row items-center justify-between rounded-xl border border-dashed border-amber-400 px-3 py-2">
-          <View className="flex-1 pr-3">
-            <Text className="text-sm font-medium text-amber-600 dark:text-amber-500">
-              Skip login (dev only)
-            </Text>
-            <Text className="text-xs text-neutral-500 dark:text-neutral-400">
-              Enters the app with no session. Accounts and transactions will be empty.
-            </Text>
-          </View>
-          <Switch value={bypass} onValueChange={setBypass} />
         </View>
       </View>
     </Screen>

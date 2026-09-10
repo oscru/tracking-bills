@@ -84,8 +84,10 @@ Phased plan in [`docs/CLAUDE.md`](docs/CLAUDE.md).
 - **Phase 4** — auth: email/password sign-in / sign-up, `SessionProvider`,
   `(auth)` / `(app)` route groups with an `AuthGate`, shared `Button` /
   `TextField` / `Screen` in `@repo/ui`. ✅
-- **Phase 5** — transactions CRUD: list (`(app)/index`), create / edit / delete
-  via a shared `TransactionForm`, starter “Cash” account per user. ✅
+- **Phase 5** — transactions CRUD: list, create / edit / delete via a shared
+  `TransactionForm`, starter “Cash” account per user. ✅
+- **Phase 6** — tab navigation (Inicio · Movimientos · Ajustes) + account and
+  category management screens (CRUD, archive, color picker). ✅
 
 ### Using the data layer
 

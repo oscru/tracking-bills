@@ -1,74 +1,90 @@
-import { useSignOut, useTransactions } from '@repo/core/hooks';
-import { Button, Screen } from '@repo/ui';
+import { useAccounts, useTransactions } from '@repo/core/hooks';
+import { formatCurrency, signedAmount, todayISODate } from '@repo/core/utils';
+import { Fab, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 
-// TODO(auth): DEV-ONLY. Remove this import and the `setDevAuthBypass(false)` call
-// in the sign-out handler once the dev bypass is gone.
-import { setDevAuthBypass } from '../../features/auth/dev-auth-bypass';
-import { TransactionListItem } from '../../features/transactions/transaction-list-item';
-
-export default function TransactionsScreen() {
+export default function HomeScreen() {
   const router = useRouter();
-  const signOut = useSignOut();
-  const { data: transactions, isLoading, isRefetching, refetch, error } = useTransactions();
+  const { data: accounts, isLoading: loadingAccounts } = useAccounts();
+  const { data: transactions, isLoading: loadingTx } = useTransactions();
 
-  const onSignOut = () => {
-    setDevAuthBypass(false); // TODO(auth): DEV-ONLY — remove with the bypass.
-    signOut.mutate();
-  };
+  const active = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
+  const currency = active[0]?.currency ?? 'MXN';
+
+  const balance = useMemo(() => {
+    const initial = active.reduce((sum, a) => sum + Number(a.initial_balance), 0);
+    const flow = (transactions ?? []).reduce(
+      (sum, t) => sum + signedAmount(t.type, Number(t.amount)),
+      0,
+    );
+    return initial + flow;
+  }, [active, transactions]);
+
+  const month = useMemo(() => {
+    const ym = todayISODate().slice(0, 7);
+    let income = 0;
+    let expense = 0;
+    for (const t of transactions ?? []) {
+      if (!t.transaction_date.startsWith(ym)) continue;
+      if (t.type === 'income') income += Number(t.amount);
+      else expense += Number(t.amount);
+    }
+    return { income, expense };
+  }, [transactions]);
+
+  const monthLabel = new Date().toLocaleDateString('es-MX', {
+    month: 'long',
+    year: 'numeric',
+  });
+  const loading = loadingAccounts || loadingTx;
 
   return (
-    <Screen className="gap-4">
-      <View className="flex-row items-center justify-between pt-2">
-        <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-          Transactions
-        </Text>
-        <Pressable onPress={onSignOut} hitSlop={8}>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">Sign out</Text>
-        </Pressable>
-      </View>
+    <Screen className="gap-6">
+      <Text className="pt-2 text-2xl font-bold text-neutral-900 dark:text-neutral-50">Inicio</Text>
 
-      {isLoading ? (
+      {loading ? (
         <ActivityIndicator className="mt-8" />
-      ) : error ? (
-        <Text className="mt-8 text-center text-sm text-red-500">{error.message}</Text>
       ) : (
-        <FlatList
-          data={transactions ?? []}
-          keyExtractor={(t) => t.id}
-          className="flex-1"
-          contentContainerClassName="pb-24"
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
-          ItemSeparatorComponent={() => (
-            <View className="h-px bg-neutral-100 dark:bg-neutral-800" />
-          )}
-          ListEmptyComponent={
-            <View className="mt-16 items-center gap-1">
-              <Text className="text-base font-medium text-neutral-900 dark:text-neutral-50">
-                No transactions yet
+        <>
+          <View className="gap-1">
+            <Text className="text-sm text-neutral-500 dark:text-neutral-400">Balance total</Text>
+            <Text className="text-4xl font-bold text-neutral-900 dark:text-neutral-50">
+              {formatCurrency(balance, currency)}
+            </Text>
+          </View>
+
+          <View className="flex-row gap-3">
+            <View className="flex-1 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800">
+              <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+                Ingresos · {monthLabel}
               </Text>
-              <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-                Tap “Add” to record your first one.
+              <Text className="mt-1 text-xl font-semibold text-green-600 dark:text-green-500">
+                {formatCurrency(month.income, currency)}
               </Text>
             </View>
-          }
-          renderItem={({ item }) => (
-            <TransactionListItem
-              transaction={item}
-              onPress={() =>
-                router.push({
-                  pathname: '/(app)/transactions/[id]',
-                  params: { id: item.id },
-                })
-              }
-            />
-          )}
-        />
+            <View className="flex-1 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800">
+              <Text className="text-xs text-neutral-500 dark:text-neutral-400">
+                Gastos · {monthLabel}
+              </Text>
+              <Text className="mt-1 text-xl font-semibold text-neutral-900 dark:text-neutral-50">
+                {formatCurrency(month.expense, currency)}
+              </Text>
+            </View>
+          </View>
+
+          <Text className="text-sm text-neutral-400 dark:text-neutral-500">
+            Gráficas por categoría y tendencia mensual — Fase 7.
+          </Text>
+        </>
       )}
 
-      <View className="absolute inset-x-5 bottom-6">
-        <Button label="Add transaction" onPress={() => router.push('/(app)/transactions/new')} />
+      <View className="absolute bottom-6 right-5">
+        <Fab
+          accessibilityLabel="Nuevo movimiento"
+          onPress={() => router.push('/(app)/transactions/new')}
+        />
       </View>
     </Screen>
   );
