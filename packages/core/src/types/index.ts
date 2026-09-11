@@ -24,15 +24,24 @@ export type UpdateRow<T extends TableName> = PublicSchema['Tables'][T]['Update']
 // schema models them as text, not Postgres enums).
 export type Plan = 'free' | 'premium';
 export type AccountType = 'cash' | 'bank' | 'credit_card';
-export type TransactionType = 'income' | 'expense';
+
+/** A movement (transaction) is income, expense, or a transfer between accounts. */
+export type TransactionType = 'income' | 'expense' | 'transfer';
+/** Categories only classify income and expense — never transfers. */
+export type CategoryType = 'income' | 'expense';
 
 // Row aliases, with the loose `text` columns narrowed to their domain unions.
 export type Profile = Omit<Row<'profiles'>, 'plan'> & { plan: Plan };
 export type Account = Omit<Row<'accounts'>, 'type'> & { type: AccountType };
-export type Category = Omit<Row<'categories'>, 'type'> & { type: TransactionType };
+export type Category = Omit<Row<'categories'>, 'type'> & { type: CategoryType };
 export type Transaction = Omit<Row<'transactions'>, 'type'> & {
   type: TransactionType;
 };
+
+/** A category with its subcategories nested (one level only). */
+export interface CategoryNode extends Category {
+  children: Category[];
+}
 
 /** ISO 4217 currency code, e.g. 'MXN'. */
 export type CurrencyCode = string;

@@ -88,6 +88,9 @@ Phased plan in [`docs/CLAUDE.md`](docs/CLAUDE.md).
   `TransactionForm`, starter “Cash” account per user. ✅
 - **Phase 6** — tab navigation (Inicio · Movimientos · Ajustes) + account and
   category management screens (CRUD, archive, color picker). ✅
+- **Redesign** — "Lima + tinta" visual system (tokens in the Tailwind preset),
+  restyled `@repo/ui` + all screens, custom calculator `NumericKeypad`, 2-step
+  movement flow, transfer type, subcategories, category picker sheet. ✅
 
 ### Using the data layer
 

@@ -15,20 +15,20 @@ export default function SettingsScreen() {
 
   return (
     <Screen className="gap-6">
-      <Text className="pt-2 text-2xl font-bold text-neutral-900 dark:text-neutral-50">Ajustes</Text>
+      <Text className="pt-2 text-2xl font-bold text-ink dark:text-ink-dark">Ajustes</Text>
 
       {user?.email ? (
-        <Text className="text-sm text-neutral-500 dark:text-neutral-400">{user.email}</Text>
+        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{user.email}</Text>
       ) : null}
 
-      <View className="rounded-2xl border border-neutral-200 px-4 dark:border-neutral-800">
+      <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
         <ListRow
           title="Cuentas"
           subtitle={`${activeAccounts} activa${activeAccounts === 1 ? '' : 's'}`}
           showChevron
           onPress={() => router.push('/(app)/settings/accounts')}
         />
-        <View className="h-px bg-neutral-100 dark:bg-neutral-800" />
+        <View className="h-px bg-line dark:bg-line-dark" />
         <ListRow
           title="Categorías"
           subtitle={`${customCategories} propia${customCategories === 1 ? '' : 's'} + predeterminadas`}

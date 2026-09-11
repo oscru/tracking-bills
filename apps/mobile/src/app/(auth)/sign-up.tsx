@@ -27,32 +27,29 @@ export default function SignUp() {
       return;
     }
     if (password !== confirm) {
-      setErrors({ confirm: 'Passwords do not match' });
+      setErrors({ confirm: 'Las contraseñas no coinciden' });
       return;
     }
     signUp.mutate(parsed.data, {
       onSuccess: (res) => {
-        // No session => the project requires email confirmation.
         if (res.needsEmailConfirmation) setConfirmationSent(true);
-        // Otherwise the AuthGate routes to /(app) once the session lands.
       },
-      onError: (e) => setErrors({ form: e instanceof Error ? e.message : 'Sign up failed' }),
+      onError: (e) =>
+        setErrors({ form: e instanceof Error ? e.message : 'No se pudo crear la cuenta' }),
     });
   };
 
   if (confirmationSent) {
     return (
-      <Screen center>
+      <Screen center scroll>
         <View className="gap-3">
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-            Check your email
-          </Text>
-          <Text className="text-base text-neutral-500 dark:text-neutral-400">
-            We sent a confirmation link to {email}. Confirm it, then sign in.
+          <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Revisa tu correo</Text>
+          <Text className="text-base text-ink-2 dark:text-ink-2-dark">
+            Te enviamos un enlace de confirmación a {email}. Confírmalo y luego inicia sesión.
           </Text>
           <Link href="/(auth)/sign-in" asChild>
-            <Text className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
-              Back to sign in
+            <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
+              Volver a iniciar sesión
             </Text>
           </Link>
         </View>
@@ -61,19 +58,17 @@ export default function SignUp() {
   }
 
   return (
-    <Screen center>
+    <Screen center scroll>
       <View className="gap-5">
         <View className="gap-1">
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-            Create your account
-          </Text>
-          <Text className="text-base text-neutral-500 dark:text-neutral-400">
-            Track income and expenses in one place
+          <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Crea tu cuenta</Text>
+          <Text className="text-base text-ink-2 dark:text-ink-2-dark">
+            Lleva tus ingresos y gastos en un solo lugar
           </Text>
         </View>
 
         <TextField
-          label="Email"
+          label="Correo"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -84,7 +79,7 @@ export default function SignUp() {
           error={errors.email}
         />
         <TextField
-          label="Password"
+          label="Contraseña"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -93,7 +88,7 @@ export default function SignUp() {
           error={errors.password}
         />
         <TextField
-          label="Confirm password"
+          label="Confirmar contraseña"
           value={confirm}
           onChangeText={setConfirm}
           secureTextEntry
@@ -101,17 +96,17 @@ export default function SignUp() {
           error={errors.confirm}
         />
 
-        {errors.form ? <Text className="text-sm text-red-500">{errors.form}</Text> : null}
+        {errors.form ? (
+          <Text className="text-sm text-danger dark:text-danger-dark">{errors.form}</Text>
+        ) : null}
 
-        <Button label="Sign up" onPress={onSubmit} loading={signUp.isPending} />
+        <Button label="Crear cuenta" onPress={onSubmit} loading={signUp.isPending} />
 
         <View className="flex-row justify-center gap-1">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">
-            Already have an account?
-          </Text>
+          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿Ya tienes cuenta?</Text>
           <Link href="/(auth)/sign-in" asChild>
-            <Text className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
-              Sign in
+            <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
+              Iniciar sesión
             </Text>
           </Link>
         </View>

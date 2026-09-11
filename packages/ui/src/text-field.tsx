@@ -10,19 +10,19 @@ export function TextField({ label, error, onFocus, onBlur, ...props }: TextField
   const [focused, setFocused] = useState(false);
 
   const borderClass = error
-    ? 'border-red-500'
+    ? 'border-danger dark:border-danger-dark'
     : focused
-      ? 'border-neutral-900 dark:border-white'
-      : 'border-neutral-200 dark:border-neutral-700';
+      ? 'border-2 border-ink dark:border-ink-dark'
+      : 'border border-line dark:border-line-dark';
 
   return (
     <View className="gap-1.5">
       {label ? (
-        <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{label}</Text>
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">{label}</Text>
       ) : null}
       <TextInput
-        placeholderTextColor="#9ca3af"
-        className={`h-12 rounded-xl border bg-white px-3 text-base text-neutral-900 dark:bg-neutral-900 dark:text-neutral-50 ${borderClass}`}
+        placeholderTextColor="#9CA3AF"
+        className={`h-[52px] rounded-ctl bg-surface px-3.5 text-base text-ink dark:bg-surface-dark dark:text-ink-dark ${borderClass}`}
         onFocus={(e) => {
           setFocused(true);
           onFocus?.(e);
@@ -33,7 +33,7 @@ export function TextField({ label, error, onFocus, onBlur, ...props }: TextField
         }}
         {...props}
       />
-      {error ? <Text className="text-sm text-red-500">{error}</Text> : null}
+      {error ? <Text className="text-sm text-danger dark:text-danger-dark">{error}</Text> : null}
     </View>
   );
 }

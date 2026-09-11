@@ -19,29 +19,31 @@ export default function AccountsScreen() {
     <Screen className="gap-4">
       <View className="flex-row items-center justify-between pt-2">
         <Pressable onPress={() => router.back()} hitSlop={8}>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">‹ Ajustes</Text>
+          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">‹ Ajustes</Text>
         </Pressable>
         <Pressable onPress={() => router.push('/(app)/settings/accounts/new')} hitSlop={8}>
-          <Text className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">Nueva</Text>
+          <Text className="text-sm font-semibold text-ink dark:text-ink-dark">Nueva</Text>
         </Pressable>
       </View>
 
-      <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">Cuentas</Text>
+      <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Cuentas</Text>
 
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
       ) : error ? (
-        <Text className="mt-8 text-center text-sm text-red-500">{error.message}</Text>
+        <Text className="mt-8 text-center text-sm text-danger dark:text-danger-dark">
+          {error.message}
+        </Text>
       ) : (
-        <View className="rounded-2xl border border-neutral-200 px-4 dark:border-neutral-800">
+        <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
           {(accounts ?? []).map((a, i) => (
             <View key={a.id}>
-              {i > 0 ? <View className="h-px bg-neutral-100 dark:bg-neutral-800" /> : null}
+              {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
               <ListRow
                 title={a.name}
                 subtitle={`${TYPE_LABEL[a.type]}${a.archived ? ' · archivada' : ''}`}
                 trailing={
-                  <Text className="text-sm text-neutral-500 dark:text-neutral-400">
+                  <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
                     {formatCurrency(Number(a.initial_balance), a.currency)}
                   </Text>
                 }

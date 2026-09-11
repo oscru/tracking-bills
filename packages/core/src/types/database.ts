@@ -173,6 +173,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_completed: boolean
           to_account_id: string | null
           transaction_date: string
           type: string
@@ -186,6 +187,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_completed?: boolean
           to_account_id?: string | null
           transaction_date?: string
           type: string
@@ -199,6 +201,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_completed?: boolean
           to_account_id?: string | null
           transaction_date?: string
           type?: string

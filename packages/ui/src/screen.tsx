@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView, type Edges } from 'react-native-safe-area-context';
 
 export interface ScreenProps {
@@ -9,6 +9,8 @@ export interface ScreenProps {
   edges?: Edges;
   /** Center children on the cross axis (handy for auth screens). */
   center?: boolean;
+  /** Wrap children in a keyboard-aware ScrollView (forms — not list screens). */
+  scroll?: boolean;
 }
 
 export function Screen({
@@ -16,12 +18,35 @@ export function Screen({
   className = '',
   edges = ['top', 'bottom'],
   center = false,
+  scroll = false,
 }: ScreenProps) {
+  // On wide web the content column is capped and centered.
+  const web = Platform.OS === 'web' ? 'mx-auto w-full max-w-[480px]' : '';
+
+  const content = scroll ? (
+    <ScrollView
+      className="flex-1"
+      contentContainerClassName={`grow px-5 ${web} ${center ? 'justify-center' : ''} ${className}`}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
+      showsVerticalScrollIndicator={false}
+    >
+      {children}
+    </ScrollView>
+  ) : (
+    <View className={`flex-1 px-5 ${web} ${center ? 'justify-center' : ''} ${className}`}>
+      {children}
+    </View>
+  );
+
   return (
-    <SafeAreaView edges={edges} className="flex-1 bg-white dark:bg-neutral-950">
-      <View className={`flex-1 px-5 ${center ? 'justify-center' : ''} ${className}`}>
-        {children}
-      </View>
-    </SafeAreaView>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1 bg-canvas dark:bg-canvas-dark"
+    >
+      <SafeAreaView edges={edges} className="flex-1">
+        {content}
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }

@@ -9,6 +9,8 @@ export const categoryCreateSchema = z.object({
   type: categoryTypeSchema,
   icon: z.string().trim().min(1).max(40).nullish(),
   color: hexColorSchema.nullish(),
+  /** Set to make this a subcategory of `parent_id` (one level only). */
+  parent_id: z.string().uuid().nullish(),
 });
 
 export const categoryUpdateSchema = categoryCreateSchema.partial();

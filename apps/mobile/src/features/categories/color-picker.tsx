@@ -37,7 +37,7 @@ export function ColorPicker({
             accessibilityState={{ selected }}
             onPress={() => onChange(c)}
             className={`h-8 w-8 items-center justify-center rounded-full ${
-              selected ? 'border-2 border-neutral-900 dark:border-white' : ''
+              selected ? 'border-2 border-ink dark:border-ink-dark' : ''
             }`}
           >
             <View className="h-6 w-6 rounded-full" style={{ backgroundColor: c }} />

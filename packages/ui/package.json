@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
+    "expo-haptics": "*",
     "nativewind": ">=4",
     "react": "*",
     "react-native": "*",

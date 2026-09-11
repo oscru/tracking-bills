@@ -72,7 +72,7 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
       />
 
       <View className="gap-2">
-        <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Tipo</Text>
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Tipo</Text>
         <View className="flex-row flex-wrap gap-2">
           {TYPES.map((t) => (
             <Chip
@@ -105,7 +105,7 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
         error={errors.initial_balance}
       />
 
-      {error ? <Text className="text-sm text-red-500">{error}</Text> : null}
+      {error ? <Text className="text-sm text-danger dark:text-danger-dark">{error}</Text> : null}
 
       <Button label={submitLabel} onPress={submit} loading={submitting} />
 

@@ -2,22 +2,106 @@
   "artboards": [
     { "file": "Main.dc.html", "title": "Inicio", "x": 0, "y": 0, "w": 390, "h": 990 },
     { "file": "SignIn.dc.html", "title": "Iniciar sesión", "x": 500, "y": 0, "w": 390, "h": 844 },
-    { "file": "Movimientos.dc.html", "title": "Movimientos", "x": 1000, "y": 0, "w": 390, "h": 910 },
-    { "file": "Monto.dc.html", "title": "Movimiento · paso 1 (monto + teclado propio)", "x": 1500, "y": 0, "w": 390, "h": 844 },
-    { "file": "MovimientoForm.dc.html", "title": "Movimiento · paso 2 (detalles)", "x": 2000, "y": 0, "w": 390, "h": 890 },
-    { "file": "Transferencia.dc.html", "title": "Movimiento · transferencia entre cuentas", "x": 2500, "y": 0, "w": 390, "h": 860 },
+    {
+      "file": "Movimientos.dc.html",
+      "title": "Movimientos",
+      "x": 1000,
+      "y": 0,
+      "w": 390,
+      "h": 910
+    },
+    {
+      "file": "Monto.dc.html",
+      "title": "Movimiento · paso 1 (monto + teclado propio)",
+      "x": 1500,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "MovimientoForm.dc.html",
+      "title": "Movimiento · paso 2 (detalles)",
+      "x": 2000,
+      "y": 0,
+      "w": 390,
+      "h": 890
+    },
+    {
+      "file": "Transferencia.dc.html",
+      "title": "Movimiento · transferencia entre cuentas",
+      "x": 2500,
+      "y": 0,
+      "w": 390,
+      "h": 860
+    },
 
     { "file": "Ajustes.dc.html", "title": "Ajustes", "x": 0, "y": 1180, "w": 390, "h": 850 },
     { "file": "Cuentas.dc.html", "title": "Cuentas", "x": 500, "y": 1180, "w": 390, "h": 730 },
-    { "file": "CuentaForm.dc.html", "title": "Cuenta · formulario", "x": 1000, "y": 1180, "w": 390, "h": 770 },
-    { "file": "Categorias.dc.html", "title": "Categorías", "x": 1500, "y": 1180, "w": 390, "h": 980 },
-    { "file": "CategoriaPicker.dc.html", "title": "Categoría · selector (hoja + búsqueda + subcategorías)", "x": 2000, "y": 1180, "w": 390, "h": 780 },
+    {
+      "file": "CuentaForm.dc.html",
+      "title": "Cuenta · formulario",
+      "x": 1000,
+      "y": 1180,
+      "w": 390,
+      "h": 770
+    },
+    {
+      "file": "Categorias.dc.html",
+      "title": "Categorías",
+      "x": 1500,
+      "y": 1180,
+      "w": 390,
+      "h": 980
+    },
+    {
+      "file": "CategoriaPicker.dc.html",
+      "title": "Categoría · selector (hoja + búsqueda + subcategorías)",
+      "x": 2000,
+      "y": 1180,
+      "w": 390,
+      "h": 780
+    },
 
-    { "file": "CategoriaForm.dc.html", "title": "Categoría · formulario", "x": 0, "y": 2280, "w": 390, "h": 750 },
-    { "file": "InicioOscuro.dc.html", "title": "Inicio · modo oscuro", "x": 500, "y": 2280, "w": 390, "h": 990 },
-    { "file": "Componentes.dc.html", "title": "Sistema de UI", "x": 1000, "y": 2280, "w": 390, "h": 1430 },
-    { "file": "Acento.dc.html", "title": "Opciones de acento", "x": 1500, "y": 2280, "w": 390, "h": 1210 },
-    { "file": "LimaClaro.dc.html", "title": "Lima · cómo queda en tema claro", "x": 2000, "y": 2280, "w": 390, "h": 980 }
+    {
+      "file": "CategoriaForm.dc.html",
+      "title": "Categoría · formulario",
+      "x": 0,
+      "y": 2280,
+      "w": 390,
+      "h": 750
+    },
+    {
+      "file": "InicioOscuro.dc.html",
+      "title": "Inicio · modo oscuro",
+      "x": 500,
+      "y": 2280,
+      "w": 390,
+      "h": 990
+    },
+    {
+      "file": "Componentes.dc.html",
+      "title": "Sistema de UI",
+      "x": 1000,
+      "y": 2280,
+      "w": 390,
+      "h": 1430
+    },
+    {
+      "file": "Acento.dc.html",
+      "title": "Opciones de acento",
+      "x": 1500,
+      "y": 2280,
+      "w": 390,
+      "h": 1210
+    },
+    {
+      "file": "LimaClaro.dc.html",
+      "title": "Lima · cómo queda en tema claro",
+      "x": 2000,
+      "y": 2280,
+      "w": 390,
+      "h": 980
+    }
   ],
   "annotations": [
     {

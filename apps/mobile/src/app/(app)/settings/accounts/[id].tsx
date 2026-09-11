@@ -27,9 +27,7 @@ export default function EditAccount() {
   if (!account) {
     return (
       <Screen center>
-        <Text className="text-base text-neutral-500 dark:text-neutral-400">
-          Cuenta no encontrada.
-        </Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Cuenta no encontrada.</Text>
       </Screen>
     );
   }
@@ -37,11 +35,9 @@ export default function EditAccount() {
   return (
     <Screen className="gap-4">
       <View className="flex-row items-center justify-between pt-2">
-        <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-          Editar cuenta
-        </Text>
+        <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Editar cuenta</Text>
         <Pressable onPress={() => router.back()} hitSlop={8}>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">Cancelar</Text>
+          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">Cancelar</Text>
         </Pressable>
       </View>
 
@@ -104,7 +100,9 @@ export default function EditAccount() {
               </View>
             ) : (
               <Pressable onPress={() => setConfirming(true)} className="items-center py-2">
-                <Text className="text-sm font-medium text-red-500">Eliminar cuenta</Text>
+                <Text className="text-sm font-medium text-danger dark:text-danger-dark">
+                  Eliminar cuenta
+                </Text>
               </Pressable>
             )}
           </View>

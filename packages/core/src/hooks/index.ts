@@ -12,6 +12,7 @@ export { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount } fro
 export {
   useCategories,
   useCategoriesByType,
+  useCategoryTree,
   useCreateCategory,
   useUpdateCategory,
   useDeleteCategory,

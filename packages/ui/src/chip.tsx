@@ -8,23 +8,30 @@ export interface ChipProps extends Omit<PressableProps, 'children' | 'style'> {
 }
 
 export function Chip({ label, selected = false, dotColor, ...props }: ChipProps) {
+  // Selected: fill with the category color if one is given, else the lime accent.
+  const colorFill = selected && dotColor ? dotColor : null;
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected }}
-      className={`flex-row items-center gap-1.5 rounded-full border px-3 py-2 ${
-        selected
-          ? 'border-neutral-900 bg-neutral-900 dark:border-white dark:bg-white'
-          : 'border-neutral-200 bg-transparent dark:border-neutral-700'
+      style={colorFill ? { backgroundColor: colorFill, borderColor: colorFill } : undefined}
+      className={`h-10 flex-row items-center gap-2 rounded-full border px-3.5 ${
+        selected && !colorFill
+          ? 'border-lime bg-lime'
+          : 'border-line bg-surface dark:border-line-dark dark:bg-surface-dark'
       }`}
       {...props}
     >
       {dotColor ? (
-        <View className="h-2 w-2 rounded-full" style={{ backgroundColor: dotColor }} />
+        <View
+          className="h-2 w-2 rounded-full"
+          style={{ backgroundColor: colorFill ? '#fff' : dotColor }}
+        />
       ) : null}
       <Text
         className={`text-sm font-medium ${
-          selected ? 'text-white dark:text-neutral-900' : 'text-neutral-700 dark:text-neutral-300'
+          selected ? (colorFill ? 'text-white' : 'text-ink') : 'text-ink-2 dark:text-ink-2-dark'
         }`}
       >
         {label}

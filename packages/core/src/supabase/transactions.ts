@@ -1,4 +1,11 @@
-import type { Account, Category, Transaction, TransactionType } from '../types';
+import type {
+  Account,
+  Category,
+  InsertRow,
+  Transaction,
+  TransactionType,
+  UpdateRow,
+} from '../types';
 import {
   transactionCreateSchema,
   transactionUpdateSchema,
@@ -22,17 +29,22 @@ export interface TransactionFilters {
   offset?: number;
 }
 
-/** A transaction row with its account and category embedded. */
+type AccountRef = Pick<Account, 'id' | 'name' | 'type' | 'currency'>;
+
+/** A transaction row with its account(s) and category embedded. */
 export interface TransactionWithRefs extends Transaction {
-  account: Pick<Account, 'id' | 'name' | 'type' | 'currency'> | null;
+  account: AccountRef | null;
+  /** Destination account — only present on transfers. */
+  to_account: AccountRef | null;
   category: Pick<
     Category,
     'id' | 'slug' | 'name' | 'icon' | 'color' | 'type' | 'is_default'
   > | null;
 }
 
+// Two FKs point at `accounts`, so disambiguate the embeds by column name.
 const WITH_REFS =
-  '*, account:accounts(id, name, type, currency), category:categories(id, slug, name, icon, color, type, is_default)';
+  '*, account:accounts!account_id(id, name, type, currency), to_account:accounts!to_account_id(id, name, type, currency), category:categories(id, slug, name, icon, color, type, is_default)';
 
 export async function listTransactions(
   filters: TransactionFilters = {},
@@ -63,7 +75,7 @@ export async function getTransaction(id: string): Promise<TransactionWithRefs> {
 }
 
 export async function createTransaction(input: TransactionCreateInput): Promise<Transaction> {
-  const payload = transactionCreateSchema.parse(input);
+  const payload = transactionCreateSchema.parse(input) as InsertRow<'transactions'>;
   return unwrap(
     await supabase.from('transactions').insert(payload).select().single(),
   ) as Transaction;
@@ -73,7 +85,7 @@ export async function updateTransaction(
   id: string,
   patch: TransactionUpdateInput,
 ): Promise<Transaction> {
-  const payload = transactionUpdateSchema.parse(patch);
+  const payload = transactionUpdateSchema.parse(patch) as UpdateRow<'transactions'>;
   return unwrap(
     await supabase.from('transactions').update(payload).eq('id', id).select().single(),
   ) as Transaction;

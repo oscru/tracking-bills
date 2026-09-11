@@ -9,11 +9,7 @@ export default function SignIn() {
   const signIn = useSignIn();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{
-    email?: string;
-    password?: string;
-    form?: string;
-  }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
 
   const onSubmit = () => {
     setErrors({});
@@ -23,26 +19,31 @@ export default function SignIn() {
       setErrors({ email: f.email?.[0], password: f.password?.[0] });
       return;
     }
-    // On success the SessionProvider updates and the AuthGate routes to /(app).
     signIn.mutate(parsed.data, {
-      onError: (e) => setErrors({ form: e instanceof Error ? e.message : 'Sign in failed' }),
+      onError: (e) =>
+        setErrors({ form: e instanceof Error ? e.message : 'No se pudo iniciar sesión' }),
     });
   };
 
   return (
-    <Screen center>
+    <Screen center scroll>
       <View className="gap-5">
+        <View className="mb-2 items-center gap-3">
+          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-lime">
+            <Text className="text-2xl font-black text-ink">$</Text>
+          </View>
+          <Text className="text-sm text-ink-3 dark:text-ink-3-dark">[nombre de la app]</Text>
+        </View>
+
         <View className="gap-1">
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-            Welcome back
-          </Text>
-          <Text className="text-base text-neutral-500 dark:text-neutral-400">
-            Sign in to continue
+          <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Iniciar sesión</Text>
+          <Text className="text-base text-ink-2 dark:text-ink-2-dark">
+            Controla tus ingresos y gastos
           </Text>
         </View>
 
         <TextField
-          label="Email"
+          label="Correo"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -53,7 +54,7 @@ export default function SignIn() {
           error={errors.email}
         />
         <TextField
-          label="Password"
+          label="Contraseña"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -62,15 +63,17 @@ export default function SignIn() {
           error={errors.password}
         />
 
-        {errors.form ? <Text className="text-sm text-red-500">{errors.form}</Text> : null}
+        {errors.form ? (
+          <Text className="text-sm text-danger dark:text-danger-dark">{errors.form}</Text>
+        ) : null}
 
-        <Button label="Sign in" onPress={onSubmit} loading={signIn.isPending} />
+        <Button label="Entrar" onPress={onSubmit} loading={signIn.isPending} />
 
         <View className="flex-row justify-center gap-1">
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">No account?</Text>
+          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿No tienes cuenta?</Text>
           <Link href="/(auth)/sign-up" asChild>
-            <Text className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">
-              Sign up
+            <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
+              Crear cuenta
             </Text>
           </Link>
         </View>

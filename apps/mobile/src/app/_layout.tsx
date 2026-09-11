@@ -1,4 +1,5 @@
 import '../global.css';
+import '../web-setup';
 
 import { createQueryClient, SessionProvider, useSession } from '@repo/core/hooks';
 import { QueryClientProvider } from '@tanstack/react-query';

@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { createCategory, deleteCategory, listCategories, updateCategory } from '../supabase';
-import type { Category, TransactionType } from '../types';
+import type { Category, CategoryNode, CategoryType } from '../types';
+import { buildCategoryTree } from '../utils';
 import type { CategoryUpdateInput } from '../validators';
 import { queryKeys } from './keys';
 
@@ -14,12 +15,23 @@ export function useCategories() {
 }
 
 /** Categories of one type (income/expense), defaults and custom together. */
-export function useCategoriesByType(type: TransactionType) {
+export function useCategoriesByType(type: CategoryType) {
   const query = useCategories();
   const data = useMemo<Category[] | undefined>(
     () => query.data?.filter((c) => c.type === type),
     [query.data, type],
   );
+  return { ...query, data };
+}
+
+/** Categories nested as parent -> subcategories, optionally filtered by type. */
+export function useCategoryTree(type?: CategoryType) {
+  const query = useCategories();
+  const data = useMemo<CategoryNode[] | undefined>(() => {
+    if (!query.data) return undefined;
+    const flat = type ? query.data.filter((c) => c.type === type) : query.data;
+    return buildCategoryTree(flat);
+  }, [query.data, type]);
   return { ...query, data };
 }
 

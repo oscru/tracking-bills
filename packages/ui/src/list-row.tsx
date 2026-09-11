@@ -31,16 +31,14 @@ export function ListRow({
       ) : null}
 
       <View className="flex-1">
-        <Text className="text-base text-neutral-900 dark:text-neutral-50">{title}</Text>
+        <Text className="text-base text-ink dark:text-ink-dark">{title}</Text>
         {subtitle ? (
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">{subtitle}</Text>
+          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{subtitle}</Text>
         ) : null}
       </View>
 
       {trailing}
-      {showChevron ? (
-        <Text className="text-lg text-neutral-300 dark:text-neutral-600">›</Text>
-      ) : null}
+      {showChevron ? <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text> : null}
     </Wrapper>
   );
 }

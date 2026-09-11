@@ -14,11 +14,9 @@ export default function NewAccount() {
   return (
     <Screen className="gap-4">
       <View className="flex-row items-center justify-between pt-2">
-        <Text className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-          Nueva cuenta
-        </Text>
+        <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Nueva cuenta</Text>
         <Pressable onPress={() => router.back()} hitSlop={8}>
-          <Text className="text-sm text-neutral-500 dark:text-neutral-400">Cancelar</Text>
+          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">Cancelar</Text>
         </Pressable>
       </View>
 
