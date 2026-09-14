@@ -42,6 +42,7 @@ export type Database = {
           id: string
           initial_balance: number
           name: string
+          show_on_home: boolean
           type: string
           updated_at: string
           user_id: string
@@ -53,6 +54,7 @@ export type Database = {
           id?: string
           initial_balance?: number
           name: string
+          show_on_home?: boolean
           type: string
           updated_at?: string
           user_id?: string
@@ -64,6 +66,7 @@ export type Database = {
           id?: string
           initial_balance?: number
           name?: string
+          show_on_home?: boolean
           type?: string
           updated_at?: string
           user_id?: string

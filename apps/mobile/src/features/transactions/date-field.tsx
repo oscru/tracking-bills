@@ -2,28 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { addDaysISO, formatDate, todayISODate } from '@repo/core/utils';
 import { BottomSheet, Chip } from '@repo/ui';
 import { useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
-const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-/** Mon-first 6x7 grid of the given month; `null` cells pad the leading/trailing days. */
-function monthGrid(year: number, month: number): (Date | null)[][] {
-  const first = new Date(year, month, 1);
-  const leading = (first.getDay() + 6) % 7; // Mon=0 .. Sun=6
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const cells: (Date | null)[] = Array.from({ length: leading }, () => null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
-  while (cells.length % 7 !== 0) cells.push(null);
-
-  const rows: (Date | null)[][] = [];
-  for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
-  return rows;
-}
+import { capitalize, monthGrid, WEEKDAYS } from './calendar-grid';
 
 export function DateField({ value, onChange }: { value: string; onChange: (iso: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -79,7 +60,11 @@ export function DateField({ value, onChange }: { value: string; onChange: (iso: 
       </Pressable>
 
       <BottomSheet visible={open} onClose={() => setOpen(false)} title="Elegir fecha">
-        <View className="gap-3 px-5 pb-6">
+        <ScrollView
+          className="max-h-[480px]"
+          contentContainerClassName="gap-3 px-5 pb-6"
+          keyboardShouldPersistTaps="handled"
+        >
           <View className="flex-row items-center justify-between">
             <Pressable onPress={() => shiftMonth(-1)} hitSlop={8} className="p-1">
               <Ionicons name="chevron-back" size={20} color="#1A1D21" />
@@ -135,7 +120,7 @@ export function DateField({ value, onChange }: { value: string; onChange: (iso: 
               })}
             </View>
           ))}
-        </View>
+        </ScrollView>
       </BottomSheet>
     </View>
   );

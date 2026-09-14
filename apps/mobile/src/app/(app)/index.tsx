@@ -27,6 +27,7 @@ export default function HomeScreen() {
   const [hidden, setHidden] = useState(false);
 
   const active = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
+  const visibleAccounts = useMemo(() => active.filter((a) => a.show_on_home), [active]);
   const currency = active[0]?.currency ?? 'MXN';
   const balance = useMemo(() => totalBalance(active, transactions ?? []), [active, transactions]);
   const thisMonth = todayISODate().slice(0, 7);
@@ -44,7 +45,7 @@ export default function HomeScreen() {
       params: { type, from: `${thisMonth}-01`, to: monthEnd },
     });
   const openAccount = (accountId: string) =>
-    router.push({ pathname: '/(app)/transactions', params: { accountId } });
+    router.push({ pathname: '/(app)/settings/accounts/[id]', params: { id: accountId } });
 
   return (
     <Screen className="gap-5">
@@ -114,7 +115,7 @@ export default function HomeScreen() {
               Tus cuentas
             </Text>
             <View className="rounded-card border border-line dark:border-line-dark">
-              {active.map((a, i) => (
+              {visibleAccounts.map((a, i) => (
                 <Pressable
                   key={a.id}
                   onPress={() => openAccount(a.id)}
@@ -135,9 +136,11 @@ export default function HomeScreen() {
                   </Text>
                 </Pressable>
               ))}
-              {active.length === 0 ? (
+              {visibleAccounts.length === 0 ? (
                 <Text className="px-4 py-4 text-sm text-ink-2 dark:text-ink-2-dark">
-                  Aún no tienes cuentas.
+                  {active.length === 0
+                    ? 'Aún no tienes cuentas.'
+                    : 'No tienes cuentas visibles aquí — actívalas desde Cuenta › Mostrar en inicio.'}
                 </Text>
               ) : null}
             </View>

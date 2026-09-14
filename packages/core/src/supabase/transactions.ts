@@ -20,8 +20,10 @@ export interface TransactionFilters {
   from?: string;
   /** Inclusive upper bound, YYYY-MM-DD. */
   to?: string;
-  accountId?: string;
-  categoryId?: string;
+  /** Match any of these accounts (OR). Omit/empty = no filter. */
+  accountIds?: string[];
+  /** Match any of these categories (OR). Omit/empty = no filter. */
+  categoryIds?: string[];
   type?: TransactionType;
   /** Case-insensitive match against `description`. */
   search?: string;
@@ -57,8 +59,8 @@ export async function listTransactions(
 
   if (filters.from) query = query.gte('transaction_date', filters.from);
   if (filters.to) query = query.lte('transaction_date', filters.to);
-  if (filters.accountId) query = query.eq('account_id', filters.accountId);
-  if (filters.categoryId) query = query.eq('category_id', filters.categoryId);
+  if (filters.accountIds?.length) query = query.in('account_id', filters.accountIds);
+  if (filters.categoryIds?.length) query = query.in('category_id', filters.categoryIds);
   if (filters.type) query = query.eq('type', filters.type);
   if (filters.search) query = query.ilike('description', `%${filters.search}%`);
   if (filters.limit != null) {

@@ -9,6 +9,8 @@ export const accountCreateSchema = z.object({
   type: accountTypeSchema,
   currency: currencyCodeSchema.default('MXN'),
   initial_balance: z.number().finite().default(0),
+  /** Whether it appears in the "Tus cuentas" list on the home screen. */
+  show_on_home: z.boolean().default(true),
 });
 
 export const accountUpdateSchema = accountCreateSchema
