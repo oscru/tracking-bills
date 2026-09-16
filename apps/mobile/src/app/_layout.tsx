@@ -9,6 +9,8 @@ import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { FloatingDraftBubble } from '../features/transactions/floating-draft-bubble';
+
 const queryClient = createQueryClient();
 
 function AuthGate() {
@@ -34,7 +36,12 @@ function AuthGate() {
     );
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <>
+      <Stack screenOptions={{ headerShown: false }} />
+      {session ? <FloatingDraftBubble /> : null}
+    </>
+  );
 }
 
 export default function RootLayout() {

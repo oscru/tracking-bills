@@ -19,6 +19,7 @@ export function BottomSheet({ visible, onClose, title, headerAction, children }:
       animationType="slide"
       onRequestClose={onClose}
       statusBarTranslucent
+      navigationBarTranslucent
     >
       <View className="flex-1 justify-end bg-black/40">
         <Pressable className="flex-1" onPress={onClose} accessibilityLabel="Cerrar" />

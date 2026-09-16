@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-import { CategoryForm } from '../../../../features/categories/category-form';
+import { CategoryForm } from '../../../../../features/categories/category-form';
 
 export default function EditCategory() {
   const { id } = useLocalSearchParams<{ id: string }>();

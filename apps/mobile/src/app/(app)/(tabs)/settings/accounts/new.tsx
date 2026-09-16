@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { AccountForm } from '../../../../features/accounts/account-form';
+import { AccountForm } from '../../../../../features/accounts/account-form';
 
 export default function NewAccount() {
   const router = useRouter();

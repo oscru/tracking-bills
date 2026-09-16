@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { CategoryForm } from '../../../../features/categories/category-form';
+import { CategoryForm } from '../../../../../features/categories/category-form';
 
 export default function NewCategory() {
   const router = useRouter();

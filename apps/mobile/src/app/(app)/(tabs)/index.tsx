@@ -155,7 +155,7 @@ export default function HomeScreen() {
       <View className="absolute bottom-6 right-5">
         <Fab
           accessibilityLabel="Nuevo movimiento"
-          onPress={() => router.push('/(app)/transactions/new')}
+          onPress={() => router.push('/(app)/new-transaction')}
         />
       </View>
     </Screen>

@@ -3,7 +3,7 @@ import { useAccounts, useCategoryTree, useTransactions } from '@repo/core/hooks'
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionType } from '@repo/core/types';
 import { formatCurrency } from '@repo/core/utils';
-import { Chip, Fab, Screen, TextField } from '@repo/ui';
+import { Fab, Screen, TextField } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -15,27 +15,15 @@ import {
   View,
 } from 'react-native';
 
-import { dayHeaderLabel, groupByDay } from '../../../features/transactions/day-groups';
-import { DateRangeField } from '../../../features/transactions/date-range-field';
-import { FilterOptionSheet } from '../../../features/transactions/filter-option-sheet';
-import { MultiSelectSheet } from '../../../features/transactions/multi-select-sheet';
-import { TransactionListItem } from '../../../features/transactions/transaction-list-item';
+import { dayHeaderLabel, groupByDay } from '../../../../features/transactions/day-groups';
+import { FiltersSheet } from '../../../../features/transactions/filters-sheet';
+import { TransactionListItem } from '../../../../features/transactions/transaction-list-item';
 
 const TITLE: Record<TransactionType, string> = {
   income: 'Ingresos',
   expense: 'Gastos',
   transfer: 'Transferencias',
 };
-
-const TYPE_OPTIONS = [
-  { value: 'income', label: 'Ingresos' },
-  { value: 'expense', label: 'Gastos' },
-  { value: 'transfer', label: 'Transferencias' },
-];
-
-function pluralLabel(count: number, noun: string, pluralNoun: string): string {
-  return `${count} ${count === 1 ? noun : pluralNoun} seleccionada${count === 1 ? '' : 's'}`;
-}
 
 export default function TransactionsScreen() {
   const router = useRouter();
@@ -56,9 +44,7 @@ export default function TransactionsScreen() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const [typeSheetOpen, setTypeSheetOpen] = useState(false);
-  const [categorySheetOpen, setCategorySheetOpen] = useState(false);
-  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
@@ -116,12 +102,12 @@ export default function TransactionsScreen() {
     [accounts],
   );
 
-  const categoryLabel =
-    categoryIds.length === 0
-      ? 'Categoría'
-      : pluralLabel(categoryIds.length, 'categoría', 'categorías');
-  const accountLabel =
-    accountIds.length === 0 ? 'Cuenta' : pluralLabel(accountIds.length, 'cuenta', 'cuentas');
+  const activeFilterCount = [
+    Boolean(type),
+    categoryIds.length > 0,
+    accountIds.length > 0,
+    Boolean(from),
+  ].filter(Boolean).length;
 
   return (
     <Screen className="gap-3">
@@ -140,39 +126,41 @@ export default function TransactionsScreen() {
         </View>
       </View>
 
-      <TextField
-        value={search}
-        onChangeText={setSearch}
-        placeholder="Buscar por descripción…"
-        autoCapitalize="none"
-        autoCorrect={false}
-        returnKeyType="search"
-      />
+      <View className="flex-row items-center gap-2">
+        <View className="flex-1">
+          <TextField
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Buscar por descripción…"
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+        </View>
 
-      <View className="flex-row flex-wrap gap-2">
-        <Chip
-          label={type ? TITLE[type] : 'Tipo'}
-          selected={Boolean(type)}
-          onPress={() => setTypeSheetOpen(true)}
-        />
-        <Chip
-          label={categoryLabel}
-          selected={categoryIds.length > 0}
-          onPress={() => setCategorySheetOpen(true)}
-        />
-        <Chip
-          label={accountLabel}
-          selected={accountIds.length > 0}
-          onPress={() => setAccountSheetOpen(true)}
-        />
-        <DateRangeField
-          from={from}
-          to={to}
-          onChange={(f, t) => {
-            setFrom(f);
-            setTo(t);
-          }}
-        />
+        <Pressable
+          onPress={() => setFiltersOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Filtros"
+          className={`h-[52px] w-[52px] items-center justify-center rounded-ctl border ${
+            activeFilterCount > 0
+              ? 'border-lime bg-lime'
+              : 'border-line bg-surface dark:border-line-dark dark:bg-surface-dark'
+          }`}
+        >
+          <Ionicons
+            name="funnel-outline"
+            size={20}
+            color={activeFilterCount > 0 ? '#1A1D21' : '#9CA3AF'}
+          />
+          {activeFilterCount > 0 ? (
+            <View className="absolute -right-1.5 -top-1.5 h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-canvas bg-ink px-1 dark:border-canvas-dark dark:bg-lime">
+              <Text className="text-[10px] font-bold text-lime dark:text-ink">
+                {activeFilterCount}
+              </Text>
+            </View>
+          ) : null}
+        </Pressable>
       </View>
 
       {isLoading ? (
@@ -189,7 +177,11 @@ export default function TransactionsScreen() {
           contentContainerClassName="pb-24"
           stickySectionHeadersEnabled
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
-          ItemSeparatorComponent={() => <View className="h-px bg-line dark:bg-line-dark" />}
+          ItemSeparatorComponent={() => (
+            <View className="border-x border-line bg-canvas px-3 dark:border-line-dark dark:bg-canvas-dark">
+              <View className="h-px bg-line dark:bg-line-dark" />
+            </View>
+          )}
           renderSectionHeader={({ section }) => (
             <View className="flex-row items-center justify-between bg-canvas pb-2 pt-4 dark:bg-canvas-dark">
               <Text className="text-[13px] font-bold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
@@ -213,54 +205,59 @@ export default function TransactionsScreen() {
               </Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <TransactionListItem
-              transaction={item}
-              onPress={() =>
-                router.push({
-                  pathname: '/(app)/transactions/[id]',
-                  params: { id: item.id },
-                })
-              }
-            />
-          )}
+          renderItem={({ item, index, section }) => {
+            const isFirst = index === 0;
+            const isLast = index === section.data.length - 1;
+            return (
+              <View
+                className={`border-x border-line px-3 dark:border-line-dark ${
+                  isFirst ? 'rounded-t-2xl border-t' : ''
+                } ${isLast ? 'rounded-b-2xl border-b' : ''}`}
+              >
+                <TransactionListItem
+                  transaction={item}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(app)/transactions/[id]',
+                      params: { id: item.id },
+                    })
+                  }
+                />
+              </View>
+            );
+          }}
         />
       )}
 
       <View className="absolute bottom-6 right-5">
         <Fab
           accessibilityLabel="Nuevo movimiento"
-          onPress={() => router.push('/(app)/transactions/new')}
+          onPress={() => router.push('/(app)/new-transaction')}
         />
       </View>
 
-      <FilterOptionSheet
-        visible={typeSheetOpen}
-        onClose={() => setTypeSheetOpen(false)}
-        title="Tipo de movimiento"
-        allLabel="Todos los tipos"
-        options={TYPE_OPTIONS}
-        value={type}
-        onSelect={(v) => {
-          setType(v as TransactionType | null);
+      <FiltersSheet
+        visible={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        type={type}
+        onTypeChange={(v) => {
+          setType(v);
           setCategoryIds([]);
         }}
-      />
-      <MultiSelectSheet
-        visible={categorySheetOpen}
-        onClose={() => setCategorySheetOpen(false)}
-        title="Categoría"
-        options={categoryOptions}
-        values={categoryIds}
-        onChange={setCategoryIds}
-      />
-      <MultiSelectSheet
-        visible={accountSheetOpen}
-        onClose={() => setAccountSheetOpen(false)}
-        title="Cuenta"
-        options={accountOptions}
-        values={accountIds}
-        onChange={setAccountIds}
+        categoryIds={categoryIds}
+        onCategoryIdsChange={setCategoryIds}
+        categoryOptions={categoryOptions}
+        accountIds={accountIds}
+        onAccountIdsChange={setAccountIds}
+        accountOptions={accountOptions}
+        from={from}
+        to={to}
+        onDateChange={(f, t) => {
+          setFrom(f);
+          setTo(t);
+        }}
+        filtered={filtered}
+        onClearAll={clearAll}
       />
     </Screen>
   );

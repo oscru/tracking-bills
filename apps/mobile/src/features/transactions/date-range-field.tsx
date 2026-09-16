@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, todayISODate } from '@repo/core/utils';
 import { BottomSheet, Chip, SegmentedControl } from '@repo/ui';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { capitalize, monthGrid, WEEKDAYS } from './calendar-grid';
@@ -16,6 +16,8 @@ export interface DateRangeFieldProps {
   from: string | null;
   to: string | null;
   onChange: (from: string | null, to: string | null) => void;
+  /** Custom trigger, e.g. a full-width row inside a filters sheet. Defaults to a chip-style button. */
+  renderTrigger?: (props: { label: string; active: boolean; onPress: () => void }) => ReactNode;
 }
 
 function monthBounds(date: Date): [string, string] {
@@ -25,7 +27,7 @@ function monthBounds(date: Date): [string, string] {
 }
 
 /** Date filter field: a single day or an inclusive range, picked from one calendar. */
-export function DateRangeField({ from, to, onChange }: DateRangeFieldProps) {
+export function DateRangeField({ from, to, onChange, renderTrigger }: DateRangeFieldProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'day' | 'range'>(from && to && from !== to ? 'range' : 'day');
   const [rangeStart, setRangeStart] = useState<string | null>(from);
@@ -88,17 +90,21 @@ export function DateRangeField({ from, to, onChange }: DateRangeFieldProps) {
 
   return (
     <>
-      <Pressable
-        onPress={openPicker}
-        className="h-10 flex-row items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
-      >
-        <Ionicons name="calendar-outline" size={14} color={from ? '#4D7C0F' : '#9CA3AF'} />
-        <Text
-          className={`text-[13px] font-semibold ${from ? 'text-lime-ink dark:text-lime-ink-dark' : 'text-ink-2 dark:text-ink-2-dark'}`}
+      {renderTrigger ? (
+        renderTrigger({ label, active: Boolean(from), onPress: openPicker })
+      ) : (
+        <Pressable
+          onPress={openPicker}
+          className="h-10 flex-row items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
         >
-          {label}
-        </Text>
-      </Pressable>
+          <Ionicons name="calendar-outline" size={14} color={from ? '#4D7C0F' : '#9CA3AF'} />
+          <Text
+            className={`text-[13px] font-semibold ${from ? 'text-lime-ink dark:text-lime-ink-dark' : 'text-ink-2 dark:text-ink-2-dark'}`}
+          >
+            {label}
+          </Text>
+        </Pressable>
+      )}
 
       <BottomSheet
         visible={open}

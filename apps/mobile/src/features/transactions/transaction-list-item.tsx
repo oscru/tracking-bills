@@ -71,9 +71,6 @@ export function TransactionListItem({
           {sign}
           {value}
         </Text>
-        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-          {formatDate(transaction_date)}
-        </Text>
         {is_completed === false ? (
           <Text className="text-[10px] font-semibold uppercase tracking-wide text-[#B45309]">
             Pendiente

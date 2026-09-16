@@ -6,7 +6,6 @@ import { applyAmountKey, evalAmount, formatCurrency, todayISODate } from '@repo/
 import { transactionCreateSchema, type TransactionCreateInput } from '@repo/core/validators';
 import {
   AmountDisplay,
-  BottomSheet,
   Button,
   Chip,
   NumericKeypad,
@@ -18,9 +17,13 @@ import {
 } from '@repo/ui';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AccountPicker } from '../accounts/account-picker';
 import { CategoryPicker } from '../categories/category-picker';
 import { DateField } from './date-field';
+import type { TransactionDraftSnapshot } from './draft-transaction-store';
+import { DiscardConfirmSheet } from './discard-confirm-sheet';
 
 export interface MovementFormInitial {
   type?: TransactionType;
@@ -43,6 +46,10 @@ interface Props {
   onSubmit: (input: TransactionCreateInput) => void;
   onCancel: () => void;
   onDelete?: () => void;
+  /** Resume from a minimized draft — takes precedence over `initial`. */
+  draft?: TransactionDraftSnapshot | null;
+  /** Present only when minimizing is supported (the "new transaction" flow). */
+  onMinimize?: (snapshot: TransactionDraftSnapshot) => void;
 }
 
 const TYPE_OPTIONS = [
@@ -68,21 +75,37 @@ export function MovementForm({
   onSubmit,
   onCancel,
   onDelete,
+  draft,
+  onMinimize,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
   const activeAccounts = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
 
-  const [view, setView] = useState<'amount' | 'details'>(mode === 'create' ? 'amount' : 'details');
-  const [type, setType] = useState<TransactionType>(initial?.type ?? 'expense');
-  const [amount, setAmount] = useState(initial?.amount != null ? String(initial.amount) : '');
-  const [pickedFrom, setFrom] = useState<string | null>(initial?.account_id ?? null);
-  const [pickedTo, setTo] = useState<string | null>(initial?.to_account_id ?? null);
-  const [categoryId, setCategoryId] = useState<string | null>(initial?.category_id ?? null);
-  const [description, setDescription] = useState(initial?.description ?? '');
-  const [date, setDate] = useState(initial?.transaction_date ?? todayISODate());
-  const [isCompleted, setIsCompleted] = useState(initial?.is_completed ?? true);
+  const [view, setView] = useState<'amount' | 'details'>(
+    draft?.view ?? (mode === 'create' ? 'amount' : 'details'),
+  );
+  const [type, setType] = useState<TransactionType>(draft?.type ?? initial?.type ?? 'expense');
+  const [amount, setAmount] = useState(
+    draft?.amount ?? (initial?.amount != null ? String(initial.amount) : ''),
+  );
+  const [pickedFrom, setFrom] = useState<string | null>(
+    draft?.accountId ?? initial?.account_id ?? null,
+  );
+  const [pickedTo, setTo] = useState<string | null>(
+    draft?.toAccountId ?? initial?.to_account_id ?? null,
+  );
+  const [categoryId, setCategoryId] = useState<string | null>(
+    draft?.categoryId ?? initial?.category_id ?? null,
+  );
+  const [description, setDescription] = useState(draft?.description ?? initial?.description ?? '');
+  const [date, setDate] = useState(draft?.date ?? initial?.transaction_date ?? todayISODate());
+  const [isCompleted, setIsCompleted] = useState(
+    draft?.isCompleted ?? initial?.is_completed ?? true,
+  );
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [accountPickerOpen, setAccountPickerOpen] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -101,6 +124,7 @@ export function MovementForm({
   const hasOp = /[*/+]/.test(amount) || /\d-/.test(amount);
 
   const selectedCategory = (categories ?? []).find((c) => c.id === categoryId) ?? null;
+  const selectedFromAccount = activeAccounts.find((a) => a.id === fromId) ?? null;
   const amountInvalid = formError === AMOUNT_ERROR;
 
   const dirty =
@@ -158,6 +182,20 @@ export function MovementForm({
 
   const tryCancel = () => (dirty ? setConfirmCancel(true) : onCancel());
 
+  const minimize = () => {
+    onMinimize?.({
+      view,
+      type,
+      amount,
+      accountId: pickedFrom,
+      toAccountId: pickedTo,
+      categoryId,
+      description,
+      date,
+      isCompleted,
+    });
+  };
+
   // --- amount step ---
   if (view === 'amount') {
     return (
@@ -169,9 +207,18 @@ export function MovementForm({
           >
             <Ionicons name="close" size={18} color="#1A1D21" />
           </Pressable>
-          <Text className="text-xl font-bold text-ink dark:text-ink-dark">
+          <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
             {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
           </Text>
+          {onMinimize ? (
+            <Pressable
+              onPress={minimize}
+              accessibilityLabel="Minimizar"
+              className="h-[34px] w-[34px] items-center justify-center rounded-full bg-[#F1F2F4] dark:bg-line-dark"
+            >
+              <Ionicons name="remove" size={20} color="#1A1D21" />
+            </Pressable>
+          ) : null}
         </View>
 
         <SegmentedControl options={TYPE_OPTIONS} value={type} onChange={changeType} />
@@ -203,7 +250,7 @@ export function MovementForm({
         <NumericKeypad onKey={onKey} />
         <Button label="Continuar" onPress={goToDetails} />
 
-        <CancelConfirm
+        <DiscardConfirmSheet
           visible={confirmCancel}
           onKeep={() => setConfirmCancel(false)}
           onDiscard={onCancel}
@@ -222,9 +269,18 @@ export function MovementForm({
         >
           <Ionicons name="close" size={18} color="#1A1D21" />
         </Pressable>
-        <Text className="text-xl font-bold text-ink dark:text-ink-dark">
+        <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
           {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
         </Text>
+        {onMinimize ? (
+          <Pressable
+            onPress={minimize}
+            accessibilityLabel="Minimizar"
+            className="h-[34px] w-[34px] items-center justify-center rounded-full bg-[#F1F2F4] dark:bg-line-dark"
+          >
+            <Ionicons name="remove" size={20} color="#1A1D21" />
+          </Pressable>
+        ) : null}
       </View>
 
       <SegmentedControl options={TYPE_OPTIONS} value={type} onChange={changeType} />
@@ -239,7 +295,11 @@ export function MovementForm({
         </Text>
       </Pressable>
 
-      <ScrollView className="flex-1" contentContainerClassName="gap-4 pb-8">
+      <ScrollView className="flex-1" contentContainerClassName="gap-4 pb-4">
+        <Field label="Fecha">
+          <DateField value={date} onChange={setDate} />
+        </Field>
+
         {type === 'transfer' ? (
           <>
             <Field label="De">
@@ -274,6 +334,20 @@ export function MovementForm({
           </>
         ) : (
           <>
+            <Field label="Cuenta">
+              <Pressable
+                onPress={() => setAccountPickerOpen(true)}
+                className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+              >
+                <Text className="text-base text-ink dark:text-ink-dark">
+                  {selectedFromAccount ? selectedFromAccount.name : 'Elige una cuenta'}
+                </Text>
+                <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+                  Ver todas ›
+                </Text>
+              </Pressable>
+            </Field>
+
             <Field label="Categoría">
               <Pressable
                 onPress={() => setPickerOpen(true)}
@@ -295,19 +369,6 @@ export function MovementForm({
                 </Text>
               </Pressable>
             </Field>
-
-            <Field label="Cuenta">
-              <View className="flex-row flex-wrap gap-2">
-                {activeAccounts.map((a) => (
-                  <Chip
-                    key={a.id}
-                    label={a.name}
-                    selected={fromId === a.id}
-                    onPress={() => setFrom(a.id)}
-                  />
-                ))}
-              </View>
-            </Field>
           </>
         )}
 
@@ -318,22 +379,12 @@ export function MovementForm({
           placeholder="Descripción"
         />
 
-        <Field label="Fecha">
-          <DateField value={date} onChange={setDate} />
-        </Field>
-
         <SwitchRow
           label="Completada"
           description={isCompleted ? 'Ya se realizó' : 'Pendiente por realizarse'}
           value={isCompleted}
           onValueChange={setIsCompleted}
         />
-
-        {formError || error ? (
-          <Text className="text-sm text-danger dark:text-danger-dark">{formError ?? error}</Text>
-        ) : null}
-
-        <Button label="Guardar" onPress={submit} loading={submitting} />
 
         {mode === 'edit' && onDelete ? (
           confirmDelete ? (
@@ -359,6 +410,16 @@ export function MovementForm({
         ) : null}
       </ScrollView>
 
+      <View
+        className="gap-2 border-t border-line bg-canvas pt-3 dark:border-line-dark dark:bg-canvas-dark"
+        style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+      >
+        {formError || error ? (
+          <Text className="text-sm text-danger dark:text-danger-dark">{formError ?? error}</Text>
+        ) : null}
+        <Button label="Guardar" onPress={submit} loading={submitting} />
+      </View>
+
       <CategoryPicker
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
@@ -366,7 +427,13 @@ export function MovementForm({
         selectedId={categoryId}
         onSelect={setCategoryId}
       />
-      <CancelConfirm
+      <AccountPicker
+        visible={accountPickerOpen}
+        onClose={() => setAccountPickerOpen(false)}
+        selectedId={fromId}
+        onSelect={setFrom}
+      />
+      <DiscardConfirmSheet
         visible={confirmCancel}
         onKeep={() => setConfirmCancel(false)}
         onDiscard={onCancel}
@@ -381,29 +448,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">{label}</Text>
       {children}
     </View>
-  );
-}
-
-function CancelConfirm({
-  visible,
-  onKeep,
-  onDiscard,
-}: {
-  visible: boolean;
-  onKeep: () => void;
-  onDiscard: () => void;
-}) {
-  return (
-    <BottomSheet visible={visible} onClose={onKeep} title="¿Descartar movimiento?">
-      <View className="gap-3 px-5 pb-4 pt-2">
-        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-          Perderás lo que llevas capturado.
-        </Text>
-        <Button label="Seguir editando" variant="secondary" onPress={onKeep} />
-        <Pressable onPress={onDiscard} className="items-center py-2">
-          <Text className="text-sm font-semibold text-danger dark:text-danger-dark">Descartar</Text>
-        </Pressable>
-      </View>
-    </BottomSheet>
   );
 }

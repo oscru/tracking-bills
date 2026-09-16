@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-import { AccountForm } from '../../../../../features/accounts/account-form';
+import { AccountForm } from '../../../../../../features/accounts/account-form';
 
 export default function EditAccount() {
   const { id } = useLocalSearchParams<{ id: string }>();

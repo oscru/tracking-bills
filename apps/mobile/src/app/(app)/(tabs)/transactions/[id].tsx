@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Text } from 'react-native';
 
-import { MovementForm } from '../../../features/transactions/movement-form';
+import { MovementForm } from '../../../../features/transactions/movement-form';
 
 export default function EditTransaction() {
   const { id } = useLocalSearchParams<{ id: string }>();
