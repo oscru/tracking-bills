@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const accountTypeSchema = z.enum(['cash', 'bank', 'credit_card']);
+export const accountTypeSchema = z.enum(['investment', 'credit', 'debit', 'savings', 'loan']);
 
 export const currencyCodeSchema = z.string().trim().length(3, 'Use a 3-letter ISO currency code');
 
@@ -14,6 +14,7 @@ export const accountCreateSchema = z.object({
 });
 
 export const accountUpdateSchema = accountCreateSchema
+  .omit({ initial_balance: true })
   .partial()
   .extend({ archived: z.boolean().optional() });
 

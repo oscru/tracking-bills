@@ -1,19 +1,15 @@
-import { useAccounts } from '@repo/core/hooks';
-import type { AccountType } from '@repo/core/types';
-import { formatCurrency } from '@repo/core/utils';
+import { useAccounts, useTransactions } from '@repo/core/hooks';
+import { accountBalance, formatCurrency } from '@repo/core/utils';
 import { ListRow, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-const TYPE_LABEL: Record<AccountType, string> = {
-  cash: 'Efectivo',
-  bank: 'Banco',
-  credit_card: 'Tarjeta de crédito',
-};
+import { ACCOUNT_TYPE_LABEL } from '../../../../../features/accounts/account-types';
 
 export default function AccountsScreen() {
   const router = useRouter();
   const { data: accounts, isLoading, error } = useAccounts();
+  const { data: transactions } = useTransactions();
 
   return (
     <Screen className="gap-4">
@@ -41,10 +37,10 @@ export default function AccountsScreen() {
               {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
               <ListRow
                 title={a.name}
-                subtitle={`${TYPE_LABEL[a.type]}${a.archived ? ' · archivada' : ''}`}
+                subtitle={`${ACCOUNT_TYPE_LABEL[a.type]}${a.archived ? ' · archivada' : ''}`}
                 trailing={
                   <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-                    {formatCurrency(Number(a.initial_balance), a.currency)}
+                    {formatCurrency(accountBalance(a, transactions ?? []), a.currency)}
                   </Text>
                 }
                 showChevron

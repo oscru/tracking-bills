@@ -1,17 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useTransactions, useUpdateAccount } from '@repo/core/hooks';
-import type { AccountType } from '@repo/core/types';
 import { accountBalance, formatCurrency } from '@repo/core/utils';
-import { Screen, SwitchRow } from '@repo/ui';
+import { Button, Screen, SwitchRow } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-const TYPE_LABEL: Record<AccountType, string> = {
-  cash: 'Efectivo',
-  bank: 'Banco',
-  credit_card: 'Tarjeta de crédito',
-};
+import { AdjustBalanceSheet } from '../../../../../../features/accounts/adjust-balance-sheet';
+import { ACCOUNT_TYPE_LABEL } from '../../../../../../features/accounts/account-types';
 
 export default function AccountDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,6 +15,7 @@ export default function AccountDetail() {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: transactions, isLoading: loadingTx } = useTransactions();
   const updateAccount = useUpdateAccount();
+  const [adjustOpen, setAdjustOpen] = useState(false);
 
   const account = (accounts ?? []).find((a) => a.id === id);
 
@@ -84,13 +81,15 @@ export default function AccountDetail() {
 
       <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
         <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-          {TYPE_LABEL[account.type]}
+          {ACCOUNT_TYPE_LABEL[account.type]}
           {account.archived ? ' · archivada' : ''}
         </Text>
         <Text className="mt-1 text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
           {formatCurrency(balance, account.currency)}
         </Text>
       </View>
+
+      <Button label="Ajustar saldo" onPress={() => setAdjustOpen(true)} />
 
       <View className="flex-row gap-3">
         <Pressable
@@ -128,6 +127,14 @@ export default function AccountDetail() {
         description="Aparece en la lista de cuentas de la pantalla principal"
         value={account.show_on_home}
         onValueChange={(v) => updateAccount.mutate({ id: account.id, patch: { show_on_home: v } })}
+      />
+
+      <AdjustBalanceSheet
+        visible={adjustOpen}
+        onClose={() => setAdjustOpen(false)}
+        accountId={account.id}
+        currency={account.currency}
+        currentBalance={balance}
       />
     </Screen>
   );

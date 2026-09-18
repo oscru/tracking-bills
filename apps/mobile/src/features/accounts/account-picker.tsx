@@ -1,15 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts } from '@repo/core/hooks';
-import type { Account, AccountType } from '@repo/core/types';
+import type { Account } from '@repo/core/types';
 import { BottomSheet } from '@repo/ui';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
-const TYPE_LABEL: Record<AccountType, string> = {
-  cash: 'Efectivo',
-  bank: 'Banco',
-  credit_card: 'Tarjeta de crédito',
-};
+import { ACCOUNT_TYPE_LABEL } from './account-types';
 
 interface Props {
   visible: boolean;
@@ -70,7 +66,7 @@ export function AccountPicker({
             <View className="flex-1">
               <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">{a.name}</Text>
               <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-                {TYPE_LABEL[a.type]} · {a.currency}
+                {ACCOUNT_TYPE_LABEL[a.type]} · {a.currency}
               </Text>
             </View>
             {selectedId === a.id ? <Ionicons name="checkmark" size={18} color="#4D7C0F" /> : null}

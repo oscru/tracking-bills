@@ -1,14 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import type { AccountType } from '@repo/core/types';
 import { accountCreateSchema, type AccountCreateInput } from '@repo/core/validators';
-import { Button, Chip, TextField } from '@repo/ui';
+import { BottomSheet, Button, TextField } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
-const TYPES: { value: AccountType; label: string }[] = [
-  { value: 'cash', label: 'Efectivo' },
-  { value: 'bank', label: 'Banco' },
-  { value: 'credit_card', label: 'Tarjeta de crédito' },
-];
+import { ACCOUNT_TYPES, ACCOUNT_TYPE_ICON, ACCOUNT_TYPE_LABEL } from './account-types';
 
 export interface AccountFormInitial {
   name?: string;
@@ -29,13 +26,15 @@ interface Props {
 type FieldErrors = Partial<Record<'name' | 'currency' | 'initial_balance', string>>;
 
 export function AccountForm({ initial, submitLabel, submitting, error, onSubmit, footer }: Props) {
+  const editing = initial != null;
   const [name, setName] = useState(initial?.name ?? '');
-  const [type, setType] = useState<AccountType>(initial?.type ?? 'cash');
+  const [type, setType] = useState<AccountType>(initial?.type ?? 'debit');
   const [currency, setCurrency] = useState(initial?.currency ?? 'MXN');
   const [balance, setBalance] = useState(
     initial?.initial_balance != null ? String(initial.initial_balance) : '',
   );
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [typePickerOpen, setTypePickerOpen] = useState(false);
 
   const submit = () => {
     setErrors({});
@@ -43,7 +42,8 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
       name,
       type,
       currency: currency.trim().toUpperCase(),
-      initial_balance: balance.trim() === '' ? 0 : Number(balance),
+      // The initial balance is fixed at creation — edits go through "Ajustar saldo" instead.
+      initial_balance: editing ? Number(initial?.initial_balance ?? 0) : Number(balance || 0),
     });
     if (!parsed.success) {
       const f = parsed.error.flatten().fieldErrors;
@@ -54,7 +54,9 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
       });
       return;
     }
-    onSubmit(parsed.data);
+    const data: Partial<AccountCreateInput> = { ...parsed.data };
+    if (editing) delete data.initial_balance;
+    onSubmit(data as AccountCreateInput);
   };
 
   return (
@@ -73,16 +75,18 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
 
       <View className="gap-2">
         <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Tipo</Text>
-        <View className="flex-row flex-wrap gap-2">
-          {TYPES.map((t) => (
-            <Chip
-              key={t.value}
-              label={t.label}
-              selected={type === t.value}
-              onPress={() => setType(t.value)}
-            />
-          ))}
-        </View>
+        <Pressable
+          onPress={() => setTypePickerOpen(true)}
+          className="flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 py-3 dark:border-line-dark dark:bg-surface-dark"
+        >
+          <View className="flex-row items-center gap-2.5">
+            <Ionicons name={ACCOUNT_TYPE_ICON[type]} size={18} color="#4D7C0F" />
+            <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
+              {ACCOUNT_TYPE_LABEL[type]}
+            </Text>
+          </View>
+          <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
+        </Pressable>
       </View>
 
       <TextField
@@ -96,20 +100,49 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
         error={errors.currency}
       />
 
-      <TextField
-        label="Saldo inicial"
-        value={balance}
-        onChangeText={setBalance}
-        keyboardType="decimal-pad"
-        placeholder="0.00"
-        error={errors.initial_balance}
-      />
+      {editing ? null : (
+        <TextField
+          label="Saldo inicial"
+          value={balance}
+          onChangeText={setBalance}
+          keyboardType="decimal-pad"
+          placeholder="0.00"
+          error={errors.initial_balance}
+        />
+      )}
 
       {error ? <Text className="text-sm text-danger dark:text-danger-dark">{error}</Text> : null}
 
       <Button label={submitLabel} onPress={submit} loading={submitting} />
 
       {footer}
+
+      <BottomSheet
+        visible={typePickerOpen}
+        onClose={() => setTypePickerOpen(false)}
+        title="Tipo de cuenta"
+      >
+        <ScrollView contentContainerClassName="pb-4">
+          {ACCOUNT_TYPES.map((t) => (
+            <Pressable
+              key={t.value}
+              onPress={() => {
+                setType(t.value);
+                setTypePickerOpen(false);
+              }}
+              className="flex-row items-center gap-3 border-t border-line px-5 py-3.5 dark:border-line-dark"
+            >
+              <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
+                <Ionicons name={t.icon} size={16} color="#4D7C0F" />
+              </View>
+              <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
+                {t.label}
+              </Text>
+              {type === t.value ? <Ionicons name="checkmark" size={18} color="#4D7C0F" /> : null}
+            </Pressable>
+          ))}
+        </ScrollView>
+      </BottomSheet>
     </ScrollView>
   );
 }

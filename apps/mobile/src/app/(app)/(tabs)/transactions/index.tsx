@@ -46,6 +46,19 @@ export default function TransactionsScreen() {
 
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  // Tabs stay mounted, so a repeat push (e.g. a different month's card from
+  // Home) only changes `params` — re-apply the nav filters whenever they do.
+  const navParamsKey = `${params.type ?? ''}|${params.from ?? ''}|${params.to ?? ''}|${params.accountId ?? ''}`;
+  const [appliedNavParamsKey, setAppliedNavParamsKey] = useState(navParamsKey);
+  if (navParamsKey !== appliedNavParamsKey) {
+    setAppliedNavParamsKey(navParamsKey);
+    setType(params.type ?? null);
+    setCategoryIds([]);
+    setFrom(params.from ?? null);
+    setTo(params.to ?? null);
+    setAccountIds(params.accountId ? [params.accountId] : []);
+  }
+
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
     return () => clearTimeout(t);

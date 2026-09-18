@@ -23,7 +23,7 @@ export type UpdateRow<T extends TableName> = PublicSchema['Tables'][T]['Update']
 // Domain enums (mirrored from the CHECK constraints; kept as unions because the
 // schema models them as text, not Postgres enums).
 export type Plan = 'free' | 'premium';
-export type AccountType = 'cash' | 'bank' | 'credit_card';
+export type AccountType = 'investment' | 'credit' | 'debit' | 'savings' | 'loan';
 
 /** A movement (transaction) is income, expense, or a transfer between accounts. */
 export type TransactionType = 'income' | 'expense' | 'transfer';
