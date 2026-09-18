@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { AccountType } from '@repo/core/types';
 import { accountCreateSchema, type AccountCreateInput } from '@repo/core/validators';
-import { BottomSheet, Button, TextField } from '@repo/ui';
+import { BottomSheet, Button, ColorPicker, TextField } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { ACCOUNT_COLORS } from './account-colors';
 import { ACCOUNT_TYPES, ACCOUNT_TYPE_ICON, ACCOUNT_TYPE_LABEL } from './account-types';
 
 export interface AccountFormInitial {
@@ -12,6 +13,7 @@ export interface AccountFormInitial {
   type?: AccountType;
   currency?: string;
   initial_balance?: number;
+  color?: string | null;
 }
 
 interface Props {
@@ -33,6 +35,7 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
   const [balance, setBalance] = useState(
     initial?.initial_balance != null ? String(initial.initial_balance) : '',
   );
+  const [color, setColor] = useState(initial?.color ?? ACCOUNT_COLORS[0]);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [typePickerOpen, setTypePickerOpen] = useState(false);
 
@@ -44,6 +47,7 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
       currency: currency.trim().toUpperCase(),
       // The initial balance is fixed at creation — edits go through "Ajustar saldo" instead.
       initial_balance: editing ? Number(initial?.initial_balance ?? 0) : Number(balance || 0),
+      color,
     });
     if (!parsed.success) {
       const f = parsed.error.flatten().fieldErrors;
@@ -110,6 +114,11 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
           error={errors.initial_balance}
         />
       )}
+
+      <View className="gap-2">
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Color</Text>
+        <ColorPicker value={color} onChange={setColor} colors={ACCOUNT_COLORS} />
+      </View>
 
       {error ? <Text className="text-sm text-danger dark:text-danger-dark">{error}</Text> : null}
 

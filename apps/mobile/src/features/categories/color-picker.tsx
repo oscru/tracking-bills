@@ -1,5 +1,3 @@
-import { Pressable, View } from 'react-native';
-
 export const CATEGORY_COLORS = [
   '#22c55e',
   '#16a34a',
@@ -18,32 +16,3 @@ export const CATEGORY_COLORS = [
   '#ca8a04',
   '#64748b',
 ] as const;
-
-export function ColorPicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (color: string) => void;
-}) {
-  return (
-    <View className="flex-row flex-wrap gap-3">
-      {CATEGORY_COLORS.map((c) => {
-        const selected = value.toLowerCase() === c;
-        return (
-          <Pressable
-            key={c}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            onPress={() => onChange(c)}
-            className={`h-8 w-8 items-center justify-center rounded-full ${
-              selected ? 'border-2 border-ink dark:border-ink-dark' : ''
-            }`}
-          >
-            <View className="h-6 w-6 rounded-full" style={{ backgroundColor: c }} />
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}

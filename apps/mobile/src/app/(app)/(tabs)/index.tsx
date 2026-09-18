@@ -163,8 +163,17 @@ export default function HomeScreen() {
                     i > 0 ? 'border-t border-line dark:border-line-dark' : ''
                   }`}
                 >
-                  <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
-                    <Ionicons name={ACCOUNT_TYPE_ICON[a.type]} size={16} color="#4D7C0F" />
+                  <View
+                    className={`h-9 w-9 items-center justify-center rounded-full ${
+                      a.color ? '' : 'bg-lime-tint dark:bg-lime-tint-dark'
+                    }`}
+                    style={a.color ? { backgroundColor: `${a.color}26` } : undefined}
+                  >
+                    <Ionicons
+                      name={ACCOUNT_TYPE_ICON[a.type]}
+                      size={16}
+                      color={a.color ?? '#4D7C0F'}
+                    />
                   </View>
                   <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
                     {a.name}

@@ -37,6 +37,7 @@ export type Database = {
       accounts: {
         Row: {
           archived: boolean
+          color: string | null
           created_at: string
           currency: string
           id: string
@@ -49,6 +50,7 @@ export type Database = {
         }
         Insert: {
           archived?: boolean
+          color?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -61,6 +63,7 @@ export type Database = {
         }
         Update: {
           archived?: boolean
+          color?: string | null
           created_at?: string
           currency?: string
           id?: string

@@ -38,6 +38,7 @@ export default function AccountsScreen() {
               <ListRow
                 title={a.name}
                 subtitle={`${ACCOUNT_TYPE_LABEL[a.type]}${a.archived ? ' · archivada' : ''}`}
+                dotColor={a.color}
                 trailing={
                   <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
                     {formatCurrency(accountBalance(a, transactions ?? []), a.currency)}

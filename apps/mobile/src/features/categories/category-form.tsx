@@ -2,11 +2,11 @@ import { useCategories } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { CategoryType } from '@repo/core/types';
 import { categoryCreateSchema, type CategoryCreateInput } from '@repo/core/validators';
-import { Button, Chip, TextField } from '@repo/ui';
+import { Button, Chip, ColorPicker, TextField } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { CATEGORY_COLORS, ColorPicker } from './color-picker';
+import { CATEGORY_COLORS } from './color-picker';
 import { CategoryPicker } from './category-picker';
 
 export interface CategoryFormInitial {
@@ -115,7 +115,7 @@ export function CategoryForm({ initial, submitLabel, submitting, error, onSubmit
 
       <View className="gap-2">
         <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Color</Text>
-        <ColorPicker value={color} onChange={setColor} />
+        <ColorPicker value={color} onChange={setColor} colors={CATEGORY_COLORS} />
       </View>
 
       {error ? <Text className="text-sm text-danger dark:text-danger-dark">{error}</Text> : null}
