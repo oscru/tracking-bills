@@ -1,12 +1,13 @@
 -- Replace the account type set (cash/bank/credit_card) with the five
 -- categories the UI now offers: investment, credit, debit, savings, loan.
--- Existing accounts are remapped to their closest new type before the
--- constraint is swapped, since the old values would otherwise violate it.
+-- The old constraint is dropped before remapping existing rows, since it
+-- would otherwise reject the new values while the update is in flight.
+
+alter table public.accounts drop constraint accounts_type_check;
 
 update public.accounts set type = 'debit' where type in ('cash', 'bank');
 update public.accounts set type = 'credit' where type = 'credit_card';
 
-alter table public.accounts drop constraint accounts_type_check;
 alter table public.accounts
   add constraint accounts_type_check
   check (type in ('investment', 'credit', 'debit', 'savings', 'loan'));
