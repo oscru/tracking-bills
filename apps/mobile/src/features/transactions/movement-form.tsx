@@ -53,9 +53,9 @@ interface Props {
 }
 
 const TYPE_OPTIONS = [
-  { value: 'expense' as const, label: 'Gasto' },
-  { value: 'income' as const, label: 'Ingreso' },
-  { value: 'transfer' as const, label: 'Transferencia' },
+  { value: 'expense' as const, label: 'Gasto', icon: 'arrow-up-circle' as const },
+  { value: 'income' as const, label: 'Ingreso', icon: 'arrow-down-circle' as const },
+  { value: 'transfer' as const, label: 'Transferencia', icon: 'swap-horizontal' as const },
 ];
 
 function prettyExpr(s: string): string {

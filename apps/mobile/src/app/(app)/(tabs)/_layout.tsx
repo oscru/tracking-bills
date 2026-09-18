@@ -61,9 +61,9 @@ export default function AppLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Ajustes',
+          title: 'Opciones',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="settings-outline" color={color} focused={focused} />
+            <TabIcon name="document-text-outline" color={color} focused={focused} />
           ),
         }}
       />

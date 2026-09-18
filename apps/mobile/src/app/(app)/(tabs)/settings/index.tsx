@@ -1,12 +1,10 @@
-import { useAccounts, useCategories, useSession, useSignOut } from '@repo/core/hooks';
-import { Button, ListRow, Screen } from '@repo/ui';
+import { useAccounts, useCategories } from '@repo/core/hooks';
+import { ListRow, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { user } = useSession();
-  const signOut = useSignOut();
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
 
@@ -15,11 +13,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen className="gap-6">
-      <Text className="pt-2 text-2xl font-bold text-ink dark:text-ink-dark">Ajustes</Text>
-
-      {user?.email ? (
-        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{user.email}</Text>
-      ) : null}
+      <Text className="pt-2 text-2xl font-bold text-ink dark:text-ink-dark">Opciones</Text>
 
       <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
         <ListRow
@@ -34,15 +28,6 @@ export default function SettingsScreen() {
           subtitle={`${customCategories} propia${customCategories === 1 ? '' : 's'} + predeterminadas`}
           showChevron
           onPress={() => router.push('/(app)/settings/categories')}
-        />
-      </View>
-
-      <View className="mt-auto">
-        <Button
-          label="Cerrar sesión"
-          variant="secondary"
-          loading={signOut.isPending}
-          onPress={() => signOut.mutate()}
         />
       </View>
     </Screen>

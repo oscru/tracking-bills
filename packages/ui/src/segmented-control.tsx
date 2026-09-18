@@ -1,8 +1,11 @@
-import { Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 export interface SegmentedOption<T extends string> {
   value: T;
   label: string;
+  /** Optional glyph shown before the label. */
+  icon?: keyof typeof Ionicons.glyphMap;
 }
 
 export interface SegmentedControlProps<T extends string> {
@@ -29,10 +32,19 @@ export function SegmentedControl<T extends string>({
   value,
   onChange,
 }: SegmentedControlProps<T>) {
+  const dark = useColorScheme() === 'dark';
+
   return (
     <View className="flex-row gap-1 rounded-ctl bg-[#EEF0F2] p-1 dark:bg-line-dark">
       {options.map((opt) => {
         const active = opt.value === value;
+        const iconColor = active
+          ? dark
+            ? '#F2F3F5'
+            : '#1A1D21'
+          : dark
+            ? '#6B7178'
+            : '#9CA3AF';
         return (
           <Pressable
             key={opt.value}
@@ -40,10 +52,11 @@ export function SegmentedControl<T extends string>({
             accessibilityState={{ selected: active }}
             onPress={() => onChange(opt.value)}
             style={active ? activeShadow : undefined}
-            className={`h-10 flex-1 items-center justify-center rounded-[9px] ${
+            className={`h-10 flex-1 flex-row items-center justify-center gap-1.5 rounded-[9px] ${
               active ? 'bg-surface dark:bg-surface-dark' : ''
             }`}
           >
+            {opt.icon ? <Ionicons name={opt.icon} size={15} color={iconColor} /> : null}
             <Text
               className={`text-[13px] font-semibold ${
                 active ? 'text-ink dark:text-ink-dark' : 'text-ink-2 dark:text-ink-2-dark'

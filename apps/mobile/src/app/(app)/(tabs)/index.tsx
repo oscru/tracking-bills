@@ -56,7 +56,9 @@ export default function HomeScreen() {
             {user?.email?.split('@')[0] ?? 'Bienvenido'}
           </Text>
         </View>
-        <Avatar name={user?.email} />
+        <Pressable onPress={() => router.push('/(app)/profile')} hitSlop={8}>
+          <Avatar name={user?.email} />
+        </Pressable>
       </View>
 
       {loading ? (
