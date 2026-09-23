@@ -9,7 +9,7 @@ export default function SettingsScreen() {
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
 
-  const customCategories = (categories ?? []).filter((c) => !c.is_default).length;
+  const customCategories = (categories ?? []).length;
   const activeAccounts = (accounts ?? []).filter((a) => !a.archived).length;
 
   return (
@@ -42,7 +42,7 @@ export default function SettingsScreen() {
         <View className="h-px bg-line dark:bg-line-dark" />
         <ListRow
           title="Categorías"
-          subtitle={`${customCategories} propia${customCategories === 1 ? '' : 's'} + predeterminadas`}
+          subtitle={`${customCategories} categorías`}
           showChevron
           onPress={() => router.push('/(app)/settings/categories')}
         />

@@ -2,6 +2,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { type ColorValue, useColorScheme, View } from 'react-native';
 
+// Tabs with a nested Stack (settings, transactions) otherwise keep whatever
+// screen was last pushed — e.g. leave an account's edit screen on top after
+// switching away and back. Popping to the tab's root screen on every
+// tabPress (not just re-taps of the already-focused tab) clears that state.
+function resetNestedStackOnTabPress(navigation: any, routeName: string) {
+  return {
+    tabPress: () => {
+      const tabRoute = navigation.getState().routes.find((r: any) => r.name === routeName);
+      const nestedState = tabRoute?.state;
+      if (nestedState && nestedState.index > 0) {
+        navigation.dispatch({ type: 'POP_TO_TOP', target: nestedState.key });
+      }
+    },
+  };
+}
+
 function TabIcon({
   name,
   color,
@@ -51,6 +67,7 @@ export default function AppLayout() {
       />
       <Tabs.Screen
         name="transactions"
+        listeners={({ navigation, route }) => resetNestedStackOnTabPress(navigation, route.name)}
         options={{
           title: 'Movimientos',
           tabBarIcon: ({ color, focused }) => (
@@ -60,6 +77,7 @@ export default function AppLayout() {
       />
       <Tabs.Screen
         name="settings"
+        listeners={({ navigation, route }) => resetNestedStackOnTabPress(navigation, route.name)}
         options={{
           title: 'Opciones',
           tabBarIcon: ({ color, focused }) => (

@@ -10,9 +10,9 @@ alter table public.categories
 
 create index categories_parent_id_idx on public.categories (parent_id);
 
--- Enforce: max 2 levels, matching income/expense type, and the parent is either
--- a system default or owned by the same user. Also blocks turning a category
--- that already has subcategories into a subcategory itself.
+-- Enforce: max 2 levels, matching income/expense type, and the parent must be
+-- owned by the same user. Also blocks turning a category that already has
+-- subcategories into a subcategory itself.
 create or replace function public.check_category_parent()
 returns trigger
 language plpgsql
@@ -25,7 +25,7 @@ begin
     return new;
   end if;
 
-  select is_default, user_id, type, parent_id
+  select user_id, type, parent_id
     into p
   from public.categories
   where id = new.parent_id;
@@ -42,7 +42,7 @@ begin
     raise exception 'a subcategory must have the same type as its parent'
       using errcode = 'check_violation';
   end if;
-  if not (p.is_default or p.user_id = new.user_id) then
+  if p.user_id <> new.user_id then
     raise exception 'parent category is not usable by this user'
       using errcode = 'check_violation';
   end if;

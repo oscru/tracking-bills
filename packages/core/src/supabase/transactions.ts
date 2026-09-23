@@ -38,15 +38,12 @@ export interface TransactionWithRefs extends Transaction {
   account: AccountRef | null;
   /** Destination account — only present on transfers. */
   to_account: AccountRef | null;
-  category: Pick<
-    Category,
-    'id' | 'slug' | 'name' | 'icon' | 'color' | 'type' | 'is_default'
-  > | null;
+  category: Pick<Category, 'id' | 'slug' | 'name' | 'icon' | 'color' | 'type'> | null;
 }
 
 // Two FKs point at `accounts`, so disambiguate the embeds by column name.
 const WITH_REFS =
-  '*, account:accounts!account_id(id, name, type, currency), to_account:accounts!to_account_id(id, name, type, currency), category:categories(id, slug, name, icon, color, type, is_default)';
+  '*, account:accounts!account_id(id, name, type, currency), to_account:accounts!to_account_id(id, name, type, currency), category:categories(id, slug, name, icon, color, type)';
 
 export async function listTransactions(
   filters: TransactionFilters = {},

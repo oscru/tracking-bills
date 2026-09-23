@@ -2,6 +2,7 @@ import '../global.css';
 import '../web-setup';
 
 import { createQueryClient, SessionProvider, useSession } from '@repo/core/hooks';
+import { SheetPortalHost } from '@repo/ui';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -50,7 +51,9 @@ export default function RootLayout() {
       <SessionProvider>
         <SafeAreaProvider>
           <StatusBar style="auto" />
-          <AuthGate />
+          <SheetPortalHost>
+            <AuthGate />
+          </SheetPortalHost>
         </SafeAreaProvider>
       </SessionProvider>
     </QueryClientProvider>

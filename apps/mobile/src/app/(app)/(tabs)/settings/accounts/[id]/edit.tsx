@@ -1,5 +1,5 @@
 import { useAccounts, useDeleteAccount, useUpdateAccount } from '@repo/core/hooks';
-import { Button, Screen } from '@repo/ui';
+import { Button, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
@@ -34,12 +34,7 @@ export default function EditAccount() {
 
   return (
     <Screen className="gap-4">
-      <View className="flex-row items-center justify-between pt-2">
-        <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Editar cuenta</Text>
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">Cancelar</Text>
-        </Pressable>
-      </View>
+      <PageHeader title="Editar cuenta" onBack={() => router.back()} />
 
       <AccountForm
         initial={{

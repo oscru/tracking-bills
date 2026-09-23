@@ -4,7 +4,7 @@ import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { Category, CategoryType } from '@repo/core/types';
 import { BottomSheet, Chip } from '@repo/ui';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -29,6 +29,7 @@ export function CategoryPicker({
   parentOnly = false,
   excludeId,
 }: Props) {
+  const { height: windowHeight } = useWindowDimensions();
   const [q, setQ] = useState('');
   const { data: tree } = useCategoryTree(type);
   const { data: allCategories } = useCategories();
@@ -115,13 +116,13 @@ export function CategoryPicker({
       ) : null}
 
       <ScrollView
-        className="max-h-[420px]"
+        style={{ height: windowHeight * 0.65 }}
         contentContainerClassName="pb-4"
         keyboardShouldPersistTaps="handled"
       >
         <Pressable
           onPress={() => pick(null)}
-          className="border-t border-line px-5 py-3 dark:border-line-dark"
+          className="border-t border-line px-5 py-5 dark:border-line-dark"
         >
           <Text className="text-[15px] text-ink-2 dark:text-ink-2-dark">
             {parentOnly ? 'Ninguna (categoría de primer nivel)' : 'Sin categoría'}
@@ -132,7 +133,7 @@ export function CategoryPicker({
           <View key={p.id}>
             <Pressable
               onPress={() => pick(p.id)}
-              className="flex-row items-center gap-3 border-t border-line px-5 py-3 dark:border-line-dark"
+              className="flex-row items-center gap-3 border-t border-line px-5 py-5 dark:border-line-dark"
             >
               <View
                 className="h-2.5 w-2.5 rounded-full"
@@ -147,7 +148,7 @@ export function CategoryPicker({
               <Pressable
                 key={c.id}
                 onPress={() => pick(c.id)}
-                className="flex-row items-center gap-2.5 border-t border-line py-2.5 pl-11 pr-5 dark:border-line-dark"
+                className="flex-row items-center gap-2.5 border-t border-line py-4 pl-11 pr-5 dark:border-line-dark"
               >
                 <View
                   className="h-1.5 w-1.5 rounded-full"

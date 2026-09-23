@@ -68,8 +68,7 @@ export function AdjustBalanceSheet({
 
     const adjustmentSlug =
       adjustmentType === 'income' ? 'balance_adjustment_income' : 'balance_adjustment_expense';
-    const categoryId =
-      (categories ?? []).find((c) => c.is_default && c.slug === adjustmentSlug)?.id ?? null;
+    const categoryId = (categories ?? []).find((c) => c.slug === adjustmentSlug)?.id ?? null;
     const payload: TransactionCreateInput = {
       type: adjustmentType,
       account_id: accountId,

@@ -1,8 +1,8 @@
 import { useAccounts, useTransactions } from '@repo/core/hooks';
 import { accountBalance, formatCurrency } from '@repo/core/utils';
-import { ListRow, Screen } from '@repo/ui';
+import { Fab, ListRow, PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import { ACCOUNT_TYPE_LABEL } from '../../../../../features/accounts/account-types';
 
@@ -13,16 +13,7 @@ export default function AccountsScreen() {
 
   return (
     <Screen className="gap-4">
-      <View className="flex-row items-center justify-between pt-2">
-        <Pressable onPress={() => router.back()} hitSlop={8}>
-          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">‹ Ajustes</Text>
-        </Pressable>
-        <Pressable onPress={() => router.push('/(app)/settings/accounts/new')} hitSlop={8}>
-          <Text className="text-sm font-semibold text-ink dark:text-ink-dark">Nueva</Text>
-        </Pressable>
-      </View>
-
-      <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Cuentas</Text>
+      <PageHeader title="Cuentas" onBack={() => router.back()} />
 
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
@@ -56,6 +47,13 @@ export default function AccountsScreen() {
           ))}
         </View>
       )}
+
+      <View className="absolute bottom-6 right-5">
+        <Fab
+          accessibilityLabel="Nueva cuenta"
+          onPress={() => router.push('/(app)/settings/accounts/new')}
+        />
+      </View>
     </Screen>
   );
 }

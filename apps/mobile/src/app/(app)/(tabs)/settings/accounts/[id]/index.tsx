@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useTransactions, useUpdateAccount } from '@repo/core/hooks';
 import { accountBalance, formatCurrency } from '@repo/core/utils';
-import { Button, Screen, SwitchRow } from '@repo/ui';
+import { Button, Fab, PageHeader, Screen, SwitchRow } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
@@ -55,29 +55,7 @@ export default function AccountDetail() {
 
   return (
     <Screen className="gap-5">
-      <View className="flex-row items-center justify-between pt-2">
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={8}
-          className="flex-row items-center gap-1"
-        >
-          <Ionicons name="chevron-back" size={20} color="#1A1D21" />
-          <Text className="text-lg font-bold text-ink dark:text-ink-dark">{account.name}</Text>
-        </Pressable>
-        <Pressable
-          onPress={() =>
-            router.push({
-              pathname: '/(app)/settings/accounts/[id]/edit',
-              params: { id: account.id },
-            })
-          }
-          hitSlop={8}
-        >
-          <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
-            Editar
-          </Text>
-        </Pressable>
-      </View>
+      <PageHeader title={account.name} onBack={() => router.back()} />
 
       <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
         <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
@@ -136,6 +114,19 @@ export default function AccountDetail() {
         currency={account.currency}
         currentBalance={balance}
       />
+
+      <View className="absolute bottom-6 right-5">
+        <Fab
+          icon="pencil"
+          accessibilityLabel="Editar cuenta"
+          onPress={() =>
+            router.push({
+              pathname: '/(app)/settings/accounts/[id]/edit',
+              params: { id: account.id },
+            })
+          }
+        />
+      </View>
     </Screen>
   );
 }

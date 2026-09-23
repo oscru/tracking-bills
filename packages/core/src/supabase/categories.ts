@@ -8,10 +8,7 @@ import {
 import { supabase } from './client';
 import { SupabaseError, unwrap } from './internal';
 
-/**
- * All categories visible to the user: system defaults + their own custom ones
- * (RLS handles the union). Ordered for direct use in a sectioned list.
- */
+/** All of the user's categories (RLS scopes to the owner). Ordered for direct use in a sectioned list. */
 export async function listCategories(): Promise<Category[]> {
   return unwrap(
     await supabase
@@ -23,13 +20,13 @@ export async function listCategories(): Promise<Category[]> {
   ) as Category[];
 }
 
-/** Create a custom category. `user_id` defaults to the caller; `is_default` stays false. */
+/** Create a category. `user_id` defaults to the caller. */
 export async function createCategory(input: CategoryCreateInput): Promise<Category> {
   const payload = categoryCreateSchema.parse(input);
   return unwrap(await supabase.from('categories').insert(payload).select().single()) as Category;
 }
 
-/** Update a custom category. RLS rejects edits to system defaults. */
+/** Update a category. */
 export async function updateCategory(id: string, patch: CategoryUpdateInput): Promise<Category> {
   const payload = categoryUpdateSchema.parse(patch);
   return unwrap(
@@ -37,7 +34,7 @@ export async function updateCategory(id: string, patch: CategoryUpdateInput): Pr
   ) as Category;
 }
 
-/** Delete a custom category. Referencing transactions keep `category_id = null`. */
+/** Delete a category. Referencing transactions keep `category_id = null`. */
 export async function deleteCategory(id: string): Promise<void> {
   const { error } = await supabase.from('categories').delete().eq('id', id);
   if (error) throw new SupabaseError(error);

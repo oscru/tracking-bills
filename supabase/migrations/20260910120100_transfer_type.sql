@@ -50,7 +50,7 @@ begin
     select 1 from public.categories c
     where c.id = new.category_id
       and c.type = new.type
-      and (c.is_default or c.user_id = new.user_id)
+      and c.user_id = new.user_id
   ) then
     raise exception 'category % is not usable by user % for a % transaction',
       new.category_id, new.user_id, new.type

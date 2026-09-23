@@ -53,13 +53,7 @@ export interface CategoryNode extends Category {
 /** ISO 4217 currency code, e.g. 'MXN'. */
 export type CurrencyCode = string;
 
-/**
- * The subset of a category row the UI needs to render a label.
- * Default categories carry a `slug` (translate it); custom categories carry a
- * literal `name` and `slug === null` (show as-is).
- */
+/** The subset of a category row the UI needs to render a label. */
 export interface CategoryLabelSource {
-  slug: string | null;
   name: string;
-  is_default: boolean;
 }

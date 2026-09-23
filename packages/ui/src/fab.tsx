@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useRef } from 'react';
 import {
@@ -5,13 +6,16 @@ import {
   Platform,
   Pressable,
   Text,
+  useColorScheme,
   type GestureResponderEvent,
   type PressableProps,
 } from 'react-native';
 
 export interface FabProps extends Omit<PressableProps, 'children' | 'style'> {
-  /** Single glyph or short label; defaults to a plus sign. */
+  /** Single glyph or short label; defaults to a plus sign. Ignored when `icon` is set. */
   glyph?: string;
+  /** Ionicons glyph to render instead of the text glyph (e.g. a pencil for an edit FAB). */
+  icon?: keyof typeof Ionicons.glyphMap;
   accessibilityLabel: string;
 }
 
@@ -20,7 +24,8 @@ export interface FabProps extends Omit<PressableProps, 'children' | 'style'> {
  * Ink circle + lime glyph in light; lime circle + ink glyph in dark. Glows
  * with a lime shadow and gives a quick press bounce + shake + haptic tap.
  */
-export function Fab({ glyph = '+', accessibilityLabel, onPress, ...props }: FabProps) {
+export function Fab({ glyph = '+', icon, accessibilityLabel, onPress, ...props }: FabProps) {
+  const dark = useColorScheme() === 'dark';
   const scale = useRef(new Animated.Value(1)).current;
   const shake = useRef(new Animated.Value(0)).current;
 
@@ -78,9 +83,13 @@ export function Fab({ glyph = '+', accessibilityLabel, onPress, ...props }: FabP
           elevation: 12,
         }}
       >
-        <Text className="text-3xl font-semibold leading-none text-lime dark:text-ink">
-          {glyph}
-        </Text>
+        {icon ? (
+          <Ionicons name={icon} size={26} color={dark ? '#1A1D21' : '#B9F227'} />
+        ) : (
+          <Text className="text-3xl font-semibold leading-none text-lime dark:text-ink">
+            {glyph}
+          </Text>
+        )}
       </Animated.View>
     </Pressable>
   );

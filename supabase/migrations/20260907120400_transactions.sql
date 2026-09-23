@@ -24,10 +24,9 @@ create trigger transactions_set_updated_at
   before update on public.transactions
   for each row execute function public.set_updated_at();
 
--- Integrity: the referenced account must belong to the same user, and the
--- category must be a system default or owned by the same user, with a matching
--- income/expense type. RLS hides other users' rows but does not stop a crafted
--- request from pointing at them, so enforce it here.
+-- Integrity: the referenced account and category must both belong to the same
+-- user, and the category's type must match. RLS hides other users' rows but
+-- does not stop a crafted request from pointing at them, so enforce it here.
 create or replace function public.check_transaction_refs()
 returns trigger
 language plpgsql
@@ -47,7 +46,7 @@ begin
     select 1 from public.categories c
     where c.id = new.category_id
       and c.type = new.type
-      and (c.is_default or c.user_id = new.user_id)
+      and c.user_id = new.user_id
   ) then
     raise exception 'category % is not usable by user % for a % transaction',
       new.category_id, new.user_id, new.type
