@@ -106,6 +106,7 @@ export function MovementForm({
   );
   const [pickerOpen, setPickerOpen] = useState(false);
   const [accountPickerOpen, setAccountPickerOpen] = useState(false);
+  const [toAccountPickerOpen, setToAccountPickerOpen] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -125,6 +126,7 @@ export function MovementForm({
 
   const selectedCategory = (categories ?? []).find((c) => c.id === categoryId) ?? null;
   const selectedFromAccount = activeAccounts.find((a) => a.id === fromId) ?? null;
+  const selectedToAccount = activeAccounts.find((a) => a.id === toId) ?? null;
   const amountInvalid = formError === AMOUNT_ERROR;
 
   const dirty =
@@ -303,30 +305,30 @@ export function MovementForm({
         {type === 'transfer' ? (
           <>
             <Field label="De">
-              <View className="flex-row flex-wrap gap-2">
-                {activeAccounts.map((a) => (
-                  <Chip
-                    key={a.id}
-                    label={a.name}
-                    selected={fromId === a.id}
-                    onPress={() => setFrom(a.id)}
-                  />
-                ))}
-              </View>
+              <Pressable
+                onPress={() => setAccountPickerOpen(true)}
+                className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+              >
+                <Text className="text-base text-ink dark:text-ink-dark">
+                  {selectedFromAccount ? selectedFromAccount.name : 'Elige una cuenta'}
+                </Text>
+                <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+                  Ver todas ›
+                </Text>
+              </Pressable>
             </Field>
             <Field label="A">
-              <View className="flex-row flex-wrap gap-2">
-                {activeAccounts
-                  .filter((a) => a.id !== fromId)
-                  .map((a) => (
-                    <Chip
-                      key={a.id}
-                      label={a.name}
-                      selected={toId === a.id}
-                      onPress={() => setTo(a.id)}
-                    />
-                  ))}
-              </View>
+              <Pressable
+                onPress={() => setToAccountPickerOpen(true)}
+                className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+              >
+                <Text className="text-base text-ink dark:text-ink-dark">
+                  {selectedToAccount ? selectedToAccount.name : 'Elige una cuenta'}
+                </Text>
+                <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+                  Ver todas ›
+                </Text>
+              </Pressable>
             </Field>
             <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
               No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas.
@@ -430,8 +432,17 @@ export function MovementForm({
       <AccountPicker
         visible={accountPickerOpen}
         onClose={() => setAccountPickerOpen(false)}
+        title={type === 'transfer' ? 'Cuenta origen' : 'Cuenta'}
         selectedId={fromId}
         onSelect={setFrom}
+      />
+      <AccountPicker
+        visible={toAccountPickerOpen}
+        onClose={() => setToAccountPickerOpen(false)}
+        title="Cuenta destino"
+        selectedId={toId}
+        onSelect={setTo}
+        excludeId={fromId}
       />
       <DiscardConfirmSheet
         visible={confirmCancel}

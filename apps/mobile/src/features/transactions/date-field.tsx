@@ -67,13 +67,13 @@ export function DateField({ value, onChange }: { value: string; onChange: (iso: 
         >
           <View className="flex-row items-center justify-between">
             <Pressable onPress={() => shiftMonth(-1)} hitSlop={8} className="p-1">
-              <Ionicons name="chevron-back" size={20} color="#1A1D21" />
+              <Ionicons name="chevron-back" size={20} color="#9CA3AF" />
             </Pressable>
             <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
               {monthTitle} {viewYear}
             </Text>
             <Pressable onPress={() => shiftMonth(1)} hitSlop={8} className="p-1">
-              <Ionicons name="chevron-forward" size={20} color="#1A1D21" />
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </Pressable>
           </View>
 
@@ -88,7 +88,13 @@ export function DateField({ value, onChange }: { value: string; onChange: (iso: 
           {grid.map((row, i) => (
             <View key={i} className="flex-row">
               {row.map((date, j) => {
-                if (!date) return <View key={j} className="flex-1 py-1.5" />;
+                if (!date) {
+                  return (
+                    <View key={j} className="flex-1 items-center py-1">
+                      <View className="h-9 w-9" />
+                    </View>
+                  );
+                }
                 const iso = todayISODate(date);
                 const selected = iso === value;
                 const isToday = iso === today;
