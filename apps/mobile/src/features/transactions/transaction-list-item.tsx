@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency, formatDate } from '@repo/core/utils';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, Text, View, useColorScheme } from 'react-native';
 import {
   PanGestureHandler,
@@ -129,16 +129,24 @@ export function TransactionListItem({
   transaction,
   onPress,
   onEdit,
-  onOpen,
+  isOpen,
+  onReveal,
 }: {
   transaction: TransactionWithRefs;
-  /** Row tap, and the "Ver" swipe action. */
-  onPress: () => void;
-  /** The "Editar" swipe action. */
-  onEdit: () => void;
-  /** Called whenever this row reveals a swipe action, passing a function that
-   * closes it — the list uses this to keep only one row open at a time. */
-  onOpen?: (close: () => void) => void;
+  /** Row tap, and the "Ver" swipe action. Pass a stable (`useCallback`) function —
+   * it feeds the gesture handling below, which rebuilds its native event
+   * binding whenever this identity changes, causing real glitches if it's a
+   * fresh arrow function every render (e.g. `onPress={() => go(item.id)}`). */
+  onPress: (id: string) => void;
+  /** The "Editar" swipe action. Same stability requirement as `onPress`. */
+  onEdit: (id: string) => void;
+  /** Whether the *list* considers this the currently-revealed row. When this
+   * goes false while the row still thinks it's open (another row revealed,
+   * the screen lost focus...), it snaps itself shut. */
+  isOpen: boolean;
+  /** Called with this row's id once it reveals a swipe action, so the list
+   * can make it the (only) open one. Pass a stable function. */
+  onReveal: (id: string) => void;
 }) {
   const {
     type,
@@ -158,6 +166,13 @@ export function TransactionListItem({
 
   const [rowWidth, setRowWidth] = useState(0);
   const [fillMeta, setFillMeta] = useState<SwipeMeta | null>(null);
+
+  // Re-derive stable (no-arg) handlers from the stable `onPress`/`onEdit`/
+  // `onReveal` props + this row's own id — these are what the gesture logic
+  // below uses.
+  const handleView = useCallback(() => onPress(transaction.id), [onPress, transaction.id]);
+  const handleEdit = useCallback(() => onEdit(transaction.id), [onEdit, transaction.id]);
+  const reveal = useCallback(() => onReveal(transaction.id), [onReveal, transaction.id]);
 
   // `dragX` is the raw, per-gesture native translation (native-driven — smooth,
   // resets to 0 each gesture). `rowOffset` is the settled base position between
@@ -194,12 +209,23 @@ export function TransactionListItem({
         bounciness: 0,
         speed: 20,
       }).start();
-      // Tell the list "I'm open" so it can close whatever other row was open —
-      // only one row's actions should ever be visible at a time.
-      if (state !== 'closed') onOpen?.(close);
+      // Tell the list "I'm open" so it can make me the only open row.
+      if (state !== 'closed') reveal();
     },
-    [dragX, rowOffset, onOpen, close],
+    [dragX, rowOffset, reveal],
   );
+
+  // The list is the single source of truth for "which row is open" — if it
+  // ever says this one shouldn't be (another row revealed, the screen lost
+  // focus and it reset everyone...) while we still think we are, snap shut.
+  // This is what actually guarantees "back to the original state", instead
+  // of relying on every possible path that opens/leaves a row to remember to
+  // clean up after itself.
+  useEffect(() => {
+    if (!isOpen && openState.current !== 'closed') {
+      close();
+    }
+  }, [isOpen, close]);
 
   const fire = useCallback(
     (action: () => void, meta: SwipeMeta) => {
@@ -233,10 +259,10 @@ export function TransactionListItem({
     (e: { nativeEvent: PanGestureHandlerEventPayload }) => {
       if (triggered.current) return;
       const total = gestureStartOffset.current + e.nativeEvent.translationX;
-      if (total > HARD_THRESHOLD) fire(onEdit, EDIT_META);
-      else if (total < -HARD_THRESHOLD) fire(onPress, VIEW_META);
+      if (total > HARD_THRESHOLD) fire(handleEdit, EDIT_META);
+      else if (total < -HARD_THRESHOLD) fire(handleView, VIEW_META);
     },
-    [fire, onEdit, onPress],
+    [fire, handleEdit, handleView],
   );
 
   // The `listener` here runs on the JS thread on every native gesture update
@@ -270,14 +296,14 @@ export function TransactionListItem({
         // before the `Animated.event` listener (which syncs back from the
         // native driver, not perfectly real-time) catches up — fall back to
         // checking it here too, against the release event's own exact data.
-        if (total > HARD_THRESHOLD) fire(onEdit, EDIT_META);
-        else if (total < -HARD_THRESHOLD) fire(onPress, VIEW_META);
+        if (total > HARD_THRESHOLD) fire(handleEdit, EDIT_META);
+        else if (total < -HARD_THRESHOLD) fire(handleView, VIEW_META);
         else if (total > SOFT_THRESHOLD) snapTo(ACTION_WIDTH, 'left');
         else if (total < -SOFT_THRESHOLD) snapTo(-ACTION_WIDTH, 'right');
         else snapTo(0, 'closed');
       }
     },
-    [snapTo, fire, onEdit, onPress],
+    [snapTo, fire, handleEdit, handleView],
   );
 
   let title: string;
@@ -307,8 +333,8 @@ export function TransactionListItem({
       className="overflow-hidden"
       onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}
     >
-      <SwipeAction translateX={translateX} meta={EDIT_META} onPress={() => fire(onEdit, EDIT_META)} />
-      <SwipeAction translateX={translateX} meta={VIEW_META} onPress={() => fire(onPress, VIEW_META)} />
+      <SwipeAction translateX={translateX} meta={EDIT_META} onPress={() => fire(handleEdit, EDIT_META)} />
+      <SwipeAction translateX={translateX} meta={VIEW_META} onPress={() => fire(handleView, VIEW_META)} />
 
       <PanGestureHandler
         onGestureEvent={onGestureEvent}
@@ -318,7 +344,7 @@ export function TransactionListItem({
       >
         <Animated.View style={{ transform: [{ translateX }] }}>
           <Pressable
-            onPress={onPress}
+            onPress={handleView}
             className="flex-row items-center gap-3 bg-canvas px-3 py-3 active:opacity-60 dark:bg-canvas-dark"
           >
             <View

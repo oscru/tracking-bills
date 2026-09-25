@@ -5,7 +5,7 @@ import type { TransactionType } from '@repo/core/types';
 import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
 import { ErrorCard, Fab, Screen, TextField } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -67,22 +67,28 @@ export default function TransactionsScreen() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // Only one row's swipe actions stay revealed at a time, and none should
-  // still be open when we come back to this screen.
-  const openRowClose = useRef<(() => void) | null>(null);
-  const handleRowOpen = useCallback((close: () => void) => {
-    if (openRowClose.current && openRowClose.current !== close) {
-      openRowClose.current();
-    }
-    openRowClose.current = close;
-  }, []);
+  // Which row (by id) currently has its swipe actions revealed — only one at
+  // a time. Cleared on blur/refocus so nothing is left open when we return.
+  const [openRowId, setOpenRowId] = useState<string | null>(null);
+  const handleRowReveal = useCallback((id: string) => setOpenRowId(id), []);
   useFocusEffect(
     useCallback(() => {
-      return () => {
-        openRowClose.current?.();
-        openRowClose.current = null;
-      };
+      return () => setOpenRowId(null);
     }, []),
+  );
+
+  // Stable across renders — passed straight into `TransactionListItem`'s
+  // gesture handling, which needs referentially-stable callbacks to avoid
+  // rebuilding its native gesture event binding on every re-render (search
+  // typing, a refetch on focus, etc. — see its own comments for the chain
+  // this feeds into).
+  const goToTransaction = useCallback(
+    (id: string) => router.push({ pathname: '/(app)/transactions/[id]', params: { id } }),
+    [router],
+  );
+  const goToEditTransaction = useCallback(
+    (id: string) => router.push({ pathname: '/(app)/transactions/[id]/edit', params: { id } }),
+    [router],
   );
 
   const { data: accounts } = useAccounts();
@@ -258,19 +264,10 @@ export default function TransactionsScreen() {
               >
                 <TransactionListItem
                   transaction={item}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/(app)/transactions/[id]',
-                      params: { id: item.id },
-                    })
-                  }
-                  onEdit={() =>
-                    router.push({
-                      pathname: '/(app)/transactions/[id]/edit',
-                      params: { id: item.id },
-                    })
-                  }
-                  onOpen={handleRowOpen}
+                  onPress={goToTransaction}
+                  onEdit={goToEditTransaction}
+                  isOpen={openRowId === item.id}
+                  onReveal={handleRowReveal}
                 />
               </View>
             );
