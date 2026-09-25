@@ -4,8 +4,8 @@ import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionType } from '@repo/core/types';
 import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
 import { ErrorCard, Fab, Screen, TextField } from '@repo/ui';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -66,6 +66,24 @@ export default function TransactionsScreen() {
     const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
     return () => clearTimeout(t);
   }, [search]);
+
+  // Only one row's swipe actions stay revealed at a time, and none should
+  // still be open when we come back to this screen.
+  const openRowClose = useRef<(() => void) | null>(null);
+  const handleRowOpen = useCallback((close: () => void) => {
+    if (openRowClose.current && openRowClose.current !== close) {
+      openRowClose.current();
+    }
+    openRowClose.current = close;
+  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        openRowClose.current?.();
+        openRowClose.current = null;
+      };
+    }, []),
+  );
 
   const { data: accounts } = useAccounts();
   const { data: tags } = useTags();
@@ -234,7 +252,7 @@ export default function TransactionsScreen() {
             const isLast = index === section.data.length - 1;
             return (
               <View
-                className={`border-x border-line px-3 dark:border-line-dark ${
+                className={`overflow-hidden border-x border-line dark:border-line-dark ${
                   isFirst ? 'rounded-t-2xl border-t' : ''
                 } ${isLast ? 'rounded-b-2xl border-b' : ''}`}
               >
@@ -246,6 +264,13 @@ export default function TransactionsScreen() {
                       params: { id: item.id },
                     })
                   }
+                  onEdit={() =>
+                    router.push({
+                      pathname: '/(app)/transactions/[id]/edit',
+                      params: { id: item.id },
+                    })
+                  }
+                  onOpen={handleRowOpen}
                 />
               </View>
             );

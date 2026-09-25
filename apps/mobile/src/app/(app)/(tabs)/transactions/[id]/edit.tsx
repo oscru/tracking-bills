@@ -9,7 +9,7 @@ import { Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Text } from 'react-native';
 
-import { MovementForm } from '../../../../features/transactions/movement-form';
+import { MovementForm } from '../../../../../features/transactions/movement-form';
 
 export default function EditTransaction() {
   const { id } = useLocalSearchParams<{ id: string }>();

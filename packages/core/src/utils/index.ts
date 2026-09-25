@@ -243,3 +243,45 @@ export function formatDate(iso: string, locale = 'es-MX'): string {
     year: 'numeric',
   });
 }
+
+/** `YYYY-MM` -> a short localized month label, e.g. "sep" (or "sep 25" outside the current year). */
+export function formatMonthShort(monthKey: string, locale = 'es-MX'): string {
+  const [y, m] = monthKey.split('-').map(Number);
+  if (!y || !m) return monthKey;
+  const label = new Date(y, m - 1, 1).toLocaleDateString(locale, { month: 'short' });
+  const currentYear = new Date().getFullYear();
+  return y === currentYear ? label : `${label} ${String(y).slice(2)}`;
+}
+
+interface CategoryHistoryTx {
+  category_id: string | null;
+  amount: number | string;
+  transaction_date: string;
+}
+
+/**
+ * One category's per-month totals for the last `months` months (oldest →
+ * newest, including the current month). A transaction's category type
+ * always matches its own type (enforced in the DB), so matching on
+ * `category_id` alone is enough — no need to also filter by income/expense.
+ */
+export function categoryMonthlyHistory(
+  transactions: CategoryHistoryTx[],
+  categoryId: string,
+  months: number,
+  referenceDate: Date = new Date(),
+): { month: string; total: number }[] {
+  const keys: string[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1);
+    keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+  const totals = new Map(keys.map((k) => [k, 0]));
+  for (const t of transactions) {
+    if (t.category_id !== categoryId) continue;
+    const key = t.transaction_date.slice(0, 7);
+    if (!totals.has(key)) continue;
+    totals.set(key, (totals.get(key) ?? 0) + Number(t.amount));
+  }
+  return keys.map((month) => ({ month, total: totals.get(month) ?? 0 }));
+}

@@ -2,9 +2,9 @@ import { useCategoryTree } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { CategoryNode, CategoryType } from '@repo/core/types';
 import { toFriendlyMessage } from '@repo/core/utils';
-import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl } from '@repo/ui';
+import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl, TextField } from '@repo/ui';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 // Booked automatically by the "Ajustar saldo" flow — not a category a user
@@ -16,9 +16,30 @@ const TYPE_OPTIONS: { value: CategoryType; label: string }[] = [
   { value: 'income', label: 'Ingresos' },
 ];
 
-function Group({ type, onEdit }: { type: CategoryType; onEdit: (id: string) => void }) {
+function Group({
+  type,
+  search,
+  onEdit,
+}: {
+  type: CategoryType;
+  search: string;
+  onEdit: (id: string) => void;
+}) {
   const { data: nodes } = useCategoryTree(type);
   const visible = (nodes ?? []).filter((n) => !HIDDEN_SLUGS.has(n.slug ?? ''));
+
+  const filtered = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return visible;
+    return visible
+      .map((p) => ({
+        ...p,
+        children: p.children.filter((c) => resolveCategoryLabel(c).toLowerCase().includes(needle)),
+      }))
+      .filter(
+        (p) => resolveCategoryLabel(p).toLowerCase().includes(needle) || p.children.length > 0,
+      );
+  }, [visible, search]);
 
   if (visible.length === 0) {
     return (
@@ -28,7 +49,15 @@ function Group({ type, onEdit }: { type: CategoryType; onEdit: (id: string) => v
     );
   }
 
-  const sorted = [...visible].sort((a, b) => a.name.localeCompare(b.name));
+  if (filtered.length === 0) {
+    return (
+      <Text className="mt-8 text-center text-sm text-ink-2 dark:text-ink-2-dark">
+        Sin resultados para “{search.trim()}”.
+      </Text>
+    );
+  }
+
+  const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
@@ -82,6 +111,7 @@ function Group({ type, onEdit }: { type: CategoryType; onEdit: (id: string) => v
 export default function CategoriesScreen() {
   const router = useRouter();
   const [type, setType] = useState<CategoryType>('expense');
+  const [search, setSearch] = useState('');
   const { isLoading, error } = useCategoryTree();
 
   const goEdit = (id: string) =>
@@ -91,6 +121,14 @@ export default function CategoriesScreen() {
     <Screen className="gap-4">
       <PageHeader title="Categorías" onBack={() => router.back()} />
       <SegmentedControl options={TYPE_OPTIONS} value={type} onChange={setType} />
+      <TextField
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Buscar categoría…"
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="search"
+      />
 
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
@@ -99,8 +137,8 @@ export default function CategoriesScreen() {
           <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar las categorías')} />
         </View>
       ) : (
-        <ScrollView className="flex-1" contentContainerClassName="pb-8">
-          <Group type={type} onEdit={goEdit} />
+        <ScrollView className="flex-1" contentContainerClassName="pb-8" keyboardShouldPersistTaps="handled">
+          <Group type={type} search={search} onEdit={goEdit} />
         </ScrollView>
       )}
 

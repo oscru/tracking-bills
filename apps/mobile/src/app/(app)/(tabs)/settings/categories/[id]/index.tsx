@@ -1,16 +1,19 @@
-import { useCategories, useUpdateCategory } from '@repo/core/hooks';
+import { useAccounts, useCategories, useUpdateCategory } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import { Button, ConfirmSheet, Fab, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { CategoryHistoryChart } from '../../../../../../features/categories/category-history-chart';
 
 export default function CategoryDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: categories, isLoading } = useCategories();
+  const { data: accounts } = useAccounts();
   const updateCategory = useUpdateCategory();
   const [confirmArchive, setConfirmArchive] = useState(false);
 
@@ -36,55 +39,65 @@ export default function CategoryDetail() {
   const toggleArchive = () =>
     updateCategory.mutate({ id: category.id, patch: { archived: !category.archived } });
 
+  const currency = accounts?.[0]?.currency ?? 'MXN';
+
   return (
     <Screen edges={['top']} className="gap-5">
       <PageHeader title={resolveCategoryLabel(category)} onBack={() => router.back()} />
 
-      <View className="flex-1 gap-5">
-        <View className="flex-row items-center gap-2">
-          <View
-            className="h-3 w-3 rounded-full"
-            style={{ backgroundColor: category.color ?? '#94A3B8' }}
-          />
-          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-            {category.type === 'income' ? 'Ingreso' : 'Gasto'}
-            {category.archived ? ' · archivada' : ''}
-          </Text>
-        </View>
-
-        {subcategories.length > 0 ? (
-          <View className="gap-2">
-            <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-              Subcategorías
+      <View className="flex-1">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-5 pb-4"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="flex-row items-center gap-2">
+            <View
+              className="h-3 w-3 rounded-full"
+              style={{ backgroundColor: category.color ?? '#94A3B8' }}
+            />
+            <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+              {category.type === 'income' ? 'Ingreso' : 'Gasto'}
+              {category.archived ? ' · archivada' : ''}
             </Text>
-            <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
-              {subcategories.map((s, i) => (
-                <View key={s.id}>
-                  {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: '/(app)/settings/categories/[id]',
-                        params: { id: s.id },
-                      })
-                    }
-                    className="flex-row items-center gap-3 py-3.5 active:opacity-60"
-                  >
-                    <View
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: s.color ?? '#94A3B8' }}
-                    />
-                    <Text className="flex-1 text-base text-ink dark:text-ink-dark">
-                      {resolveCategoryLabel(s)}
-                      {s.archived ? ' · archivada' : ''}
-                    </Text>
-                    <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text>
-                  </Pressable>
-                </View>
-              ))}
-            </View>
           </View>
-        ) : null}
+
+          <CategoryHistoryChart categoryId={category.id} color={category.color} currency={currency} />
+
+          {subcategories.length > 0 ? (
+            <View className="gap-2">
+              <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+                Subcategorías
+              </Text>
+              <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
+                {subcategories.map((s, i) => (
+                  <View key={s.id}>
+                    {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
+                    <Pressable
+                      onPress={() =>
+                        router.push({
+                          pathname: '/(app)/settings/categories/[id]',
+                          params: { id: s.id },
+                        })
+                      }
+                      className="flex-row items-center gap-3 py-3.5 active:opacity-60"
+                    >
+                      <View
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: s.color ?? '#94A3B8' }}
+                      />
+                      <Text className="flex-1 text-base text-ink dark:text-ink-dark">
+                        {resolveCategoryLabel(s)}
+                        {s.archived ? ' · archivada' : ''}
+                      </Text>
+                      <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+        </ScrollView>
 
         <View className="absolute bottom-6 right-5">
           <Fab

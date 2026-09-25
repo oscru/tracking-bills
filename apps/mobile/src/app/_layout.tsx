@@ -8,6 +8,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { FloatingDraftBubble } from '../features/transactions/floating-draft-bubble';
@@ -47,15 +48,17 @@ function AuthGate() {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SessionProvider>
-        <SafeAreaProvider>
-          <StatusBar style="auto" />
-          <SheetPortalHost>
-            <AuthGate />
-          </SheetPortalHost>
-        </SafeAreaProvider>
-      </SessionProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <SessionProvider>
+          <SafeAreaProvider>
+            <StatusBar style="auto" />
+            <SheetPortalHost>
+              <AuthGate />
+            </SheetPortalHost>
+          </SafeAreaProvider>
+        </SessionProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
