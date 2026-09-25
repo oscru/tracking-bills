@@ -2,7 +2,7 @@ import { useCategories } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { CategoryType } from '@repo/core/types';
 import { categoryCreateSchema, type CategoryCreateInput } from '@repo/core/validators';
-import { Button, Chip, ColorPicker, TextField } from '@repo/ui';
+import { Button, Chip, ColorPicker, ErrorCard, TextField } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -23,10 +23,20 @@ interface Props {
   submitting: boolean;
   error?: string | null;
   onSubmit: (input: CategoryCreateInput) => void;
+  /** Called when the name changes — the parent should clear its `error` so it doesn't linger once the user starts fixing it. */
+  onDirty?: () => void;
   footer?: ReactNode;
 }
 
-export function CategoryForm({ initial, submitLabel, submitting, error, onSubmit, footer }: Props) {
+export function CategoryForm({
+  initial,
+  submitLabel,
+  submitting,
+  error,
+  onSubmit,
+  onDirty,
+  footer,
+}: Props) {
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState<CategoryType>(initial?.type ?? 'expense');
   const [color, setColor] = useState(initial?.color ?? CATEGORY_COLORS[0]);
@@ -56,9 +66,14 @@ export function CategoryForm({ initial, submitLabel, submitting, error, onSubmit
       <TextField
         label="Nombre"
         value={name}
-        onChangeText={setName}
+        onChangeText={(text) => {
+          setName(text);
+          setNameError(undefined);
+          onDirty?.();
+        }}
         placeholder="Ej. Mascota"
         error={nameError}
+        invalid={Boolean(error)}
       />
 
       <View className="gap-2">
@@ -118,7 +133,7 @@ export function CategoryForm({ initial, submitLabel, submitting, error, onSubmit
         <ColorPicker value={color} onChange={setColor} colors={CATEGORY_COLORS} />
       </View>
 
-      {error ? <Text className="text-sm text-danger dark:text-danger-dark">{error}</Text> : null}
+      <ErrorCard message={error} />
 
       <Button label={submitLabel} onPress={submit} loading={submitting} />
 

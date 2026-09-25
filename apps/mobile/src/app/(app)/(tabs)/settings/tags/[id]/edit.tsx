@@ -1,21 +1,21 @@
-import { useAccounts, useDeleteAccount, useFormError, useUpdateAccount } from '@repo/core/hooks';
+import { useDeleteTag, useFormError, useTags, useUpdateTag } from '@repo/core/hooks';
 import { Button, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-import { AccountForm } from '../../../../../../features/accounts/account-form';
+import { TagForm } from '../../../../../../features/tags/tag-form';
 
-export default function EditAccount() {
+export default function EditTag() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data: accounts, isLoading } = useAccounts();
-  const update = useUpdateAccount();
-  const remove = useDeleteAccount();
+  const { data: tags, isLoading } = useTags();
+  const update = useUpdateTag();
+  const remove = useDeleteTag();
   const { error, setError, clearError } = useFormError();
   const [confirming, setConfirming] = useState(false);
 
-  const account = (accounts ?? []).find((a) => a.id === id);
+  const tag = (tags ?? []).find((t) => t.id === id);
 
   if (isLoading) {
     return (
@@ -24,26 +24,20 @@ export default function EditAccount() {
       </Screen>
     );
   }
-  if (!account) {
+  if (!tag) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Cuenta no encontrada.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Tag no encontrada.</Text>
       </Screen>
     );
   }
 
   return (
     <Screen className="gap-4">
-      <PageHeader title="Editar cuenta" onBack={() => router.back()} />
+      <PageHeader title="Editar tag" onBack={() => router.back()} />
 
-      <AccountForm
-        initial={{
-          name: account.name,
-          type: account.type,
-          currency: account.currency,
-          initial_balance: Number(account.initial_balance),
-          color: account.color,
-        }}
+      <TagForm
+        initial={{ name: tag.name, color: tag.color }}
         submitLabel="Guardar cambios"
         submitting={update.isPending}
         error={error}
@@ -75,7 +69,7 @@ export default function EditAccount() {
                     loading={remove.isPending}
                     onPress={() =>
                       remove.mutate(id, {
-                        onSuccess: () => router.replace('/(app)/settings/accounts'),
+                        onSuccess: () => router.replace('/(app)/settings/tags'),
                         onError: (e) => setError(e, 'No se pudo eliminar'),
                       })
                     }
@@ -85,7 +79,7 @@ export default function EditAccount() {
             ) : (
               <Pressable onPress={() => setConfirming(true)} className="items-center py-2">
                 <Text className="text-sm font-medium text-danger dark:text-danger-dark">
-                  Eliminar cuenta
+                  Eliminar tag
                 </Text>
               </Pressable>
             )}

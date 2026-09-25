@@ -10,6 +10,8 @@ export { BottomSheet, type BottomSheetProps } from './bottom-sheet';
 export { Button, type ButtonProps } from './button';
 export { Chip, type ChipProps } from './chip';
 export { ColorPicker, type ColorPickerProps } from './color-picker';
+export { ConfirmSheet, type ConfirmSheetProps } from './confirm-sheet';
+export { ErrorCard, type ErrorCardProps } from './error-card';
 export { Fab, type FabProps } from './fab';
 export { IconButton, type IconButtonProps } from './icon-button';
 export { ListRow, type ListRowProps } from './list-row';

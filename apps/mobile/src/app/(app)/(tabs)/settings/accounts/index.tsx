@@ -1,6 +1,6 @@
 import { useAccounts, useTransactions } from '@repo/core/hooks';
-import { accountBalance, formatCurrency } from '@repo/core/utils';
-import { Fab, ListRow, PageHeader, Screen } from '@repo/ui';
+import { accountBalance, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
+import { ErrorCard, Fab, ListRow, PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 
@@ -18,9 +18,9 @@ export default function AccountsScreen() {
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
       ) : error ? (
-        <Text className="mt-8 text-center text-sm text-danger dark:text-danger-dark">
-          {error.message}
-        </Text>
+        <View className="mt-8">
+          <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar las cuentas')} />
+        </View>
       ) : (
         <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
           {(accounts ?? []).map((a, i) => (

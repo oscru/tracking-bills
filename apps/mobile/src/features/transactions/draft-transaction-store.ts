@@ -9,6 +9,7 @@ export interface TransactionDraftSnapshot {
   accountId: string | null;
   toAccountId: string | null;
   categoryId: string | null;
+  tagIds: string[];
   description: string;
   date: string;
   isCompleted: boolean;

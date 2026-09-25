@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { createCategory, deleteCategory, listCategories, updateCategory } from '../supabase';
+import { createCategory, listCategories, updateCategory } from '../supabase';
 import type { Category, CategoryNode, CategoryType } from '../types';
 import { buildCategoryTree } from '../utils';
 import type { CategoryUpdateInput } from '../validators';
@@ -49,16 +49,5 @@ export function useUpdateCategory() {
     mutationFn: ({ id, patch }: { id: string; patch: CategoryUpdateInput }) =>
       updateCategory(id, patch),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.categories.all }),
-  });
-}
-
-export function useDeleteCategory() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => deleteCategory(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.categories.all });
-      qc.invalidateQueries({ queryKey: queryKeys.transactions.all });
-    },
   });
 }

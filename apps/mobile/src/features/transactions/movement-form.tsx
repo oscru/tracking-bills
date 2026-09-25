@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useCategories } from '@repo/core/hooks';
+import { useAccounts, useCategories, useTags } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionType } from '@repo/core/types';
 import { applyAmountKey, evalAmount, formatCurrency, todayISODate } from '@repo/core/utils';
@@ -8,6 +8,7 @@ import {
   AmountDisplay,
   Button,
   Chip,
+  ErrorCard,
   NumericKeypad,
   Screen,
   SegmentedControl,
@@ -21,9 +22,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccountPicker } from '../accounts/account-picker';
 import { CategoryPicker } from '../categories/category-picker';
+import { CategoryQuickCreateSheet } from '../categories/category-quick-create-sheet';
+import { TagQuickCreateSheet } from '../tags/tag-quick-create-sheet';
 import { DateField } from './date-field';
 import type { TransactionDraftSnapshot } from './draft-transaction-store';
 import { DiscardConfirmSheet } from './discard-confirm-sheet';
+import { MultiSelectSheet } from './multi-select-sheet';
 
 export interface MovementFormInitial {
   type?: TransactionType;
@@ -31,9 +35,17 @@ export interface MovementFormInitial {
   account_id?: string | null;
   to_account_id?: string | null;
   category_id?: string | null;
+  /** Tag ids currently on the transaction. */
+  tags?: string[];
   description?: string | null;
   transaction_date?: string;
   is_completed?: boolean;
+}
+
+function sameIds(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sorted = [...b].sort();
+  return [...a].sort().every((id, i) => id === sorted[i]);
 }
 
 const AMOUNT_ERROR = 'El monto no puede ser cero';
@@ -43,7 +55,7 @@ interface Props {
   initial?: MovementFormInitial;
   submitting: boolean;
   error?: string | null;
-  onSubmit: (input: TransactionCreateInput) => void;
+  onSubmit: (input: TransactionCreateInput, tagIds: string[]) => void;
   onCancel: () => void;
   onDelete?: () => void;
   /** Resume from a minimized draft — takes precedence over `initial`. */
@@ -81,6 +93,7 @@ export function MovementForm({
   const insets = useSafeAreaInsets();
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
+  const { data: tags } = useTags();
   const activeAccounts = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
 
   const [view, setView] = useState<'amount' | 'details'>(
@@ -99,6 +112,7 @@ export function MovementForm({
   const [categoryId, setCategoryId] = useState<string | null>(
     draft?.categoryId ?? initial?.category_id ?? null,
   );
+  const [tagIds, setTagIds] = useState<string[]>(draft?.tagIds ?? initial?.tags ?? []);
   const [description, setDescription] = useState(draft?.description ?? initial?.description ?? '');
   const [date, setDate] = useState(draft?.date ?? initial?.transaction_date ?? todayISODate());
   const [isCompleted, setIsCompleted] = useState(
@@ -107,6 +121,9 @@ export function MovementForm({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [accountPickerOpen, setAccountPickerOpen] = useState(false);
   const [toAccountPickerOpen, setToAccountPickerOpen] = useState(false);
+  const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const [categoryQuickCreateOpen, setCategoryQuickCreateOpen] = useState(false);
+  const [tagQuickCreateOpen, setTagQuickCreateOpen] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -129,12 +146,23 @@ export function MovementForm({
   const selectedToAccount = activeAccounts.find((a) => a.id === toId) ?? null;
   const amountInvalid = formError === AMOUNT_ERROR;
 
+  // Archived tags stay selectable here only if they're already on this
+  // transaction, so editing an old movement doesn't silently drop its tag.
+  const tagOptions = useMemo(
+    () =>
+      (tags ?? [])
+        .filter((t) => !t.archived || tagIds.includes(t.id))
+        .map((t) => ({ value: t.id, label: t.name, dotColor: t.color })),
+    [tags, tagIds],
+  );
+
   const dirty =
     amount !== (initial?.amount != null ? String(initial.amount) : '') ||
     description !== (initial?.description ?? '') ||
     categoryId !== (initial?.category_id ?? null) ||
     pickedFrom !== (initial?.account_id ?? null) ||
     pickedTo !== (initial?.to_account_id ?? null) ||
+    !sameIds(tagIds, initial?.tags ?? []) ||
     isCompleted !== (initial?.is_completed ?? true);
 
   const onKey = (k: KeypadKey) => setAmount((prev) => applyAmountKey(prev, k));
@@ -179,7 +207,7 @@ export function MovementForm({
       );
       return;
     }
-    onSubmit(parsed.data);
+    onSubmit(parsed.data, tagIds);
   };
 
   const tryCancel = () => (dirty ? setConfirmCancel(true) : onCancel());
@@ -192,6 +220,7 @@ export function MovementForm({
       accountId: pickedFrom,
       toAccountId: pickedTo,
       categoryId,
+      tagIds,
       description,
       date,
       isCompleted,
@@ -245,9 +274,7 @@ export function MovementForm({
           ))}
         </View>
 
-        {formError ? (
-          <Text className="text-center text-sm text-danger dark:text-danger-dark">{formError}</Text>
-        ) : null}
+        <ErrorCard message={formError} />
 
         <NumericKeypad onKey={onKey} />
         <Button label="Continuar" onPress={goToDetails} />
@@ -362,8 +389,14 @@ export function MovementForm({
                       style={{ backgroundColor: selectedCategory.color ?? '#94A3B8' }}
                     />
                   ) : null}
-                  <Text className="text-base text-ink dark:text-ink-dark">
-                    {selectedCategory ? resolveCategoryLabel(selectedCategory) : 'Sin categoría'}
+                  <Text
+                    className={
+                      selectedCategory
+                        ? 'text-base text-ink dark:text-ink-dark'
+                        : 'text-base text-ink-3 dark:text-ink-3-dark'
+                    }
+                  >
+                    {selectedCategory ? resolveCategoryLabel(selectedCategory) : 'Elige una categoría'}
                   </Text>
                 </View>
                 <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
@@ -373,6 +406,22 @@ export function MovementForm({
             </Field>
           </>
         )}
+
+        <Field label="Tags">
+          <Pressable
+            onPress={() => setTagPickerOpen(true)}
+            className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+          >
+            <Text className="text-base text-ink dark:text-ink-dark">
+              {tagIds.length === 0
+                ? 'Sin tags'
+                : `${tagIds.length} tag${tagIds.length === 1 ? '' : 's'} seleccionada${tagIds.length === 1 ? '' : 's'}`}
+            </Text>
+            <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+              Ver todas ›
+            </Text>
+          </Pressable>
+        </Field>
 
         <TextField
           label="Descripción (opcional)"
@@ -416,9 +465,7 @@ export function MovementForm({
         className="gap-2 border-t border-line bg-canvas pt-3 dark:border-line-dark dark:bg-canvas-dark"
         style={{ paddingBottom: Math.max(insets.bottom, 12) }}
       >
-        {formError || error ? (
-          <Text className="text-sm text-danger dark:text-danger-dark">{formError ?? error}</Text>
-        ) : null}
+        <ErrorCard message={formError ?? error} />
         <Button label="Guardar" onPress={submit} loading={submitting} />
       </View>
 
@@ -428,6 +475,8 @@ export function MovementForm({
         type={type === 'income' ? 'income' : 'expense'}
         selectedId={categoryId}
         onSelect={setCategoryId}
+        onCreateNew={() => setCategoryQuickCreateOpen(true)}
+        allowNone={false}
       />
       <AccountPicker
         visible={accountPickerOpen}
@@ -443,6 +492,33 @@ export function MovementForm({
         selectedId={toId}
         onSelect={setTo}
         excludeId={fromId}
+      />
+      <MultiSelectSheet
+        visible={tagPickerOpen}
+        onClose={() => setTagPickerOpen(false)}
+        title="Tags"
+        options={tagOptions}
+        values={tagIds}
+        onChange={setTagIds}
+        onCreateNew={() => setTagQuickCreateOpen(true)}
+      />
+      <CategoryQuickCreateSheet
+        visible={categoryQuickCreateOpen}
+        onClose={() => setCategoryQuickCreateOpen(false)}
+        type={type === 'income' ? 'income' : 'expense'}
+        onCreated={(id) => {
+          setCategoryId(id);
+          setCategoryQuickCreateOpen(false);
+          setPickerOpen(false);
+        }}
+      />
+      <TagQuickCreateSheet
+        visible={tagQuickCreateOpen}
+        onClose={() => setTagQuickCreateOpen(false)}
+        onCreated={(id) => {
+          setTagIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+          setTagQuickCreateOpen(false);
+        }}
       />
       <DiscardConfirmSheet
         visible={confirmCancel}

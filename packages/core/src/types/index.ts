@@ -44,6 +44,13 @@ export type Category = Omit<Row<'categories'>, 'type'> & { type: CategoryType };
 export type Transaction = Omit<Row<'transactions'>, 'type'> & {
   type: TransactionType;
 };
+/** A user-defined label attachable to any transaction. Retired via `archived`. */
+export type Tag = Row<'tags'>;
+/** Per-tag transaction counts, split the way the tag list displays them. */
+export interface TagCounts {
+  expense: number;
+  income: number;
+}
 
 /** A category with its subcategories nested (one level only). */
 export interface CategoryNode extends Category {

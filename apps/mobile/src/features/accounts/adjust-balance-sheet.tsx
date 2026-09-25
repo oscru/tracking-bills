@@ -1,7 +1,7 @@
 import { useCategories, useCreateTransaction } from '@repo/core/hooks';
 import type { TransactionCreateInput } from '@repo/core/validators';
-import { applyAmountKey, evalAmount, formatCurrency, todayISODate } from '@repo/core/utils';
-import { AmountDisplay, BottomSheet, Button, NumericKeypad, type KeypadKey } from '@repo/ui';
+import { applyAmountKey, evalAmount, formatCurrency, toFriendlyMessage, todayISODate } from '@repo/core/utils';
+import { AmountDisplay, BottomSheet, Button, ErrorCard, NumericKeypad, type KeypadKey } from '@repo/ui';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -68,7 +68,8 @@ export function AdjustBalanceSheet({
 
     const adjustmentSlug =
       adjustmentType === 'income' ? 'balance_adjustment_income' : 'balance_adjustment_expense';
-    const categoryId = (categories ?? []).find((c) => c.slug === adjustmentSlug)?.id ?? null;
+    const categoryId = (categories ?? []).find((c) => c.slug === adjustmentSlug)?.id;
+    if (!categoryId) return setError('No se encontró la categoría de ajuste de saldo');
     const payload: TransactionCreateInput = {
       type: adjustmentType,
       account_id: accountId,
@@ -86,7 +87,7 @@ export function AdjustBalanceSheet({
       },
       onError: (e) => {
         setConfirmOpen(false);
-        setError(e instanceof Error ? e.message : 'No se pudo ajustar el saldo');
+        setError(toFriendlyMessage(e, 'No se pudo ajustar el saldo'));
       },
     });
   };
@@ -113,9 +114,7 @@ export function AdjustBalanceSheet({
           </Text>
         ) : null}
 
-        {error ? (
-          <Text className="text-center text-sm text-danger dark:text-danger-dark">{error}</Text>
-        ) : null}
+        <ErrorCard message={error} />
 
         <NumericKeypad onKey={onKey} />
         <Button label="Guardar" onPress={askConfirm} />

@@ -1,19 +1,19 @@
-import { useCreateAccount, useFormError } from '@repo/core/hooks';
+import { useCreateTag, useFormError } from '@repo/core/hooks';
 import { PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 
-import { AccountForm } from '../../../../../features/accounts/account-form';
+import { TagForm } from '../../../../../features/tags/tag-form';
 
-export default function NewAccount() {
+export default function NewTag() {
   const router = useRouter();
-  const create = useCreateAccount();
+  const create = useCreateTag();
   const { error, setError, clearError } = useFormError();
 
   return (
     <Screen className="gap-4">
-      <PageHeader title="Nueva cuenta" onBack={() => router.back()} />
+      <PageHeader title="Nueva tag" onBack={() => router.back()} />
 
-      <AccountForm
+      <TagForm
         submitLabel="Guardar"
         submitting={create.isPending}
         error={error}
@@ -22,7 +22,7 @@ export default function NewAccount() {
           clearError();
           create.mutate(input, {
             onSuccess: () => router.back(),
-            onError: (e) => setError(e, 'No se pudo guardar la cuenta'),
+            onError: (e) => setError(e, 'No se pudo guardar la tag'),
           });
         }}
       />

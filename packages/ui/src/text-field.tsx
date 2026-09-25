@@ -4,16 +4,19 @@ import { Text, TextInput, View, type TextInputProps } from 'react-native';
 export interface TextFieldProps extends TextInputProps {
   label?: string;
   error?: string | null;
+  /** Tint the border red without an inline message — for when a summary error (e.g. an `ErrorCard`) already names this field. */
+  invalid?: boolean;
 }
 
-export function TextField({ label, error, onFocus, onBlur, ...props }: TextFieldProps) {
+export function TextField({ label, error, invalid, onFocus, onBlur, ...props }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
 
-  const borderClass = error
-    ? 'border-danger dark:border-danger-dark'
-    : focused
-      ? 'border-2 border-ink dark:border-ink-dark'
-      : 'border border-line dark:border-line-dark';
+  const borderClass =
+    error || invalid
+      ? 'border-danger dark:border-danger-dark'
+      : focused
+        ? 'border-2 border-ink dark:border-ink-dark'
+        : 'border border-line dark:border-line-dark';
 
   return (
     <View className="gap-1.5">

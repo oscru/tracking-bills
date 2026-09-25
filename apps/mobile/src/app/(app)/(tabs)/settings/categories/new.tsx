@@ -1,7 +1,6 @@
-import { useCreateCategory } from '@repo/core/hooks';
+import { useCreateCategory, useFormError } from '@repo/core/hooks';
 import { Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { CategoryForm } from '../../../../../features/categories/category-form';
@@ -9,7 +8,7 @@ import { CategoryForm } from '../../../../../features/categories/category-form';
 export default function NewCategory() {
   const router = useRouter();
   const create = useCreateCategory();
-  const [error, setError] = useState<string | null>(null);
+  const { error, setError, clearError } = useFormError();
 
   return (
     <Screen className="gap-4">
@@ -24,12 +23,12 @@ export default function NewCategory() {
         submitLabel="Guardar"
         submitting={create.isPending}
         error={error}
+        onDirty={clearError}
         onSubmit={(input) => {
-          setError(null);
+          clearError();
           create.mutate(input, {
             onSuccess: () => router.back(),
-            onError: (e) =>
-              setError(e instanceof Error ? e.message : 'No se pudo guardar la categoría'),
+            onError: (e) => setError(e, 'No se pudo guardar la categoría'),
           });
         }}
       />

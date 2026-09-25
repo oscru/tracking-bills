@@ -1,7 +1,8 @@
 import { useCategoryTree } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { CategoryNode, CategoryType } from '@repo/core/types';
-import { Fab, PageHeader, Screen, SegmentedControl } from '@repo/ui';
+import { toFriendlyMessage } from '@repo/core/utils';
+import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -45,6 +46,7 @@ function Group({ type, onEdit }: { type: CategoryType; onEdit: (id: string) => v
             <View className="flex-1">
               <Text className="text-base text-ink dark:text-ink-dark">
                 {resolveCategoryLabel(p)}
+                {p.archived ? ' · archivada' : ''}
               </Text>
               {p.children.length > 0 ? (
                 <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
@@ -66,6 +68,7 @@ function Group({ type, onEdit }: { type: CategoryType; onEdit: (id: string) => v
               />
               <Text className="flex-1 text-sm text-ink-2 dark:text-ink-2-dark">
                 {resolveCategoryLabel(c)}
+                {c.archived ? ' · archivada' : ''}
               </Text>
               <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text>
             </Pressable>
@@ -92,9 +95,9 @@ export default function CategoriesScreen() {
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
       ) : error ? (
-        <Text className="mt-8 text-center text-sm text-danger dark:text-danger-dark">
-          {error.message}
-        </Text>
+        <View className="mt-8">
+          <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar las categorías')} />
+        </View>
       ) : (
         <ScrollView className="flex-1" contentContainerClassName="pb-8">
           <Group type={type} onEdit={goEdit} />

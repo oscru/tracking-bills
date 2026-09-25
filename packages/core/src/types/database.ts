@@ -86,6 +86,7 @@ export type Database = {
       }
       categories: {
         Row: {
+          archived: boolean
           color: string | null
           created_at: string
           icon: string | null
@@ -99,6 +100,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived?: boolean
           color?: string | null
           created_at?: string
           icon?: string | null
@@ -112,6 +114,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          archived?: boolean
           color?: string | null
           created_at?: string
           icon?: string | null
@@ -167,6 +170,87 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tags: {
+        Row: {
+          archived: boolean
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          archived?: boolean
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tags_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_tags: {
+        Row: {
+          created_at: string
+          tag_id: string
+          transaction_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          tag_id: string
+          transaction_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          tag_id?: string
+          transaction_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_tags_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_tags_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {

@@ -13,7 +13,9 @@ export const categoryCreateSchema = z.object({
   parent_id: z.string().uuid().nullish(),
 });
 
-export const categoryUpdateSchema = categoryCreateSchema.partial();
+export const categoryUpdateSchema = categoryCreateSchema.partial().extend({
+  archived: z.boolean().optional(),
+});
 
 export type CategoryCreateInput = z.infer<typeof categoryCreateSchema>;
 export type CategoryUpdateInput = z.infer<typeof categoryUpdateSchema>;

@@ -1,6 +1,7 @@
 import { useSignUp } from '@repo/core/hooks';
+import { toFriendlyMessage } from '@repo/core/utils';
 import { signUpSchema } from '@repo/core/validators';
-import { Button, Screen, TextField } from '@repo/ui';
+import { Button, ErrorCard, Screen, TextField } from '@repo/ui';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
@@ -34,8 +35,7 @@ export default function SignUp() {
       onSuccess: (res) => {
         if (res.needsEmailConfirmation) setConfirmationSent(true);
       },
-      onError: (e) =>
-        setErrors({ form: e instanceof Error ? e.message : 'No se pudo crear la cuenta' }),
+      onError: (e) => setErrors({ form: toFriendlyMessage(e, 'No se pudo crear la cuenta') }),
     });
   };
 
@@ -96,9 +96,7 @@ export default function SignUp() {
           error={errors.confirm}
         />
 
-        {errors.form ? (
-          <Text className="text-sm text-danger dark:text-danger-dark">{errors.form}</Text>
-        ) : null}
+        <ErrorCard message={errors.form} />
 
         <Button label="Crear cuenta" onPress={onSubmit} loading={signUp.isPending} />
 

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { AccountType } from '@repo/core/types';
 import { accountCreateSchema, type AccountCreateInput } from '@repo/core/validators';
-import { BottomSheet, Button, ColorPicker, TextField } from '@repo/ui';
+import { BottomSheet, Button, ColorPicker, ErrorCard, TextField } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -22,12 +22,22 @@ interface Props {
   submitting: boolean;
   error?: string | null;
   onSubmit: (input: AccountCreateInput) => void;
+  /** Called when the name changes — the parent should clear its `error` so it doesn't linger once the user starts fixing it. */
+  onDirty?: () => void;
   footer?: ReactNode;
 }
 
 type FieldErrors = Partial<Record<'name' | 'currency' | 'initial_balance', string>>;
 
-export function AccountForm({ initial, submitLabel, submitting, error, onSubmit, footer }: Props) {
+export function AccountForm({
+  initial,
+  submitLabel,
+  submitting,
+  error,
+  onSubmit,
+  onDirty,
+  footer,
+}: Props) {
   const editing = initial != null;
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState<AccountType>(initial?.type ?? 'debit');
@@ -72,9 +82,14 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
       <TextField
         label="Nombre"
         value={name}
-        onChangeText={setName}
+        onChangeText={(text) => {
+          setName(text);
+          setErrors((prev) => ({ ...prev, name: undefined }));
+          onDirty?.();
+        }}
         placeholder="Ej. Cuenta de nómina"
         error={errors.name}
+        invalid={Boolean(error)}
       />
 
       <View className="gap-2">
@@ -120,7 +135,7 @@ export function AccountForm({ initial, submitLabel, submitting, error, onSubmit,
         <ColorPicker value={color} onChange={setColor} colors={ACCOUNT_COLORS} />
       </View>
 
-      {error ? <Text className="text-sm text-danger dark:text-danger-dark">{error}</Text> : null}
+      <ErrorCard message={error} />
 
       <Button label={submitLabel} onPress={submit} loading={submitting} />
 

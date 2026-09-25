@@ -61,6 +61,10 @@ interface Props {
   onAccountIdsChange: (ids: string[]) => void;
   accountOptions: FilterOption[];
 
+  tagIds: string[];
+  onTagIdsChange: (ids: string[]) => void;
+  tagOptions: FilterOption[];
+
   from: string | null;
   to: string | null;
   onDateChange: (from: string | null, to: string | null) => void;
@@ -84,6 +88,9 @@ export function FiltersSheet({
   accountIds,
   onAccountIdsChange,
   accountOptions,
+  tagIds,
+  onTagIdsChange,
+  tagOptions,
   from,
   to,
   onDateChange,
@@ -93,6 +100,7 @@ export function FiltersSheet({
   const [typeSheetOpen, setTypeSheetOpen] = useState(false);
   const [categorySheetOpen, setCategorySheetOpen] = useState(false);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+  const [tagSheetOpen, setTagSheetOpen] = useState(false);
 
   const categoryLabel =
     categoryIds.length === 0
@@ -100,6 +108,7 @@ export function FiltersSheet({
       : pluralLabel(categoryIds.length, 'categoría', 'categorías');
   const accountLabel =
     accountIds.length === 0 ? 'Todas las cuentas' : pluralLabel(accountIds.length, 'cuenta', 'cuentas');
+  const tagLabel = tagIds.length === 0 ? 'Todas las tags' : pluralLabel(tagIds.length, 'tag', 'tags');
 
   return (
     <>
@@ -133,6 +142,7 @@ export function FiltersSheet({
             value={accountLabel}
             onPress={() => setAccountSheetOpen(true)}
           />
+          <FilterRow title="Tag" value={tagLabel} onPress={() => setTagSheetOpen(true)} />
           <DateRangeField
             from={from}
             to={to}
@@ -168,6 +178,14 @@ export function FiltersSheet({
         options={accountOptions}
         values={accountIds}
         onChange={onAccountIdsChange}
+      />
+      <MultiSelectSheet
+        visible={tagSheetOpen}
+        onClose={() => setTagSheetOpen(false)}
+        title="Tag"
+        options={tagOptions}
+        values={tagIds}
+        onChange={onTagIdsChange}
       />
     </>
   );

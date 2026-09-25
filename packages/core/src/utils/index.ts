@@ -3,6 +3,8 @@
  */
 import type { Category, CategoryNode } from '../types';
 
+export * from './errors';
+
 /** Format a numeric amount as a localized currency string. */
 export function formatCurrency(amount: number, currency = 'MXN', locale = 'es-MX'): string {
   return new Intl.NumberFormat(locale, {
@@ -180,6 +182,23 @@ export function accountBalance(account: BalanceAccount, transactions: BalanceTx[
 /** Net worth across accounts (transfers cancel out). */
 export function totalBalance(accounts: BalanceAccount[], transactions: BalanceTx[]): number {
   return accounts.reduce((sum, a) => sum + accountBalance(a, transactions), 0);
+}
+
+interface TagCountTx {
+  type: string;
+  tags: { id: string }[];
+}
+
+/** How many expense/income transactions carry this tag (transfers aren't counted). */
+export function tagCounts(tagId: string, transactions: TagCountTx[]): { expense: number; income: number } {
+  let expense = 0;
+  let income = 0;
+  for (const t of transactions) {
+    if (!t.tags.some((tag) => tag.id === tagId)) continue;
+    if (t.type === 'expense') expense++;
+    else if (t.type === 'income') income++;
+  }
+  return { expense, income };
 }
 
 /** Income / expense totals for a `YYYY-MM` month, excluding transfers. */

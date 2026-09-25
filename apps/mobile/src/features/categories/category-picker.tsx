@@ -17,6 +17,8 @@ interface Props {
   parentOnly?: boolean;
   /** Hide this id (a category can't be its own parent). */
   excludeId?: string;
+  /** Show the "Sin categoría" option. Set false when a category is required (e.g. transactions). */
+  allowNone?: boolean;
 }
 
 export function CategoryPicker({
@@ -28,6 +30,7 @@ export function CategoryPicker({
   onCreateNew,
   parentOnly = false,
   excludeId,
+  allowNone = true,
 }: Props) {
   const { height: windowHeight } = useWindowDimensions();
   const [q, setQ] = useState('');
@@ -42,15 +45,24 @@ export function CategoryPicker({
       if (t.type !== type || !t.category?.id || seen.has(t.category.id)) continue;
       seen.add(t.category.id);
       const full = (allCategories ?? []).find((c) => c.id === t.category?.id);
-      if (full) out.push(full);
+      if (full && (!full.archived || full.id === selectedId)) out.push(full);
       if (out.length >= 5) break;
     }
     return out;
-  }, [transactions, allCategories, type]);
+  }, [transactions, allCategories, type, selectedId]);
 
+  // Archived categories stay selectable here only if they're already the
+  // current selection, so editing an old transaction/subcategory doesn't
+  // silently drop it — mirrors the same rule for tags in `MovementForm`.
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    let roots = (tree ?? []).filter((p) => p.id !== excludeId);
+    let roots = (tree ?? [])
+      .filter((p) => p.id !== excludeId)
+      .filter((p) => !p.archived || p.id === selectedId)
+      .map((p) => ({
+        ...p,
+        children: p.children.filter((c) => !c.archived || c.id === selectedId),
+      }));
     if (parentOnly) {
       roots = roots.map((p) => ({ ...p, children: [] }));
     }
@@ -63,7 +75,7 @@ export function CategoryPicker({
       .filter(
         (p) => resolveCategoryLabel(p).toLowerCase().includes(needle) || p.children.length > 0,
       );
-  }, [tree, q, parentOnly, excludeId]);
+  }, [tree, q, parentOnly, excludeId, selectedId]);
 
   const pick = (id: string | null) => {
     onSelect(id);
@@ -120,14 +132,16 @@ export function CategoryPicker({
         contentContainerClassName="pb-4"
         keyboardShouldPersistTaps="handled"
       >
-        <Pressable
-          onPress={() => pick(null)}
-          className="border-t border-line px-5 py-5 dark:border-line-dark"
-        >
-          <Text className="text-[15px] text-ink-2 dark:text-ink-2-dark">
-            {parentOnly ? 'Ninguna (categoría de primer nivel)' : 'Sin categoría'}
-          </Text>
-        </Pressable>
+        {parentOnly || allowNone ? (
+          <Pressable
+            onPress={() => pick(null)}
+            className="border-t border-line px-5 py-5 dark:border-line-dark"
+          >
+            <Text className="text-[15px] text-ink-2 dark:text-ink-2-dark">
+              {parentOnly ? 'Ninguna (categoría de primer nivel)' : 'Sin categoría'}
+            </Text>
+          </Pressable>
+        ) : null}
 
         {filtered.map((p) => (
           <View key={p.id}>

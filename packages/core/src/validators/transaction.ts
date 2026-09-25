@@ -5,6 +5,10 @@ export const transactionTypeSchema = z.enum(['income', 'expense', 'transfer']);
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 const uuid = z.string().uuid();
+// income/expense movements must be categorized — only a transfer has none.
+const requiredCategoryId = z
+  .string({ required_error: 'Elige una categoría', invalid_type_error: 'Elige una categoría' })
+  .uuid('Elige una categoría');
 const amount = z.number().positive('Must be greater than 0').finite();
 const description = z.string().trim().max(280).nullish();
 // Omitted -> the DB defaults it to current_date.
@@ -18,12 +22,12 @@ const commonFields = { account_id: uuid, amount, description, transaction_date, 
 
 /**
  * Create payload — a discriminated union on `type`:
- * income/expense carry an optional `category_id`; a transfer carries a required
+ * income/expense carry a required `category_id`; a transfer carries a required
  * `to_account_id` (the destination) and no category.
  */
 export const transactionCreateSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('income'), category_id: uuid.nullish(), ...commonFields }),
-  z.object({ type: z.literal('expense'), category_id: uuid.nullish(), ...commonFields }),
+  z.object({ type: z.literal('income'), category_id: requiredCategoryId, ...commonFields }),
+  z.object({ type: z.literal('expense'), category_id: requiredCategoryId, ...commonFields }),
   z.object({ type: z.literal('transfer'), to_account_id: uuid, ...commonFields }),
 ]);
 

@@ -1,6 +1,6 @@
 import { ActivityIndicator, Pressable, Text, type PressableProps } from 'react-native';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'ghost-danger';
 
 export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
@@ -12,18 +12,21 @@ const container: Record<Variant, string> = {
   primary: 'bg-ink dark:bg-ink-dark',
   secondary: 'bg-[#F1F2F4] dark:bg-line-dark',
   ghost: 'bg-transparent',
+  'ghost-danger': 'bg-transparent',
 };
 
 const text: Record<Variant, string> = {
   primary: 'text-surface dark:text-surface-dark',
   secondary: 'text-ink dark:text-ink-dark',
   ghost: 'text-lime-ink dark:text-lime-ink-dark',
+  'ghost-danger': 'text-danger dark:text-danger-dark',
 };
 
 const spinner: Record<Variant, string> = {
   primary: '#fff',
   secondary: '#1A1D21',
   ghost: '#4D7C0F',
+  'ghost-danger': '#E5484D',
 };
 
 export function Button({

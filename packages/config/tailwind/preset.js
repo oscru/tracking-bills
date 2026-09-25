@@ -39,7 +39,12 @@ module.exports = {
           'tint-dark': '#26310A',
         },
         pos: { DEFAULT: '#16A34A', dark: '#22C55E' },
-        danger: { DEFAULT: '#E5484D', dark: '#F16A6E' },
+        danger: {
+          DEFAULT: '#E5484D',
+          dark: '#F16A6E',
+          tint: '#FCEAEA',
+          'tint-dark': '#3A1619',
+        },
       },
       borderRadius: {
         card: '20px',

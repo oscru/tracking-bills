@@ -5,6 +5,7 @@
  */
 export { createQueryClient } from './query-client';
 export { queryKeys } from './keys';
+export { useFormError } from './use-form-error';
 
 export { SessionProvider, useSession, type SessionState } from './session-context';
 export { useSignIn, useSignUp, useSignOut } from './use-auth';
@@ -15,8 +16,15 @@ export {
   useCategoryTree,
   useCreateCategory,
   useUpdateCategory,
-  useDeleteCategory,
 } from './use-categories';
+export {
+  useTags,
+  useCreateTag,
+  useUpdateTag,
+  useArchiveTag,
+  useDeleteTag,
+  useSetTransactionTags,
+} from './use-tags';
 export {
   useTransactions,
   useTransaction,

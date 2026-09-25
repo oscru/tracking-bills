@@ -6,7 +6,7 @@ import {
   type CategoryUpdateInput,
 } from '../validators';
 import { supabase } from './client';
-import { SupabaseError, unwrap } from './internal';
+import { unwrap } from './internal';
 
 /** All of the user's categories (RLS scopes to the owner). Ordered for direct use in a sectioned list. */
 export async function listCategories(): Promise<Category[]> {
@@ -32,10 +32,4 @@ export async function updateCategory(id: string, patch: CategoryUpdateInput): Pr
   return unwrap(
     await supabase.from('categories').update(payload).eq('id', id).select().single(),
   ) as Category;
-}
-
-/** Delete a category. Referencing transactions keep `category_id = null`. */
-export async function deleteCategory(id: string): Promise<void> {
-  const { error } = await supabase.from('categories').delete().eq('id', id);
-  if (error) throw new SupabaseError(error);
 }

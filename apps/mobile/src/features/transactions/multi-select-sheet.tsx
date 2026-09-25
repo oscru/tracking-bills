@@ -15,6 +15,7 @@ interface Props {
   options: MultiSelectOption[];
   values: string[];
   onChange: (values: string[]) => void;
+  onCreateNew?: () => void;
 }
 
 function Checkbox({ checked }: { checked: boolean }) {
@@ -30,7 +31,15 @@ function Checkbox({ checked }: { checked: boolean }) {
 }
 
 /** Reusable multi-select list sheet: "Seleccionar todo" + a checkbox per option. */
-export function MultiSelectSheet({ visible, onClose, title, options, values, onChange }: Props) {
+export function MultiSelectSheet({
+  visible,
+  onClose,
+  title,
+  options,
+  values,
+  onChange,
+  onCreateNew,
+}: Props) {
   const allSelected = options.length > 0 && values.length === options.length;
 
   const toggleAll = () => {
@@ -46,11 +55,20 @@ export function MultiSelectSheet({ visible, onClose, title, options, values, onC
       onClose={onClose}
       title={title}
       headerAction={
-        <Pressable onPress={onClose} hitSlop={8}>
-          <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-            Listo
-          </Text>
-        </Pressable>
+        <View className="flex-row items-center gap-4">
+          {onCreateNew ? (
+            <Pressable onPress={onCreateNew} hitSlop={8}>
+              <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+                + Nueva
+              </Text>
+            </Pressable>
+          ) : null}
+          <Pressable onPress={onClose} hitSlop={8}>
+            <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+              Listo
+            </Text>
+          </Pressable>
+        </View>
       }
     >
       <ScrollView className="max-h-[480px]" contentContainerClassName="pb-4">

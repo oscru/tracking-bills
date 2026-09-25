@@ -1,4 +1,4 @@
-import { useAccounts, useCategories, useSession } from '@repo/core/hooks';
+import { useAccounts, useCategories, useSession, useTags } from '@repo/core/hooks';
 import { Avatar, ListRow, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
@@ -8,9 +8,11 @@ export default function SettingsScreen() {
   const { user } = useSession();
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
+  const { data: tags } = useTags();
 
   const customCategories = (categories ?? []).length;
   const activeAccounts = (accounts ?? []).filter((a) => !a.archived).length;
+  const activeTags = (tags ?? []).filter((t) => !t.archived).length;
 
   return (
     <Screen className="gap-6">
@@ -45,6 +47,13 @@ export default function SettingsScreen() {
           subtitle={`${customCategories} categorías`}
           showChevron
           onPress={() => router.push('/(app)/settings/categories')}
+        />
+        <View className="h-px bg-line dark:bg-line-dark" />
+        <ListRow
+          title="Tags"
+          subtitle={`${activeTags} activa${activeTags === 1 ? '' : 's'}`}
+          showChevron
+          onPress={() => router.push('/(app)/settings/tags')}
         />
       </View>
     </Screen>

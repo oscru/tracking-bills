@@ -1,6 +1,7 @@
 import { useSignIn } from '@repo/core/hooks';
+import { toFriendlyMessage } from '@repo/core/utils';
 import { signInSchema } from '@repo/core/validators';
-import { Button, Screen, TextField } from '@repo/ui';
+import { Button, ErrorCard, Screen, TextField } from '@repo/ui';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
@@ -20,8 +21,7 @@ export default function SignIn() {
       return;
     }
     signIn.mutate(parsed.data, {
-      onError: (e) =>
-        setErrors({ form: e instanceof Error ? e.message : 'No se pudo iniciar sesión' }),
+      onError: (e) => setErrors({ form: toFriendlyMessage(e, 'No se pudo iniciar sesión') }),
     });
   };
 
@@ -63,9 +63,7 @@ export default function SignIn() {
           error={errors.password}
         />
 
-        {errors.form ? (
-          <Text className="text-sm text-danger dark:text-danger-dark">{errors.form}</Text>
-        ) : null}
+        <ErrorCard message={errors.form} />
 
         <Button label="Entrar" onPress={onSubmit} loading={signIn.isPending} />
 

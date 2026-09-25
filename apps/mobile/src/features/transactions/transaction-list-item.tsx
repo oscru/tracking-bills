@@ -20,9 +20,12 @@ export function TransactionListItem({
     account,
     to_account,
     is_completed,
+    tags,
   } = transaction;
   const currency = account?.currency ?? 'MXN';
   const value = formatCurrency(amount, currency);
+  const primaryTag = tags?.[0] ?? null;
+  const extraTags = tags && tags.length > 1 ? tags.length - 1 : 0;
 
   let title: string;
   let subtitle: string;
@@ -64,6 +67,15 @@ export function TransactionListItem({
         <Text className="text-[13px] text-ink-2 dark:text-ink-2-dark" numberOfLines={1}>
           {subtitle}
         </Text>
+        {primaryTag ? (
+          <View className="mt-0.5 flex-row items-center gap-1">
+            <Ionicons name="pricetag-outline" size={10} color="#9CA3AF" />
+            <Text className="text-[11px] text-ink-3 dark:text-ink-3-dark" numberOfLines={1}>
+              {primaryTag.name}
+              {extraTags > 0 ? ` +${extraTags}` : ''}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <View className="items-end">

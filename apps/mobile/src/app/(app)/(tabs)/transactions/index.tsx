@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useCategoryTree, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useCategoryTree, useTags, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionType } from '@repo/core/types';
-import { formatCurrency } from '@repo/core/utils';
-import { Fab, Screen, TextField } from '@repo/ui';
+import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
+import { ErrorCard, Fab, Screen, TextField } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -32,6 +32,7 @@ export default function TransactionsScreen() {
     from?: string;
     to?: string;
     accountId?: string;
+    tagId?: string;
   }>();
 
   const [type, setType] = useState<TransactionType | null>(params.type ?? null);
@@ -41,6 +42,7 @@ export default function TransactionsScreen() {
   const [accountIds, setAccountIds] = useState<string[]>(
     params.accountId ? [params.accountId] : [],
   );
+  const [tagIds, setTagIds] = useState<string[]>(params.tagId ? [params.tagId] : []);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -48,7 +50,7 @@ export default function TransactionsScreen() {
 
   // Tabs stay mounted, so a repeat push (e.g. a different month's card from
   // Home) only changes `params` — re-apply the nav filters whenever they do.
-  const navParamsKey = `${params.type ?? ''}|${params.from ?? ''}|${params.to ?? ''}|${params.accountId ?? ''}`;
+  const navParamsKey = `${params.type ?? ''}|${params.from ?? ''}|${params.to ?? ''}|${params.accountId ?? ''}|${params.tagId ?? ''}`;
   const [appliedNavParamsKey, setAppliedNavParamsKey] = useState(navParamsKey);
   if (navParamsKey !== appliedNavParamsKey) {
     setAppliedNavParamsKey(navParamsKey);
@@ -57,6 +59,7 @@ export default function TransactionsScreen() {
     setFrom(params.from ?? null);
     setTo(params.to ?? null);
     setAccountIds(params.accountId ? [params.accountId] : []);
+    setTagIds(params.tagId ? [params.tagId] : []);
   }
 
   useEffect(() => {
@@ -65,6 +68,7 @@ export default function TransactionsScreen() {
   }, [search]);
 
   const { data: accounts } = useAccounts();
+  const { data: tags } = useTags();
   // Category filter always lists one type's tree — income if that's the active
   // type filter, expense otherwise (categories don't apply to transfers).
   const { data: categoryTree } = useCategoryTree(type === 'income' ? 'income' : 'expense');
@@ -76,12 +80,13 @@ export default function TransactionsScreen() {
       from: from ?? undefined,
       to: to ?? undefined,
       accountIds: accountIds.length ? accountIds : undefined,
+      tagIds: tagIds.length ? tagIds : undefined,
       search: debouncedSearch || undefined,
     }),
-    [type, categoryIds, from, to, accountIds, debouncedSearch],
+    [type, categoryIds, from, to, accountIds, tagIds, debouncedSearch],
   );
   const filtered = Boolean(
-    type || categoryIds.length || from || accountIds.length || debouncedSearch,
+    type || categoryIds.length || from || accountIds.length || tagIds.length || debouncedSearch,
   );
 
   const { data: transactions, isLoading, isRefetching, refetch, error } = useTransactions(filters);
@@ -95,6 +100,7 @@ export default function TransactionsScreen() {
     setFrom(null);
     setTo(null);
     setAccountIds([]);
+    setTagIds([]);
     setSearch('');
   };
 
@@ -114,11 +120,16 @@ export default function TransactionsScreen() {
     () => (accounts ?? []).map((a) => ({ value: a.id, label: a.name })),
     [accounts],
   );
+  const tagOptions = useMemo(
+    () => (tags ?? []).filter((t) => !t.archived).map((t) => ({ value: t.id, label: t.name, dotColor: t.color })),
+    [tags],
+  );
 
   const activeFilterCount = [
     Boolean(type),
     categoryIds.length > 0,
     accountIds.length > 0,
+    tagIds.length > 0,
     Boolean(from),
   ].filter(Boolean).length;
 
@@ -179,9 +190,9 @@ export default function TransactionsScreen() {
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
       ) : error ? (
-        <Text className="mt-8 text-center text-sm text-danger dark:text-danger-dark">
-          {error.message}
-        </Text>
+        <View className="mt-8">
+          <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar los movimientos')} />
+        </View>
       ) : (
         <SectionList
           sections={sections}
@@ -263,6 +274,9 @@ export default function TransactionsScreen() {
         accountIds={accountIds}
         onAccountIdsChange={setAccountIds}
         accountOptions={accountOptions}
+        tagIds={tagIds}
+        onTagIdsChange={setTagIds}
+        tagOptions={tagOptions}
         from={from}
         to={to}
         onDateChange={(f, t) => {
