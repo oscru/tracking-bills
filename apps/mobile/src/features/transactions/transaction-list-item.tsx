@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency, formatDate } from '@repo/core/utils';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, Text, View, useColorScheme } from 'react-native';
 import {
@@ -192,6 +193,13 @@ export function TransactionListItem({
   const openState = useRef<OpenState>('closed');
   const gestureStartOffset = useRef(0);
   const triggered = useRef(false);
+  // True only between BEGAN and the release being handled. A slow drag can
+  // have one more native translationX event queued up right as the finger
+  // lifts, which lands (and rewrites dragX) after we've already read the
+  // release's own translationX and snapped — this flag lets the listener
+  // recognize that straggler and zero dragX back out instead of letting it
+  // reopen/offset the row a beat later.
+  const gestureActive = useRef(false);
 
   const close = useCallback(() => {
     openState.current = 'closed';
@@ -200,8 +208,14 @@ export function TransactionListItem({
   }, [dragX, rowOffset]);
 
   const snapTo = useCallback(
-    (toValue: number, state: OpenState) => {
+    (toValue: number, state: OpenState, fromOffset: number) => {
       openState.current = state;
+      // `rowOffset` never moves during the drag itself — only `dragX` (native-
+      // driven) tracks the finger. Zeroing `dragX` without first parking
+      // `rowOffset` at the row's actual current position would make the sum
+      // read `rowOffset`'s stale (pre-drag) value for a frame — a visible
+      // snap to closed right before the spring below animates it back out.
+      rowOffset.setValue(fromOffset);
       dragX.setValue(0);
       Animated.spring(rowOffset, {
         toValue,
@@ -228,11 +242,17 @@ export function TransactionListItem({
   }, [isOpen, close]);
 
   const fire = useCallback(
-    (action: () => void, meta: SwipeMeta) => {
+    (action: () => void, meta: SwipeMeta, fromOffset: number) => {
       if (triggered.current) return;
       triggered.current = true;
       setFillMeta(meta);
       fillProgress.setValue(0);
+      // Same reasoning as `snapTo`: park `rowOffset` at the row's real
+      // current position before zeroing the native-driven `dragX`, or the
+      // sum flashes back to `rowOffset`'s stale value for a frame — visible
+      // even under the fill sweep on a hard swipe fired mid-drag.
+      rowOffset.setValue(fromOffset);
+      dragX.setValue(0);
       Animated.parallel([
         Animated.timing(fillProgress, {
           toValue: 1,
@@ -242,27 +262,53 @@ export function TransactionListItem({
         }),
         Animated.spring(rowOffset, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 20 }),
       ]).start(() => {
+        // Don't reset here: the push transition (~300ms) keeps this screen
+        // visible for a while after `action()` fires, and an instant
+        // `setValue`/`setFillMeta(null)` right now would show as a jump —
+        // full-width fill snapping back to button-width, then vanishing —
+        // while the row is still on screen mid-transition. Leave the row
+        // painted; the focus effect below cleans it up once we're actually
+        // back (see its own comment).
         action();
-        // The list screen stays mounted behind whatever we just navigated to
-        // (expo-router keeps it in the stack), so this row's state persists —
-        // reset it now, off-screen, so it's back to normal by the time we return.
+      });
+    },
+    [fillProgress, rowOffset, dragX],
+  );
+
+  // The list screen stays mounted behind whatever `fire` just navigated to
+  // (expo-router keeps it in the stack), so this row's post-action state
+  // (painted fill, closed-but-not-reset refs) persists untouched while we're
+  // away. Clear it here, on refocus, instead of the instant it finishes
+  // painting — by the time we're focused again the row isn't mid-transition,
+  // so there's nothing to see snap.
+  useFocusEffect(
+    useCallback(() => {
+      if (triggered.current || openState.current !== 'closed') {
         triggered.current = false;
         openState.current = 'closed';
         fillProgress.setValue(0);
         setFillMeta(null);
-      });
-    },
-    [fillProgress, rowOffset],
+        dragX.setValue(0);
+        rowOffset.setValue(0);
+      }
+    }, [fillProgress, dragX, rowOffset]),
   );
 
   const handleDragUpdate = useCallback(
     (e: { nativeEvent: PanGestureHandlerEventPayload }) => {
+      if (!gestureActive.current) {
+        // A straggler from the gesture we already released — the native
+        // mapping just wrote its translationX into dragX behind our back.
+        // Cancel that write out instead of leaving it to sit there.
+        dragX.setValue(0);
+        return;
+      }
       if (triggered.current) return;
       const total = gestureStartOffset.current + e.nativeEvent.translationX;
-      if (total > HARD_THRESHOLD) fire(handleEdit, EDIT_META);
-      else if (total < -HARD_THRESHOLD) fire(handleView, VIEW_META);
+      if (total > HARD_THRESHOLD) fire(handleEdit, EDIT_META, total);
+      else if (total < -HARD_THRESHOLD) fire(handleView, VIEW_META, total);
     },
-    [fire, handleEdit, handleView],
+    [fire, handleEdit, handleView, dragX],
   );
 
   // The `listener` here runs on the JS thread on every native gesture update
@@ -285,25 +331,34 @@ export function TransactionListItem({
       const { state, oldState, translationX } = e.nativeEvent;
       if (state === State.BEGAN) {
         triggered.current = false;
+        gestureActive.current = true;
         gestureStartOffset.current =
           openState.current === 'left' ? ACTION_WIDTH : openState.current === 'right' ? -ACTION_WIDTH : 0;
         return;
       }
       if (oldState === State.ACTIVE) {
-        if (triggered.current) return;
+        gestureActive.current = false;
+        if (triggered.current) {
+          // `fire` already reset dragX once, but the gesture was still active
+          // then — the native driver kept following the finger past that
+          // point, so it needs zeroing again now that the finger has lifted
+          // and stopped feeding it.
+          dragX.setValue(0);
+          return;
+        }
         const total = gestureStartOffset.current + translationX;
         // A very fast swipe can cross HARD_THRESHOLD and have the finger lift
         // before the `Animated.event` listener (which syncs back from the
         // native driver, not perfectly real-time) catches up — fall back to
         // checking it here too, against the release event's own exact data.
-        if (total > HARD_THRESHOLD) fire(handleEdit, EDIT_META);
-        else if (total < -HARD_THRESHOLD) fire(handleView, VIEW_META);
-        else if (total > SOFT_THRESHOLD) snapTo(ACTION_WIDTH, 'left');
-        else if (total < -SOFT_THRESHOLD) snapTo(-ACTION_WIDTH, 'right');
-        else snapTo(0, 'closed');
+        if (total > HARD_THRESHOLD) fire(handleEdit, EDIT_META, total);
+        else if (total < -HARD_THRESHOLD) fire(handleView, VIEW_META, total);
+        else if (total > SOFT_THRESHOLD) snapTo(ACTION_WIDTH, 'left', total);
+        else if (total < -SOFT_THRESHOLD) snapTo(-ACTION_WIDTH, 'right', total);
+        else snapTo(0, 'closed', total);
       }
     },
-    [snapTo, fire, handleEdit, handleView],
+    [snapTo, fire, handleEdit, handleView, dragX],
   );
 
   let title: string;
@@ -333,8 +388,16 @@ export function TransactionListItem({
       className="overflow-hidden"
       onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}
     >
-      <SwipeAction translateX={translateX} meta={EDIT_META} onPress={() => fire(handleEdit, EDIT_META)} />
-      <SwipeAction translateX={translateX} meta={VIEW_META} onPress={() => fire(handleView, VIEW_META)} />
+      <SwipeAction
+        translateX={translateX}
+        meta={EDIT_META}
+        onPress={() => fire(handleEdit, EDIT_META, ACTION_WIDTH)}
+      />
+      <SwipeAction
+        translateX={translateX}
+        meta={VIEW_META}
+        onPress={() => fire(handleView, VIEW_META, -ACTION_WIDTH)}
+      />
 
       <PanGestureHandler
         onGestureEvent={onGestureEvent}

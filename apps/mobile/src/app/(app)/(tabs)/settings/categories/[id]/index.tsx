@@ -9,7 +9,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CategoryHistoryChart } from '../../../../../../features/categories/category-history-chart';
 
 export default function CategoryDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, fromTransactionId } = useLocalSearchParams<{
+    id: string;
+    /** Set only when we were pushed straight from a transaction's detail
+     * screen — that's a cross-tab push (this route lives in the settings
+     * tab), so the default `router.back()` has nothing correct to pop to
+     * and would bubble out to the home tab instead. Route back there
+     * explicitly instead; every other entry point (the categories list, a
+     * parent category's subcategory list) is a same-tab push and keeps
+     * using plain `back()`. */
+    fromTransactionId?: string;
+  }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: categories, isLoading } = useCategories();
@@ -19,6 +29,11 @@ export default function CategoryDetail() {
 
   const category = (categories ?? []).find((c) => c.id === id);
   const subcategories = (categories ?? []).filter((c) => c.parent_id === id);
+
+  const goBack = () =>
+    fromTransactionId
+      ? router.navigate({ pathname: '/(app)/transactions/[id]', params: { id: fromTransactionId } })
+      : router.back();
 
   if (isLoading) {
     return (
@@ -30,7 +45,7 @@ export default function CategoryDetail() {
   if (!category) {
     return (
       <Screen className="gap-4">
-        <PageHeader title="Categoría" onBack={() => router.back()} />
+        <PageHeader title="Categoría" onBack={goBack} />
         <Text className="text-base text-ink-2 dark:text-ink-2-dark">Categoría no encontrada.</Text>
       </Screen>
     );
@@ -43,7 +58,7 @@ export default function CategoryDetail() {
 
   return (
     <Screen edges={['top']} className="gap-5">
-      <PageHeader title={resolveCategoryLabel(category)} onBack={() => router.back()} />
+      <PageHeader title={resolveCategoryLabel(category)} onBack={goBack} />
 
       <View className="flex-1">
         <ScrollView

@@ -46,7 +46,16 @@ export default function TransactionDetail() {
   };
   const goCategory = () => {
     if (!tx.category) return;
-    router.push({ pathname: '/(app)/settings/categories/[id]', params: { id: tx.category.id } });
+    // `settings/categories/[id]` lives in the settings tab's own nested
+    // stack — pushing into it from here switches tabs and leaves that stack
+    // with only this one screen, so its default `router.back()` has nowhere
+    // correct to pop to and bubbles all the way out to the home tab instead
+    // of back to this transaction. Pass our id along so its back button can
+    // route here explicitly instead of relying on that broken pop.
+    router.push({
+      pathname: '/(app)/settings/categories/[id]',
+      params: { id: tx.category.id, fromTransactionId: tx.id },
+    });
   };
   const goTag = (tagId: string) =>
     router.push({ pathname: '/(app)/settings/tags/[id]', params: { id: tagId } });
