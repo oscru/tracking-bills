@@ -1,7 +1,7 @@
 import { useTransaction } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import { formatCurrency, formatDate } from '@repo/core/utils';
-import { Chip, Fab, ListRow, PageHeader, Screen } from '@repo/ui';
+import { Chip, Fab, IconButton, ListRow, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
@@ -60,9 +60,32 @@ export default function TransactionDetail() {
   const goTag = (tagId: string) =>
     router.push({ pathname: '/(app)/settings/tags/[id]', params: { id: tagId } });
 
+  const goSaveFavorite = () => {
+    router.push({
+      pathname: '/(app)/transactions/favorites/new',
+      params: {
+        type: tx.type,
+        accountId: tx.account_id,
+        toAccountId: tx.to_account_id ?? undefined,
+        categoryId: tx.category_id ?? undefined,
+        description: tx.description ?? undefined,
+      },
+    });
+  };
+
   return (
     <Screen edges={['top']} className="gap-5">
-      <PageHeader title={title} onBack={() => router.back()} />
+      <PageHeader
+        title={title}
+        onBack={() => router.back()}
+        action={
+          <IconButton
+            icon="star-outline"
+            onPress={goSaveFavorite}
+            accessibilityLabel="Guardar como favorito"
+          />
+        }
+      />
 
       <View className="flex-1">
         <ScrollView

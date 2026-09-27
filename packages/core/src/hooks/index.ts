@@ -26,6 +26,12 @@ export {
   useSetTransactionTags,
 } from './use-tags';
 export {
+  useFavoriteTransactions,
+  useCreateFavoriteTransaction,
+  useUpdateFavoriteTransaction,
+  useDeleteFavoriteTransaction,
+} from './use-favorite-transactions';
+export {
   useTransactions,
   useTransaction,
   useCreateTransaction,

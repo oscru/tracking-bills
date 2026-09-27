@@ -40,6 +40,10 @@ export const draftTransactionStore = {
   minimize(snapshot: TransactionDraftSnapshot) {
     setState({ minimized: true, snapshot });
   },
+  /** Prefill a fresh draft (e.g. from a tapped favorite) before opening the form. */
+  seed(snapshot: TransactionDraftSnapshot) {
+    setState({ minimized: false, snapshot });
+  },
   /** The form screen is open again — hide the bubble but keep the snapshot around. */
   restore() {
     if (state.minimized) setState({ ...state, minimized: false });

@@ -144,6 +144,80 @@ export type Database = {
           },
         ]
       }
+      favorite_transactions: {
+        Row: {
+          account_id: string
+          amount: number | null
+          category_id: string | null
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          label: string
+          to_account_id: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          amount?: number | null
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          icon: string
+          id?: string
+          label: string
+          to_account_id?: string | null
+          type: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number | null
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          label?: string
+          to_account_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorite_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorite_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorite_transactions_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorite_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

@@ -9,6 +9,7 @@ import {
   Button,
   Chip,
   ErrorCard,
+  IconButton,
   NumericKeypad,
   Screen,
   SegmentedControl,
@@ -23,6 +24,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AccountPicker } from '../accounts/account-picker';
 import { CategoryPicker } from '../categories/category-picker';
 import { CategoryQuickCreateSheet } from '../categories/category-quick-create-sheet';
+import type { FavoriteFormInitial } from '../favorites/favorite-form';
+import { FavoriteQuickCreateSheet } from '../favorites/favorite-quick-create-sheet';
 import { TagQuickCreateSheet } from '../tags/tag-quick-create-sheet';
 import { DateField } from './date-field';
 import type { TransactionDraftSnapshot } from './draft-transaction-store';
@@ -127,6 +130,16 @@ export function MovementForm({
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // Whether ♥ is armed — just an intent flag, checked at `submit()` time
+  // rather than opening the favorite sheet on tap. Tapping ♥ mid-form (e.g.
+  // from the amount step, before a category is even picked) has nothing
+  // valid to build a favorite from yet; deferring to submit means the sheet
+  // only ever opens once `transactionCreateSchema` has already accepted the
+  // movement, so it's built from confirmed data instead of a half-filled draft.
+  const [saveAsFavorite, setSaveAsFavorite] = useState(false);
+  // The validated movement, held here while the favorite sheet (if armed) is
+  // open — `onSubmit` doesn't fire until that sheet is resolved either way.
+  const [pendingSubmit, setPendingSubmit] = useState<TransactionCreateInput | null>(null);
 
   const fromId = pickedFrom ?? activeAccounts[0]?.id ?? null;
   const toId = pickedTo;
@@ -145,6 +158,15 @@ export function MovementForm({
   const selectedFromAccount = activeAccounts.find((a) => a.id === fromId) ?? null;
   const selectedToAccount = activeAccounts.find((a) => a.id === toId) ?? null;
   const amountInvalid = formError === AMOUNT_ERROR;
+
+  // What "Guardar como favorito" prefills — everything a favorite needs
+  // except its own name/icon, which this movement doesn't carry. Amount is
+  // deliberately left out: defaulting a new favorite to today's exact amount
+  // would make "monto libre" the exception instead of the norm.
+  const favoriteInitial: FavoriteFormInitial =
+    type === 'transfer'
+      ? { type, account_id: fromId, to_account_id: toId, description: description.trim() || null }
+      : { type, account_id: fromId, category_id: categoryId, description: description.trim() || null };
 
   // Archived tags stay selectable here only if they're already on this
   // transaction, so editing an old movement doesn't silently drop its tag.
@@ -207,7 +229,21 @@ export function MovementForm({
       );
       return;
     }
+    if (saveAsFavorite) {
+      // Detour through naming the favorite first — `finishSubmit` (wired to
+      // the sheet's `onClose`/`onCreated`) carries this the rest of the way.
+      setPendingSubmit(parsed.data);
+      return;
+    }
     onSubmit(parsed.data, tagIds);
+  };
+
+  // Resolves the ♥ detour either way — favorite created or the sheet just
+  // dismissed — by finally submitting the movement that was already validated.
+  const finishSubmit = () => {
+    if (pendingSubmit) onSubmit(pendingSubmit, tagIds);
+    setPendingSubmit(null);
+    setSaveAsFavorite(false);
   };
 
   const tryCancel = () => (dirty ? setConfirmCancel(true) : onCancel());
@@ -241,6 +277,13 @@ export function MovementForm({
           <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
             {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
           </Text>
+          <IconButton
+            icon={saveAsFavorite ? 'heart' : 'heart-outline'}
+            onPress={() => setSaveAsFavorite((v) => !v)}
+            accessibilityLabel={
+              saveAsFavorite ? 'No guardar como favorito' : 'Guardar como favorito'
+            }
+          />
           {onMinimize ? (
             <Pressable
               onPress={minimize}
@@ -284,6 +327,12 @@ export function MovementForm({
           onKeep={() => setConfirmCancel(false)}
           onDiscard={onCancel}
         />
+        <FavoriteQuickCreateSheet
+          visible={pendingSubmit != null}
+          onClose={finishSubmit}
+          initial={favoriteInitial}
+          onCreated={finishSubmit}
+        />
       </Screen>
     );
   }
@@ -301,6 +350,11 @@ export function MovementForm({
         <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
           {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
         </Text>
+        <IconButton
+          icon={saveAsFavorite ? 'heart' : 'heart-outline'}
+          onPress={() => setSaveAsFavorite((v) => !v)}
+          accessibilityLabel={saveAsFavorite ? 'No guardar como favorito' : 'Guardar como favorito'}
+        />
         {onMinimize ? (
           <Pressable
             onPress={minimize}
@@ -524,6 +578,12 @@ export function MovementForm({
         visible={confirmCancel}
         onKeep={() => setConfirmCancel(false)}
         onDiscard={onCancel}
+      />
+      <FavoriteQuickCreateSheet
+        visible={pendingSubmit != null}
+        onClose={finishSubmit}
+        initial={favoriteInitial}
+        onCreated={finishSubmit}
       />
     </Screen>
   );

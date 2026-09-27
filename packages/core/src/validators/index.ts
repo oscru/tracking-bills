@@ -6,5 +6,6 @@
 export * from './account';
 export * from './auth';
 export * from './category';
+export * from './favorite-transaction';
 export * from './tag';
 export * from './transaction';

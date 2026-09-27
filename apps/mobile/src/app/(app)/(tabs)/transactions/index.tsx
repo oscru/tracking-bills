@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 
+import { FavoritesRow } from '../../../../features/favorites/favorites-row';
 import { dayHeaderLabel, groupByDay } from '../../../../features/transactions/day-groups';
 import { FiltersSheet } from '../../../../features/transactions/filters-sheet';
 import { TransactionListItem } from '../../../../features/transactions/transaction-list-item';
@@ -174,6 +175,8 @@ export default function TransactionsScreen() {
         </View>
       </View>
 
+      {filtered ? null : <FavoritesRow />}
+
       <View className="flex-row items-center gap-2">
         <View className="flex-1">
           <TextField
@@ -224,6 +227,12 @@ export default function TransactionsScreen() {
           className="flex-1"
           contentContainerClassName="pb-24"
           stickySectionHeadersEnabled
+          // Android's view-recycling optimization for offscreen rows has a
+          // well-documented bug where a row can render blank (but still
+          // count toward layout/totals) right after the list's data changes
+          // — exactly what inserting a new transaction does. Disabling it
+          // costs nothing noticeable at this list's size.
+          removeClippedSubviews={false}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
           ItemSeparatorComponent={() => (
             <View className="border-x border-line bg-canvas px-3 dark:border-line-dark dark:bg-canvas-dark">

@@ -46,6 +46,10 @@ export type Transaction = Omit<Row<'transactions'>, 'type'> & {
 };
 /** A user-defined label attachable to any transaction. Retired via `archived`. */
 export type Tag = Row<'tags'>;
+/** A saved shortcut that prefills the movement form — not a historical record. */
+export type FavoriteTransaction = Omit<Row<'favorite_transactions'>, 'type'> & {
+  type: TransactionType;
+};
 /** Per-tag transaction counts, split the way the tag list displays them. */
 export interface TagCounts {
   expense: number;

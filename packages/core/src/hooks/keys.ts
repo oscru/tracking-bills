@@ -15,6 +15,10 @@ export const queryKeys = {
     all: ['tags'] as const,
     list: () => ['tags', 'list'] as const,
   },
+  favoriteTransactions: {
+    all: ['favoriteTransactions'] as const,
+    list: () => ['favoriteTransactions', 'list'] as const,
+  },
   transactions: {
     all: ['transactions'] as const,
     list: (filters: TransactionFilters = {}) => ['transactions', 'list', filters] as const,
