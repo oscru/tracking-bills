@@ -41,6 +41,7 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          include_in_total: boolean
           initial_balance: number
           name: string
           show_on_home: boolean
@@ -54,6 +55,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          include_in_total?: boolean
           initial_balance?: number
           name: string
           show_on_home?: boolean
@@ -67,6 +69,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          include_in_total?: boolean
           initial_balance?: number
           name?: string
           show_on_home?: boolean

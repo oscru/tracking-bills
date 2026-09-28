@@ -81,7 +81,7 @@ export default function TransactionDetail() {
     ? 'text-ink dark:text-ink-dark'
     : tx.type === 'income'
       ? 'text-pos dark:text-pos-dark'
-      : 'text-ink dark:text-ink-dark';
+      : 'text-danger dark:text-danger-dark';
 
   const categoryLabel = tx.category
     ? parentCategory
@@ -152,7 +152,7 @@ export default function TransactionDetail() {
               {formatDate(tx.transaction_date)}
             </Text>
             {tx.is_completed === false ? (
-              <Text className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-[#B45309]">
+              <Text className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-warning dark:text-warning-dark">
                 Pendiente
               </Text>
             ) : null}

@@ -156,6 +156,8 @@ export function buildCategoryTree(categories: Category[]): CategoryNode[] {
 interface BalanceAccount {
   id: string;
   initial_balance: number | string;
+  /** Whether this account counts toward `totalBalance` — its own `accountBalance` is unaffected. */
+  include_in_total?: boolean;
 }
 interface BalanceTx {
   type: string;
@@ -205,9 +207,11 @@ export function projectedAccountBalance(
   return accountBalance(account, transactions) + transactionEffect(pending, account.id);
 }
 
-/** Net worth across accounts (transfers cancel out). */
+/** Net worth across accounts opted into the total (transfers cancel out). */
 export function totalBalance(accounts: BalanceAccount[], transactions: BalanceTx[]): number {
-  return accounts.reduce((sum, a) => sum + accountBalance(a, transactions), 0);
+  return accounts
+    .filter((a) => a.include_in_total !== false)
+    .reduce((sum, a) => sum + accountBalance(a, transactions), 0);
 }
 
 interface RankableFavorite {
@@ -230,6 +234,39 @@ export function topFavorites<T extends RankableFavorite>(
   return [...pool]
     .sort((a, b) => b.use_count - a.use_count || b.created_at.localeCompare(a.created_at))
     .slice(0, limit);
+}
+
+interface PendingTx {
+  transaction_date: string;
+  is_completed: boolean;
+}
+
+/**
+ * Splits not-yet-settled transactions by date, relative to `today`
+ * (`YYYY-MM-DD`): `overdue` (dated before today — should have happened
+ * already) vs `upcoming` (today or later — still ahead of schedule). Powers
+ * the home screen's two reminder cards, which mean very different things:
+ * overdue needs attention now, upcoming is just a heads-up.
+ */
+export function splitPendingByDate<T extends PendingTx>(
+  transactions: T[],
+  today: string,
+): { overdue: T[]; upcoming: T[] } {
+  const pending = transactions.filter((t) => !t.is_completed);
+  return {
+    overdue: pending.filter((t) => t.transaction_date < today),
+    upcoming: pending.filter((t) => t.transaction_date >= today),
+  };
+}
+
+/** Calendar days from `today` to a later `dateISO` (both `YYYY-MM-DD`) — 0 if same day. */
+export function daysUntil(dateISO: string, today: string): number {
+  const [y1, m1, d1] = today.split('-').map(Number);
+  const [y2, m2, d2] = dateISO.split('-').map(Number);
+  if (!y1 || !m1 || !d1 || !y2 || !m2 || !d2) return 0;
+  const a = new Date(y1, m1 - 1, d1).getTime();
+  const b = new Date(y2, m2 - 1, d2).getTime();
+  return Math.round((b - a) / 86_400_000);
 }
 
 interface TagCountTx {

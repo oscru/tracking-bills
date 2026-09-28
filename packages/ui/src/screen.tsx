@@ -23,10 +23,16 @@ export function Screen({
   // On wide web the content column is capped and centered.
   const web = Platform.OS === 'web' ? 'mx-auto w-full max-w-[480px]' : '';
 
+  // Purely decorative breathing room from the top/bottom edges — kept
+  // separate from `SafeAreaView`'s `edges` above (which only accounts for
+  // system chrome: notch, home indicator) so it never stacks with a screen's
+  // own manual `insets.bottom` handling for a sticky footer button.
+  const vertical = 'pt-3 pb-4';
+
   const content = scroll ? (
     <ScrollView
       className="flex-1"
-      contentContainerClassName={`grow px-5 ${web} ${center ? 'justify-center' : ''} ${className}`}
+      contentContainerClassName={`grow px-5 ${vertical} ${web} ${center ? 'justify-center' : ''} ${className}`}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive"
       showsVerticalScrollIndicator={false}
@@ -34,7 +40,7 @@ export function Screen({
       {children}
     </ScrollView>
   ) : (
-    <View className={`flex-1 px-5 ${web} ${center ? 'justify-center' : ''} ${className}`}>
+    <View className={`flex-1 px-5 ${vertical} ${web} ${center ? 'justify-center' : ''} ${className}`}>
       {children}
     </View>
   );

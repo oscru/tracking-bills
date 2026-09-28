@@ -36,6 +36,8 @@ export default function TransactionsScreen() {
     to?: string;
     accountId?: string;
     tagId?: string;
+    /** `'1'` — only planned/pending movements (e.g. from the home screen's reminder). */
+    pending?: string;
   }>();
 
   const [type, setType] = useState<TransactionType | null>(params.type ?? null);
@@ -46,6 +48,7 @@ export default function TransactionsScreen() {
     params.accountId ? [params.accountId] : [],
   );
   const [tagIds, setTagIds] = useState<string[]>(params.tagId ? [params.tagId] : []);
+  const [pendingOnly, setPendingOnly] = useState(params.pending === '1');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -53,7 +56,7 @@ export default function TransactionsScreen() {
 
   // Tabs stay mounted, so a repeat push (e.g. a different month's card from
   // Home) only changes `params` — re-apply the nav filters whenever they do.
-  const navParamsKey = `${params.type ?? ''}|${params.from ?? ''}|${params.to ?? ''}|${params.accountId ?? ''}|${params.tagId ?? ''}`;
+  const navParamsKey = `${params.type ?? ''}|${params.from ?? ''}|${params.to ?? ''}|${params.accountId ?? ''}|${params.tagId ?? ''}|${params.pending ?? ''}`;
   const [appliedNavParamsKey, setAppliedNavParamsKey] = useState(navParamsKey);
   if (navParamsKey !== appliedNavParamsKey) {
     setAppliedNavParamsKey(navParamsKey);
@@ -63,6 +66,7 @@ export default function TransactionsScreen() {
     setTo(params.to ?? null);
     setAccountIds(params.accountId ? [params.accountId] : []);
     setTagIds(params.tagId ? [params.tagId] : []);
+    setPendingOnly(params.pending === '1');
   }
 
   useEffect(() => {
@@ -123,11 +127,18 @@ export default function TransactionsScreen() {
       accountIds: accountIds.length ? accountIds : undefined,
       tagIds: tagIds.length ? tagIds : undefined,
       search: debouncedSearch || undefined,
+      isCompleted: pendingOnly ? false : undefined,
     }),
-    [type, categoryIds, from, to, accountIds, tagIds, debouncedSearch],
+    [type, categoryIds, from, to, accountIds, tagIds, debouncedSearch, pendingOnly],
   );
   const filtered = Boolean(
-    type || categoryIds.length || from || accountIds.length || tagIds.length || debouncedSearch,
+    type ||
+      categoryIds.length ||
+      from ||
+      accountIds.length ||
+      tagIds.length ||
+      debouncedSearch ||
+      pendingOnly,
   );
 
   const { data: transactions, isLoading, isRefetching, refetch, error } = useTransactions(filters);
@@ -142,6 +153,7 @@ export default function TransactionsScreen() {
     setTo(null);
     setAccountIds([]);
     setTagIds([]);
+    setPendingOnly(false);
     setSearch('');
   };
 
@@ -173,14 +185,21 @@ export default function TransactionsScreen() {
     accountIds.length > 0,
     tagIds.length > 0,
     Boolean(from),
+    pendingOnly,
   ].filter(Boolean).length;
 
   return (
     <Screen className="gap-3">
-      <View className="gap-1 pt-2">
+      <View className="gap-1">
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-bold text-ink dark:text-ink-dark">
-            {type ? TITLE[type] : 'Movimientos'}
+            {pendingOnly
+              ? from && !to
+                ? 'Próximos'
+                : 'Pendientes'
+              : type
+                ? TITLE[type]
+                : 'Movimientos'}
           </Text>
           {filtered ? (
             <Pressable onPress={clearAll} hitSlop={8}>

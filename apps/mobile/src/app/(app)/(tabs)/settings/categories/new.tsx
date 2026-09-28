@@ -12,7 +12,7 @@ export default function NewCategory() {
 
   return (
     <Screen className="gap-4">
-      <View className="flex-row items-center justify-between pt-2">
+      <View className="flex-row items-center justify-between">
         <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Nueva categoría</Text>
         <Pressable onPress={() => router.back()} hitSlop={8}>
           <Text className="text-sm text-ink-2 dark:text-ink-2-dark">Cancelar</Text>

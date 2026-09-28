@@ -120,6 +120,15 @@ export default function AccountDetail() {
           }
         />
 
+        <SwitchRow
+          label="Incluir en balance total"
+          description="Se suma al «Balance total» de la pantalla principal"
+          value={account.include_in_total}
+          onValueChange={(v) =>
+            updateAccount.mutate({ id: account.id, patch: { include_in_total: v } })
+          }
+        />
+
         <View className="absolute bottom-6 right-5">
           <Fab
             icon="pencil"

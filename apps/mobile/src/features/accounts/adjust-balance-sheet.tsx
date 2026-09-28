@@ -106,7 +106,7 @@ export function AdjustBalanceSheet({
             className={`text-center text-[13px] font-semibold ${
               diff > 0
                 ? 'text-pos dark:text-pos-dark'
-                : 'text-ink-2 dark:text-ink-2-dark'
+                : 'text-danger dark:text-danger-dark'
             }`}
           >
             {diff > 0 ? 'Se registrará un ingreso de ' : 'Se registrará un gasto de '}

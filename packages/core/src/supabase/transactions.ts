@@ -30,6 +30,8 @@ export interface TransactionFilters {
   type?: TransactionType;
   /** Case-insensitive match against `description`. */
   search?: string;
+  /** `false` = only planned/pending movements; `true` = only settled ones. Omit = no filter. */
+  isCompleted?: boolean;
   limit?: number;
   offset?: number;
 }
@@ -75,6 +77,7 @@ export async function listTransactions(
   if (filters.categoryIds?.length) query = query.in('category_id', filters.categoryIds);
   if (filters.type) query = query.eq('type', filters.type);
   if (filters.search) query = query.ilike('description', `%${filters.search}%`);
+  if (filters.isCompleted != null) query = query.eq('is_completed', filters.isCompleted);
 
   if (filters.tagIds?.length) {
     const { data: links, error } = await supabase

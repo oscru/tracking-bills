@@ -13,7 +13,7 @@ export interface PageHeaderProps {
 /** Back arrow + page title on one line — the standard top-of-page header. */
 export function PageHeader({ title, onBack, action }: PageHeaderProps) {
   return (
-    <View className="flex-row items-center gap-3 pt-2">
+    <View className="flex-row items-center gap-3">
       <BackButton onPress={onBack} />
       <Text className="flex-1 text-2xl font-bold text-ink dark:text-ink-dark" numberOfLines={1}>
         {title}

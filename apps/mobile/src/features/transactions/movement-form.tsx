@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import {
   useAccounts,
   useCategories,
@@ -224,15 +223,16 @@ export function MovementForm({
     else setTo(null);
   };
 
-  // Quick-fills the account/category/description a favorite carries. Leaves
-  // the amount alone if the user's already typed one — only takes the
-  // favorite's fixed amount when the field is still blank.
+  // Quick-fills the account/category/description/amount a favorite carries —
+  // a fixed amount always overwrites whatever's currently typed, same as
+  // tapping a favorite from the stories row does. "Monto libre" favorites
+  // (no fixed amount) leave the field as-is instead of clearing it.
   const applyFavorite = (f: FavoriteTransactionWithRefs) => {
     recordFavoriteUse.mutate(f.id);
     setFrom(f.account_id);
     setCategoryId(f.category_id);
     if (f.description) setDescription(f.description);
-    if (f.amount != null && !amount) setAmount(String(f.amount));
+    if (f.amount != null) setAmount(String(f.amount));
   };
 
   const goToDetails = () => {
@@ -306,14 +306,9 @@ export function MovementForm({
   // --- amount step ---
   if (view === 'amount') {
     return (
-      <Screen edges={['top']} className="gap-3">
-        <View className="flex-row items-center gap-3 pt-2">
-          <Pressable
-            onPress={tryCancel}
-            className="h-[34px] w-[34px] items-center justify-center rounded-full bg-[#F1F2F4] dark:bg-line-dark"
-          >
-            <Ionicons name="close" size={18} color="#1A1D21" />
-          </Pressable>
+      <Screen className="gap-3">
+        <View className="flex-row items-center gap-3">
+          <IconButton icon="close" onPress={tryCancel} accessibilityLabel="Cancelar" />
           <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
             {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
           </Text>
@@ -325,13 +320,7 @@ export function MovementForm({
             }
           />
           {onMinimize ? (
-            <Pressable
-              onPress={minimize}
-              accessibilityLabel="Minimizar"
-              className="h-[34px] w-[34px] items-center justify-center rounded-full bg-[#F1F2F4] dark:bg-line-dark"
-            >
-              <Ionicons name="remove" size={20} color="#1A1D21" />
-            </Pressable>
+            <IconButton icon="remove" onPress={minimize} accessibilityLabel="Minimizar" />
           ) : null}
         </View>
 
@@ -394,13 +383,8 @@ export function MovementForm({
   // --- details step ---
   return (
     <Screen edges={['top']} className="gap-4">
-      <View className="flex-row items-center gap-3 pt-2">
-        <Pressable
-          onPress={tryCancel}
-          className="h-[34px] w-[34px] items-center justify-center rounded-full bg-[#F1F2F4] dark:bg-line-dark"
-        >
-          <Ionicons name="close" size={18} color="#1A1D21" />
-        </Pressable>
+      <View className="flex-row items-center gap-3">
+        <IconButton icon="close" onPress={tryCancel} accessibilityLabel="Cancelar" />
         <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
           {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
         </Text>
@@ -410,13 +394,7 @@ export function MovementForm({
           accessibilityLabel={saveAsFavorite ? 'No guardar como favorito' : 'Guardar como favorito'}
         />
         {onMinimize ? (
-          <Pressable
-            onPress={minimize}
-            accessibilityLabel="Minimizar"
-            className="h-[34px] w-[34px] items-center justify-center rounded-full bg-[#F1F2F4] dark:bg-line-dark"
-          >
-            <Ionicons name="remove" size={20} color="#1A1D21" />
-          </Pressable>
+          <IconButton icon="remove" onPress={minimize} accessibilityLabel="Minimizar" />
         ) : null}
       </View>
 

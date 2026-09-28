@@ -16,7 +16,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen className="gap-6">
-      <Text className="pt-2 text-2xl font-bold text-ink dark:text-ink-dark">Opciones</Text>
+      <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Opciones</Text>
 
       <Pressable
         onPress={() => router.push('/(app)/profile')}

@@ -22,6 +22,8 @@ export const accountCreateSchema = z.object({
   color: hexColorSchema.nullish(),
   /** Whether it appears in the "Tus cuentas" list on the home screen. */
   show_on_home: z.boolean().default(true),
+  /** Whether its balance counts toward the home screen's overall "Balance total". */
+  include_in_total: z.boolean().default(true),
 });
 
 export const accountUpdateSchema = accountCreateSchema

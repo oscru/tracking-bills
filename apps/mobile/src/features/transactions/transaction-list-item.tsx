@@ -382,7 +382,7 @@ export function TransactionListItem({
       ? [categoryLabel, account?.name].filter(Boolean).join(' · ')
       : account?.name || formatDate(transaction_date);
     sign = type === 'income' ? '+' : '−';
-    amountClass = type === 'income' ? 'text-pos dark:text-pos-dark' : 'text-ink dark:text-ink-dark';
+    amountClass = type === 'income' ? 'text-pos dark:text-pos-dark' : 'text-danger dark:text-danger-dark';
     color = category?.color ?? '#94A3B8';
   }
 
@@ -451,7 +451,7 @@ export function TransactionListItem({
                 {value}
               </Text>
               {is_completed === false ? (
-                <Text className="text-[10px] font-semibold uppercase tracking-wide text-[#B45309]">
+                <Text className="text-[10px] font-semibold uppercase tracking-wide text-warning dark:text-warning-dark">
                   Pendiente
                 </Text>
               ) : null}

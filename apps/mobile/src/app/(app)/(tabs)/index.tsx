@@ -2,21 +2,25 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useTransactions } from '@repo/core/hooks';
 import {
   accountBalance,
+  addDaysISO,
+  daysUntil,
   formatCurrency,
   monthTotals,
+  splitPendingByDate,
   todayISODate,
   totalBalance,
 } from '@repo/core/utils';
 import { Fab, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View, useColorScheme } from 'react-native';
 
 import { ACCOUNT_TYPE_ICON } from '../../../features/accounts/account-types';
 import { MonthPickerSheet } from '../../../features/home/month-picker-sheet';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const dark = useColorScheme() === 'dark';
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: transactions, isLoading: loadingTx } = useTransactions();
   const [hidden, setHidden] = useState(false);
@@ -25,6 +29,21 @@ export default function HomeScreen() {
   const visibleAccounts = useMemo(() => active.filter((a) => a.show_on_home), [active]);
   const currency = active[0]?.currency ?? 'MXN';
   const balance = useMemo(() => totalBalance(active, transactions ?? []), [active, transactions]);
+  const today = todayISODate();
+  // Overdue (should've already happened) and upcoming (still ahead of
+  // schedule) mean very different things, so they get two separate cards —
+  // one urgent, one just a heads-up.
+  const { overdue, upcoming } = useMemo(
+    () => splitPendingByDate(transactions ?? [], today),
+    [transactions, today],
+  );
+  const nearestUpcomingDays = useMemo(
+    () =>
+      upcoming.length
+        ? Math.min(...upcoming.map((t) => daysUntil(t.transaction_date, today)))
+        : null,
+    [upcoming, today],
+  );
   const loading = loadingAccounts || loadingTx;
 
   const now = useMemo(() => new Date(), []);
@@ -64,7 +83,7 @@ export default function HomeScreen() {
 
   return (
     <Screen className="gap-5">
-      <View className="flex-row items-center justify-center gap-4 pt-2">
+      <View className="flex-row items-center justify-center gap-4">
         <Pressable onPress={() => shiftMonth(-1)} hitSlop={10} accessibilityLabel="Mes anterior">
           <Ionicons name="chevron-back" size={22} color="#9CA3AF" />
         </Pressable>
@@ -129,6 +148,61 @@ export default function HomeScreen() {
             </Text>
           </View>
 
+          {overdue.length > 0 ? (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/(app)/transactions',
+                  params: { pending: '1', to: addDaysISO(today, -1) },
+                })
+              }
+              className="flex-row items-center gap-3 rounded-2xl bg-warning-tint p-4 active:opacity-80 dark:bg-warning-tint-dark"
+            >
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-surface dark:bg-surface-dark">
+                <Ionicons name="time-outline" size={20} color={dark ? '#F3B25E' : '#B45309'} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-[15px] font-bold text-warning dark:text-warning-dark">
+                  {overdue.length} movimiento{overdue.length === 1 ? '' : 's'} pendiente
+                  {overdue.length === 1 ? '' : 's'}
+                </Text>
+                <Text className="text-xs text-warning opacity-80 dark:text-warning-dark">
+                  Aún no se han realizado, toca para revisarlos
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={dark ? '#F3B25E' : '#B45309'} />
+            </Pressable>
+          ) : null}
+
+          {upcoming.length > 0 ? (
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/(app)/transactions',
+                  params: { pending: '1', from: today },
+                })
+              }
+              className="flex-row items-center gap-3 rounded-2xl bg-lime-tint p-4 active:opacity-80 dark:bg-lime-tint-dark"
+            >
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-surface dark:bg-surface-dark">
+                <Ionicons name="calendar-outline" size={20} color={dark ? '#A3E635' : '#4D7C0F'} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-[15px] font-bold text-lime-ink dark:text-lime-ink-dark">
+                  {nearestUpcomingDays === 0
+                    ? `${upcoming.length} movimiento${upcoming.length === 1 ? '' : 's'} por realizar hoy`
+                    : `${upcoming.length} movimiento${upcoming.length === 1 ? '' : 's'} próximo${upcoming.length === 1 ? '' : 's'}`}
+                </Text>
+                <Text className="text-xs text-lime-ink opacity-80 dark:text-lime-ink-dark">
+                  {nearestUpcomingDays === 0
+                    ? 'Programado para hoy, toca para revisarlo'
+                    : `El más cercano en ${nearestUpcomingDays} día${nearestUpcomingDays === 1 ? '' : 's'}`}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={dark ? '#A3E635' : '#4D7C0F'} />
+            </Pressable>
+          ) : null}
+
           <View className="flex-row gap-3">
             <Pressable
               onPress={() => openMonth('income')}
@@ -144,7 +218,7 @@ export default function HomeScreen() {
               className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
             >
               <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Gastos</Text>
-              <Text className="mt-1 text-xl font-bold text-ink dark:text-ink-dark">
+              <Text className="mt-1 text-xl font-bold text-danger dark:text-danger-dark">
                 {hidden ? '•••' : formatCurrency(month.expense, currency)}
               </Text>
             </Pressable>

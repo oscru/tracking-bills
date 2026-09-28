@@ -45,6 +45,12 @@ module.exports = {
           tint: '#FCEAEA',
           'tint-dark': '#3A1619',
         },
+        warning: {
+          DEFAULT: '#B45309',
+          dark: '#F3B25E',
+          tint: '#FEF3E2',
+          'tint-dark': '#2B1F0F',
+        },
       },
       borderRadius: {
         card: '20px',
