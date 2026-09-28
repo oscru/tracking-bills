@@ -9,6 +9,7 @@ export { useFormError } from './use-form-error';
 
 export { SessionProvider, useSession, type SessionState } from './session-context';
 export { useSignIn, useSignUp, useSignOut } from './use-auth';
+export { useProfile, useUpdateProfile } from './use-profile';
 export { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount } from './use-accounts';
 export {
   useCategories,

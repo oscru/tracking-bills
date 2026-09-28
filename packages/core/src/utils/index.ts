@@ -301,6 +301,48 @@ export function monthTotals(
   return { income, expense };
 }
 
+export interface CategorySpend {
+  categoryId: string | null;
+  name: string;
+  color: string;
+  icon: string | null;
+  /** Total expensed, always positive. */
+  total: number;
+}
+
+interface SpendTx {
+  type: string;
+  amount: number | string;
+  transaction_date: string;
+  category: { id: string; name: string; color: string | null; icon: string | null } | null;
+}
+
+/**
+ * Expense total per category for a `YYYY-MM` month, highest first. Transfers
+ * and income aren't counted; uncategorized expenses roll into one "Sin
+ * categoría" bucket so the breakdown always accounts for the full month.
+ */
+export function categorySpendBreakdown(transactions: SpendTx[], month: string): CategorySpend[] {
+  const byCategory = new Map<string, CategorySpend>();
+  for (const t of transactions) {
+    if (t.type !== 'expense' || !t.transaction_date.startsWith(month)) continue;
+    const key = t.category?.id ?? '__none__';
+    const entry = byCategory.get(key);
+    if (entry) {
+      entry.total += Number(t.amount);
+    } else {
+      byCategory.set(key, {
+        categoryId: t.category?.id ?? null,
+        name: t.category?.name ?? 'Sin categoría',
+        color: t.category?.color ?? '#94A3B8',
+        icon: t.category?.icon ?? null,
+        total: Number(t.amount),
+      });
+    }
+  }
+  return [...byCategory.values()].sort((a, b) => b.total - a.total);
+}
+
 /** Today's date as `YYYY-MM-DD` in local time. */
 export function todayISODate(date: Date = new Date()): string {
   const y = date.getFullYear();
@@ -409,4 +451,34 @@ export function categoryMonthlyHistory(
     totals.set(key, (totals.get(key) ?? 0) + Number(t.amount));
   }
   return keys.map((month) => ({ month, total: totals.get(month) ?? 0 }));
+}
+
+// --- home layout ----------------------------------------------------------
+
+/**
+ * The Home screen's optional, user-orderable cards — in their default order.
+ * The month selector and the "Balance total" card are the screen's anchor
+ * and are deliberately not in this list: they're always shown, always first.
+ */
+export const HOME_LAYOUT_ITEMS = [
+  'pending',
+  'upcoming',
+  'monthlyTotals',
+  'categorySpend',
+  'accounts',
+] as const;
+
+export type HomeLayoutItem = (typeof HOME_LAYOUT_ITEMS)[number];
+
+/**
+ * Fills in a stored order with any item it's missing (a card added in a
+ * later release, so it still shows up for existing users) and drops
+ * anything no longer valid — always returns a full permutation of
+ * `HOME_LAYOUT_ITEMS`.
+ */
+export function normalizeHomeLayout(stored: string[] | null | undefined): HomeLayoutItem[] {
+  const known = new Set<string>(HOME_LAYOUT_ITEMS);
+  const valid = (stored ?? []).filter((k): k is HomeLayoutItem => known.has(k));
+  const missing = HOME_LAYOUT_ITEMS.filter((k) => !valid.includes(k));
+  return [...valid, ...missing];
 }

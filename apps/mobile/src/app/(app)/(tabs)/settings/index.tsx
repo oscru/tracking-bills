@@ -56,6 +56,15 @@ export default function SettingsScreen() {
           onPress={() => router.push('/(app)/settings/tags')}
         />
       </View>
+
+      <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
+        <ListRow
+          title="Personalizar inicio"
+          subtitle="Orden de las tarjetas de la pantalla principal"
+          showChevron
+          onPress={() => router.push('/(app)/settings/home-layout')}
+        />
+      </View>
     </Screen>
   );
 }

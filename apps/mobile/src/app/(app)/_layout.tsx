@@ -6,6 +6,8 @@ export default function AppRootLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="new-transaction" />
       <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="monthly-spending" />
+      <Stack.Screen name="category-month-spending" />
     </Stack>
   );
 }

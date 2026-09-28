@@ -3,6 +3,10 @@ import type { TransactionFilters } from '../supabase';
 /** Central query-key factory so invalidation stays consistent. */
 export const queryKeys = {
   session: ['session'] as const,
+  profile: {
+    all: ['profile'] as const,
+    detail: () => ['profile', 'detail'] as const,
+  },
   accounts: {
     all: ['accounts'] as const,
     list: () => ['accounts', 'list'] as const,

@@ -229,6 +229,7 @@ export type Database = {
           created_at: string
           currency: string
           email: string | null
+          home_layout: string[] | null
           id: string
           plan: string
           updated_at: string
@@ -237,6 +238,7 @@ export type Database = {
           created_at?: string
           currency?: string
           email?: string | null
+          home_layout?: string[] | null
           id: string
           plan?: string
           updated_at?: string
@@ -245,6 +247,7 @@ export type Database = {
           created_at?: string
           currency?: string
           email?: string | null
+          home_layout?: string[] | null
           id?: string
           plan?: string
           updated_at?: string

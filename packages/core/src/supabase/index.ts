@@ -9,5 +9,6 @@ export * from './auth';
 export * from './accounts';
 export * from './categories';
 export * from './favorite-transactions';
+export * from './profiles';
 export * from './tags';
 export * from './transactions';
