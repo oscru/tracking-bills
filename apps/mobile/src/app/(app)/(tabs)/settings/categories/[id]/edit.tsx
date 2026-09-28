@@ -39,6 +39,7 @@ export default function EditCategory() {
           id: category.id,
           name: category.name,
           type: category.type,
+          icon: category.icon,
           color: category.color,
           parent_id: category.parent_id,
         }}

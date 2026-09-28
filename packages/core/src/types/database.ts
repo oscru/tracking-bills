@@ -157,6 +157,7 @@ export type Database = {
           to_account_id: string | null
           type: string
           updated_at: string
+          use_count: number
           user_id: string
         }
         Insert: {
@@ -171,6 +172,7 @@ export type Database = {
           to_account_id?: string | null
           type: string
           updated_at?: string
+          use_count?: number
           user_id?: string
         }
         Update: {
@@ -185,6 +187,7 @@ export type Database = {
           to_account_id?: string | null
           type?: string
           updated_at?: string
+          use_count?: number
           user_id?: string
         }
         Relationships: [
@@ -405,7 +408,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_favorite_transaction_use: {
+        Args: { favorite_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

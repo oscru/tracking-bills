@@ -8,6 +8,7 @@ export { Avatar, type AvatarProps } from './avatar';
 export { BackButton, type BackButtonProps } from './back-button';
 export { BottomSheet, type BottomSheetProps } from './bottom-sheet';
 export { Button, type ButtonProps } from './button';
+export { CategoryDot, type CategoryDotProps } from './category-dot';
 export { Chip, type ChipProps } from './chip';
 export { ColorPicker, type ColorPickerProps } from './color-picker';
 export { ConfirmSheet, type ConfirmSheetProps } from './confirm-sheet';

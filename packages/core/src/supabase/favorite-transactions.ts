@@ -57,3 +57,9 @@ export async function deleteFavoriteTransaction(id: string): Promise<void> {
   const { error } = await supabase.from('favorite_transactions').delete().eq('id', id);
   if (error) throw new SupabaseError(error);
 }
+
+/** Bumps a favorite's `use_count` by one — call each time it's tapped to prefill a movement. */
+export async function recordFavoriteTransactionUse(id: string): Promise<void> {
+  const { error } = await supabase.rpc('increment_favorite_transaction_use', { favorite_id: id });
+  if (error) throw new SupabaseError(error);
+}

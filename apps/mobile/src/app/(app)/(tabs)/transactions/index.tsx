@@ -5,7 +5,7 @@ import type { TransactionType } from '@repo/core/types';
 import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
 import { ErrorCard, Fab, Screen, TextField } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -13,6 +13,8 @@ import {
   SectionList,
   Text,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 
 import { FavoritesRow } from '../../../../features/favorites/favorites-row';
@@ -78,6 +80,20 @@ export default function TransactionsScreen() {
     }, []),
   );
 
+  // Collapses the favorites row on any real downward scroll, brings it back
+  // on an upward one (or once back at the very top) — same feel as an IG
+  // stories row tucking away as you read the feed.
+  const [favoritesVisible, setFavoritesVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const dy = y - lastScrollY.current;
+    if (y <= 4) setFavoritesVisible(true);
+    else if (dy > 8) setFavoritesVisible(false);
+    else if (dy < -8) setFavoritesVisible(true);
+    lastScrollY.current = y;
+  }, []);
+
   // Stable across renders — passed straight into `TransactionListItem`'s
   // gesture handling, which needs referentially-stable callbacks to avoid
   // rebuilding its native gesture event binding on every re-render (search
@@ -132,11 +148,12 @@ export default function TransactionsScreen() {
   const categoryOptions = useMemo(
     () =>
       (categoryTree ?? []).flatMap((p) => [
-        { value: p.id, label: resolveCategoryLabel(p), dotColor: p.color },
+        { value: p.id, label: resolveCategoryLabel(p), dotColor: p.color, icon: p.icon },
         ...p.children.map((c) => ({
           value: c.id,
           label: `${resolveCategoryLabel(p)} › ${resolveCategoryLabel(c)}`,
           dotColor: c.color ?? p.color,
+          icon: c.icon ?? p.icon,
         })),
       ]),
     [categoryTree],
@@ -175,7 +192,7 @@ export default function TransactionsScreen() {
         </View>
       </View>
 
-      {filtered ? null : <FavoritesRow />}
+      {filtered ? null : <FavoritesRow visible={favoritesVisible} />}
 
       <View className="flex-row items-center gap-2">
         <View className="flex-1">
@@ -234,6 +251,8 @@ export default function TransactionsScreen() {
           // costs nothing noticeable at this list's size.
           removeClippedSubviews={false}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           ItemSeparatorComponent={() => (
             <View className="border-x border-line bg-canvas px-3 dark:border-line-dark dark:bg-canvas-dark">
               <View className="h-px bg-line dark:bg-line-dark" />

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheet } from '@repo/ui';
+import { BottomSheet, CategoryDot } from '@repo/ui';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 export interface MultiSelectOption {
   value: string;
   label: string;
   dotColor?: string | null;
+  icon?: string | null;
 }
 
 interface Props {
@@ -91,11 +92,8 @@ export function MultiSelectSheet({
               className="min-h-[56px] flex-row items-center gap-3 border-t border-line px-5 dark:border-line-dark"
             >
               <Checkbox checked={checked} />
-              {opt.dotColor ? (
-                <View
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: opt.dotColor }}
-                />
+              {opt.dotColor || opt.icon ? (
+                <CategoryDot color={opt.dotColor} icon={opt.icon} size={16} />
               ) : null}
               <Text className="flex-1 text-[15px] text-ink dark:text-ink-dark">{opt.label}</Text>
             </Pressable>

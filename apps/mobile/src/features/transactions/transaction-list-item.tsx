@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency, formatDate } from '@repo/core/utils';
+import { CategoryDot } from '@repo/ui';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, Text, View, useColorScheme } from 'react-native';
@@ -374,10 +375,12 @@ export function TransactionListItem({
     amountClass = 'text-ink-2 dark:text-ink-2-dark';
     color = '#4D7C0F';
   } else {
-    title = category ? resolveCategoryLabel(category) : 'Sin categoría';
-    subtitle =
-      [description?.trim(), account?.name].filter(Boolean).join(' · ') ||
-      formatDate(transaction_date);
+    const categoryLabel = category ? resolveCategoryLabel(category) : 'Sin categoría';
+    const trimmedDescription = description?.trim();
+    title = trimmedDescription || categoryLabel;
+    subtitle = trimmedDescription
+      ? [categoryLabel, account?.name].filter(Boolean).join(' · ')
+      : account?.name || formatDate(transaction_date);
     sign = type === 'income' ? '+' : '−';
     amountClass = type === 'income' ? 'text-pos dark:text-pos-dark' : 'text-ink dark:text-ink-dark';
     color = category?.color ?? '#94A3B8';
@@ -417,12 +420,17 @@ export function TransactionListItem({
               {type === 'transfer' ? (
                 <Ionicons name="swap-horizontal" size={18} color={color} />
               ) : (
-                <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
+                <CategoryDot color={color} icon={category?.icon} size={18} />
               )}
             </View>
 
             <View className="flex-1">
-              <Text className="text-[15px] font-semibold text-ink dark:text-ink-dark">{title}</Text>
+              <Text
+                className="text-[15px] font-semibold text-ink dark:text-ink-dark"
+                numberOfLines={1}
+              >
+                {title}
+              </Text>
               <Text className="text-[13px] text-ink-2 dark:text-ink-2-dark" numberOfLines={1}>
                 {subtitle}
               </Text>

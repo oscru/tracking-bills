@@ -4,6 +4,7 @@ import {
   createFavoriteTransaction,
   deleteFavoriteTransaction,
   listFavoriteTransactions,
+  recordFavoriteTransactionUse,
   updateFavoriteTransaction,
 } from '../supabase';
 import type { FavoriteTransactionUpdateInput } from '../validators';
@@ -37,6 +38,15 @@ export function useDeleteFavoriteTransaction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteFavoriteTransaction(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.favoriteTransactions.all }),
+  });
+}
+
+/** Fire-and-forget: bumps a favorite's use count after it's tapped to prefill a movement. */
+export function useRecordFavoriteTransactionUse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => recordFavoriteTransactionUse(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.favoriteTransactions.all }),
   });
 }

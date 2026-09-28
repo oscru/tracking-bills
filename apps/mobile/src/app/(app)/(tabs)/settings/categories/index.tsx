@@ -2,7 +2,7 @@ import { useCategoryTree } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { CategoryNode, CategoryType } from '@repo/core/types';
 import { toFriendlyMessage } from '@repo/core/utils';
-import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl, TextField } from '@repo/ui';
+import { CategoryDot, ErrorCard, Fab, PageHeader, Screen, SegmentedControl, TextField } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -68,10 +68,7 @@ function Group({
             onPress={() => onEdit(p.id)}
             className="flex-row items-center gap-3 py-3.5 active:opacity-60"
           >
-            <View
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: p.color ?? '#94A3B8' }}
-            />
+            <CategoryDot color={p.color} icon={p.icon} size={16} />
             <View className="flex-1">
               <Text className="text-base text-ink dark:text-ink-dark">
                 {resolveCategoryLabel(p)}
@@ -91,10 +88,7 @@ function Group({
               onPress={() => onEdit(c.id)}
               className="flex-row items-center gap-2.5 py-2.5 pl-6 active:opacity-60"
             >
-              <View
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: c.color ?? p.color ?? '#94A3B8' }}
-              />
+              <CategoryDot color={c.color ?? p.color} icon={c.icon} size={13} />
               <Text className="flex-1 text-sm text-ink-2 dark:text-ink-2-dark">
                 {resolveCategoryLabel(c)}
                 {c.archived ? ' · archivada' : ''}

@@ -1,13 +1,17 @@
 import { Pressable, Text, View, type PressableProps } from 'react-native';
 
+import { CategoryDot } from './category-dot';
+
 export interface ChipProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
   selected?: boolean;
   /** Optional leading color dot (e.g. a category color). */
   dotColor?: string | null;
+  /** Optional leading icon (e.g. a category's icon) shown instead of the dot when set. */
+  icon?: string | null;
 }
 
-export function Chip({ label, selected = false, dotColor, ...props }: ChipProps) {
+export function Chip({ label, selected = false, dotColor, icon, ...props }: ChipProps) {
   // Selected: fill with the category color if one is given, else the lime accent.
   const colorFill = selected && dotColor ? dotColor : null;
 
@@ -23,11 +27,8 @@ export function Chip({ label, selected = false, dotColor, ...props }: ChipProps)
       }`}
       {...props}
     >
-      {dotColor ? (
-        <View
-          className="h-2 w-2 rounded-full"
-          style={{ backgroundColor: colorFill ? '#fff' : dotColor }}
-        />
+      {dotColor || icon ? (
+        <CategoryDot color={colorFill ? '#fff' : dotColor} icon={icon} size={13} />
       ) : null}
       <Text
         className={`text-sm font-medium ${

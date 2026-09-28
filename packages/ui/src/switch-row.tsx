@@ -5,13 +5,17 @@ export interface SwitchRowProps {
   description?: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
+  disabled?: boolean;
 }
 
 /** A labeled on/off row — a `Switch` styled to the "Lima + tinta" accent. */
-export function SwitchRow({ label, description, value, onValueChange }: SwitchRowProps) {
+export function SwitchRow({ label, description, value, onValueChange, disabled }: SwitchRowProps) {
   const dark = useColorScheme() === 'dark';
   return (
-    <View className="flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 py-3 dark:border-line-dark dark:bg-surface-dark">
+    <View
+      className="flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 py-3 dark:border-line-dark dark:bg-surface-dark"
+      style={disabled ? { opacity: 0.5 } : undefined}
+    >
       <View className="flex-1 pr-3">
         <Text className="text-base text-ink dark:text-ink-dark">{label}</Text>
         {description ? (
@@ -21,6 +25,7 @@ export function SwitchRow({ label, description, value, onValueChange }: SwitchRo
       <Switch
         value={value}
         onValueChange={onValueChange}
+        disabled={disabled}
         trackColor={{ false: dark ? '#23272C' : '#E3E5E8', true: '#B9F227' }}
         thumbColor="#FFFFFF"
         ios_backgroundColor={dark ? '#23272C' : '#E3E5E8'}

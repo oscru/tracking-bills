@@ -6,7 +6,7 @@ import {
   favoriteTransactionCreateSchema,
   type FavoriteTransactionCreateInput,
 } from '@repo/core/validators';
-import { Button, ErrorCard, SegmentedControl, SwitchRow, TextField } from '@repo/ui';
+import { Button, CategoryDot, ErrorCard, SegmentedControl, SwitchRow, TextField } from '@repo/ui';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -216,10 +216,7 @@ export function FavoriteForm({
           >
             <View className="flex-row items-center gap-2">
               {selectedCategory ? (
-                <View
-                  className="h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: selectedCategory.color ?? '#94A3B8' }}
-                />
+                <CategoryDot color={selectedCategory.color} icon={selectedCategory.icon} size={16} />
               ) : null}
               <Text
                 className={

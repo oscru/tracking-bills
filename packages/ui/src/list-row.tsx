@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { CategoryDot } from './category-dot';
+
 export interface ListRowProps {
   title: string;
   subtitle?: string | null;
@@ -8,6 +10,8 @@ export interface ListRowProps {
   trailing?: ReactNode;
   /** Leading color dot (e.g. a category color). */
   dotColor?: string | null;
+  /** Leading icon (e.g. a category's icon) shown instead of the dot when set. */
+  icon?: string | null;
   onPress?: () => void;
   showChevron?: boolean;
 }
@@ -17,6 +21,7 @@ export function ListRow({
   subtitle,
   trailing,
   dotColor,
+  icon,
   onPress,
   showChevron = false,
 }: ListRowProps) {
@@ -26,9 +31,7 @@ export function ListRow({
       onPress={onPress}
       className={`flex-row items-center gap-3 py-3.5 ${onPress ? 'active:opacity-60' : ''}`}
     >
-      {dotColor ? (
-        <View className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: dotColor }} />
-      ) : null}
+      {dotColor || icon ? <CategoryDot color={dotColor} icon={icon} size={15} /> : null}
 
       <View className="flex-1">
         <Text className="text-base text-ink dark:text-ink-dark">{title}</Text>

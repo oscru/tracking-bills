@@ -1,12 +1,26 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useCategories, useTags } from '@repo/core/hooks';
+import {
+  useAccounts,
+  useCategories,
+  useFavoriteTransactions,
+  useRecordFavoriteTransactionUse,
+  useTags,
+} from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
+import type { FavoriteTransactionWithRefs } from '@repo/core/supabase';
 import type { TransactionType } from '@repo/core/types';
-import { applyAmountKey, evalAmount, formatCurrency, todayISODate } from '@repo/core/utils';
+import {
+  applyAmountKey,
+  evalAmount,
+  formatCurrency,
+  todayISODate,
+  topFavorites,
+} from '@repo/core/utils';
 import { transactionCreateSchema, type TransactionCreateInput } from '@repo/core/validators';
 import {
   AmountDisplay,
   Button,
+  CategoryDot,
   Chip,
   ErrorCard,
   IconButton,
@@ -24,6 +38,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AccountPicker } from '../accounts/account-picker';
 import { CategoryPicker } from '../categories/category-picker';
 import { CategoryQuickCreateSheet } from '../categories/category-quick-create-sheet';
+import { favoriteTint } from '../favorites/favorite-colors';
 import type { FavoriteFormInitial } from '../favorites/favorite-form';
 import { FavoriteQuickCreateSheet } from '../favorites/favorite-quick-create-sheet';
 import { TagQuickCreateSheet } from '../tags/tag-quick-create-sheet';
@@ -97,7 +112,16 @@ export function MovementForm({
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
   const { data: tags } = useTags();
+  const { data: favorites } = useFavoriteTransactions();
+  const recordFavoriteUse = useRecordFavoriteTransactionUse();
   const activeAccounts = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
+  // The calculator's quick-fill pills, in place of the plain account chips,
+  // for the type they're actually saved under (favorites don't apply to the
+  // other types the way a source account always does).
+  const favoriteExpenses = useMemo(
+    () => topFavorites(favorites ?? [], { type: 'expense' }),
+    [favorites],
+  );
 
   const [view, setView] = useState<'amount' | 'details'>(
     draft?.view ?? (mode === 'create' ? 'amount' : 'details'),
@@ -144,6 +168,11 @@ export function MovementForm({
   const fromId = pickedFrom ?? activeAccounts[0]?.id ?? null;
   const toId = pickedTo;
   const currency = activeAccounts.find((a) => a.id === fromId)?.currency ?? 'MXN';
+  // A future date can't have already happened — the effective "Completada"
+  // is forced off (and its switch disabled) whenever the date is pushed past
+  // today, without discarding whatever the user had it set to otherwise.
+  const isFutureDate = date > todayISODate();
+  const effectiveCompleted = isFutureDate ? false : isCompleted;
 
   const value = evalAmount(amount);
   const lastOperand = amount
@@ -185,7 +214,7 @@ export function MovementForm({
     pickedFrom !== (initial?.account_id ?? null) ||
     pickedTo !== (initial?.to_account_id ?? null) ||
     !sameIds(tagIds, initial?.tags ?? []) ||
-    isCompleted !== (initial?.is_completed ?? true);
+    effectiveCompleted !== (initial?.is_completed ?? true);
 
   const onKey = (k: KeypadKey) => setAmount((prev) => applyAmountKey(prev, k));
 
@@ -193,6 +222,17 @@ export function MovementForm({
     setType(next);
     if (next === 'transfer') setCategoryId(null);
     else setTo(null);
+  };
+
+  // Quick-fills the account/category/description a favorite carries. Leaves
+  // the amount alone if the user's already typed one — only takes the
+  // favorite's fixed amount when the field is still blank.
+  const applyFavorite = (f: FavoriteTransactionWithRefs) => {
+    recordFavoriteUse.mutate(f.id);
+    setFrom(f.account_id);
+    setCategoryId(f.category_id);
+    if (f.description) setDescription(f.description);
+    if (f.amount != null && !amount) setAmount(String(f.amount));
   };
 
   const goToDetails = () => {
@@ -213,7 +253,7 @@ export function MovementForm({
       amount: value,
       description: description.trim() || null,
       transaction_date: date,
-      is_completed: isCompleted,
+      is_completed: effectiveCompleted,
     };
     const payload =
       type === 'transfer'
@@ -307,14 +347,28 @@ export function MovementForm({
         </View>
 
         <View className="flex-row flex-wrap justify-center gap-2">
-          {activeAccounts.map((a) => (
-            <Chip
-              key={a.id}
-              label={a.name}
-              selected={fromId === a.id}
-              onPress={() => setFrom(a.id)}
-            />
-          ))}
+          {type === 'expense' && favoriteExpenses.length > 0
+            ? favoriteExpenses.map((f) => {
+                const { fg } = favoriteTint(f);
+                return (
+                  <Chip
+                    key={f.id}
+                    label={f.label}
+                    icon={f.icon}
+                    dotColor={fg}
+                    selected={fromId === f.account_id && categoryId === f.category_id}
+                    onPress={() => applyFavorite(f)}
+                  />
+                );
+              })
+            : activeAccounts.map((a) => (
+                <Chip
+                  key={a.id}
+                  label={a.name}
+                  selected={fromId === a.id}
+                  onPress={() => setFrom(a.id)}
+                />
+              ))}
         </View>
 
         <ErrorCard message={formError} />
@@ -438,10 +492,7 @@ export function MovementForm({
               >
                 <View className="flex-row items-center gap-2">
                   {selectedCategory ? (
-                    <View
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: selectedCategory.color ?? '#94A3B8' }}
-                    />
+                    <CategoryDot color={selectedCategory.color} icon={selectedCategory.icon} size={16} />
                   ) : null}
                   <Text
                     className={
@@ -486,9 +537,16 @@ export function MovementForm({
 
         <SwitchRow
           label="Completada"
-          description={isCompleted ? 'Ya se realizó' : 'Pendiente por realizarse'}
-          value={isCompleted}
+          description={
+            isFutureDate
+              ? 'No puede estar completada — la fecha es futura'
+              : effectiveCompleted
+                ? 'Ya se realizó'
+                : 'Pendiente por realizarse'
+          }
+          value={effectiveCompleted}
           onValueChange={setIsCompleted}
+          disabled={isFutureDate}
         />
 
         {mode === 'edit' && onDelete ? (

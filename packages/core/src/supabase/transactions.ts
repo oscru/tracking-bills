@@ -42,7 +42,7 @@ export interface TransactionWithRefs extends Transaction {
   account: AccountRef | null;
   /** Destination account — only present on transfers. */
   to_account: AccountRef | null;
-  category: Pick<Category, 'id' | 'slug' | 'name' | 'icon' | 'color' | 'type'> | null;
+  category: Pick<Category, 'id' | 'slug' | 'name' | 'icon' | 'color' | 'type' | 'parent_id'> | null;
   tags: TagRef[];
 }
 
@@ -50,7 +50,7 @@ export interface TransactionWithRefs extends Transaction {
 // `tags` comes back nested as `[{ tag: {...} }]` (one row per join-table
 // link) — flattened to a plain `TagRef[]` by `normalizeTags` below.
 const WITH_REFS =
-  '*, account:accounts!account_id(id, name, type, currency), to_account:accounts!to_account_id(id, name, type, currency), category:categories(id, slug, name, icon, color, type), tags:transaction_tags(tag:tags(id, name, color))';
+  '*, account:accounts!account_id(id, name, type, currency), to_account:accounts!to_account_id(id, name, type, currency), category:categories(id, slug, name, icon, color, type, parent_id), tags:transaction_tags(tag:tags(id, name, color))';
 
 interface RawWithRefs extends Omit<TransactionWithRefs, 'tags'> {
   tags: { tag: TagRef | null }[] | null;

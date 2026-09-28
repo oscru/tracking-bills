@@ -30,6 +30,7 @@ export {
   useCreateFavoriteTransaction,
   useUpdateFavoriteTransaction,
   useDeleteFavoriteTransaction,
+  useRecordFavoriteTransactionUse,
 } from './use-favorite-transactions';
 export {
   useTransactions,

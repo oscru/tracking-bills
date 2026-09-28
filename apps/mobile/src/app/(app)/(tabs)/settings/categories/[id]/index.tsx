@@ -1,6 +1,6 @@
 import { useAccounts, useCategories, useUpdateCategory } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
-import { Button, ConfirmSheet, Fab, PageHeader, Screen } from '@repo/ui';
+import { Button, CategoryDot, ConfirmSheet, Fab, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -67,10 +67,7 @@ export default function CategoryDetail() {
           showsVerticalScrollIndicator={false}
         >
           <View className="flex-row items-center gap-2">
-            <View
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: category.color ?? '#94A3B8' }}
-            />
+            <CategoryDot color={category.color} icon={category.icon} size={17} />
             <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
               {category.type === 'income' ? 'Ingreso' : 'Gasto'}
               {category.archived ? ' · archivada' : ''}
@@ -97,10 +94,7 @@ export default function CategoryDetail() {
                       }
                       className="flex-row items-center gap-3 py-3.5 active:opacity-60"
                     >
-                      <View
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: s.color ?? '#94A3B8' }}
-                      />
+                      <CategoryDot color={s.color} icon={s.icon} size={16} />
                       <Text className="flex-1 text-base text-ink dark:text-ink-dark">
                         {resolveCategoryLabel(s)}
                         {s.archived ? ' · archivada' : ''}

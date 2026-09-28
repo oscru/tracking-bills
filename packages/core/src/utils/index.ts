@@ -162,26 +162,74 @@ interface BalanceTx {
   amount: number | string;
   account_id: string;
   to_account_id: string | null;
+  is_completed: boolean;
 }
 
-/** Running balance of one account: initial + income − expense − transfers out + transfers in. */
+/** One transaction's signed effect on one account's balance, regardless of `is_completed`. */
+function transactionEffect(t: BalanceTx, accountId: string): number {
+  const amount = Number(t.amount);
+  if (t.type === 'transfer') {
+    let delta = 0;
+    if (t.account_id === accountId) delta -= amount;
+    if (t.to_account_id === accountId) delta += amount;
+    return delta;
+  }
+  return t.account_id === accountId ? (t.type === 'income' ? amount : -amount) : 0;
+}
+
+/**
+ * Running balance of one account: initial + every *settled* transaction's
+ * effect. A planned/pending one (`is_completed: false`, e.g. a scheduled
+ * payment) doesn't touch it until it actually settles — that's what keeps
+ * this number an accurate record of the money really in the account.
+ */
 export function accountBalance(account: BalanceAccount, transactions: BalanceTx[]): number {
   let balance = Number(account.initial_balance);
   for (const t of transactions) {
-    const amount = Number(t.amount);
-    if (t.type === 'transfer') {
-      if (t.account_id === account.id) balance -= amount;
-      if (t.to_account_id === account.id) balance += amount;
-    } else if (t.account_id === account.id) {
-      balance += t.type === 'income' ? amount : -amount;
-    }
+    if (!t.is_completed) continue;
+    balance += transactionEffect(t, account.id);
   }
   return balance;
+}
+
+/**
+ * `accountBalance`, plus one specific transaction's effect even if it's
+ * still pending — "what would this account's balance be if `pending`
+ * settled", for planning ahead without pretending it already has.
+ */
+export function projectedAccountBalance(
+  account: BalanceAccount,
+  transactions: BalanceTx[],
+  pending: BalanceTx,
+): number {
+  return accountBalance(account, transactions) + transactionEffect(pending, account.id);
 }
 
 /** Net worth across accounts (transfers cancel out). */
 export function totalBalance(accounts: BalanceAccount[], transactions: BalanceTx[]): number {
   return accounts.reduce((sum, a) => sum + accountBalance(a, transactions), 0);
+}
+
+interface RankableFavorite {
+  type: string;
+  use_count: number;
+  created_at: string;
+}
+
+/**
+ * Ranks favorites by actual use (most-tapped first, ties broken by most
+ * recently created), optionally narrowed to one `type`, capped at `limit`.
+ * Shared by every surface that features "your top favorites" — the stories
+ * row and the calculator's quick-fill pills — so they always agree.
+ */
+export function topFavorites<T extends RankableFavorite>(
+  favorites: T[],
+  { type, limit = 6 }: { type?: string; limit?: number } = {},
+): T[] {
+  const pool = type ? favorites.filter((f) => f.type === type) : favorites;
+  return [...pool]
+    .sort((a, b) => b.use_count - a.use_count || b.created_at.localeCompare(a.created_at))
+    .slice(0, limit);
 }
 
 interface TagCountTx {
@@ -242,6 +290,46 @@ export function formatDate(iso: string, locale = 'es-MX'): string {
     month: 'short',
     year: 'numeric',
   });
+}
+
+/** A `timestamptz` ISO string -> a localized date + time label, e.g. "7 sep 2026, 10:32 a.m." */
+export function formatDateTime(iso: string, locale = 'es-MX'): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleString(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+/**
+ * A `timestamptz` ISO string -> "Recién {verb}" for the first hour, "{Verb}
+ * hoy/ayer/antier/hace N días" by calendar day through day 6, then "{Verb} el
+ * 7 sep 2026" beyond that. `verb` is a lowercase past participle, e.g.
+ * "creado" or "editado". Calendar-day based (midnight to midnight, local
+ * time), not a rolling 24h window, so "ayer" holds all day even if it was
+ * under 24h ago.
+ */
+export function formatActivityMoment(iso: string, verb: string, locale = 'es-MX'): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+
+  const now = new Date();
+  if (now.getTime() - date.getTime() < 60 * 60 * 1000) return `Recién ${verb}`;
+
+  const cap = verb.charAt(0).toUpperCase() + verb.slice(1);
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
+  if (days === 0) return `${cap} hoy`;
+  if (days === 1) return `${cap} ayer`;
+  if (days === 2) return `${cap} antier`;
+  if (days >= 3 && days <= 6) return `${cap} hace ${days} días`;
+
+  const dateLabel = date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+  return `${cap} el ${dateLabel}`;
 }
 
 /** `YYYY-MM` -> a short localized month label, e.g. "sep" (or "sep 25" outside the current year). */

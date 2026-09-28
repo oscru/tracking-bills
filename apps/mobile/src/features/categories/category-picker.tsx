@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCategories, useCategoryTree, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { Category, CategoryType } from '@repo/core/types';
-import { BottomSheet, Chip } from '@repo/ui';
+import { BottomSheet, CategoryDot, Chip } from '@repo/ui';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
@@ -119,6 +119,7 @@ export function CategoryPicker({
                 key={c.id}
                 label={resolveCategoryLabel(c)}
                 dotColor={c.color}
+                icon={c.icon}
                 selected={selectedId === c.id}
                 onPress={() => pick(c.id)}
               />
@@ -149,10 +150,7 @@ export function CategoryPicker({
               onPress={() => pick(p.id)}
               className="flex-row items-center gap-3 border-t border-line px-5 py-5 dark:border-line-dark"
             >
-              <View
-                className="h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: p.color ?? '#94A3B8' }}
-              />
+              <CategoryDot color={p.color} icon={p.icon} size={16} />
               <Text className="flex-1 text-[15px] font-bold text-ink dark:text-ink-dark">
                 {resolveCategoryLabel(p)}
               </Text>
@@ -164,10 +162,7 @@ export function CategoryPicker({
                 onPress={() => pick(c.id)}
                 className="flex-row items-center gap-2.5 border-t border-line py-4 pl-11 pr-5 dark:border-line-dark"
               >
-                <View
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: c.color ?? p.color ?? '#94A3B8' }}
-                />
+                <CategoryDot color={c.color ?? p.color} icon={c.icon} size={13} />
                 <Text className="flex-1 text-[14px] text-ink-2 dark:text-ink-2-dark">
                   {resolveCategoryLabel(c)}
                 </Text>
