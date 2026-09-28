@@ -229,6 +229,7 @@ export type Database = {
           created_at: string
           currency: string
           email: string | null
+          home_hidden_items: string[]
           home_layout: string[] | null
           id: string
           plan: string
@@ -238,6 +239,7 @@ export type Database = {
           created_at?: string
           currency?: string
           email?: string | null
+          home_hidden_items?: string[]
           home_layout?: string[] | null
           id: string
           plan?: string
@@ -247,6 +249,7 @@ export type Database = {
           created_at?: string
           currency?: string
           email?: string | null
+          home_hidden_items?: string[]
           home_layout?: string[] | null
           id?: string
           plan?: string

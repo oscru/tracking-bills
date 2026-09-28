@@ -1,9 +1,11 @@
 /**
  * Currency / date / calculation helpers. UI-agnostic and pure.
  */
+import { HOME_LAYOUT_ITEMS, type HomeLayoutItem } from '../home-layout';
 import type { Category, CategoryNode } from '../types';
 
 export * from './errors';
+export { HOME_LAYOUT_ITEMS, type HomeLayoutItem };
 
 /** Format a numeric amount as a localized currency string. */
 export function formatCurrency(amount: number, currency = 'MXN', locale = 'es-MX'): string {
@@ -453,22 +455,40 @@ export function categoryMonthlyHistory(
   return keys.map((month) => ({ month, total: totals.get(month) ?? 0 }));
 }
 
-// --- home layout ----------------------------------------------------------
+interface MonthlyTrendTx {
+  type: string;
+  amount: number | string;
+  transaction_date: string;
+}
 
 /**
- * The Home screen's optional, user-orderable cards — in their default order.
- * The month selector and the "Balance total" card are the screen's anchor
- * and are deliberately not in this list: they're always shown, always first.
+ * Income and expense totals per month for the last `months` months (oldest →
+ * newest, including the current month), across all categories/accounts —
+ * the whole-account counterpart to `categoryMonthlyHistory`. Transfers
+ * aren't counted.
  */
-export const HOME_LAYOUT_ITEMS = [
-  'pending',
-  'upcoming',
-  'monthlyTotals',
-  'categorySpend',
-  'accounts',
-] as const;
+export function monthlyIncomeExpenseHistory(
+  transactions: MonthlyTrendTx[],
+  months: number,
+  referenceDate: Date = new Date(),
+): { month: string; income: number; expense: number }[] {
+  const keys: string[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1);
+    keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+  const totals = new Map(keys.map((k) => [k, { income: 0, expense: 0 }]));
+  for (const t of transactions) {
+    const key = t.transaction_date.slice(0, 7);
+    const bucket = totals.get(key);
+    if (!bucket) continue;
+    if (t.type === 'income') bucket.income += Number(t.amount);
+    else if (t.type === 'expense') bucket.expense += Number(t.amount);
+  }
+  return keys.map((month) => ({ month, ...(totals.get(month) ?? { income: 0, expense: 0 }) }));
+}
 
-export type HomeLayoutItem = (typeof HOME_LAYOUT_ITEMS)[number];
+// --- home layout ----------------------------------------------------------
 
 /**
  * Fills in a stored order with any item it's missing (a card added in a
@@ -481,4 +501,13 @@ export function normalizeHomeLayout(stored: string[] | null | undefined): HomeLa
   const valid = (stored ?? []).filter((k): k is HomeLayoutItem => known.has(k));
   const missing = HOME_LAYOUT_ITEMS.filter((k) => !valid.includes(k));
   return [...valid, ...missing];
+}
+
+/** `normalizeHomeLayout`'s order, minus whatever's in `hiddenItems` — what Home actually renders. */
+export function visibleHomeLayout(
+  stored: string[] | null | undefined,
+  hiddenItems: string[] | null | undefined,
+): HomeLayoutItem[] {
+  const hidden = new Set(hiddenItems ?? []);
+  return normalizeHomeLayout(stored).filter((k) => !hidden.has(k));
 }

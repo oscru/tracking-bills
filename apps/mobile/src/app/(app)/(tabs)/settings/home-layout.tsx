@@ -1,9 +1,38 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useProfile, useUpdateProfile } from '@repo/core/hooks';
+import type { Profile } from '@repo/core/types';
 import { normalizeHomeLayout, type HomeLayoutItem } from '@repo/core/utils';
 import { PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, Text, View, useColorScheme } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  LayoutAnimation,
+  Platform,
+  Switch,
+  Text,
+  UIManager,
+  View,
+  useColorScheme,
+} from 'react-native';
+import {
+  PanGestureHandler,
+  State,
+  type PanGestureHandlerGestureEvent,
+  type PanGestureHandlerStateChangeEvent,
+} from 'react-native-gesture-handler';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const ROW_HEIGHT = 72;
+const ROW_GAP = 10;
+const SLOT = ROW_HEIGHT + ROW_GAP;
+
+function clamp(n: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, n));
+}
 
 const ITEM_META: Record<
   HomeLayoutItem,
@@ -11,7 +40,7 @@ const ITEM_META: Record<
 > = {
   pending: {
     label: 'Movimientos pendientes',
-    description: 'Aviso de gastos o ingresos que ya deberían haberse realizado',
+    description: 'Gastos o ingresos que ya deberían haberse realizado',
     icon: 'time-outline',
   },
   upcoming: {
@@ -19,15 +48,15 @@ const ITEM_META: Record<
     description: 'Recordatorio de lo que tienes programado a futuro',
     icon: 'calendar-outline',
   },
-  monthlyTotals: {
-    label: 'Ingresos y gastos del mes',
-    description: 'Totales del mes en dos tarjetas',
-    icon: 'swap-vertical-outline',
-  },
   categorySpend: {
     label: 'Gastos por categoría',
     description: 'Gráfica y tus 5 categorías con más gasto',
     icon: 'pie-chart-outline',
+  },
+  monthlyTrend: {
+    label: 'Tendencia mensual',
+    description: 'Ingresos vs. gastos de los últimos 6 meses',
+    icon: 'trending-up-outline',
   },
   accounts: {
     label: 'Tus cuentas',
@@ -36,84 +65,181 @@ const ITEM_META: Record<
   },
 };
 
-/** Lets the user reorder Home's optional cards. The balance card and month
- * selector aren't included — they're the screen's anchor and always come first. */
+/** Lets the user drag to reorder Home's optional cards, and switch each one
+ * on/off entirely. The month selector, balance card, and income/expense
+ * totals aren't included — they're the screen's anchor and always come
+ * first, always visible. */
 export default function HomeLayoutScreen() {
   const router = useRouter();
-  const dark = useColorScheme() === 'dark';
   const { data: profile, isLoading } = useProfile();
-  const updateProfile = useUpdateProfile();
-  const order: HomeLayoutItem[] = normalizeHomeLayout(profile?.home_layout);
-
-  const move = (index: number, delta: number) => {
-    const target = index + delta;
-    if (target < 0 || target >= order.length) return;
-    const next = [...order];
-    const [moved] = next.splice(index, 1);
-    next.splice(target, 0, moved!);
-    updateProfile.mutate({ home_layout: next });
-  };
-
-  const arrowColor = (enabled: boolean) => (enabled ? (dark ? '#F2F3F5' : '#1A1D21') : '#D1D5DB');
 
   return (
     <Screen edges={['top']} className="gap-5">
       <PageHeader title="Orden del inicio" onBack={() => router.back()} />
 
       <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-        Cambia el orden de las tarjetas de tu pantalla principal. El balance total y el
-        selector de mes siempre se quedan fijos arriba.
+        Arrastra del ícono para reordenar, o apaga una tarjeta para quitarla de tu inicio. El
+        selector de mes, el balance total y los ingresos/gastos del mes siempre se quedan fijos
+        arriba.
       </Text>
 
-      {isLoading ? (
+      {isLoading || !profile ? (
         <ActivityIndicator className="mt-8" />
       ) : (
-        <View className="rounded-card border border-line dark:border-line-dark">
-          {order.map((key, i) => {
-            const meta = ITEM_META[key];
-            return (
-              <View key={key}>
-                {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
-                <View className="flex-row items-center gap-3 px-4 py-3.5">
-                  <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
-                    <Ionicons name={meta.icon} size={16} color="#4D7C0F" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
-                      {meta.label}
-                    </Text>
-                    <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-                      {meta.description}
-                    </Text>
-                  </View>
-                  <View className="gap-1.5">
-                    <Pressable
-                      disabled={i === 0}
-                      onPress={() => move(i, -1)}
-                      hitSlop={6}
-                      accessibilityLabel={`Subir ${meta.label}`}
-                    >
-                      <Ionicons name="chevron-up" size={18} color={arrowColor(i > 0)} />
-                    </Pressable>
-                    <Pressable
-                      disabled={i === order.length - 1}
-                      onPress={() => move(i, 1)}
-                      hitSlop={6}
-                      accessibilityLabel={`Bajar ${meta.label}`}
-                    >
-                      <Ionicons
-                        name="chevron-down"
-                        size={18}
-                        color={arrowColor(i < order.length - 1)}
-                      />
-                    </Pressable>
-                  </View>
-                </View>
-              </View>
-            );
-          })}
-        </View>
+        <HomeLayoutEditor profile={profile} />
       )}
     </Screen>
+  );
+}
+
+function HomeLayoutEditor({ profile }: { profile: Profile }) {
+  const dark = useColorScheme() === 'dark';
+  const updateProfile = useUpdateProfile();
+
+  const [order, setOrder] = useState<HomeLayoutItem[]>(() =>
+    normalizeHomeLayout(profile.home_layout),
+  );
+  const [hiddenSet, setHiddenSet] = useState<Set<HomeLayoutItem>>(
+    () => new Set((profile.home_hidden_items ?? []) as HomeLayoutItem[]),
+  );
+  const [dragKey, setDragKey] = useState<HomeLayoutItem | null>(null);
+  const [dragTop, setDragTop] = useState(0);
+
+  // Gesture callbacks can fire well after the render that created them —
+  // refs (kept current via effects, not written during render) are what let
+  // them still see the latest order/hidden-set/drag-start instead of
+  // whatever was true when the drag began.
+  const orderRef = useRef(order);
+  useEffect(() => {
+    orderRef.current = order;
+  }, [order]);
+  const hiddenRef = useRef(hiddenSet);
+  useEffect(() => {
+    hiddenRef.current = hiddenSet;
+  }, [hiddenSet]);
+  const dragStartTopRef = useRef(0);
+
+  const persist = (nextOrder: HomeLayoutItem[], nextHidden: Set<HomeLayoutItem>) => {
+    updateProfile.mutate({ home_layout: nextOrder, home_hidden_items: [...nextHidden] });
+  };
+
+  const toggleHidden = (key: HomeLayoutItem) => {
+    const next = new Set(hiddenSet);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setHiddenSet(next);
+    persist(order, next);
+  };
+
+  // Recreated every render (cheap — 5 short-lived closures) purely so each
+  // row's `key` is captured correctly; the actual order/hidden-set reads
+  // inside go through the refs above, not this closure's own `order`/
+  // `hiddenSet`, since those can be stale by the time a callback fires (see
+  // the comment on the refs). Uses `react-native-gesture-handler` (not the
+  // core `PanResponder`) because the app root is wrapped in
+  // `GestureHandlerRootView` — on native, that intercepts touch dispatch in
+  // a way plain `PanResponder` children can't reliably receive.
+  const makeGestureHandlers = (key: HomeLayoutItem) => ({
+    onHandlerStateChange: (e: PanGestureHandlerStateChangeEvent) => {
+      const { state, oldState } = e.nativeEvent;
+      if (state === State.BEGAN) {
+        const top = orderRef.current.indexOf(key) * SLOT;
+        dragStartTopRef.current = top;
+        setDragTop(top);
+        setDragKey(key);
+      } else if (oldState === State.ACTIVE) {
+        setDragKey(null);
+        persist(orderRef.current, hiddenRef.current);
+      }
+    },
+    onGestureEvent: (e: PanGestureHandlerGestureEvent) => {
+      const newTop = dragStartTopRef.current + e.nativeEvent.translationY;
+      setDragTop(newTop);
+
+      const list = orderRef.current;
+      const currentIndex = list.indexOf(key);
+      const targetIndex = clamp(Math.round(newTop / SLOT), 0, list.length - 1);
+      if (targetIndex !== currentIndex) {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        const next = [...list];
+        next.splice(currentIndex, 1);
+        next.splice(targetIndex, 0, key);
+        orderRef.current = next;
+        setOrder(next);
+      }
+    },
+  });
+
+  return (
+    <View style={{ height: order.length * SLOT - ROW_GAP }}>
+      {order.map((key, index) => {
+        const meta = ITEM_META[key];
+        const isHidden = hiddenSet.has(key);
+        const isDragging = dragKey === key;
+        const { onGestureEvent, onHandlerStateChange } = makeGestureHandlers(key);
+
+        return (
+          <View
+            key={key}
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              height: ROW_HEIGHT,
+              top: isDragging ? dragTop : index * SLOT,
+              zIndex: isDragging ? 10 : 1,
+              elevation: isDragging ? 4 : 0,
+              shadowColor: '#000',
+              shadowOpacity: isDragging ? 0.15 : 0,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 4 },
+            }}
+          >
+            <View
+              className="h-full flex-row items-center gap-3 rounded-2xl border border-line bg-surface px-3 dark:border-line-dark dark:bg-surface-dark"
+              style={isHidden ? { opacity: 0.5 } : undefined}
+            >
+              <PanGestureHandler
+                onGestureEvent={onGestureEvent}
+                onHandlerStateChange={onHandlerStateChange}
+                activeOffsetY={[-4, 4]}
+              >
+                <View hitSlop={10} className="-m-1.5 p-2.5">
+                  <Ionicons
+                    name="reorder-three-outline"
+                    size={20}
+                    color={dark ? '#6B7178' : '#9CA3AF'}
+                  />
+                </View>
+              </PanGestureHandler>
+
+              <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
+                <Ionicons name={meta.icon} size={16} color="#4D7C0F" />
+              </View>
+
+              <View className="flex-1">
+                <Text
+                  className="text-[15px] font-medium text-ink dark:text-ink-dark"
+                  numberOfLines={1}
+                >
+                  {meta.label}
+                </Text>
+                <Text className="text-xs text-ink-2 dark:text-ink-2-dark" numberOfLines={1}>
+                  {meta.description}
+                </Text>
+              </View>
+
+              <Switch
+                value={!isHidden}
+                onValueChange={() => toggleHidden(key)}
+                trackColor={{ false: dark ? '#23272C' : '#E3E5E8', true: '#B9F227' }}
+                thumbColor="#FFFFFF"
+                ios_backgroundColor={dark ? '#23272C' : '#E3E5E8'}
+              />
+            </View>
+          </View>
+        );
+      })}
+    </View>
   );
 }

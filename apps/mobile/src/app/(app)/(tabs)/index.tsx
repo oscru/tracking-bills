@@ -7,10 +7,10 @@ import {
   daysUntil,
   formatCurrency,
   monthTotals,
-  normalizeHomeLayout,
   splitPendingByDate,
   todayISODate,
   totalBalance,
+  visibleHomeLayout,
   type HomeLayoutItem,
 } from '@repo/core/utils';
 import { Fab, Screen } from '@repo/ui';
@@ -21,6 +21,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View, useColorScheme } 
 import { ACCOUNT_TYPE_ICON } from '../../../features/accounts/account-types';
 import { CategorySpendCard } from '../../../features/home/category-spend-card';
 import { MonthPickerSheet } from '../../../features/home/month-picker-sheet';
+import { MonthlyTrendChart } from '../../../features/home/monthly-trend-chart';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -29,7 +30,10 @@ export default function HomeScreen() {
   const { data: transactions, isLoading: loadingTx } = useTransactions();
   const { data: profile } = useProfile();
   const [hidden, setHidden] = useState(false);
-  const layoutOrder = useMemo(() => normalizeHomeLayout(profile?.home_layout), [profile]);
+  const layoutOrder = useMemo(
+    () => visibleHomeLayout(profile?.home_layout, profile?.home_hidden_items),
+    [profile],
+  );
 
   const active = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
   const visibleAccounts = useMemo(() => active.filter((a) => a.show_on_home), [active]);
@@ -103,8 +107,9 @@ export default function HomeScreen() {
     });
 
   // Every card the user can reorder from Opciones › Personalizar inicio —
-  // rendered below in `layoutOrder`'s sequence. The balance card and month
-  // selector aren't here: they're the screen's anchor and always come first.
+  // rendered below in `layoutOrder`'s sequence. The month selector, balance
+  // card, and income/expense totals aren't here: they're the screen's
+  // anchor and always come first.
   const cards: Record<HomeLayoutItem, ReactNode> = {
     pending:
       overdue.length > 0 ? (
@@ -163,29 +168,6 @@ export default function HomeScreen() {
         </Pressable>
       ) : null,
 
-    monthlyTotals: (
-      <View className="flex-row gap-3">
-        <Pressable
-          onPress={() => openMonth('income')}
-          className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
-        >
-          <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Ingresos</Text>
-          <Text className="mt-1 text-xl font-bold text-pos dark:text-pos-dark">
-            {hidden ? '•••' : formatCurrency(month.income, currency)}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => openMonth('expense')}
-          className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
-        >
-          <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Gastos</Text>
-          <Text className="mt-1 text-xl font-bold text-danger dark:text-danger-dark">
-            {hidden ? '•••' : formatCurrency(month.expense, currency)}
-          </Text>
-        </Pressable>
-      </View>
-    ),
-
     categorySpend: (
       <CategorySpendCard
         breakdown={categoryBreakdown}
@@ -194,6 +176,8 @@ export default function HomeScreen() {
         onSelectCategory={openCategory}
       />
     ),
+
+    monthlyTrend: <MonthlyTrendChart />,
 
     accounts: (
       <View className="gap-2">
@@ -302,13 +286,31 @@ export default function HomeScreen() {
             </Text>
           </View>
 
+          {/* Fixed, like the balance card above — not user-reorderable/hideable. */}
+          <View className="flex-row gap-3">
+            <Pressable
+              onPress={() => openMonth('income')}
+              className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
+            >
+              <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Ingresos</Text>
+              <Text className="mt-1 text-xl font-bold text-pos dark:text-pos-dark">
+                {hidden ? '•••' : formatCurrency(month.income, currency)}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => openMonth('expense')}
+              className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
+            >
+              <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Gastos</Text>
+              <Text className="mt-1 text-xl font-bold text-danger dark:text-danger-dark">
+                {hidden ? '•••' : formatCurrency(month.expense, currency)}
+              </Text>
+            </Pressable>
+          </View>
+
           {layoutOrder.map((key) => (
             <View key={key}>{cards[key]}</View>
           ))}
-
-          <Text className="text-sm text-ink-3 dark:text-ink-3-dark">
-            Tendencia mensual — próximamente.
-          </Text>
         </ScrollView>
       )}
 
