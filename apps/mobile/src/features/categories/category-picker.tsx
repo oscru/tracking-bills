@@ -17,6 +17,8 @@ interface Props {
   parentOnly?: boolean;
   /** Hide this id (a category can't be its own parent). */
   excludeId?: string;
+  /** Hide these ids too (e.g. categories already added elsewhere). */
+  excludeIds?: string[];
   /** Show the "Sin categoría" option. Set false when a category is required (e.g. transactions). */
   allowNone?: boolean;
 }
@@ -30,6 +32,7 @@ export function CategoryPicker({
   onCreateNew,
   parentOnly = false,
   excludeId,
+  excludeIds,
   allowNone = true,
 }: Props) {
   const { height: windowHeight } = useWindowDimensions();
@@ -56,12 +59,13 @@ export function CategoryPicker({
   // silently drop it — mirrors the same rule for tags in `MovementForm`.
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
+    const excluded = new Set(excludeIds ?? []);
     let roots = (tree ?? [])
-      .filter((p) => p.id !== excludeId)
+      .filter((p) => p.id !== excludeId && !excluded.has(p.id))
       .filter((p) => !p.archived || p.id === selectedId)
       .map((p) => ({
         ...p,
-        children: p.children.filter((c) => !c.archived || c.id === selectedId),
+        children: p.children.filter((c) => !excluded.has(c.id) && (!c.archived || c.id === selectedId)),
       }));
     if (parentOnly) {
       roots = roots.map((p) => ({ ...p, children: [] }));
@@ -75,7 +79,7 @@ export function CategoryPicker({
       .filter(
         (p) => resolveCategoryLabel(p).toLowerCase().includes(needle) || p.children.length > 0,
       );
-  }, [tree, q, parentOnly, excludeId, selectedId]);
+  }, [tree, q, parentOnly, excludeId, excludeIds, selectedId]);
 
   const pick = (id: string | null) => {
     onSelect(id);

@@ -4,7 +4,6 @@ import { Button, CategoryDot, ConfirmSheet, Fab, PageHeader, Screen } from '@rep
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CategoryHistoryChart } from '../../../../../../features/categories/category-history-chart';
 
@@ -21,7 +20,6 @@ export default function CategoryDetail() {
     fromTransactionId?: string;
   }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { data: categories, isLoading } = useCategories();
   const { data: accounts } = useAccounts();
   const updateCategory = useUpdateCategory();
@@ -63,7 +61,7 @@ export default function CategoryDetail() {
       <View className="flex-1">
         <ScrollView
           className="flex-1"
-          contentContainerClassName="gap-5 pb-4"
+          contentContainerClassName="gap-5 pb-24"
           showsVerticalScrollIndicator={false}
         >
           <View className="flex-row items-center gap-2">
@@ -106,6 +104,15 @@ export default function CategoryDetail() {
               </View>
             </View>
           ) : null}
+
+          <View className="border-t border-line pt-5 dark:border-line-dark">
+            <Button
+              label={category.archived ? 'Desarchivar' : 'Archivar'}
+              variant={category.archived ? 'secondary' : 'ghost-danger'}
+              loading={updateCategory.isPending}
+              onPress={() => (category.archived ? toggleArchive() : setConfirmArchive(true))}
+            />
+          </View>
         </ScrollView>
 
         <View className="absolute bottom-6 right-5">
@@ -120,15 +127,6 @@ export default function CategoryDetail() {
             }
           />
         </View>
-      </View>
-
-      <View style={{ paddingBottom: Math.max(insets.bottom, 12) }}>
-        <Button
-          label={category.archived ? 'Desarchivar' : 'Archivar'}
-          variant={category.archived ? 'secondary' : 'ghost-danger'}
-          loading={updateCategory.isPending}
-          onPress={() => (category.archived ? toggleArchive() : setConfirmArchive(true))}
-        />
       </View>
 
       <ConfirmSheet

@@ -87,6 +87,95 @@ export type Database = {
           },
         ]
       }
+      budget_categories: {
+        Row: {
+          amount: number
+          budget_id: string
+          category_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          amount: number
+          budget_id: string
+          category_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          amount?: number
+          budget_id?: string
+          category_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_categories_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          amount: number
+          archived: boolean
+          created_at: string
+          end_date: string | null
+          id: string
+          name: string
+          period_type: string
+          repeats: boolean
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          archived?: boolean
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name: string
+          period_type: string
+          repeats?: boolean
+          start_date: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          archived?: boolean
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name?: string
+          period_type?: string
+          repeats?: boolean
+          start_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           archived: boolean

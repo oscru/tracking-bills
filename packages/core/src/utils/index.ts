@@ -2,7 +2,7 @@
  * Currency / date / calculation helpers. UI-agnostic and pure.
  */
 import { HOME_LAYOUT_ITEMS, type HomeLayoutItem } from '../home-layout';
-import type { Category, CategoryNode } from '../types';
+import type { BudgetPeriodType, Category, CategoryNode } from '../types';
 
 export * from './errors';
 export { HOME_LAYOUT_ITEMS, type HomeLayoutItem };
@@ -784,6 +784,120 @@ export function topTransactions<T extends { type: string; amount: number | strin
     .sort((a, b) => Number(b.amount) - Number(a.amount))
     .slice(0, limit);
 }
+
+// --- budgets ----------------------------------------------------------------
+
+export interface BudgetSpan {
+  period_type: BudgetPeriodType;
+  /** What date this budget's range (or, if repeating, its first occurrence) starts on. */
+  start_date: string;
+  /** Only set (and only meaningful) for 'custom'. */
+  end_date: string | null;
+  /** Whether a new occurrence of the same size starts right after the previous one ends. Always false for 'custom'. */
+  repeats: boolean;
+}
+
+/** The last day of the occurrence that starts on `startISO`, for a sized (non-custom) period type. */
+function periodSpanEnd(startISO: string, periodType: Exclude<BudgetPeriodType, 'custom'>): string {
+  const [y, m, d] = startISO.split('-').map(Number);
+  const start = new Date(y ?? 2000, (m ?? 1) - 1, d ?? 1);
+  if (periodType === 'weekly') return todayISODate(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6));
+  if (periodType === 'biweekly') return todayISODate(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 14));
+  // monthly: one calendar month later, minus a day — handles variable month lengths correctly.
+  return todayISODate(new Date(start.getFullYear(), start.getMonth() + 1, start.getDate() - 1));
+}
+
+/**
+ * The `{ from, to }` (inclusive, `YYYY-MM-DD`) bounds of a budget's occurrence
+ * containing `referenceDate` — anchored at `start_date`, not the calendar
+ * (a weekly budget started on a Wednesday runs Wednesday-to-Tuesday). When
+ * `repeats` is false there's only ever the one occurrence; once
+ * `referenceDate` is past it, that same occurrence is returned as "ended".
+ * 'custom' ignores `referenceDate` and `repeats` entirely — it's always its
+ * own stored `start_date`/`end_date`.
+ */
+export function budgetPeriodRange(
+  budget: BudgetSpan,
+  referenceDate: Date = new Date(),
+): { from: string; to: string } {
+  if (budget.period_type === 'custom') {
+    return { from: budget.start_date, to: budget.end_date ?? budget.start_date };
+  }
+
+  const today = todayISODate(referenceDate);
+  let cycleStart = budget.start_date;
+  let cycleEnd = periodSpanEnd(cycleStart, budget.period_type);
+
+  if (!budget.repeats) return { from: cycleStart, to: cycleEnd };
+
+  while (cycleEnd < today) {
+    cycleStart = addDaysISO(cycleEnd, 1);
+    cycleEnd = periodSpanEnd(cycleStart, budget.period_type);
+  }
+  return { from: cycleStart, to: cycleEnd };
+}
+
+interface BudgetTx {
+  type: string;
+  amount: number | string;
+  transaction_date: string;
+  category: { id: string } | null;
+}
+
+export interface BudgetProgress {
+  from: string;
+  to: string;
+  spent: number;
+  remaining: number;
+  /** 0-100+ — can exceed 100 when over budget. */
+  pct: number;
+  isOverBudget: boolean;
+}
+
+/** How much of a budget has been spent — across every one of its linked categories — in its current occurrence (see `budgetPeriodRange`). */
+export function budgetProgress(
+  categoryIds: string[],
+  amount: number,
+  budget: BudgetSpan,
+  transactions: BudgetTx[],
+  referenceDate: Date = new Date(),
+): BudgetProgress {
+  const { from, to } = budgetPeriodRange(budget, referenceDate);
+  const categorySet = new Set(categoryIds);
+  let spent = 0;
+  for (const t of transactions) {
+    if (t.type !== 'expense') continue;
+    if (!t.category?.id || !categorySet.has(t.category.id)) continue;
+    if (t.transaction_date < from || t.transaction_date > to) continue;
+    spent += Number(t.amount);
+  }
+  return {
+    from,
+    to,
+    spent,
+    remaining: amount - spent,
+    pct: amount > 0 ? (spent / amount) * 100 : 0,
+    isOverBudget: spent > amount,
+  };
+}
+
+/** How much was spent in one category within an inclusive range — the per-category line in a budget's breakdown. */
+export function categorySpentInRange(
+  categoryId: string,
+  transactions: BudgetTx[],
+  fromISO: string,
+  toISO: string,
+): number {
+  let spent = 0;
+  for (const t of transactions) {
+    if (t.type !== 'expense') continue;
+    if (t.category?.id !== categoryId) continue;
+    if (t.transaction_date < fromISO || t.transaction_date > toISO) continue;
+    spent += Number(t.amount);
+  }
+  return spent;
+}
+
 
 // --- home layout ----------------------------------------------------------
 

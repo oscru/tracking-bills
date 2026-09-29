@@ -48,6 +48,11 @@ const ITEM_META: Record<
     description: 'Recordatorio de lo que tienes programado a futuro',
     icon: 'calendar-outline',
   },
+  budgets: {
+    label: 'Presupuestos',
+    description: 'Qué tan cerca estás del límite de tus categorías',
+    icon: 'speedometer-outline',
+  },
   categorySpend: {
     label: 'Gastos por categoría',
     description: 'Gráfica y tus 5 categorías con más gasto',

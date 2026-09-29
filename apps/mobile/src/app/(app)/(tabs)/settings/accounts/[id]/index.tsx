@@ -4,8 +4,7 @@ import { accountBalance, formatCurrency } from '@repo/core/utils';
 import { Button, ConfirmSheet, Fab, PageHeader, Screen, SwitchRow } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AdjustBalanceSheet } from '../../../../../../features/accounts/adjust-balance-sheet';
 import { ACCOUNT_TYPE_LABEL } from '../../../../../../features/accounts/account-types';
@@ -13,7 +12,6 @@ import { ACCOUNT_TYPE_LABEL } from '../../../../../../features/accounts/account-
 export default function AccountDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: transactions, isLoading: loadingTx } = useTransactions();
   const updateAccount = useUpdateAccount();
@@ -63,71 +61,82 @@ export default function AccountDetail() {
     <Screen edges={['top']} className="gap-5">
       <PageHeader title={account.name} onBack={() => router.back()} />
 
-      <View className="flex-1 gap-5">
-        <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
-          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-            {ACCOUNT_TYPE_LABEL[account.type]}
-            {account.archived ? ' · archivada' : ''}
-          </Text>
-          <Text className="mt-1 text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
-            {formatCurrency(balance, account.currency)}
-          </Text>
-        </View>
+      <View className="flex-1">
+        <ScrollView className="flex-1" contentContainerClassName="gap-5 pb-24">
+          <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
+            <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+              {ACCOUNT_TYPE_LABEL[account.type]}
+              {account.archived ? ' · archivada' : ''}
+            </Text>
+            <Text className="mt-1 text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
+              {formatCurrency(balance, account.currency)}
+            </Text>
+          </View>
 
-        <Button label="Ajustar saldo" onPress={() => setAdjustOpen(true)} />
+          <Button label="Ajustar saldo" onPress={() => setAdjustOpen(true)} />
 
-        <View className="flex-row gap-3">
-          <Pressable
-            onPress={() => openMovements('income')}
-            className="flex-1 rounded-2xl border border-pos/30 bg-lime-tint p-4 active:opacity-70 dark:border-pos-dark/30 dark:bg-lime-tint-dark"
-          >
-            <View className="flex-row items-center gap-1.5">
-              <Ionicons name="arrow-down-circle" size={16} color="#16A34A" />
-              <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-                Ingresos
+          <View className="flex-row gap-3">
+            <Pressable
+              onPress={() => openMovements('income')}
+              className="flex-1 rounded-2xl border border-pos/30 bg-lime-tint p-4 active:opacity-70 dark:border-pos-dark/30 dark:bg-lime-tint-dark"
+            >
+              <View className="flex-row items-center gap-1.5">
+                <Ionicons name="arrow-down-circle" size={16} color="#16A34A" />
+                <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
+                  Ingresos
+                </Text>
+              </View>
+              <Text className="mt-1 text-2xl font-bold text-pos dark:text-pos-dark">
+                {incomeCount}
               </Text>
-            </View>
-            <Text className="mt-1 text-2xl font-bold text-pos dark:text-pos-dark">
-              {incomeCount}
-            </Text>
-            <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-              {incomeCount === 1 ? 'movimiento' : 'movimientos'}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => openMovements('expense')}
-            className="flex-1 rounded-2xl border border-line bg-[#F1F2F4] p-4 active:opacity-70 dark:border-line-dark dark:bg-line-dark"
-          >
-            <View className="flex-row items-center gap-1.5">
-              <Ionicons name="arrow-up-circle" size={16} color="#1A1D21" />
-              <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">Gastos</Text>
-            </View>
-            <Text className="mt-1 text-2xl font-bold text-ink dark:text-ink-dark">
-              {expenseCount}
-            </Text>
-            <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-              {expenseCount === 1 ? 'movimiento' : 'movimientos'}
-            </Text>
-          </Pressable>
-        </View>
+              <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+                {incomeCount === 1 ? 'movimiento' : 'movimientos'}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => openMovements('expense')}
+              className="flex-1 rounded-2xl border border-line bg-[#F1F2F4] p-4 active:opacity-70 dark:border-line-dark dark:bg-line-dark"
+            >
+              <View className="flex-row items-center gap-1.5">
+                <Ionicons name="arrow-up-circle" size={16} color="#1A1D21" />
+                <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">Gastos</Text>
+              </View>
+              <Text className="mt-1 text-2xl font-bold text-ink dark:text-ink-dark">
+                {expenseCount}
+              </Text>
+              <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+                {expenseCount === 1 ? 'movimiento' : 'movimientos'}
+              </Text>
+            </Pressable>
+          </View>
 
-        <SwitchRow
-          label="Mostrar en Inicio"
-          description="Aparece en la lista de cuentas de la pantalla principal"
-          value={account.show_on_home}
-          onValueChange={(v) =>
-            updateAccount.mutate({ id: account.id, patch: { show_on_home: v } })
-          }
-        />
+          <SwitchRow
+            label="Mostrar en Inicio"
+            description="Aparece en la lista de cuentas de la pantalla principal"
+            value={account.show_on_home}
+            onValueChange={(v) =>
+              updateAccount.mutate({ id: account.id, patch: { show_on_home: v } })
+            }
+          />
 
-        <SwitchRow
-          label="Incluir en balance total"
-          description="Se suma al «Balance total» de la pantalla principal"
-          value={account.include_in_total}
-          onValueChange={(v) =>
-            updateAccount.mutate({ id: account.id, patch: { include_in_total: v } })
-          }
-        />
+          <SwitchRow
+            label="Incluir en balance total"
+            description="Se suma al «Balance total» de la pantalla principal"
+            value={account.include_in_total}
+            onValueChange={(v) =>
+              updateAccount.mutate({ id: account.id, patch: { include_in_total: v } })
+            }
+          />
+
+          <View className="border-t border-line pt-5 dark:border-line-dark">
+            <Button
+              label={account.archived ? 'Desarchivar' : 'Archivar'}
+              variant={account.archived ? 'secondary' : 'ghost-danger'}
+              loading={updateAccount.isPending}
+              onPress={() => (account.archived ? toggleArchive() : setConfirmArchive(true))}
+            />
+          </View>
+        </ScrollView>
 
         <View className="absolute bottom-6 right-5">
           <Fab
@@ -141,15 +150,6 @@ export default function AccountDetail() {
             }
           />
         </View>
-      </View>
-
-      <View style={{ paddingBottom: Math.max(insets.bottom, 12) }}>
-        <Button
-          label={account.archived ? 'Desarchivar' : 'Archivar'}
-          variant={account.archived ? 'secondary' : 'ghost-danger'}
-          loading={updateAccount.isPending}
-          onPress={() => (account.archived ? toggleArchive() : setConfirmArchive(true))}
-        />
       </View>
 
       <AdjustBalanceSheet

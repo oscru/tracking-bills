@@ -5,6 +5,7 @@
  */
 export * from './account';
 export * from './auth';
+export * from './budget';
 export * from './category';
 export * from './favorite-transaction';
 export * from './profile';

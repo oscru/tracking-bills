@@ -18,6 +18,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { BiggestExpensesCard } from '../../../features/analytics/biggest-expenses-card';
+import { BudgetsProgressCard } from '../../../features/analytics/budgets-progress-card';
 import {
   CalendarHeatmap,
   type HeatmapCell,
@@ -258,6 +259,8 @@ export default function AnalyticsScreen() {
           ) : null}
 
           <InsightsStrip insights={insights} currency={currency} metric={heatmapMetric} />
+
+          {period === 'month' ? <BudgetsProgressCard currency={currency} /> : null}
 
           <CategoryTrendCard trend={trend} onSeeAll={openMonthCategories} metric={heatmapMetric} />
 

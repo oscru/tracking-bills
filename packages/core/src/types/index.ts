@@ -50,6 +50,16 @@ export type Tag = Row<'tags'>;
 export type FavoriteTransaction = Omit<Row<'favorite_transactions'>, 'type'> & {
   type: TransactionType;
 };
+/**
+ * How often a budget's limit resets. "biweekly" is calendar days 1-15 and
+ * 16-end of month. "custom" is a one-off explicit `start_date`/`end_date`
+ * range instead of a recurring occurrence.
+ */
+export type BudgetPeriodType = 'weekly' | 'biweekly' | 'monthly' | 'custom';
+/** A named spending envelope covering one or more categories (see `BudgetCategory`) — always expense-scoped. */
+export type Budget = Omit<Row<'budgets'>, 'period_type'> & { period_type: BudgetPeriodType };
+/** A category linked to a budget — a category can belong to several budgets at once. */
+export type BudgetCategory = Row<'budget_categories'>;
 /** Per-tag transaction counts, split the way the tag list displays them. */
 export interface TagCounts {
   expense: number;

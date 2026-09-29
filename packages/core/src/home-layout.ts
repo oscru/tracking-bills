@@ -11,6 +11,7 @@
 export const HOME_LAYOUT_ITEMS = [
   'pending',
   'upcoming',
+  'budgets',
   'categorySpend',
   'monthlyTrend',
   'accounts',

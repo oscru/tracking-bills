@@ -18,6 +18,15 @@ export interface DateRangeFieldProps {
   onChange: (from: string | null, to: string | null) => void;
   /** Custom trigger, e.g. a full-width row inside a filters sheet. Defaults to a chip-style button. */
   renderTrigger?: (props: { label: string; active: boolean; onPress: () => void }) => ReactNode;
+  /**
+   * Always pick a range — hides the Día/Rango toggle and never defaults to
+   * single-day mode. Without this, a picker that opens with nothing selected
+   * yet starts in "Día" mode, so the very first tap commits a single date and
+   * closes the sheet before a second date can be picked. Use this whenever
+   * the field is ALWAYS meant to be a range (e.g. a custom budget period),
+   * as opposed to a "day or range" filter where single-day is a real choice.
+   */
+  forceRangeMode?: boolean;
 }
 
 function monthBounds(date: Date): [string, string] {
@@ -27,9 +36,10 @@ function monthBounds(date: Date): [string, string] {
 }
 
 /** Date filter field: a single day or an inclusive range, picked from one calendar. */
-export function DateRangeField({ from, to, onChange, renderTrigger }: DateRangeFieldProps) {
+export function DateRangeField({ from, to, onChange, renderTrigger, forceRangeMode = false }: DateRangeFieldProps) {
+  const initialMode = forceRangeMode || (from && to && from !== to) ? 'range' : 'day';
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<'day' | 'range'>(from && to && from !== to ? 'range' : 'day');
+  const [mode, setMode] = useState<'day' | 'range'>(initialMode);
   const [rangeStart, setRangeStart] = useState<string | null>(from);
   const [rangeEnd, setRangeEnd] = useState<string | null>(to);
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
@@ -39,7 +49,7 @@ export function DateRangeField({ from, to, onChange, renderTrigger }: DateRangeF
     const anchor = from ? new Date(from) : new Date();
     setViewYear(anchor.getFullYear());
     setViewMonth(anchor.getMonth());
-    setMode(from && to && from !== to ? 'range' : 'day');
+    setMode(forceRangeMode || (from && to && from !== to) ? 'range' : 'day');
     setRangeStart(from);
     setRangeEnd(to);
     setOpen(true);
@@ -125,15 +135,17 @@ export function DateRangeField({ from, to, onChange, renderTrigger }: DateRangeF
           contentContainerClassName="gap-3 px-5 pb-6"
           keyboardShouldPersistTaps="handled"
         >
-          <SegmentedControl
-            options={MODE_OPTIONS}
-            value={mode}
-            onChange={(v) => {
-              setMode(v);
-              setRangeStart(from);
-              setRangeEnd(to);
-            }}
-          />
+          {forceRangeMode ? null : (
+            <SegmentedControl
+              options={MODE_OPTIONS}
+              value={mode}
+              onChange={(v) => {
+                setMode(v);
+                setRangeStart(from);
+                setRangeEnd(to);
+              }}
+            />
+          )}
 
           <View className="flex-row gap-2">
             <Chip

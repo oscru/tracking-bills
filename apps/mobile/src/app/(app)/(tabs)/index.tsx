@@ -19,6 +19,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View, useColorScheme } from 'react-native';
 
 import { ACCOUNT_TYPE_ICON } from '../../../features/accounts/account-types';
+import { BudgetsCard } from '../../../features/home/budgets-card';
 import { CategorySpendCard } from '../../../features/home/category-spend-card';
 import { MonthPickerSheet } from '../../../features/home/month-picker-sheet';
 import { MonthlyTrendChart } from '../../../features/home/monthly-trend-chart';
@@ -167,6 +168,8 @@ export default function HomeScreen() {
           <Ionicons name="chevron-forward" size={18} color={dark ? '#A3E635' : '#4D7C0F'} />
         </Pressable>
       ) : null,
+
+    budgets: <BudgetsCard currency={currency} />,
 
     categorySpend: (
       <CategorySpendCard
