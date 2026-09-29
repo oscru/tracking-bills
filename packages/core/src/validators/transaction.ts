@@ -22,23 +22,35 @@ const commonFields = { account_id: uuid, amount, description, transaction_date, 
 
 /**
  * Create payload — a discriminated union on `type`:
- * income/expense carry a required `category_id`; a transfer carries a required
- * `to_account_id` (the destination) and no category.
+ * income/expense carry a required `category_id`; a transfer carries no
+ * category and exactly one destination — another account (`to_account_id`)
+ * or a savings goal (`goal_id`), never both, never neither.
  */
-export const transactionCreateSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('income'), category_id: requiredCategoryId, ...commonFields }),
-  z.object({ type: z.literal('expense'), category_id: requiredCategoryId, ...commonFields }),
-  z.object({ type: z.literal('transfer'), to_account_id: uuid, ...commonFields }),
-]);
+export const transactionCreateSchema = z
+  .discriminatedUnion('type', [
+    z.object({ type: z.literal('income'), category_id: requiredCategoryId, ...commonFields }),
+    z.object({ type: z.literal('expense'), category_id: requiredCategoryId, ...commonFields }),
+    z.object({
+      type: z.literal('transfer'),
+      to_account_id: uuid.optional(),
+      goal_id: uuid.optional(),
+      ...commonFields,
+    }),
+  ])
+  .refine((v) => v.type !== 'transfer' || Boolean(v.to_account_id) !== Boolean(v.goal_id), {
+    message: 'Elige una cuenta o un objetivo de destino',
+    path: ['to_account_id'],
+  });
 
 /**
  * Update payload — a loose partial. The DB CHECK + integrity trigger enforce the
- * real invariants (transfer shape, account/category ownership).
+ * real invariants (transfer shape, account/category/goal ownership).
  */
 export const transactionUpdateSchema = z.object({
   type: transactionTypeSchema.optional(),
   account_id: uuid.optional(),
   to_account_id: uuid.nullish(),
+  goal_id: uuid.nullish(),
   category_id: uuid.nullish(),
   amount: amount.optional(),
   description,

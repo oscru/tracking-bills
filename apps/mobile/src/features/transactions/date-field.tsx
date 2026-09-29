@@ -6,7 +6,14 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { capitalize, monthGrid, WEEKDAYS } from './calendar-grid';
 
-export function DateField({ value, onChange }: { value: string; onChange: (iso: string) => void }) {
+interface DateFieldProps {
+  value: string;
+  onChange: (iso: string) => void;
+  /** Hide the Hoy/Ayer/Mañana shortcuts — for dates unlikely to be "today-ish", like a goal's deadline. */
+  showQuickChips?: boolean;
+}
+
+export function DateField({ value, onChange, showQuickChips = true }: DateFieldProps) {
   const [open, setOpen] = useState(false);
   const parsed = useMemo(() => {
     const [y, m, d] = value.split('-').map(Number);
@@ -35,19 +42,21 @@ export function DateField({ value, onChange }: { value: string; onChange: (iso: 
 
   return (
     <View className="gap-2">
-      <View className="flex-row gap-2">
-        <Chip label="Hoy" selected={value === today} onPress={() => onChange(today)} />
-        <Chip
-          label="Ayer"
-          selected={value === addDaysISO(today, -1)}
-          onPress={() => onChange(addDaysISO(today, -1))}
-        />
-        <Chip
-          label="Mañana"
-          selected={value === addDaysISO(today, 1)}
-          onPress={() => onChange(addDaysISO(today, 1))}
-        />
-      </View>
+      {showQuickChips ? (
+        <View className="flex-row gap-2">
+          <Chip label="Hoy" selected={value === today} onPress={() => onChange(today)} />
+          <Chip
+            label="Ayer"
+            selected={value === addDaysISO(today, -1)}
+            onPress={() => onChange(addDaysISO(today, -1))}
+          />
+          <Chip
+            label="Mañana"
+            selected={value === addDaysISO(today, 1)}
+            onPress={() => onChange(addDaysISO(today, 1))}
+          />
+        </View>
+      ) : null}
 
       <Pressable
         onPress={openPicker}

@@ -1,6 +1,7 @@
 import type {
   Account,
   Category,
+  Goal,
   InsertRow,
   Tag,
   Transaction,
@@ -37,13 +38,16 @@ export interface TransactionFilters {
 }
 
 type AccountRef = Pick<Account, 'id' | 'name' | 'type' | 'currency'>;
+type GoalRef = Pick<Goal, 'id' | 'name' | 'icon'>;
 export type TagRef = Pick<Tag, 'id' | 'name' | 'color'>;
 
-/** A transaction row with its account(s), category, and tags embedded. */
+/** A transaction row with its account(s), category, goal, and tags embedded. */
 export interface TransactionWithRefs extends Transaction {
   account: AccountRef | null;
-  /** Destination account — only present on transfers. */
+  /** Destination account — only present on account-to-account transfers. */
   to_account: AccountRef | null;
+  /** Destination goal — only present on transfers aimed at a savings goal instead of an account. */
+  goal: GoalRef | null;
   category: Pick<Category, 'id' | 'slug' | 'name' | 'icon' | 'color' | 'type' | 'parent_id'> | null;
   tags: TagRef[];
 }
@@ -52,7 +56,7 @@ export interface TransactionWithRefs extends Transaction {
 // `tags` comes back nested as `[{ tag: {...} }]` (one row per join-table
 // link) — flattened to a plain `TagRef[]` by `normalizeTags` below.
 const WITH_REFS =
-  '*, account:accounts!account_id(id, name, type, currency), to_account:accounts!to_account_id(id, name, type, currency), category:categories(id, slug, name, icon, color, type, parent_id), tags:transaction_tags(tag:tags(id, name, color))';
+  '*, account:accounts!account_id(id, name, type, currency), to_account:accounts!to_account_id(id, name, type, currency), goal:goals(id, name, icon), category:categories(id, slug, name, icon, color, type, parent_id), tags:transaction_tags(tag:tags(id, name, color))';
 
 interface RawWithRefs extends Omit<TransactionWithRefs, 'tags'> {
   tags: { tag: TagRef | null }[] | null;

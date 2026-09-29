@@ -1,3 +1,4 @@
+import { useAccounts } from '@repo/core/hooks';
 import { PageHeader, Screen, Button, ErrorCard } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -10,8 +11,10 @@ import { useBudgetDraft } from '../../../../../../features/budgets/budget-draft-
  * period's size/anchor/repetition. */
 export default function NewBudgetBasics() {
   const router = useRouter();
+  const { data: accounts } = useAccounts();
   const { draft, setDraft } = useBudgetDraft();
   const [fieldError, setFieldError] = useState<string | null>(null);
+  const currency = accounts?.[0]?.currency ?? 'MXN';
 
   const goToCategories = () => {
     setFieldError(null);
@@ -44,6 +47,7 @@ export default function NewBudgetBasics() {
             setDraft((d) => ({ ...d, amountText: v }));
             setFieldError(null);
           }}
+          currency={currency}
           periodType={draft.periodType}
           onChangePeriodType={(v) => {
             setDraft((d) => ({ ...d, periodType: v }));

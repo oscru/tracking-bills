@@ -27,3 +27,4 @@ export {
 export { SheetPortalHost } from './sheet-portal';
 export { SwitchRow, type SwitchRowProps } from './switch-row';
 export { TextField, type TextFieldProps } from './text-field';
+export { CurrencyField, type CurrencyFieldProps } from './currency-field';

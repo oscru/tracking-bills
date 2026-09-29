@@ -1,4 +1,4 @@
-import { useAccounts, useBudgets, useCategories, useSession, useTags } from '@repo/core/hooks';
+import { useAccounts, useBudgets, useCategories, useGoals, useSession, useTags } from '@repo/core/hooks';
 import { Avatar, ListRow, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
@@ -10,9 +10,11 @@ export default function SettingsScreen() {
   const { data: categories } = useCategories();
   const { data: tags } = useTags();
   const { data: budgets } = useBudgets();
+  const { data: goals } = useGoals();
 
   const customCategories = (categories ?? []).length;
   const activeBudgets = (budgets ?? []).length;
+  const activeGoals = (goals ?? []).filter((g) => !g.archived).length;
   const activeAccounts = (accounts ?? []).filter((a) => !a.archived).length;
   const activeTags = (tags ?? []).filter((t) => !t.archived).length;
 
@@ -63,6 +65,13 @@ export default function SettingsScreen() {
           subtitle={`${activeBudgets} presupuesto${activeBudgets === 1 ? '' : 's'}`}
           showChevron
           onPress={() => router.push('/(app)/settings/budgets')}
+        />
+        <View className="h-px bg-line dark:bg-line-dark" />
+        <ListRow
+          title="Objetivos"
+          subtitle={`${activeGoals} objetivo${activeGoals === 1 ? '' : 's'}`}
+          showChevron
+          onPress={() => router.push('/(app)/settings/goals')}
         />
       </View>
 

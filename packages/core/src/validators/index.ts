@@ -8,6 +8,7 @@ export * from './auth';
 export * from './budget';
 export * from './category';
 export * from './favorite-transaction';
+export * from './goal';
 export * from './profile';
 export * from './tag';
 export * from './transaction';

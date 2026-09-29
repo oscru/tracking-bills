@@ -34,6 +34,7 @@ export {
   useRecordFavoriteTransactionUse,
 } from './use-favorite-transactions';
 export { useBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget } from './use-budgets';
+export { useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal } from './use-goals';
 export {
   useTransactions,
   useTransaction,

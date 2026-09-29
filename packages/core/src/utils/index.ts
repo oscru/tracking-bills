@@ -898,6 +898,84 @@ export function categorySpentInRange(
   return spent;
 }
 
+// --- goals --------------------------------------------------------------
+
+interface GoalTx {
+  type: string;
+  amount: number | string;
+  goal_id: string | null;
+}
+
+export interface GoalProgress {
+  saved: number;
+  remaining: number;
+  /** 0-100+ — can exceed 100 once the goal is over-funded. */
+  pct: number;
+  isComplete: boolean;
+}
+
+/** How much has been transferred into a goal so far — every `transactions` row with this `goal_id` is a contribution (see `transactions.goal_id`). */
+export function goalProgress(goalId: string, targetAmount: number, transactions: GoalTx[]): GoalProgress {
+  let saved = 0;
+  for (const t of transactions) {
+    if (t.goal_id !== goalId) continue;
+    saved += Number(t.amount);
+  }
+  return {
+    saved,
+    remaining: targetAmount - saved,
+    pct: targetAmount > 0 ? (saved / targetAmount) * 100 : 0,
+    isComplete: saved >= targetAmount,
+  };
+}
+
+export type GoalPaceStatus = 'ahead' | 'on-track' | 'behind';
+
+export interface GoalPace {
+  status: GoalPaceStatus;
+  /** What you'd have saved by now if you'd kept exactly to the planned pace. */
+  expectedByNow: number;
+  /** `saved - expectedByNow` — positive means ahead. */
+  difference: number;
+}
+
+/**
+ * How a goal's actual savings compare to its planned pace (`contribution_amount`
+ * every `contribution_interval_days`), as of `today`. Purely informational —
+ * nothing enforces the pace, it's just what the user told us they intend.
+ */
+export function goalPace(
+  saved: number,
+  contributionAmount: number,
+  contributionIntervalDays: number,
+  createdAt: string,
+  today: string = todayISODate(),
+): GoalPace {
+  const daysElapsed = Math.max(0, daysUntil(today, createdAt.slice(0, 10)));
+  const periodsElapsed = Math.floor(daysElapsed / contributionIntervalDays);
+  const expectedByNow = contributionAmount * periodsElapsed;
+  const difference = saved - expectedByNow;
+  const status: GoalPaceStatus = difference > 0 ? 'ahead' : difference < 0 ? 'behind' : 'on-track';
+  return { status, expectedByNow, difference };
+}
+
+/**
+ * How much to save every `intervalDays` (starting today) to reach
+ * `targetAmount` exactly by `deadline` — the suggestion shown while setting
+ * up a goal's savings pace. `null` when there's no time left to save
+ * anything (`deadline` is today or already past).
+ */
+export function suggestedGoalContribution(
+  targetAmount: number,
+  deadline: string,
+  intervalDays: number,
+  referenceDate: Date = new Date(),
+): number | null {
+  const daysLeft = daysUntil(deadline, todayISODate(referenceDate));
+  if (daysLeft <= 0) return null;
+  const periodsLeft = daysLeft / intervalDays;
+  return targetAmount / periodsLeft;
+}
 
 // --- home layout ----------------------------------------------------------
 

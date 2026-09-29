@@ -313,6 +313,56 @@ export type Database = {
           },
         ]
       }
+      goals: {
+        Row: {
+          archived: boolean
+          contribution_amount: number | null
+          contribution_interval_days: number | null
+          created_at: string
+          deadline: string | null
+          icon: string
+          id: string
+          name: string
+          target_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean
+          contribution_amount?: number | null
+          contribution_interval_days?: number | null
+          created_at?: string
+          deadline?: string | null
+          icon: string
+          id?: string
+          name: string
+          target_amount: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          archived?: boolean
+          contribution_amount?: number | null
+          contribution_interval_days?: number | null
+          created_at?: string
+          deadline?: string | null
+          icon?: string
+          id?: string
+          name?: string
+          target_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -434,6 +484,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           description: string | null
+          goal_id: string | null
           id: string
           is_completed: boolean
           to_account_id: string | null
@@ -448,6 +499,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          goal_id?: string | null
           id?: string
           is_completed?: boolean
           to_account_id?: string | null
@@ -462,6 +514,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          goal_id?: string | null
           id?: string
           is_completed?: boolean
           to_account_id?: string | null
@@ -483,6 +536,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
             referencedColumns: ["id"]
           },
           {

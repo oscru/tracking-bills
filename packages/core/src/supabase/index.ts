@@ -10,6 +10,7 @@ export * from './accounts';
 export * from './budgets';
 export * from './categories';
 export * from './favorite-transactions';
+export * from './goals';
 export * from './profiles';
 export * from './tags';
 export * from './transactions';

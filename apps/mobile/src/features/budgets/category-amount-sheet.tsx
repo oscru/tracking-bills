@@ -1,7 +1,7 @@
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { Category } from '@repo/core/types';
 import { formatCurrency } from '@repo/core/utils';
-import { BottomSheet, Button, CategoryDot, TextField } from '@repo/ui';
+import { BottomSheet, Button, CategoryDot, CurrencyField } from '@repo/ui';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -64,15 +64,14 @@ export function CategoryAmountSheet({
           </View>
         ) : null}
 
-        <TextField
+        <CurrencyField
           label="Monto asignado"
           value={amountText}
           onChangeText={(t) => {
             setAmountText(t);
             setError(null);
           }}
-          placeholder="0.00"
-          keyboardType="decimal-pad"
+          currency={currency}
           error={error}
           autoFocus
         />

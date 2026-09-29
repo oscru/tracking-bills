@@ -6,7 +6,7 @@ import {
   favoriteTransactionCreateSchema,
   type FavoriteTransactionCreateInput,
 } from '@repo/core/validators';
-import { Button, CategoryDot, ErrorCard, SegmentedControl, SwitchRow, TextField } from '@repo/ui';
+import { Button, CategoryDot, CurrencyField, ErrorCard, SegmentedControl, SwitchRow, TextField } from '@repo/ui';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -250,15 +250,14 @@ export function FavoriteForm({
       />
 
       {fixedAmount ? (
-        <TextField
+        <CurrencyField
           label="Monto"
           value={amountText}
           onChangeText={(t) => {
             setAmountText(t);
             dirty();
           }}
-          placeholder="0.00"
-          keyboardType="decimal-pad"
+          currency={selectedAccount?.currency ?? 'MXN'}
         />
       ) : null}
 

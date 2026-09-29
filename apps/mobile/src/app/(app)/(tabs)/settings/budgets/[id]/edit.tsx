@@ -123,6 +123,7 @@ export default function EditBudget() {
             setAmountText(v);
             dirty();
           }}
+          currency={currency}
           periodType={periodType}
           onChangePeriodType={(v) => {
             setPeriodType(v);

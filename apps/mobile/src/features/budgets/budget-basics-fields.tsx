@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BudgetPeriodType } from '@repo/core/types';
-import { Chip, SwitchRow, TextField } from '@repo/ui';
+import { Chip, CurrencyField, SwitchRow, TextField } from '@repo/ui';
 import { Pressable, Text, View } from 'react-native';
 
 import { DateField } from '../transactions/date-field';
@@ -24,6 +24,7 @@ interface Props {
   onChangeName: (v: string) => void;
   amountText: string;
   onChangeAmount: (v: string) => void;
+  currency: string;
   periodType: BudgetPeriodType;
   onChangePeriodType: (v: BudgetPeriodType) => void;
   /** When a weekly/biweekly/monthly budget starts. Not used for 'custom' — that has its own range below. */
@@ -45,6 +46,7 @@ export function BudgetBasicsFields({
   onChangeName,
   amountText,
   onChangeAmount,
+  currency,
   periodType,
   onChangePeriodType,
   startDate,
@@ -65,13 +67,7 @@ export function BudgetBasicsFields({
         maxLength={60}
       />
 
-      <TextField
-        label="Monto"
-        value={amountText}
-        onChangeText={onChangeAmount}
-        placeholder="0.00"
-        keyboardType="decimal-pad"
-      />
+      <CurrencyField label="Monto" value={amountText} onChangeText={onChangeAmount} currency={currency} />
 
       <View className="gap-2">
         <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">

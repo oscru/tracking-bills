@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCreateFavoriteTransaction, useFormError } from '@repo/core/hooks';
+import { useAccounts, useCreateFavoriteTransaction, useFormError } from '@repo/core/hooks';
 import { favoriteTransactionCreateSchema } from '@repo/core/validators';
-import { BottomSheet, Button, ErrorCard, SwitchRow, TextField } from '@repo/ui';
+import { BottomSheet, Button, CurrencyField, ErrorCard, SwitchRow, TextField } from '@repo/ui';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -40,7 +40,9 @@ function QuickFavoriteFields({
   onCreated: () => void;
 }) {
   const create = useCreateFavoriteTransaction();
+  const { data: accounts } = useAccounts();
   const { error, setError, clearError } = useFormError();
+  const currency = (accounts ?? []).find((a) => a.id === initial.account_id)?.currency ?? 'MXN';
 
   const [label, setLabel] = useState('');
   const [icon, setIcon] = useState<string | null>(null);
@@ -138,15 +140,14 @@ function QuickFavoriteFields({
       />
 
       {fixedAmount ? (
-        <TextField
+        <CurrencyField
           label="Monto"
           value={amountText}
           onChangeText={(t) => {
             setAmountText(t);
             dirty();
           }}
-          placeholder="0.00"
-          keyboardType="decimal-pad"
+          currency={currency}
         />
       ) : null}
 

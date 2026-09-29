@@ -95,6 +95,10 @@ export default function TransactionDetail() {
     if (!accountId) return;
     router.push({ pathname: '/(app)/settings/accounts/[id]', params: { id: accountId } });
   };
+  const goGoal = (goalId: string | null) => {
+    if (!goalId) return;
+    router.push({ pathname: '/(app)/settings/goals/[id]', params: { id: goalId } });
+  };
   const goCategory = () => {
     if (!tx.category) return;
     // `settings/categories/[id]` lives in the settings tab's own nested
@@ -180,14 +184,24 @@ export default function TransactionDetail() {
                   onPress={() => goAccount(tx.account_id)}
                 />
                 <View className="h-px bg-line dark:bg-line-dark" />
-                <ListRow
-                  title="A"
-                  subtitle={toAccount?.name}
-                  dotColor={toAccount?.color}
-                  icon={toAccount ? ACCOUNT_TYPE_ICON[toAccount.type] : undefined}
-                  showChevron
-                  onPress={() => goAccount(tx.to_account_id)}
-                />
+                {tx.goal ? (
+                  <ListRow
+                    title="A"
+                    subtitle={tx.goal.name}
+                    icon={tx.goal.icon as keyof typeof Ionicons.glyphMap}
+                    showChevron
+                    onPress={() => goGoal(tx.goal_id)}
+                  />
+                ) : (
+                  <ListRow
+                    title="A"
+                    subtitle={toAccount?.name}
+                    dotColor={toAccount?.color}
+                    icon={toAccount ? ACCOUNT_TYPE_ICON[toAccount.type] : undefined}
+                    showChevron
+                    onPress={() => goAccount(tx.to_account_id)}
+                  />
+                )}
               </>
             ) : (
               <>

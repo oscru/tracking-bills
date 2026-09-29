@@ -60,6 +60,8 @@ export type BudgetPeriodType = 'weekly' | 'biweekly' | 'monthly' | 'custom';
 export type Budget = Omit<Row<'budgets'>, 'period_type'> & { period_type: BudgetPeriodType };
 /** A category linked to a budget — a category can belong to several budgets at once. */
 export type BudgetCategory = Row<'budget_categories'>;
+/** A savings target — not a real account, but a transfer can be aimed at one (see `Transaction.goal_id`). Progress is derived from those transfers, not stored. */
+export type Goal = Row<'goals'>;
 /** Per-tag transaction counts, split the way the tag list displays them. */
 export interface TagCounts {
   expense: number;

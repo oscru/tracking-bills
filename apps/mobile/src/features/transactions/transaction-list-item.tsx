@@ -158,6 +158,7 @@ export function TransactionListItem({
     category,
     account,
     to_account,
+    goal,
     is_completed,
     tags,
   } = transaction;
@@ -370,7 +371,7 @@ export function TransactionListItem({
 
   if (type === 'transfer') {
     title = 'Transferencia';
-    subtitle = `${account?.name ?? '—'} → ${to_account?.name ?? '—'}`;
+    subtitle = `${account?.name ?? '—'} → ${goal?.name ?? to_account?.name ?? '—'}`;
     sign = '';
     amountClass = 'text-ink-2 dark:text-ink-2-dark';
     color = '#4D7C0F';

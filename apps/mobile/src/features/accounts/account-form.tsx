@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { AccountType } from '@repo/core/types';
 import { accountCreateSchema, type AccountCreateInput } from '@repo/core/validators';
-import { BottomSheet, Button, ColorPicker, ErrorCard, TextField } from '@repo/ui';
+import { BottomSheet, Button, ColorPicker, CurrencyField, ErrorCard, TextField } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -120,12 +120,11 @@ export function AccountForm({
       />
 
       {editing ? null : (
-        <TextField
+        <CurrencyField
           label="Saldo inicial"
           value={balance}
           onChangeText={setBalance}
-          keyboardType="decimal-pad"
-          placeholder="0.00"
+          currency={currency.trim() || 'MXN'}
           error={errors.initial_balance}
         />
       )}
