@@ -76,6 +76,15 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
+        name="analytics"
+        options={{
+          title: 'Análisis',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="stats-chart-outline" color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         listeners={({ navigation, route }) => resetNestedStackOnTabPress(navigation, route.name)}
         options={{

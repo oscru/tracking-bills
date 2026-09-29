@@ -15,6 +15,17 @@ export function formatCurrency(amount: number, currency = 'MXN', locale = 'es-MX
   }).format(amount);
 }
 
+/** A short "$1.8k" / "$450" form of an amount — for tight spaces (e.g. a calendar-heatmap cell) where a full `formatCurrency` string wouldn't fit. */
+export function formatCompactAmount(amount: number): string {
+  const abs = Math.abs(amount);
+  if (abs >= 1000) {
+    const thousands = abs / 1000;
+    const rounded = thousands >= 10 ? String(Math.round(thousands)) : thousands.toFixed(1).replace(/\.0$/, '');
+    return `$${rounded}k`;
+  }
+  return `$${Math.round(abs)}`;
+}
+
 /** Signed amount for a transaction: expenses are negative, income positive. */
 export function signedAmount(type: 'income' | 'expense', amount: number): number {
   return type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
@@ -486,6 +497,292 @@ export function monthlyIncomeExpenseHistory(
     else if (t.type === 'expense') bucket.expense += Number(t.amount);
   }
   return keys.map((month) => ({ month, ...(totals.get(month) ?? { income: 0, expense: 0 }) }));
+}
+
+// --- analytics (the "Análisis" tab: calendar heatmap + trend) -------------
+
+export type AnalyticsPeriod = 'week' | 'month' | 'year';
+
+function startOfWeek(date: Date): Date {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const mondayOffset = (d.getDay() + 6) % 7; // getDay(): Sun=0..Sat=6 -> Monday-start offset
+  d.setDate(d.getDate() - mondayOffset);
+  return d;
+}
+
+/** The `{ from, to }` (inclusive, `YYYY-MM-DD`) bounds of the week/month/year containing `referenceDate`. */
+export function periodRange(period: AnalyticsPeriod, referenceDate: Date): { from: string; to: string } {
+  if (period === 'week') {
+    const start = startOfWeek(referenceDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    return { from: todayISODate(start), to: todayISODate(end) };
+  }
+  if (period === 'year') {
+    const y = referenceDate.getFullYear();
+    return { from: `${y}-01-01`, to: `${y}-12-31` };
+  }
+  const y = referenceDate.getFullYear();
+  const m = referenceDate.getMonth();
+  return { from: `${y}-${String(m + 1).padStart(2, '0')}-01`, to: todayISODate(new Date(y, m + 1, 0)) };
+}
+
+/** A new reference date `delta` whole periods away (negative = back). */
+export function shiftPeriodDate(period: AnalyticsPeriod, referenceDate: Date, delta: number): Date {
+  if (period === 'week') {
+    const d = new Date(referenceDate);
+    d.setDate(d.getDate() + delta * 7);
+    return d;
+  }
+  if (period === 'year') return new Date(referenceDate.getFullYear() + delta, referenceDate.getMonth(), 1);
+  return new Date(referenceDate.getFullYear(), referenceDate.getMonth() + delta, 1);
+}
+
+/** `periodRange` for the period immediately before `referenceDate`'s — what "vs. anterior" compares against. */
+export function previousPeriodRange(period: AnalyticsPeriod, referenceDate: Date): { from: string; to: string } {
+  return periodRange(period, shiftPeriodDate(period, referenceDate, -1));
+}
+
+/** A human label for the period containing `referenceDate`, e.g. "Septiembre 2026", "8 – 14 sep", "2026". */
+export function periodLabel(period: AnalyticsPeriod, referenceDate: Date, locale = 'es-MX'): string {
+  if (period === 'year') return String(referenceDate.getFullYear());
+  if (period === 'month') {
+    const label = referenceDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+  const { from, to } = periodRange('week', referenceDate);
+  const parseISO = (iso: string) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y ?? 2000, (m ?? 1) - 1, d ?? 1);
+  };
+  const fromDate = parseISO(from);
+  const toDate = parseISO(to);
+  const sameMonth = fromDate.getMonth() === toDate.getMonth();
+  const fromLabel = fromDate.toLocaleDateString(locale, sameMonth ? { day: 'numeric' } : { day: 'numeric', month: 'short' });
+  const toLabel = toDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  return `${fromLabel} – ${toLabel}`;
+}
+
+interface RangeTx {
+  type: string;
+  amount: number | string;
+  transaction_date: string;
+}
+
+/** Income / expense totals within an inclusive `[fromISO, toISO]` range, excluding transfers. */
+function rangeTotals(transactions: RangeTx[], fromISO: string, toISO: string): { income: number; expense: number } {
+  let income = 0;
+  let expense = 0;
+  for (const t of transactions) {
+    if (t.transaction_date < fromISO || t.transaction_date > toISO) continue;
+    if (t.type === 'income') income += Number(t.amount);
+    else if (t.type === 'expense') expense += Number(t.amount);
+  }
+  return { income, expense };
+}
+
+/** Every day in `[fromISO, toISO]` with its expense or income total (0 for days with none) — the heatmap's raw data. */
+export function dailyTransactionTotals(
+  transactions: RangeTx[],
+  fromISO: string,
+  toISO: string,
+  type: 'expense' | 'income' = 'expense',
+): { date: string; total: number }[] {
+  const totals = new Map<string, number>();
+  for (const t of transactions) {
+    if (t.type !== type) continue;
+    if (t.transaction_date < fromISO || t.transaction_date > toISO) continue;
+    totals.set(t.transaction_date, (totals.get(t.transaction_date) ?? 0) + Number(t.amount));
+  }
+  const days: { date: string; total: number }[] = [];
+  for (let cursor = fromISO; cursor <= toISO; cursor = addDaysISO(cursor, 1)) {
+    days.push({ date: cursor, total: totals.get(cursor) ?? 0 });
+  }
+  return days;
+}
+
+/** Each month of `year` with its expense or income total — the year view's per-cell data (one cell per month). */
+export function monthlyTransactionTotalsForYear(
+  transactions: RangeTx[],
+  year: number,
+  type: 'expense' | 'income' = 'expense',
+): { month: string; total: number }[] {
+  const totals = new Map<string, number>();
+  for (let m = 1; m <= 12; m++) totals.set(`${year}-${String(m).padStart(2, '0')}`, 0);
+  for (const t of transactions) {
+    if (t.type !== type) continue;
+    const key = t.transaction_date.slice(0, 7);
+    if (!totals.has(key)) continue;
+    totals.set(key, (totals.get(key) ?? 0) + Number(t.amount));
+  }
+  return [...totals.entries()].map(([month, total]) => ({ month, total }));
+}
+
+/**
+ * Consecutive expense-free days counting back from `today` (inclusive) — "racha
+ * sin gastar". Stops at the earliest transaction on record so an account with
+ * little history doesn't read as an implausibly long streak.
+ */
+export function noSpendStreak(transactions: RangeTx[], today: string): number {
+  if (transactions.length === 0) return 0;
+  const expenseDates = new Set(
+    transactions.filter((t) => t.type === 'expense' && Number(t.amount) > 0).map((t) => t.transaction_date),
+  );
+  const earliest = transactions.reduce((min, t) => (t.transaction_date < min ? t.transaction_date : min), today);
+  let streak = 0;
+  for (let cursor = today; cursor >= earliest; cursor = addDaysISO(cursor, -1)) {
+    if (expenseDates.has(cursor)) break;
+    streak++;
+  }
+  return streak;
+}
+
+/**
+ * The longest run of consecutive expense-free days anywhere in the account's
+ * history, up to and including `today` — the "mejor racha" a given streak
+ * gets compared against.
+ */
+export function longestNoSpendStreak(transactions: RangeTx[], today: string = todayISODate()): number {
+  if (transactions.length === 0) return 0;
+  const expenseDates = new Set(
+    transactions.filter((t) => t.type === 'expense' && Number(t.amount) > 0).map((t) => t.transaction_date),
+  );
+  const earliest = transactions.reduce((min, t) => (t.transaction_date < min ? t.transaction_date : min), today);
+  let longest = 0;
+  let current = 0;
+  for (let cursor = earliest; cursor <= today; cursor = addDaysISO(cursor, 1)) {
+    if (expenseDates.has(cursor)) {
+      current = 0;
+    } else {
+      current++;
+      longest = Math.max(longest, current);
+    }
+  }
+  return longest;
+}
+
+export interface PeriodInsights {
+  /** This period's total for the requested `type` (expense or income). */
+  currentAmount: number;
+  previousAmount: number;
+  /** % change vs. the previous period, for the requested `type`; `null` when there's nothing to compare against. */
+  pctChangeVsPrevious: number | null;
+  /** % of income kept, i.e. `(income - expense) / income` — always both-sided, not affected by `type`. */
+  savingsRatePct: number | null;
+  /** `currentAmount` extrapolated to the full period from the pace so far; `null` unless the period is still ongoing. */
+  projectedAmount: number | null;
+  /** Consecutive no-spend days ending today — always about expenses, regardless of `type`. */
+  noSpendStreakDays: number;
+  /** The longest no-spend streak anywhere in the account's history — what `noSpendStreakDays` is measured against. */
+  bestNoSpendStreakDays: number;
+  /** Whether `today` falls inside this period — projection only makes sense when it does. */
+  isCurrentPeriod: boolean;
+}
+
+/** The whole "insights strip" bundle for one period — one call, everything a chip needs. */
+export function periodInsights(
+  transactions: RangeTx[],
+  period: AnalyticsPeriod,
+  referenceDate: Date,
+  type: 'expense' | 'income' = 'expense',
+  today: string = todayISODate(),
+): PeriodInsights {
+  const { from, to } = periodRange(period, referenceDate);
+  const prev = previousPeriodRange(period, referenceDate);
+  const current = rangeTotals(transactions, from, to);
+  const previous = rangeTotals(transactions, prev.from, prev.to);
+  const currentAmount = current[type];
+  const previousAmount = previous[type];
+
+  const isCurrentPeriod = today >= from && today <= to;
+  let projectedAmount: number | null = null;
+  if (isCurrentPeriod) {
+    // daysUntil(dateISO, today) returns dateISO - today, so `from` is the
+    // "today" argument here to get today-from / to-from (both positive).
+    const daysElapsed = daysUntil(today, from) + 1;
+    const totalDays = daysUntil(to, from) + 1;
+    projectedAmount = daysElapsed > 0 ? (currentAmount / daysElapsed) * totalDays : null;
+  }
+
+  return {
+    currentAmount,
+    previousAmount,
+    pctChangeVsPrevious: previousAmount > 0 ? ((currentAmount - previousAmount) / previousAmount) * 100 : null,
+    savingsRatePct: current.income > 0 ? ((current.income - current.expense) / current.income) * 100 : null,
+    projectedAmount,
+    noSpendStreakDays: noSpendStreak(transactions, today),
+    bestNoSpendStreakDays: longestNoSpendStreak(transactions, today),
+    isCurrentPeriod,
+  };
+}
+
+export interface CategoryTrend {
+  categoryId: string | null;
+  name: string;
+  color: string;
+  icon: string | null;
+  currentTotal: number;
+  previousTotal: number;
+  /** % change vs. the previous period; `null` when it wasn't spent on last period either. */
+  pctChange: number | null;
+}
+
+/** Per-category expense or income this period vs. the previous one, highest current amount first — "Categorías en tendencia". */
+export function categoryTrend(
+  transactions: SpendTx[],
+  period: AnalyticsPeriod,
+  referenceDate: Date,
+  type: 'expense' | 'income' = 'expense',
+): CategoryTrend[] {
+  const { from, to } = periodRange(period, referenceDate);
+  const prev = previousPeriodRange(period, referenceDate);
+
+  const byCategory = new Map<string, CategoryTrend>();
+  const touch = (t: SpendTx, field: 'currentTotal' | 'previousTotal') => {
+    const key = t.category?.id ?? '__none__';
+    let entry = byCategory.get(key);
+    if (!entry) {
+      entry = {
+        categoryId: t.category?.id ?? null,
+        name: t.category?.name ?? 'Sin categoría',
+        color: t.category?.color ?? '#94A3B8',
+        icon: t.category?.icon ?? null,
+        currentTotal: 0,
+        previousTotal: 0,
+        pctChange: null,
+      };
+      byCategory.set(key, entry);
+    }
+    entry[field] += Number(t.amount);
+  };
+
+  for (const t of transactions) {
+    if (t.type !== type) continue;
+    if (t.transaction_date >= from && t.transaction_date <= to) touch(t, 'currentTotal');
+    else if (t.transaction_date >= prev.from && t.transaction_date <= prev.to) touch(t, 'previousTotal');
+  }
+
+  return [...byCategory.values()]
+    .map((c) => ({
+      ...c,
+      pctChange: c.previousTotal > 0 ? ((c.currentTotal - c.previousTotal) / c.previousTotal) * 100 : null,
+    }))
+    .filter((c) => c.currentTotal > 0 || c.previousTotal > 0)
+    .sort((a, b) => b.currentTotal - a.currentTotal);
+}
+
+/** The `limit` largest expenses or income entries within an inclusive `[fromISO, toISO]` range, biggest first. */
+export function topTransactions<T extends { type: string; amount: number | string; transaction_date: string }>(
+  transactions: T[],
+  fromISO: string,
+  toISO: string,
+  type: 'expense' | 'income' = 'expense',
+  limit = 3,
+): T[] {
+  return transactions
+    .filter((t) => t.type === type && t.transaction_date >= fromISO && t.transaction_date <= toISO)
+    .sort((a, b) => Number(b.amount) - Number(a.amount))
+    .slice(0, limit);
 }
 
 // --- home layout ----------------------------------------------------------

@@ -4,22 +4,22 @@ import { useMemo } from 'react';
 import { Text, View, useColorScheme, useWindowDimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 
-const MONTHS = 6;
+const DEFAULT_MONTHS = 6;
 const CARD_PADDING = 20; // matches p-5
 const SCREEN_PADDING = 20; // matches Screen's px-5
 const Y_AXIS_GUTTER = 40; // room gifted-charts reserves for the y-axis labels
 
-/** Whole-account income vs. expense trend over the last `MONTHS` months — the
+/** Whole-account income vs. expense trend over the last `months` months — the
  * general-purpose counterpart to `CategoryHistoryChart`, which is scoped to
  * one category. */
-export function MonthlyTrendChart() {
+export function MonthlyTrendChart({ months = DEFAULT_MONTHS }: { months?: number }) {
   const dark = useColorScheme() === 'dark';
   const { width: windowWidth } = useWindowDimensions();
   const { data: transactions } = useTransactions();
 
   const history = useMemo(
-    () => monthlyIncomeExpenseHistory(transactions ?? [], MONTHS),
-    [transactions],
+    () => monthlyIncomeExpenseHistory(transactions ?? [], months),
+    [transactions, months],
   );
   const hasData = history.some((h) => h.income > 0 || h.expense > 0);
 
@@ -76,7 +76,7 @@ export function MonthlyTrendChart() {
       ) : (
         <View className="items-center justify-center py-10">
           <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-            Sin movimientos en los últimos {MONTHS} meses.
+            Sin movimientos en los últimos {months} meses.
           </Text>
         </View>
       )}
