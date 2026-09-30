@@ -4,6 +4,7 @@ import type { Profile } from '@repo/core/types';
 import { normalizeHomeLayout, type HomeLayoutItem } from '@repo/core/utils';
 import { PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { useColorScheme } from 'nativewind';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,7 +14,6 @@ import {
   Text,
   UIManager,
   View,
-  useColorScheme,
 } from 'react-native';
 import {
   PanGestureHandler,
@@ -58,6 +58,11 @@ const ITEM_META: Record<
     description: 'Gráfica y tus 5 categorías con más gasto',
     icon: 'pie-chart-outline',
   },
+  weeklySpend: {
+    label: 'Gastos semanales',
+    description: 'Vistazo rápido de lo gastado esta semana, día por día',
+    icon: 'bar-chart-outline',
+  },
   monthlyTrend: {
     label: 'Tendencia mensual',
     description: 'Ingresos vs. gastos de los últimos 6 meses',
@@ -98,7 +103,8 @@ export default function HomeLayoutScreen() {
 }
 
 function HomeLayoutEditor({ profile }: { profile: Profile }) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const updateProfile = useUpdateProfile();
 
   const [order, setOrder] = useState<HomeLayoutItem[]>(() =>
@@ -130,10 +136,23 @@ function HomeLayoutEditor({ profile }: { profile: Profile }) {
 
   const toggleHidden = (key: HomeLayoutItem) => {
     const next = new Set(hiddenSet);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
+    const hiding = !next.has(key);
+    if (hiding) next.add(key);
+    else next.delete(key);
     setHiddenSet(next);
-    persist(order, next);
+
+    // Switching a card off sends it to the bottom of the list — out of the
+    // way, and out of the reorder drag's way — rather than leaving a gap
+    // where it was. Turning it back on doesn't restore its old spot; the
+    // user drags it back up if they want it somewhere specific.
+    let nextOrder = order;
+    if (hiding) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      nextOrder = [...order.filter((k) => k !== key), key];
+      setOrder(nextOrder);
+    }
+
+    persist(nextOrder, next);
   };
 
   // Recreated every render (cheap — 5 short-lived closures) purely so each

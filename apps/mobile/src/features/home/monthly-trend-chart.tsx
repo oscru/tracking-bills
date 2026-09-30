@@ -1,7 +1,8 @@
 import { useTransactions } from '@repo/core/hooks';
 import { formatMonthShort, monthlyIncomeExpenseHistory } from '@repo/core/utils';
+import { useColorScheme } from 'nativewind';
 import { useMemo } from 'react';
-import { Text, View, useColorScheme, useWindowDimensions } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 
 const DEFAULT_MONTHS = 6;
@@ -13,7 +14,8 @@ const Y_AXIS_GUTTER = 40; // room gifted-charts reserves for the y-axis labels
  * general-purpose counterpart to `CategoryHistoryChart`, which is scoped to
  * one category. */
 export function MonthlyTrendChart({ months = DEFAULT_MONTHS }: { months?: number }) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const { width: windowWidth } = useWindowDimensions();
   const { data: transactions } = useTransactions();
 

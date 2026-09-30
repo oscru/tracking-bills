@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useCategoryTree, useTags, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useCategoryTree, useProfile, useTags, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionType } from '@repo/core/types';
 import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
@@ -113,6 +113,7 @@ export default function TransactionsScreen() {
   );
 
   const { data: accounts } = useAccounts();
+  const { data: profile } = useProfile();
   const { data: tags } = useTags();
   // Category filter always lists one type's tree — income if that's the active
   // type filter, expense otherwise (categories don't apply to transfers).
@@ -143,7 +144,7 @@ export default function TransactionsScreen() {
 
   const { data: transactions, isLoading, isRefetching, refetch, error } = useTransactions(filters);
 
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
   const sections = useMemo(() => groupByDay(transactions ?? []), [transactions]);
 
   const clearAll = () => {

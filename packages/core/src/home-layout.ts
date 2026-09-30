@@ -13,6 +13,7 @@ export const HOME_LAYOUT_ITEMS = [
   'upcoming',
   'budgets',
   'categorySpend',
+  'weeklySpend',
   'monthlyTrend',
   'accounts',
 ] as const;

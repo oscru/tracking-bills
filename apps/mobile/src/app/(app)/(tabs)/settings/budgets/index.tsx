@@ -1,4 +1,4 @@
-import { useAccounts, useBudgets, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useBudgets, useProfile, useTransactions } from '@repo/core/hooks';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetProgress, formatDate, toFriendlyMessage } from '@repo/core/utils';
 import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl } from '@repo/ui';
@@ -24,9 +24,10 @@ export default function BudgetsScreen() {
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const { data: accounts } = useAccounts();
+  const { data: profile } = useProfile();
   const { data: budgets, isLoading, error } = useBudgets();
   const { data: transactions } = useTransactions();
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const visible = (budgets ?? []).filter((b) => (status === 'archived' ? b.archived : !b.archived));
 

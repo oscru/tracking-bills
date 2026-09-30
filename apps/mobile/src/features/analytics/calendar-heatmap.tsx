@@ -1,5 +1,6 @@
 import { formatCompactAmount } from '@repo/core/utils';
-import { Pressable, Text, useColorScheme, View } from 'react-native';
+import { useColorScheme } from 'nativewind';
+import { Pressable, Text, View } from 'react-native';
 
 export interface HeatmapCell {
   key: string;
@@ -93,7 +94,8 @@ export function CalendarHeatmap({
   variant = 'expense',
   showAmounts = false,
 }: Props) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const maxTotal = Math.max(1, ...cells.filter((c) => !c.blank).map((c) => c.total));
   const rows = chunk(cells, columns);
 

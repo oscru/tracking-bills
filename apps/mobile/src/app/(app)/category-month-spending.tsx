@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useCategories, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useCategories, useProfile, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import { categorySpendBreakdown, formatCurrency, formatDate, todayISODate } from '@repo/core/utils';
@@ -51,7 +51,8 @@ export default function CategoryMonthSpendingScreen() {
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
   const { data: transactions, isLoading } = useTransactions();
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const { data: profile } = useProfile();
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const category = (categories ?? []).find((c) => c.id === params.categoryId) ?? null;
 

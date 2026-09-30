@@ -82,6 +82,13 @@ export default function SettingsScreen() {
           showChevron
           onPress={() => router.push('/(app)/settings/home-layout')}
         />
+        <View className="h-px bg-line dark:bg-line-dark" />
+        <ListRow
+          title="Preferencias"
+          subtitle="Moneda, tema e idioma"
+          showChevron
+          onPress={() => router.push('/(app)/settings/preferences')}
+        />
       </View>
     </Screen>
   );

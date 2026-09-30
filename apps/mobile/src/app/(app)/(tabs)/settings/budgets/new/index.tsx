@@ -1,4 +1,4 @@
-import { useAccounts } from '@repo/core/hooks';
+import { useAccounts, useProfile } from '@repo/core/hooks';
 import { PageHeader, Screen, Button, ErrorCard } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -12,9 +12,10 @@ import { useBudgetDraft } from '../../../../../../features/budgets/budget-draft-
 export default function NewBudgetBasics() {
   const router = useRouter();
   const { data: accounts } = useAccounts();
+  const { data: profile } = useProfile();
   const { draft, setDraft } = useBudgetDraft();
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const goToCategories = () => {
     setFieldError(null);

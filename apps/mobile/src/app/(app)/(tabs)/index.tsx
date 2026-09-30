@@ -15,18 +15,21 @@ import {
 } from '@repo/core/utils';
 import { Fab, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { useColorScheme } from 'nativewind';
 import { useMemo, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View, useColorScheme } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { ACCOUNT_TYPE_ICON } from '../../../features/accounts/account-types';
 import { BudgetsCard } from '../../../features/home/budgets-card';
 import { CategorySpendCard } from '../../../features/home/category-spend-card';
 import { MonthPickerSheet } from '../../../features/home/month-picker-sheet';
 import { MonthlyTrendChart } from '../../../features/home/monthly-trend-chart';
+import { WeeklySpendCard } from '../../../features/home/weekly-spend-card';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: transactions, isLoading: loadingTx } = useTransactions();
   const { data: profile } = useProfile();
@@ -38,7 +41,7 @@ export default function HomeScreen() {
 
   const active = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
   const visibleAccounts = useMemo(() => active.filter((a) => a.show_on_home), [active]);
-  const currency = active[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? active[0]?.currency ?? 'MXN';
   const balance = useMemo(() => totalBalance(active, transactions ?? []), [active, transactions]);
   const today = todayISODate();
   // Overdue (should've already happened) and upcoming (still ahead of
@@ -178,6 +181,10 @@ export default function HomeScreen() {
         onSeeAll={openMonthlySpending}
         onSelectCategory={openCategory}
       />
+    ),
+
+    weeklySpend: (
+      <WeeklySpendCard currency={currency} onPress={() => router.push('/(app)/analytics')} />
     ),
 
     monthlyTrend: <MonthlyTrendChart />,

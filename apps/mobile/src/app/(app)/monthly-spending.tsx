@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useProfile, useTransactions } from '@repo/core/hooks';
 import { categorySpendBreakdown, todayISODate } from '@repo/core/utils';
 import { PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,7 +16,8 @@ export default function MonthlySpendingScreen() {
 
   const { data: accounts } = useAccounts();
   const { data: transactions, isLoading } = useTransactions();
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const { data: profile } = useProfile();
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const breakdown = useMemo(
     () => categorySpendBreakdown(transactions ?? [], month),

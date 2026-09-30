@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { type ColorValue, useColorScheme, View } from 'react-native';
+import { useColorScheme } from 'nativewind';
+import { type ColorValue, View } from 'react-native';
 
 // Tabs with a nested Stack (settings, transactions) otherwise keep whatever
 // screen was last pushed — e.g. leave an account's edit screen on top after
@@ -39,7 +40,8 @@ function TabIcon({
 }
 
 export default function AppLayout() {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
 
   return (
     <Tabs

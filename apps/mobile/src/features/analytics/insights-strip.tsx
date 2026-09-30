@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { PeriodInsights } from '@repo/core/utils';
 import { formatCurrency } from '@repo/core/utils';
-import { ScrollView, Text, useColorScheme, View } from 'react-native';
+import { useColorScheme } from 'nativewind';
+import { ScrollView, Text, View } from 'react-native';
 
 interface Props {
   insights: PeriodInsights;
@@ -47,7 +48,8 @@ function Chip({
 /** Four at-a-glance stat chips computed from `periodInsights` — the tab's
  * "so what" layer on top of the calendar/trend visuals. */
 export function InsightsStrip({ insights, currency, metric = 'expense' }: Props) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const posColor = dark ? '#22C55E' : '#16A34A';
   const dangerColor = dark ? '#F16A6E' : '#E5484D';
   const warningColor = dark ? '#F3B25E' : '#B45309';

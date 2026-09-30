@@ -1,4 +1,4 @@
-import { useAccounts, useCategories, useUpdateCategory } from '@repo/core/hooks';
+import { useAccounts, useCategories, useProfile, useUpdateCategory } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import { Button, CategoryDot, ConfirmSheet, Fab, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -22,6 +22,7 @@ export default function CategoryDetail() {
   const router = useRouter();
   const { data: categories, isLoading } = useCategories();
   const { data: accounts } = useAccounts();
+  const { data: profile } = useProfile();
   const updateCategory = useUpdateCategory();
   const [confirmArchive, setConfirmArchive] = useState(false);
 
@@ -52,7 +53,7 @@ export default function CategoryDetail() {
   const toggleArchive = () =>
     updateCategory.mutate({ id: category.id, patch: { archived: !category.archived } });
 
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   return (
     <Screen edges={['top']} className="gap-5">

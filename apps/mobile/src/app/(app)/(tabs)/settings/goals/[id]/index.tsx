@@ -4,6 +4,7 @@ import {
   useDeleteGoal,
   useFormError,
   useGoals,
+  useProfile,
   useTransactions,
   useUpdateGoal,
 } from '@repo/core/hooks';
@@ -35,6 +36,7 @@ export default function GoalDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: accounts } = useAccounts();
+  const { data: profile } = useProfile();
   const { data: goals, isLoading } = useGoals();
   const { data: transactions } = useTransactions();
   const updateGoal = useUpdateGoal();
@@ -43,7 +45,7 @@ export default function GoalDetail() {
   const [contributeOpen, setContributeOpen] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const goal = (goals ?? []).find((g) => g.id === id);
 

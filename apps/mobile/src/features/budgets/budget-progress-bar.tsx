@@ -1,5 +1,6 @@
 import { formatCurrency } from '@repo/core/utils';
-import { Text, useColorScheme, View } from 'react-native';
+import { useColorScheme } from 'nativewind';
+import { Text, View } from 'react-native';
 
 interface Props {
   spent: number;
@@ -12,7 +13,8 @@ interface Props {
 /** A thin progress bar for one budget's current-period status — green under
  * budget, amber close to the limit, red over it. */
 export function BudgetProgressBar({ spent, amount, pct, isOverBudget, currency }: Props) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const posColor = dark ? '#22C55E' : '#16A34A';
   const warningColor = dark ? '#F3B25E' : '#B45309';
   const dangerColor = dark ? '#F16A6E' : '#E5484D';

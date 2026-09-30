@@ -1,6 +1,7 @@
 import type { CategorySpend } from '@repo/core/utils';
 import { formatCurrency } from '@repo/core/utils';
-import { Text, View, useColorScheme } from 'react-native';
+import { useColorScheme } from 'nativewind';
+import { Text, View } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
 
 interface Props {
@@ -12,7 +13,8 @@ interface Props {
 
 /** Donut of the month's spend, one slice per category in that category's own color. */
 export function CategorySpendDonut({ breakdown, total, currency, radius = 72 }: Props) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
 
   return (
     <PieChart

@@ -3,6 +3,7 @@ import {
   useBudgets,
   useDeleteBudget,
   useFormError,
+  useProfile,
   useTransactions,
   useUpdateBudget,
 } from '@repo/core/hooks';
@@ -27,6 +28,7 @@ export default function BudgetDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: accounts } = useAccounts();
+  const { data: profile } = useProfile();
   const { data: budgets, isLoading } = useBudgets();
   const { data: transactions } = useTransactions();
   const updateBudget = useUpdateBudget();
@@ -34,7 +36,7 @@ export default function BudgetDetail() {
   const { error, setError } = useFormError();
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const budget = (budgets ?? []).find((b) => b.id === id);
 

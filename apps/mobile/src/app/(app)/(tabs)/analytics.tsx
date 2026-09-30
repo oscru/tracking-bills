@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useProfile, useTransactions } from '@repo/core/hooks';
 import {
   categoryTrend,
   dailyTransactionTotals,
@@ -53,8 +53,9 @@ const METRIC_OPTIONS: SegmentedOption<HeatmapVariant>[] = [
 export default function AnalyticsScreen() {
   const router = useRouter();
   const { data: accounts } = useAccounts();
+  const { data: profile } = useProfile();
   const { data: transactions, isLoading } = useTransactions();
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
   const tx = useMemo(() => transactions ?? [], [transactions]);
 
   const [period, setPeriod] = useState<AnalyticsPeriod>('month');

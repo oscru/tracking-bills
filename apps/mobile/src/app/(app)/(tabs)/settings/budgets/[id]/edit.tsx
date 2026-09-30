@@ -1,4 +1,4 @@
-import { useAccounts, useBudgets, useFormError, useUpdateBudget } from '@repo/core/hooks';
+import { useAccounts, useBudgets, useFormError, useProfile, useUpdateBudget } from '@repo/core/hooks';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetUpdateSchema } from '@repo/core/validators';
 import { todayISODate } from '@repo/core/utils';
@@ -17,10 +17,11 @@ export default function EditBudget() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: accounts } = useAccounts();
+  const { data: profile } = useProfile();
   const { data: budgets, isLoading } = useBudgets();
   const update = useUpdateBudget();
   const { error, setError, clearError } = useFormError();
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const budget = (budgets ?? []).find((b) => b.id === id);
   const isCustom = budget?.period_type === 'custom';

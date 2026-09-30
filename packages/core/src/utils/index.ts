@@ -5,6 +5,7 @@ import { HOME_LAYOUT_ITEMS, type HomeLayoutItem } from '../home-layout';
 import type { BudgetPeriodType, Category, CategoryNode } from '../types';
 
 export * from './errors';
+export * from './currencies';
 export { HOME_LAYOUT_ITEMS, type HomeLayoutItem };
 
 /** Format a numeric amount as a localized currency string. */

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useGoals, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useGoals, useProfile, useTransactions } from '@repo/core/hooks';
 import { daysUntil, formatDate, goalProgress, todayISODate, toFriendlyMessage } from '@repo/core/utils';
 import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl } from '@repo/ui';
 import { useRouter } from 'expo-router';
@@ -25,9 +25,10 @@ export default function GoalsScreen() {
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const { data: accounts } = useAccounts();
+  const { data: profile } = useProfile();
   const { data: goals, isLoading, error } = useGoals();
   const { data: transactions } = useTransactions();
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const visible = (goals ?? []).filter((g) => (status === 'archived' ? g.archived : !g.archived));
 

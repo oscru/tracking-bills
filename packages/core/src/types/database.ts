@@ -372,6 +372,7 @@ export type Database = {
           home_layout: string[] | null
           id: string
           plan: string
+          theme_preference: string
           updated_at: string
         }
         Insert: {
@@ -382,6 +383,7 @@ export type Database = {
           home_layout?: string[] | null
           id: string
           plan?: string
+          theme_preference?: string
           updated_at?: string
         }
         Update: {
@@ -392,6 +394,7 @@ export type Database = {
           home_layout?: string[] | null
           id?: string
           plan?: string
+          theme_preference?: string
           updated_at?: string
         }
         Relationships: []

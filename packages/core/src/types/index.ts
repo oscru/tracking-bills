@@ -37,8 +37,14 @@ export type TransactionType = 'income' | 'expense' | 'transfer';
 /** Categories only classify income and expense — never transfers. */
 export type CategoryType = 'income' | 'expense';
 
+/** Overrides the OS light/dark setting when not "system". */
+export type ThemePreference = 'system' | 'light' | 'dark';
+
 // Row aliases, with the loose `text` columns narrowed to their domain unions.
-export type Profile = Omit<Row<'profiles'>, 'plan'> & { plan: Plan };
+export type Profile = Omit<Row<'profiles'>, 'plan' | 'theme_preference'> & {
+  plan: Plan;
+  theme_preference: ThemePreference;
+};
 export type Account = Omit<Row<'accounts'>, 'type'> & { type: AccountType };
 export type Category = Omit<Row<'categories'>, 'type'> & { type: CategoryType };
 export type Transaction = Omit<Row<'transactions'>, 'type'> & {

@@ -1,4 +1,4 @@
-import { useAccounts, useCreateBudget, useFormError } from '@repo/core/hooks';
+import { useAccounts, useCreateBudget, useFormError, useProfile } from '@repo/core/hooks';
 import { budgetCreateSchema } from '@repo/core/validators';
 import { formatCurrency } from '@repo/core/utils';
 import { Button, ErrorCard, PageHeader, Screen } from '@repo/ui';
@@ -14,11 +14,12 @@ import { useBudgetDraft } from '../../../../../../features/budgets/budget-draft-
 export default function NewBudgetCategories() {
   const router = useRouter();
   const { data: accounts } = useAccounts();
+  const { data: profile } = useProfile();
   const { draft, setDraft } = useBudgetDraft();
   const create = useCreateBudget();
   const { error, setError, clearError } = useFormError();
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const currency = accounts?.[0]?.currency ?? 'MXN';
+  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const totalAmount = Number(draft.amountText.replace(',', '.')) || 0;
 

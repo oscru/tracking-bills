@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheet, Chip } from '@repo/ui';
+import { useColorScheme } from 'nativewind';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, useColorScheme, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { ICON_GROUPS, searchIconCatalog, type IconCatalogGroup } from './icon-catalog';
 
@@ -15,7 +16,8 @@ interface Props {
 
 /** Searchable, categorized grid over the curated `ICON_CATALOG` — same shape as `CategoryPicker`. */
 export function IconPicker({ visible, onClose, value, onSelect }: Props) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const [q, setQ] = useState('');
   const [group, setGroup] = useState<IconCatalogGroup | null>(null);
 

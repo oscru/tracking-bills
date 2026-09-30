@@ -1,5 +1,6 @@
 import { formatCurrency } from '@repo/core/utils';
-import { Text, useColorScheme, View } from 'react-native';
+import { useColorScheme } from 'nativewind';
+import { Text, View } from 'react-native';
 
 interface Props {
   saved: number;
@@ -11,7 +12,8 @@ interface Props {
 
 /** A goal's savings progress — lime while in progress, green once the target is reached. */
 export function GoalProgressBar({ saved, target, pct, isComplete, currency }: Props) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const posColor = dark ? '#22C55E' : '#16A34A';
   const barColor = isComplete ? posColor : '#B9F227';
 

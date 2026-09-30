@@ -1,8 +1,9 @@
 import { useTransactions } from '@repo/core/hooks';
 import { categoryMonthlyHistory, formatCurrency, formatMonthShort } from '@repo/core/utils';
 import { SegmentedControl } from '@repo/ui';
+import { useColorScheme } from 'nativewind';
 import { useMemo, useState } from 'react';
-import { Text, View, useColorScheme, useWindowDimensions } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 
 const MONTHS = 6;
@@ -18,7 +19,8 @@ interface Props {
 
 /** A category's monthly spend history, switchable between bar and line. */
 export function CategoryHistoryChart({ categoryId, color, currency }: Props) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const { width: windowWidth } = useWindowDimensions();
   const { data: transactions } = useTransactions();
   const [kind, setKind] = useState<'bar' | 'line'>('bar');

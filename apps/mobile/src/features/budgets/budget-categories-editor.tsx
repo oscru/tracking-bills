@@ -3,8 +3,9 @@ import { useCategories } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import { formatCurrency } from '@repo/core/utils';
 import { CategoryDot } from '@repo/ui';
+import { useColorScheme } from 'nativewind';
 import { useState } from 'react';
-import { Pressable, Text, useColorScheme, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { CategoryPicker } from '../categories/category-picker';
 import { CategoryAmountSheet } from './category-amount-sheet';
@@ -27,7 +28,8 @@ interface Props {
  * one to change its amount, remove any of them. Tracks how much of the total
  * is still unassigned, and flags (without blocking) going more than 10% over. */
 export function BudgetCategoriesEditor({ categories, onChange, totalAmount, currency }: Props) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const { data: allCategories } = useCategories();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);

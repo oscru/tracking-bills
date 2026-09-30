@@ -4,8 +4,9 @@ import type { TransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency, formatDate } from '@repo/core/utils';
 import { CategoryDot } from '@repo/ui';
 import { useFocusEffect } from 'expo-router';
+import { useColorScheme } from 'nativewind';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, Text, View, useColorScheme } from 'react-native';
+import { Animated, Easing, Pressable, Text, View } from 'react-native';
 import {
   PanGestureHandler,
   State,
@@ -54,7 +55,8 @@ function SwipeAction({
   meta: SwipeMeta;
   onPress: () => void;
 }) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const { side, tone, icon, label } = meta;
   const opacity = translateX.interpolate({
     inputRange: side === 'left' ? [0, ACTION_WIDTH / 2] : [-ACTION_WIDTH / 2, 0],
@@ -95,7 +97,8 @@ function SwipeFill({
   progress: Animated.Value;
   rowWidth: number;
 }) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const { side, tone, icon, label } = meta;
   const colors = swipeColors(tone, dark);
   const width = progress.interpolate({

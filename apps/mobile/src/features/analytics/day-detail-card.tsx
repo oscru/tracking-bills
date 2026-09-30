@@ -3,7 +3,8 @@ import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency, formatDate, longestNoSpendStreak, noSpendStreak } from '@repo/core/utils';
 import { CategoryDot } from '@repo/ui';
-import { Pressable, Text, useColorScheme, View } from 'react-native';
+import { useColorScheme } from 'nativewind';
+import { Pressable, Text, View } from 'react-native';
 
 interface Props {
   dateISO: string;
@@ -15,7 +16,8 @@ interface Props {
 /** The tapped day's own movements (income and expense, not transfers) — what
  * actually happened behind that one heatmap cell. */
 export function DayDetailCard({ dateISO, transactions, currency, onPressTransaction }: Props) {
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const warningColor = dark ? '#F3B25E' : '#B45309';
   const dayTx = transactions
     .filter((t) => t.transaction_date === dateISO && t.type !== 'transfer')

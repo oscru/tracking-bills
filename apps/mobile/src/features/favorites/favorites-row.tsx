@@ -3,8 +3,9 @@ import { useFavoriteTransactions, useRecordFavoriteTransactionUse } from '@repo/
 import type { FavoriteTransactionWithRefs } from '@repo/core/supabase';
 import { todayISODate, topFavorites } from '@repo/core/utils';
 import { useRouter } from 'expo-router';
+import { useColorScheme } from 'nativewind';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, Pressable, ScrollView, Text, View, useColorScheme } from 'react-native';
+import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { draftTransactionStore } from '../transactions/draft-transaction-store';
 import { favoriteTint } from './favorite-colors';
@@ -23,7 +24,8 @@ interface Props {
  */
 export function FavoritesRow({ visible = true }: Props) {
   const router = useRouter();
-  const dark = useColorScheme() === 'dark';
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const { data: favorites } = useFavoriteTransactions();
   const recordUse = useRecordFavoriteTransactionUse();
 
