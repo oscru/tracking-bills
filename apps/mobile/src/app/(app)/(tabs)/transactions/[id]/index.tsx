@@ -12,9 +12,10 @@ import {
 import { BottomSheet, Chip, Fab, IconButton, ListRow, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { ACCOUNT_TYPE_ICON } from '../../../../../features/accounts/account-types';
+import { TransactionDetailSkeleton } from '../../../../../features/transactions/transaction-detail-skeleton';
 
 export default function TransactionDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -61,8 +62,9 @@ export default function TransactionDetail() {
 
   if (isLoading) {
     return (
-      <Screen center>
-        <ActivityIndicator />
+      <Screen edges={['top']} className="gap-5">
+        <PageHeader title="Movimiento" onBack={() => router.back()} />
+        <TransactionDetailSkeleton />
       </Screen>
     );
   }

@@ -4,7 +4,9 @@ import { tagCounts } from '@repo/core/utils';
 import { Button, ConfirmSheet, Fab, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+
+import { TagDetailSkeleton } from '../../../../../../features/tags/tag-detail-skeleton';
 
 export default function TagDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,8 +26,9 @@ export default function TagDetail() {
 
   if (loadingTags || loadingTx) {
     return (
-      <Screen center>
-        <ActivityIndicator />
+      <Screen edges={['top']} className="gap-5">
+        <PageHeader title="Tag" onBack={() => router.back()} />
+        <TagDetailSkeleton />
       </Screen>
     );
   }

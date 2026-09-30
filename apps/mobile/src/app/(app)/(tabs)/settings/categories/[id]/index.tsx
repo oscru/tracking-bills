@@ -3,8 +3,9 @@ import { resolveCategoryLabel } from '@repo/core/i18n';
 import { Button, CategoryDot, ConfirmSheet, Fab, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { CategoryDetailSkeleton } from '../../../../../../features/categories/category-detail-skeleton';
 import { CategoryHistoryChart } from '../../../../../../features/categories/category-history-chart';
 
 export default function CategoryDetail() {
@@ -36,8 +37,9 @@ export default function CategoryDetail() {
 
   if (isLoading) {
     return (
-      <Screen center>
-        <ActivityIndicator />
+      <Screen edges={['top']} className="gap-5">
+        <PageHeader title="Categoría" onBack={goBack} />
+        <CategoryDetailSkeleton />
       </Screen>
     );
   }

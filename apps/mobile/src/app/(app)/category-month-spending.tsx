@@ -6,10 +6,11 @@ import { categorySpendBreakdown, formatCurrency, formatDate, todayISODate } from
 import { CategoryDot, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CategorySpendDonut } from '../../features/home/category-spend-donut';
 import { CategorySpendRow } from '../../features/home/category-spend-row';
+import { CategorySpendSkeleton } from '../../features/home/category-spend-skeleton';
 
 /** One actual expense in the list below the subcategory breakdown. */
 function ExpenseRow({
@@ -111,7 +112,12 @@ export default function CategoryMonthSpendingScreen() {
       />
 
       {isLoading ? (
-        <ActivityIndicator className="mt-8" />
+        <CategorySpendSkeleton
+          sections={[
+            { title: true, rows: 2 },
+            { title: true, rows: 3 },
+          ]}
+        />
       ) : total > 0 ? (
         <ScrollView
           className="flex-1"

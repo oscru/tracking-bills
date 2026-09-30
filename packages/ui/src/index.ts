@@ -19,6 +19,7 @@ export { ListRow, type ListRowProps } from './list-row';
 export { NumericKeypad, type NumericKeypadProps, type KeypadKey } from './numeric-keypad';
 export { PageHeader, type PageHeaderProps } from './page-header';
 export { Screen, type ScreenProps } from './screen';
+export { Skeleton, type SkeletonProps } from './skeleton';
 export {
   SegmentedControl,
   type SegmentedControlProps,

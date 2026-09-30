@@ -4,8 +4,9 @@ import { accountBalance, formatCurrency } from '@repo/core/utils';
 import { Button, ConfirmSheet, Fab, PageHeader, Screen, SwitchRow } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { AccountDetailSkeleton } from '../../../../../../features/accounts/account-detail-skeleton';
 import { AdjustBalanceSheet } from '../../../../../../features/accounts/adjust-balance-sheet';
 import { ACCOUNT_TYPE_LABEL } from '../../../../../../features/accounts/account-types';
 
@@ -41,8 +42,9 @@ export default function AccountDetail() {
 
   if (loadingAccounts || loadingTx) {
     return (
-      <Screen center>
-        <ActivityIndicator />
+      <Screen edges={['top']} className="gap-5">
+        <PageHeader title="Cuenta" onBack={() => router.back()} />
+        <AccountDetailSkeleton />
       </Screen>
     );
   }

@@ -17,11 +17,12 @@ import { Fab, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { ACCOUNT_TYPE_ICON } from '../../../features/accounts/account-types';
 import { BudgetsCard } from '../../../features/home/budgets-card';
 import { CategorySpendCard } from '../../../features/home/category-spend-card';
+import { HomeSkeleton } from '../../../features/home/home-skeleton';
 import { MonthPickerSheet } from '../../../features/home/month-picker-sheet';
 import { MonthlyTrendChart } from '../../../features/home/monthly-trend-chart';
 import { WeeklySpendCard } from '../../../features/home/weekly-spend-card';
@@ -271,7 +272,9 @@ export default function HomeScreen() {
       />
 
       {loading ? (
-        <ActivityIndicator className="mt-8" />
+        <ScrollView className="flex-1" contentContainerClassName="pb-24" showsVerticalScrollIndicator={false}>
+          <HomeSkeleton />
+        </ScrollView>
       ) : (
         <ScrollView
           className="flex-1"

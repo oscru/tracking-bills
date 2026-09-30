@@ -6,12 +6,13 @@ import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
 import { ErrorCard, Fab, Screen, TextField } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, SectionList, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, SectionList, Text, View } from 'react-native';
 
 import { FavoritesRow } from '../../../../features/favorites/favorites-row';
 import { dayHeaderLabel, groupByDay } from '../../../../features/transactions/day-groups';
 import { FiltersSheet } from '../../../../features/transactions/filters-sheet';
 import { TransactionListItem } from '../../../../features/transactions/transaction-list-item';
+import { TransactionsSkeleton } from '../../../../features/transactions/transactions-skeleton';
 
 const TITLE: Record<TransactionType, string> = {
   income: 'Ingresos',
@@ -229,7 +230,9 @@ export default function TransactionsScreen() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator className="mt-8" />
+        <ScrollView className="flex-1" contentContainerClassName="pb-24" showsVerticalScrollIndicator={false}>
+          <TransactionsSkeleton />
+        </ScrollView>
       ) : error ? (
         <View className="mt-8">
           <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar los movimientos')} />

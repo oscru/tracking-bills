@@ -15,8 +15,9 @@ import {
 import { Chip, Screen, SegmentedControl, type SegmentedOption } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { AnalyticsSkeleton } from '../../../features/analytics/analytics-skeleton';
 import { BiggestExpensesCard } from '../../../features/analytics/biggest-expenses-card';
 import { BudgetsProgressCard } from '../../../features/analytics/budgets-progress-card';
 import {
@@ -214,7 +215,9 @@ export default function AnalyticsScreen() {
       ) : null}
 
       {isLoading ? (
-        <ActivityIndicator className="mt-8" />
+        <ScrollView className="flex-1" contentContainerClassName="pb-24" showsVerticalScrollIndicator={false}>
+          <AnalyticsSkeleton />
+        </ScrollView>
       ) : (
         <ScrollView
           className="flex-1"

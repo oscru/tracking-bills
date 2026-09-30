@@ -4,10 +4,11 @@ import { categorySpendBreakdown, todayISODate } from '@repo/core/utils';
 import { PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { CategorySpendDonut } from '../../features/home/category-spend-donut';
 import { CategorySpendRow } from '../../features/home/category-spend-row';
+import { CategorySpendSkeleton } from '../../features/home/category-spend-skeleton';
 
 export default function MonthlySpendingScreen() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function MonthlySpendingScreen() {
       />
 
       {isLoading ? (
-        <ActivityIndicator className="mt-8" />
+        <CategorySpendSkeleton sections={[{ title: false, rows: 4 }]} />
       ) : total > 0 ? (
         <ScrollView
           className="flex-1"
