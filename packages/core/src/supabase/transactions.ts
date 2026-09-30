@@ -119,6 +119,15 @@ export async function createTransaction(input: TransactionCreateInput): Promise<
   ) as Transaction;
 }
 
+/** Inserts many transactions in one round trip (e.g. an import run) — a
+ * single `INSERT ... VALUES (...), (...) RETURNING *`, so the response rows
+ * come back in the same order as `inputs`. */
+export async function createTransactions(inputs: TransactionCreateInput[]): Promise<Transaction[]> {
+  if (inputs.length === 0) return [];
+  const payload = inputs.map((input) => transactionCreateSchema.parse(input)) as InsertRow<'transactions'>[];
+  return unwrap(await supabase.from('transactions').insert(payload).select()) as Transaction[];
+}
+
 export async function updateTransaction(
   id: string,
   patch: TransactionUpdateInput,

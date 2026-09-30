@@ -89,6 +89,13 @@ export default function SettingsScreen() {
           showChevron
           onPress={() => router.push('/(app)/settings/preferences')}
         />
+        <View className="h-px bg-line dark:bg-line-dark" />
+        <ListRow
+          title="Importar y exportar"
+          subtitle="Comparte o migra tus movimientos vía Excel"
+          showChevron
+          onPress={() => router.push('/(app)/settings/import-export')}
+        />
       </View>
     </Screen>
   );

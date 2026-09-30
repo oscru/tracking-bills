@@ -62,3 +62,10 @@ export async function setTransactionTags(transactionId: string, tagIds: string[]
     if (error) throw new SupabaseError(error);
   }
 }
+
+/** Links many transaction/tag pairs in one insert (e.g. an import run) — unlike `setTransactionTags`, this assumes every transaction is brand new and skips the diff. */
+export async function attachTagsBulk(links: { transaction_id: string; tag_id: string }[]): Promise<void> {
+  if (links.length === 0) return;
+  const { error } = await supabase.from('transaction_tags').insert(links);
+  if (error) throw new SupabaseError(error);
+}

@@ -12,7 +12,8 @@
     "./types": "./src/types/index.ts",
     "./validators": "./src/validators/index.ts",
     "./utils": "./src/utils/index.ts",
-    "./i18n": "./src/i18n/index.ts"
+    "./i18n": "./src/i18n/index.ts",
+    "./import-export": "./src/import-export/index.ts"
   },
   "scripts": {
     "lint": "eslint src",
@@ -22,6 +23,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
     "@tanstack/react-query": "^5.102.8",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },
   "peerDependencies": {
