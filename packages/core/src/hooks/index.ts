@@ -17,6 +17,7 @@ export {
   useCategoryTree,
   useCreateCategory,
   useUpdateCategory,
+  useDeleteCategory,
 } from './use-categories';
 export {
   useTags,

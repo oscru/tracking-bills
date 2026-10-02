@@ -6,7 +6,7 @@ import {
   type CategoryUpdateInput,
 } from '../validators';
 import { supabase } from './client';
-import { unwrap } from './internal';
+import { SupabaseError, unwrap } from './internal';
 
 /** All of the user's categories (RLS scopes to the owner). Ordered for direct use in a sectioned list. */
 export async function listCategories(): Promise<Category[]> {
@@ -32,4 +32,12 @@ export async function updateCategory(id: string, patch: CategoryUpdateInput): Pr
   return unwrap(
     await supabase.from('categories').update(payload).eq('id', id).select().single(),
   ) as Category;
+}
+
+/** Hard delete — blocked by the DB (`check_category_deletable`) unless the
+ * category is archived, isn't a built-in system category, and has no
+ * transactions, favorites, or budget assignment pointing at it. */
+export async function deleteCategory(id: string): Promise<void> {
+  const { error } = await supabase.from('categories').delete().eq('id', id);
+  if (error) throw new SupabaseError(error);
 }

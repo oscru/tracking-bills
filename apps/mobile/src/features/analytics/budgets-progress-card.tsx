@@ -6,19 +6,29 @@ import { Pressable, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../budgets/budget-progress-bar';
 
+interface Props {
+  /** Analytics scopes everything on screen to one currency at a time (no
+   * exchange rate exists to blend them) — this card follows the same rule
+   * instead of mixing every currency's budgets together. */
+  currency: string;
+}
+
 /** Every active budget's current occurrence — the fuller, "Ver todas"-style
- * counterpart to Home's top-3 preview. Budgets are now anchored to their own
- * `start_date` rather than the calendar, so this no longer tries to force
- * anything onto whichever month Análisis happens to be showing — it's always
- * "right now", same as Home. Each budget shows in its own locked currency. */
-export function BudgetsProgressCard() {
+ * counterpart to Home's top-3 preview. Budgets are anchored to their own
+ * `start_date` rather than the calendar, so this never tries to force
+ * anything onto whichever month Análisis happens to be showing above it —
+ * it's always "right now" for each budget's own cycle, same as Home (the
+ * "Periodo actual" caption below makes that explicit, since this card sits
+ * right under a month navigator that could otherwise read as scoping it
+ * too). Each budget shows in its own locked currency. */
+export function BudgetsProgressCard({ currency }: Props) {
   const router = useRouter();
   const { data: budgets } = useBudgets();
   const { data: transactions } = useTransactions();
 
   const rows = useMemo(() => {
     return (budgets ?? [])
-      .filter((b) => !b.archived)
+      .filter((b) => !b.archived && b.currency === currency)
       .map((budget) => {
         const categoryIds = budget.categories.map((c) => c.category.id);
         return {
@@ -33,13 +43,18 @@ export function BudgetsProgressCard() {
         };
       })
       .sort((a, b) => b.progress.pct - a.progress.pct);
-  }, [budgets, transactions]);
+  }, [budgets, transactions, currency]);
 
   if (rows.length === 0) return null;
 
   return (
     <View className="gap-4 rounded-card bg-surface p-5 dark:bg-surface-dark">
-      <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">Presupuestos</Text>
+      <View>
+        <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">Presupuestos</Text>
+        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
+          Periodo actual de cada presupuesto — no cambia con el mes de arriba
+        </Text>
+      </View>
       {rows.map(({ budget, progress }) => (
         <Pressable
           key={budget.id}
@@ -60,6 +75,7 @@ export function BudgetsProgressCard() {
             pct={progress.pct}
             isOverBudget={progress.isOverBudget}
             currency={budget.currency}
+            hasCategories={progress.hasCategories}
           />
         </Pressable>
       ))}

@@ -82,6 +82,7 @@ export default function BudgetDetail() {
               pct={progress.pct}
               isOverBudget={progress.isOverBudget}
               currency={budget.currency}
+              hasCategories={progress.hasCategories}
             />
           </View>
 
@@ -115,6 +116,7 @@ export default function BudgetDetail() {
                       pct={catProgress.pct}
                       isOverBudget={catProgress.isOverBudget}
                       currency={budget.currency}
+                      hasCategories={catProgress.hasCategories}
                     />
                   </View>
                 );

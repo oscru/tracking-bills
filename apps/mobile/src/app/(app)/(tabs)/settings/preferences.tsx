@@ -1,5 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCreateTag, useProfile, useTags, useUpdateProfile, useUpdateTag } from '@repo/core/hooks';
+import {
+  useAccounts,
+  useBudgets,
+  useCreateTag,
+  useGoals,
+  useProfile,
+  useTags,
+  useUpdateProfile,
+  useUpdateTag,
+} from '@repo/core/hooks';
 import type { Profile, Tag, ThemePreference } from '@repo/core/types';
 import { findCurrency, toFriendlyMessage, type CurrencyMeta } from '@repo/core/utils';
 import { BottomSheet, Button, ErrorCard, PageHeader, Screen, SwitchRow, TextField } from '@repo/ui';
@@ -84,17 +93,50 @@ function CurrencySection({ profile }: { profile: Profile }) {
 
 function EnabledCurrenciesSection({ profile }: { profile: Profile }) {
   const updateProfile = useUpdateProfile();
+  const { data: accounts } = useAccounts();
+  const { data: budgets } = useBudgets();
+  const { data: goals } = useGoals();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
   const codes = profile.enabled_currencies;
+
+  // A currency still backing an existing account/budget/goal can't be
+  // disabled — `enabled_currencies` only curates what's offered for NEW
+  // things, so turning one off while it's in use wouldn't remove it from
+  // anywhere, it would just stop explaining why that account/budget/goal's
+  // currency no longer shows up as pickable elsewhere.
+  const inUseCodes = Array.from(
+    new Set([
+      ...(accounts ?? []).map((a) => a.currency),
+      ...(budgets ?? []).map((b) => b.currency),
+      ...(goals ?? []).map((g) => g.currency),
+    ]),
+  );
 
   const toggle = (code: string) => {
     const has = codes.includes(code);
     if (has && codes.length <= 1) return;
+    if (has && inUseCodes.includes(code)) {
+      setBlockedMessage(
+        `No puedes deshabilitar ${code}: todavía tienes cuentas, presupuestos o metas en esa divisa.`,
+      );
+      return;
+    }
+    setBlockedMessage(null);
     const next = has ? codes.filter((c) => c !== code) : [...codes, code];
     // Dropping the current default picks the first remaining one instead —
     // there must always be a valid preselected currency to fall back on.
     const nextDefault = has && profile.currency === code ? next[0]! : profile.currency;
-    updateProfile.mutate({ enabled_currencies: next, currency: nextDefault });
+    updateProfile.mutate(
+      { enabled_currencies: next, currency: nextDefault },
+      {
+        // Defense in depth: the UI already locks in-use currencies in the
+        // picker, but a concurrent edit from another device (a new account
+        // created in the gap between loading this list and tapping toggle)
+        // could still make the DB-level check the one that actually catches it.
+        onError: (e) => setBlockedMessage(toFriendlyMessage(e, 'No se pudo actualizar')),
+      },
+    );
   };
 
   return (
@@ -116,12 +158,14 @@ function EnabledCurrenciesSection({ profile }: { profile: Profile }) {
         Como elegir idiomas en un traductor: busca y marca las que realmente usas — son las únicas
         que vas a poder elegir al crear una cuenta, un presupuesto o un objetivo.
       </Text>
+      <ErrorCard message={blockedMessage} />
 
       <CurrencyMultiPicker
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
         selectedCodes={codes}
         onToggle={toggle}
+        inUseCodes={inUseCodes}
       />
     </View>
   );

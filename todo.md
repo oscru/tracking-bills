@@ -63,25 +63,120 @@ al corregir.
       subcategorías se van a archivar también. Reversible: desarchivar cada
       una por separado. Probado contra la DB local (solo las activas
       cambian, una ya archivada se queda igual). `tsc --noEmit` limpio.
-- [ ] **`accounts.currency` e `initial_balance` están documentados como
+- [x] **`accounts.currency` e `initial_balance` están documentados como
       "bloqueados tras creación" pero nada en la DB lo impide.** Ninguna
       trigger protege esas columnas; un UPDATE directo reinterpretaría
       silenciosamente todo el historial de la cuenta.
+      **Fix (2026-10-02):** trigger `check_account_locked_fields` (migración
+      `20261002210000_account_locked_fields.sql`), `before update of
+      currency, initial_balance` — rechaza el cambio si cualquiera de los dos
+      difiere de su valor original. Confirmé antes de implementar que ningún
+      flujo legítimo depende de mutar `initial_balance` después de crear la
+      cuenta ("Ajustar saldo" crea una transacción, nunca toca esa columna) y
+      que `updateAccount()` es el único call-site que actualiza `accounts`
+      (ya gateado por `accountUpdateSchema`, que excluye ambos campos) — cero
+      riesgo de romper algo existente. Probado: cambiar `currency` falla,
+      cambiar `initial_balance` falla, actualizar cualquier otra columna
+      (ej. `name`) sigue funcionando normal. `errors.ts` traduce el error a
+      un mensaje amigable. Verificado con `tsc --noEmit` en ambos paquetes.
 
 ## 🟡 Inconsistencias de reglas de negocio
 
-- [ ] En Analytics, `BudgetsProgressCard` ignora el filtro de moneda de la
+- [x] En Analytics, `BudgetsProgressCard` ignora el filtro de moneda de la
       pantalla — mezcla presupuestos de todas las monedas.
-- [ ] Esa misma tarjeta ignora el mes que el usuario está navegando (siempre
+      **Regla de negocio:** Analytics acota TODO a una moneda a la vez (no hay
+      tipo de cambio para mezclarlas) — Presupuestos debe seguir esa misma
+      regla.
+      **Fix (2026-10-02):** `BudgetsProgressCard` ahora recibe `currency`
+      como prop y filtra `budget.currency === currency`; `analytics.tsx` le
+      pasa el `currency` que ya calcula para el resto de la pantalla.
+      `tsc --noEmit` limpio.
+- [x] Esa misma tarjeta ignora el mes que el usuario está navegando (siempre
       usa "ahora"), sin aviso visual.
-- [ ] Deshabilitar una moneda en Preferencias no valida si ya está en uso por
+      **Regla de negocio (ya era la correcta, solo faltaba decirla):** cada
+      presupuesto corre su propio ciclo anclado a su `start_date`, no al
+      calendario — por diseño, la tarjeta SIEMPRE muestra el periodo *actual*
+      de cada presupuesto, sin importar qué mes esté navegando el resto de la
+      pantalla arriba. No era un bug de lógica, era falta de un aviso visual.
+      **Fix (2026-10-02):** agregado un subtítulo "Periodo actual de cada
+      presupuesto — no cambia con el mes de arriba" bajo el título de la
+      tarjeta.
+- [x] Deshabilitar una moneda en Preferencias no valida si ya está en uso por
       cuentas/budgets/goals existentes.
-- [ ] Borrar una categoría vinculada a un budget (`budget_categories` `on
+      **Regla de negocio:** `enabled_currencies` solo cura qué se ofrece para
+      cosas NUEVAS — no se puede deshabilitar una divisa que ya está en uso
+      por una cuenta/budget/goal existente (no rompe nada técnicamente, pero
+      deja algo "en uso" sin ninguna explicación visible en Preferencias).
+      **Fix (2026-10-02), dos capas:**
+      - **DB**: trigger `check_enabled_currencies_in_use` (migración
+        `20261002190000_enabled_currencies_in_use.sql`) calcula qué códigos se
+        quitaron del array y rechaza el update si alguno sigue en uso por
+        accounts/budgets/goals. Probado: quitar una divisa en uso falla,
+        quitar una sin uso funciona.
+      - **UI**: `CurrencyMultiPicker` ahora acepta `inUseCodes` y bloquea esas
+        filas (atenuadas, con "· en uso"); `preferences.tsx` calcula
+        `inUseCodes` desde `useAccounts/useBudgets/useGoals` y además bloquea
+        defensivamente en `toggle()` con un `ErrorCard`, con `onError` en la
+        mutación por si la DB lo atrapa primero (carrera entre dispositivos).
+        `errors.ts` traduce el `check_violation` a mensaje amigable.
+      Verificado con `tsc --noEmit` en ambos paquetes.
+- [x] Borrar una categoría vinculada a un budget (`budget_categories` `on
       delete cascade`) puede dejarlo con 0 categorías, y se muestra como
       "presupuesto perfecto" (0% gastado) en vez de marcarlo roto.
-- [ ] Al cambiar el tipo de una transacción (income↔expense), `updateTransaction`
+      **Resuelto de raíz (2026-10-02):** al construir el borrado real de
+      categorías (ver "Rediseños implementados" abajo), la regla de negocio
+      quedó: una categoría asignada a un presupuesto **no se puede eliminar**
+      — hay que quitarla del presupuesto primero. Ya no existe ningún camino
+      (ni siquiera uno nuevo) para que un presupuesto llegue a 0 categorías
+      por un borrado de categoría. El caso de "0% gastado se ve como
+      perfecto" sigue siendo cierto en abstracto si algún día se permite
+      vaciar un presupuesto de otra forma, pero hoy no hay ningún camino
+      alcanzable para eso (el formulario exige mínimo 1 categoría).
+      **Además (2026-10-02), el fix de fondo pedido aparte:** `budgetProgress`
+      ahora distingue explícitamente "sin categorías" de "0% gastado, vas
+      bien" vía un nuevo campo `hasCategories` en `BudgetProgress` — antes se
+      veían idénticos. `BudgetProgressBar` muestra una alerta ("Sin
+      categorías asignadas — este presupuesto no está contando ningún gasto")
+      en vez de la barra verde cuando `hasCategories` es `false`. Actualizados
+      los 5 call sites (Home, Analytics, lista y detalle de presupuestos,
+      incluido el desglose por categoría). De paso también encontré y arreglé
+      el mismo problema en el contador "N de M bajo control" de Home
+      (`budgets-card.tsx`): un presupuesto sin categorías contaba como
+      "bajo control" porque `isOverBudget` es `false` cuando nunca puede
+      gastar nada. Revisé si hay otra vía viva hacia 0 categorías aparte del
+      delete ya bloqueado (edición de presupuesto exige mínimo 1 vía Zod,
+      archivar una categoría no la quita de `budget_categories`) — no
+      encontré ninguna alcanzable desde la app hoy. **Nota aparte encontrada
+      de paso, no resuelta:** una categoría SIN subcategorías puede cambiar
+      de tipo (income↔expense) libremente aunque esté asignada a un
+      presupuesto — no vacía sus categorías, pero la deja "muda" (nunca
+      podrá volver a registrar gasto, porque una transacción de gasto no
+      puede usar una categoría tipo income). Lo dejo anotado, no lo arreglé
+      todavía.
+      Verificado con `tsc --noEmit` en ambos paquetes.
+- [x] Al cambiar el tipo de una transacción (income↔expense), `updateTransaction`
       no limpia `category_id` — depende de que la DB rechace la combinación y
       el usuario ve un error crudo de Postgres.
+      **Regla de negocio:** una categoría pertenece a exactamente un tipo —
+      cambiar Gasto↔Ingreso↔Transferencia siempre debe limpiar cualquier
+      campo que solo tenga sentido para el tipo anterior (categoría para
+      income/expense; cuenta/meta destino para transfer).
+      **Fix (2026-10-02):**
+      - `movement-form.tsx`: `changeType` ahora limpia `categoryId` en
+        **cualquier** cambio de tipo (antes solo lo hacía al pasar a
+        transferencia) — cubre tanto crear como editar, mismo formulario.
+      - `validators/transaction.ts`: `transactionUpdateSchema` gana dos
+        `.refine()` estructurales (sin necesitar consultar la DB): una
+        transferencia nunca lleva `category_id`, e income/expense nunca
+        llevan `to_account_id`/`goal_id` — solo se activan cuando `type` se
+        está cambiando explícitamente en ese patch, no cuando está ausente
+        (verificado con una tabla de verdad aparte para no romper updates
+        parciales legítimos, ej. editar solo la cuenta destino de una
+        transferencia existente).
+      - `errors.ts`: el mensaje de la DB para categoría-no-coincide-con-tipo
+        ahora traduce a "Esa categoría no es válida para este tipo de
+        movimiento. Elige otra." en vez de caer en el genérico.
+      Verificado con `tsc --noEmit` en ambos paquetes.
 - [ ] Las utilidades de analytics en `packages/core/src/utils/index.ts` mezclan
       dos convenciones de moneda distintas (unas esperan pre-filtrado por el
       caller, otras filtran solas) — riesgo de mezclar monedas en pantallas
@@ -123,9 +218,10 @@ al corregir.
       nombre real (ej. "Tarjeta Oro").
 - [ ] Todo el cálculo de dinero usa floats de JS pese a que la DB usa
       `numeric(14,2)` — riesgo bajo de desvíos de centavos en sumas largas.
-- [ ] No existe borrado de categorías en la UI (solo archivar), pero la DB sí
+- [x] No existe borrado de categorías en la UI (solo archivar), pero la DB sí
       tiene `on delete cascade` en `parent_id` — deuda latente si se agrega
       borrado en el futuro.
+      **Resuelto: se construyó el borrado** (ver "Rediseños implementados").
 - [ ] `isCurrentMonth` en Home se congela al montar el componente — una sesión
       larga que cruce medianoche deja el botón "mes siguiente" deshabilitado un
       día de más.
@@ -239,6 +335,39 @@ al corregir.
       archivar la cuenta de una meta abierta sigue desvinculando. Ambas rutas
       (archivar la meta vs. archivar la cuenta) ya dan el mismo resultado.
 
+- [x] **Borrado real de categorías archivadas, con 5 condiciones (no solo las
+      2 pedidas) porque toda FK hacia `categories` resuelve destructivamente
+      al borrar (nunca `restrict`):**
+      - `transactions.category_id` → `on delete set null` (descategorizaría
+        historial en silencio).
+      - `favorite_transactions.category_id` → `on delete set null`
+        (rompería un favorito en silencio).
+      - `budget_categories.category_id` → `on delete cascade` (encogería un
+        presupuesto en silencio, podría dejarlo en 0 categorías).
+      - `categories.parent_id` → `on delete cascade` (borrar un padre se
+        lleva a sus hijos — cada uno re-chequeado por el mismo trigger, así
+        que un hijo activo o en uso bloquea el borrado completo).
+      - Las categorías "del sistema" (`slug` no nulo — ej. las de ajuste de
+        saldo que `adjust-balance-sheet.tsx` busca por slug) nunca son
+        borrables, tengan o no transacciones.
+      **Regla final: solo se puede eliminar una categoría archivada que no
+      sea del sistema, sin transacciones, sin estar en un favorito, y sin
+      estar asignada a un presupuesto.** Si no, se bloquea con el motivo
+      exacto.
+      **Implementado (2026-10-02):** trigger `check_category_deletable`
+      (migración `20261002200000_category_deletable.sql`) — probé las 5
+      condiciones una por una contra la DB local, incluyendo el caso de
+      cascada padre→hijo (borrar un padre cuyo hijo tiene una transacción
+      falla completo, sin borrar nada). `deleteCategory` +
+      `useDeleteCategory` en `packages/core`. UI en
+      `categories/[id]/index.tsx`: toda categoría archivada muestra
+      "Eliminar definitivamente"; si está bloqueada, se ve atenuada con el
+      motivo exacto debajo (calculado client-side con los mismos datos ya
+      cargados); si no, abre un confirm que además avisa cuántas
+      subcategorías se eliminarían con ella. `errors.ts` traduce las 5
+      razones a mensajes amigables por si la DB la atrapa primero.
+      Verificado con `tsc --noEmit` en ambos paquetes.
+
 ## Backlog (pendiente — requiere pensar la estructura antes de tocar código)
 
 - [ ] **Texto engañoso al eliminar una meta ligada a cuenta.** El diálogo de
@@ -254,8 +383,9 @@ al corregir.
 
 ## Pendiente aparte (no es deficiencia, es trabajo en curso)
 
-- [ ] Push de las migraciones pendientes a Supabase hosted
-      (`supabase db push`): `20261001120000_profile_travel_mode`,
+- [ ] **Push de las 14 migraciones a Supabase hosted** (`supabase db push`) —
+      ninguna se ha subido todavía, independientemente de qué tan committeado
+      esté el código localmente: `20261001120000_profile_travel_mode`,
       `20261001130000_profile_enabled_currencies`,
       `20261001140000_budget_goal_currency`,
       `20261001150000_transfer_currency_match`,
@@ -265,6 +395,21 @@ al corregir.
       `20261002150000_account_archive_unlinks_goal`,
       `20261002160000_goal_is_completed`,
       `20261002170000_account_archive_respects_goal_completed`,
-      `20261002180000_category_parent_type_and_archive_cascade`.
-- [ ] Commitear los archivos modificados de la feature de multi-moneda +
-      travel mode + meta-ligada-a-cuenta (actualmente sin stage).
+      `20261002180000_category_parent_type_and_archive_cascade`,
+      `20261002190000_enabled_currencies_in_use`,
+      `20261002200000_category_deletable`,
+      `20261002210000_account_locked_fields`.
+- [x] ~~Commitear los archivos modificados de la feature de multi-moneda +
+      travel mode + meta-ligada-a-cuenta~~ — ya se hicieron 3 commits en
+      paralelo (`135de98 Added trip mode. Added divisa switch in all viws`,
+      `a4e8e37 Fixed bugs for objectives module`, `d60f2ea Fixed persisted
+      bugs`), cubriendo todo hasta el borrado de categorías inclusive.
+      **Queda sin commitear (trabajo de esta última tanda):** las 3
+      migraciones más nuevas (`enabled_currencies_in_use`,
+      `category_deletable`, `account_locked_fields`) y los archivos que
+      tocaron — `preferences.tsx`, `currency-picker.tsx`,
+      `categories/[id]/index.tsx`, `movement-form.tsx`,
+      `validators/transaction.ts`, `budget-progress-bar.tsx` y los 5 call
+      sites de `BudgetProgressBar`, `use-categories.ts`, `categories.ts`
+      (supabase), `hooks/index.ts`, `errors.ts`, `utils/index.ts`
+      (`hasCategories`), y este mismo `todo.md`.

@@ -88,6 +88,7 @@ export default function BudgetsScreen() {
                   pct={progress.pct}
                   isOverBudget={progress.isOverBudget}
                   currency={b.currency}
+                  hasCategories={progress.hasCategories}
                 />
 
                 <Text className="text-xs text-ink-3 dark:text-ink-3-dark">

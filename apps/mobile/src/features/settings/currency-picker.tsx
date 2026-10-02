@@ -107,11 +107,13 @@ const MultiRow = memo(function MultiRow({
   item,
   selected,
   disabled,
+  lockedReason,
   onPress,
 }: {
   item: CurrencyMeta;
   selected: boolean;
   disabled: boolean;
+  lockedReason?: string;
   onPress: () => void;
 }) {
   return (
@@ -127,7 +129,10 @@ const MultiRow = memo(function MultiRow({
         <Text className="text-[15px] font-medium capitalize text-ink dark:text-ink-dark">
           {item.name}
         </Text>
-        <Text className="text-xs text-ink-2 dark:text-ink-2-dark">{item.code}</Text>
+        <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+          {item.code}
+          {lockedReason ? ` · ${lockedReason}` : ''}
+        </Text>
       </View>
       <Ionicons
         name={selected ? 'checkmark-circle' : 'ellipse-outline'}
@@ -145,6 +150,10 @@ interface MultiProps {
   onToggle: (code: string) => void;
   /** Blocks deselecting below this many — there must always be at least one currency to offer. */
   minSelected?: number;
+  /** Currencies that already back an existing account, budget, or goal —
+   * can't be deselected (the picker would stop offering it for new things
+   * while everything that already uses it keeps using it silently). */
+  inUseCodes?: string[];
 }
 
 /**
@@ -158,6 +167,7 @@ export function CurrencyMultiPicker({
   selectedCodes,
   onToggle,
   minSelected = 1,
+  inUseCodes,
 }: MultiProps) {
   const [q, setQ] = useState('');
 
@@ -192,12 +202,15 @@ export function CurrencyMultiPicker({
         windowSize={5}
         renderItem={({ item }) => {
           const selected = selectedCodes.includes(item.code);
-          const disabled = selected && selectedCodes.length <= minSelected;
+          const isLast = selected && selectedCodes.length <= minSelected;
+          const inUse = selected && (inUseCodes?.includes(item.code) ?? false);
+          const disabled = isLast || inUse;
           return (
             <MultiRow
               item={item}
               selected={selected}
               disabled={disabled}
+              lockedReason={inUse ? 'en uso' : undefined}
               onPress={() => {
                 if (disabled) return;
                 onToggle(item.code);

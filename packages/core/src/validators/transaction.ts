@@ -43,20 +43,34 @@ export const transactionCreateSchema = z
   });
 
 /**
- * Update payload — a loose partial. The DB CHECK + integrity trigger enforce the
- * real invariants (transfer shape, account/category/goal ownership).
+ * Update payload — a loose partial. The DB CHECK + integrity trigger enforce
+ * the real invariants (transfer shape, account/category/goal ownership) —
+ * including whether a `category_id` actually belongs to the new `type`,
+ * which needs a DB lookup this schema can't do. The one thing checkable
+ * structurally (no lookup needed) is caught here instead of round-tripping:
+ * a transfer never carries a category, income/expense never carry a
+ * transfer destination.
  */
-export const transactionUpdateSchema = z.object({
-  type: transactionTypeSchema.optional(),
-  account_id: uuid.optional(),
-  to_account_id: uuid.nullish(),
-  goal_id: uuid.nullish(),
-  category_id: uuid.nullish(),
-  amount: amount.optional(),
-  description,
-  transaction_date,
-  is_completed,
-});
+export const transactionUpdateSchema = z
+  .object({
+    type: transactionTypeSchema.optional(),
+    account_id: uuid.optional(),
+    to_account_id: uuid.nullish(),
+    goal_id: uuid.nullish(),
+    category_id: uuid.nullish(),
+    amount: amount.optional(),
+    description,
+    transaction_date,
+    is_completed,
+  })
+  .refine((v) => v.type !== 'transfer' || !v.category_id, {
+    message: 'Una transferencia no lleva categoría',
+    path: ['category_id'],
+  })
+  .refine((v) => v.type == null || v.type === 'transfer' || (!v.to_account_id && !v.goal_id), {
+    message: 'Solo una transferencia puede tener cuenta o meta destino',
+    path: ['to_account_id'],
+  });
 
 export type TransactionCreateInput = z.infer<typeof transactionCreateSchema>;
 export type TransactionUpdateInput = z.infer<typeof transactionUpdateSchema>;

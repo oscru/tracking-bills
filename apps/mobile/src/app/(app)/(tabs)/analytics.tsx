@@ -297,7 +297,7 @@ export default function AnalyticsScreen() {
 
           <InsightsStrip insights={insights} currency={currency} metric={heatmapMetric} />
 
-          {period === 'month' ? <BudgetsProgressCard /> : null}
+          {period === 'month' ? <BudgetsProgressCard currency={currency} /> : null}
 
           <CategoryTrendCard trend={trend} onSeeAll={openMonthCategories} metric={heatmapMetric} />
 

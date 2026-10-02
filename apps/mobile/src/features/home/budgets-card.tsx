@@ -35,7 +35,10 @@ export function BudgetsCard() {
       .sort((a, b) => b.progress.pct - a.progress.pct);
   }, [budgets, transactions]);
 
-  const onTrack = rows.filter((r) => !r.progress.isOverBudget).length;
+  // A budget with no categories isn't "under control" — it's broken, just
+  // quiet about it (`isOverBudget` is false because nothing can ever be
+  // counted as spent against it).
+  const onTrack = rows.filter((r) => r.progress.hasCategories && !r.progress.isOverBudget).length;
 
   return (
     <View className="gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">
@@ -83,6 +86,7 @@ export function BudgetsCard() {
                   pct={progress.pct}
                   isOverBudget={progress.isOverBudget}
                   currency={budget.currency}
+                  hasCategories={progress.hasCategories}
                 />
               </Pressable>
             ))}

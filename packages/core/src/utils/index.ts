@@ -963,6 +963,12 @@ export interface BudgetProgress {
   /** 0-100+ — can exceed 100 when over budget. */
   pct: number;
   isOverBudget: boolean;
+  /** `false` when the budget has no linked categories at all — a broken/
+   * empty state (today unreachable through the app itself, but not
+   * guaranteed by any DB constraint either) that otherwise looks identical
+   * to "0% spent, right on track". Callers should show a distinct warning
+   * instead of a healthy-progress bar when this is `false`. */
+  hasCategories: boolean;
 }
 
 /**
@@ -999,6 +1005,7 @@ export function budgetProgress(
     remaining: amount - spent,
     pct: amount > 0 ? (spent / amount) * 100 : 0,
     isOverBudget: spent > amount,
+    hasCategories: categoryIds.length > 0,
   };
 }
 

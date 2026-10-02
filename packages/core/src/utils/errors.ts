@@ -54,6 +54,30 @@ function fromSupabaseError(error: SupabaseError): string | null {
       if (/cannot change type of a category that has subcategories/.test(error.message)) {
         return 'No puedes cambiar el tipo de una categoría que tiene subcategorías. Muévelas o elimínalas primero.';
       }
+      if (/cannot disable currency .+ still in use/.test(error.message)) {
+        return 'No puedes deshabilitar esa divisa: todavía tienes cuentas, presupuestos o metas en ella.';
+      }
+      if (/cannot delete a system category/.test(error.message)) {
+        return 'Esta es una categoría del sistema y no se puede eliminar.';
+      }
+      if (/cannot delete a category that is not archived/.test(error.message)) {
+        return 'Primero archiva la categoría para poder eliminarla.';
+      }
+      if (/cannot delete a category that has transactions/.test(error.message)) {
+        return 'Tiene movimientos asociados — no se puede eliminar mientras los conserve.';
+      }
+      if (/cannot delete a category used by a favorite movement/.test(error.message)) {
+        return 'Está asignada a un movimiento favorito — quítala de ahí primero.';
+      }
+      if (/cannot delete a category assigned to a budget/.test(error.message)) {
+        return 'Está asignada a un presupuesto — quítala de ahí primero.';
+      }
+      if (/is not usable by user .+ for a .+ transaction/.test(error.message)) {
+        return 'Esa categoría no es válida para este tipo de movimiento. Elige otra.';
+      }
+      if (/cannot change (currency|initial_balance) after account creation/.test(error.message)) {
+        return 'La divisa y el saldo inicial no se pueden cambiar después de crear la cuenta.';
+      }
       return 'Revisa los datos ingresados.';
     case '42501': // insufficient_privilege (RLS)
       return 'No tienes permiso para hacer esto.';

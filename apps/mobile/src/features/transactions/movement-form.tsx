@@ -238,8 +238,14 @@ export function MovementForm({
 
   const changeType = (next: TransactionType) => {
     setType(next);
-    if (next === 'transfer') setCategoryId(null);
-    else {
+    // A category belongs to exactly one type (`categories.type`) — income,
+    // expense, and "no category at all" (transfer) each have their own,
+    // disjoint set. Keeping whatever was picked for the old type across a
+    // switch leaves a stale selection the DB will reject on save (or, for
+    // income<->expense, one the Categoría field keeps showing as "selected"
+    // even though it no longer belongs to the list being shown).
+    setCategoryId(null);
+    if (next !== 'transfer') {
       setTo(null);
       setGoalId(null);
     }
