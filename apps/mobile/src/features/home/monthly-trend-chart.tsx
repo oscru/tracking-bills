@@ -1,9 +1,14 @@
 import { useTransactions } from '@repo/core/hooks';
-import { formatMonthShort, groupByAccountCurrency, monthlyIncomeExpenseHistory } from '@repo/core/utils';
+import {
+  formatMonthShort,
+  groupByAccountCurrency,
+  monthlyIncomeExpenseHistory,
+} from '@repo/core/utils';
 import { useColorScheme } from 'nativewind';
 import { useMemo } from 'react';
 import { Text, View, useWindowDimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
+import { ICON_COLORS } from '@repo/ui';
 
 const DEFAULT_MONTHS = 6;
 const CARD_PADDING = 20; // matches p-5
@@ -29,10 +34,10 @@ export function MonthlyTrendChart({ months = DEFAULT_MONTHS }: { months?: number
   }, [transactions, months]);
   const hasAnyData = groups.some((g) => g.history.some((h) => h.income > 0 || h.expense > 0));
 
-  const axisColor = dark ? '#6B7178' : '#9CA3AF';
-  const gridColor = dark ? '#23272C' : '#EDEFF2';
-  const incomeColor = dark ? '#22C55E' : '#16A34A';
-  const expenseColor = dark ? '#F16A6E' : '#E5484D';
+  const axisColor = dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3;
+  const gridColor = dark ? ICON_COLORS.lineDark : ICON_COLORS.line;
+  const incomeColor = dark ? ICON_COLORS.posDark : ICON_COLORS.pos;
+  const expenseColor = dark ? ICON_COLORS.dangerDark : ICON_COLORS.danger;
   const chartWidth = Math.max(
     windowWidth - SCREEN_PADDING * 2 - CARD_PADDING * 2 - Y_AXIS_GUTTER,
     160,

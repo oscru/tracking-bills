@@ -9,7 +9,16 @@ import {
   formatDateTime,
   projectedAccountBalance,
 } from '@repo/core/utils';
-import { BottomSheet, Chip, Fab, IconButton, ListRow, PageHeader, Screen } from '@repo/ui';
+import {
+  BottomSheet,
+  Chip,
+  Fab,
+  IconButton,
+  ListRow,
+  PageHeader,
+  Screen,
+  ICON_COLORS,
+} from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -30,8 +39,7 @@ export default function TransactionDetail() {
 
   const account = (accounts ?? []).find((a) => a.id === tx?.account_id) ?? null;
   const toAccount = (accounts ?? []).find((a) => a.id === tx?.to_account_id) ?? null;
-  const parentCategory =
-    (categories ?? []).find((c) => c.id === tx?.category?.parent_id) ?? null;
+  const parentCategory = (categories ?? []).find((c) => c.id === tx?.category?.parent_id) ?? null;
 
   // Each account's balance right before this transaction, and right after.
   // A settled transaction gets its actual historical before/after, in ledger
@@ -42,7 +50,12 @@ export default function TransactionDetail() {
   // projection always tracks today's real money instead of a snapshot frozen
   // at whatever date the pending movement happens to be filed under.
   const balances = useMemo(() => {
-    const empty = { accountBefore: null, accountAfter: null, toAccountBefore: null, toAccountAfter: null };
+    const empty = {
+      accountBefore: null,
+      accountAfter: null,
+      toAccountBefore: null,
+      toAccountAfter: null,
+    };
     if (!tx || !allTransactions) return empty;
     const before =
       tx.is_completed === false
@@ -170,7 +183,7 @@ export default function TransactionDetail() {
               <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
                 {formatActivityMoment(tx.created_at, 'creado')}
               </Text>
-              <Ionicons name="information-circle-outline" size={14} color="#9CA3AF" />
+              <Ionicons name="information-circle-outline" size={14} color={ICON_COLORS.ink3} />
             </Pressable>
           </View>
 
@@ -237,7 +250,10 @@ export default function TransactionDetail() {
               projected={tx.is_completed === false}
             />
           ) : null}
-          {isTransfer && toAccount && balances.toAccountBefore != null && balances.toAccountAfter != null ? (
+          {isTransfer &&
+          toAccount &&
+          balances.toAccountBefore != null &&
+          balances.toAccountAfter != null ? (
             <BalanceCard
               title={toAccount.name}
               before={balances.toAccountBefore}
@@ -261,7 +277,13 @@ export default function TransactionDetail() {
               <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Tags</Text>
               <View className="flex-row flex-wrap gap-2">
                 {tx.tags.map((t) => (
-                  <Chip key={t.id} label={t.name} dotColor={t.color} selected onPress={() => goTag(t.id)} />
+                  <Chip
+                    key={t.id}
+                    label={t.name}
+                    dotColor={t.color}
+                    selected
+                    onPress={() => goTag(t.id)}
+                  />
                 ))}
               </View>
             </View>
@@ -336,7 +358,7 @@ function BalanceCard({
             {formatCurrency(before, currency)}
           </Text>
         </View>
-        <Ionicons name="arrow-forward" size={16} color="#9CA3AF" />
+        <Ionicons name="arrow-forward" size={16} color={ICON_COLORS.ink3} />
         <View className="items-end">
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
             {projected ? 'Saldo si se completa' : 'Saldo nuevo'}

@@ -38,13 +38,7 @@ export function SegmentedControl<T extends string>({
     <View className="flex-row gap-1 rounded-ctl bg-[#EEF0F2] p-1 dark:bg-line-dark">
       {options.map((opt) => {
         const active = opt.value === value;
-        const iconColor = active
-          ? dark
-            ? '#F2F3F5'
-            : '#1A1D21'
-          : dark
-            ? '#6B7178'
-            : '#9CA3AF';
+        const iconColor = active ? (dark ? '#F2F3F5' : '#1A1D21') : dark ? '#6B7178' : '#9CA3AF';
         return (
           <Pressable
             key={opt.value}

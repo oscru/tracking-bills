@@ -19,7 +19,8 @@ export default function NewBudgetBasics() {
     setFieldError(null);
     if (!draft.name.trim()) return setFieldError('Ponle un nombre');
     const amount = Number(draft.amountText.replace(',', '.'));
-    if (!Number.isFinite(amount) || amount <= 0) return setFieldError('El monto debe ser mayor a 0');
+    if (!Number.isFinite(amount) || amount <= 0)
+      return setFieldError('El monto debe ser mayor a 0');
     if (draft.periodType === 'custom' && (!draft.customFrom || !draft.customTo)) {
       return setFieldError('Elige el rango de fechas');
     }

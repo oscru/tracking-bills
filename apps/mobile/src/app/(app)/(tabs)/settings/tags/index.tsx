@@ -57,7 +57,10 @@ export default function TagsScreen() {
       )}
 
       <View className="absolute bottom-6 right-5">
-        <Fab accessibilityLabel="Nueva tag" onPress={() => router.push('/(app)/settings/tags/new')} />
+        <Fab
+          accessibilityLabel="Nueva tag"
+          onPress={() => router.push('/(app)/settings/tags/new')}
+        />
       </View>
     </Screen>
   );

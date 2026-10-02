@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFavoriteTransactions } from '@repo/core/hooks';
 import type { FavoriteTransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency } from '@repo/core/utils';
-import { PageHeader, Screen } from '@repo/ui';
+import { PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -44,7 +44,7 @@ export default function FavoritesScreen() {
               className="min-h-[112px] items-center justify-center gap-2 rounded-card border border-dashed border-line dark:border-line-dark"
             >
               <View className="h-11 w-11 items-center justify-center rounded-full border border-dashed border-line dark:border-line-dark">
-                <Ionicons name="add" size={20} color="#9CA3AF" />
+                <Ionicons name="add" size={20} color={ICON_COLORS.ink3} />
               </View>
               <Text className="text-[13px] font-semibold text-ink-3 dark:text-ink-3-dark">
                 Nuevo favorito
@@ -69,7 +69,10 @@ function FavoriteCard({
   const currency = favorite.account?.currency ?? 'MXN';
   const subtitle = isTransfer
     ? `${favorite.account?.name ?? '—'} → ${favorite.to_account?.name ?? '—'}`
-    : [favorite.account?.name, favorite.amount != null ? formatCurrency(favorite.amount, currency) : 'monto libre']
+    : [
+        favorite.account?.name,
+        favorite.amount != null ? formatCurrency(favorite.amount, currency) : 'monto libre',
+      ]
         .filter(Boolean)
         .join(' · ');
 

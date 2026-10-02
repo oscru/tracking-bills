@@ -1,6 +1,7 @@
 import { formatCurrency } from '@repo/core/utils';
 import { useColorScheme } from 'nativewind';
 import { Text, View } from 'react-native';
+import { ICON_COLORS } from '@repo/ui';
 
 interface Props {
   saved: number;
@@ -14,17 +15,22 @@ interface Props {
 export function GoalProgressBar({ saved, target, pct, isComplete, currency }: Props) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
-  const posColor = dark ? '#22C55E' : '#16A34A';
-  const barColor = isComplete ? posColor : '#B9F227';
+  const posColor = dark ? ICON_COLORS.posDark : ICON_COLORS.pos;
+  const barColor = isComplete ? posColor : ICON_COLORS.lime;
 
   return (
     <View className="gap-1.5">
       <View className="flex-row items-center justify-between">
         <Text className="text-sm text-ink dark:text-ink-dark">
           {formatCurrency(saved, currency)}{' '}
-          <Text className="text-ink-3 dark:text-ink-3-dark">de {formatCurrency(target, currency)}</Text>
+          <Text className="text-ink-3 dark:text-ink-3-dark">
+            de {formatCurrency(target, currency)}
+          </Text>
         </Text>
-        <Text className="text-sm font-semibold" style={{ color: isComplete ? posColor : '#4D7C0F' }}>
+        <Text
+          className="text-sm font-semibold"
+          style={{ color: isComplete ? posColor : ICON_COLORS.limeInk }}
+        >
           {Math.round(pct)}%
         </Text>
       </View>

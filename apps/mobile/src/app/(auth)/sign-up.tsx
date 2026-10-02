@@ -3,7 +3,7 @@ import { useSignUp } from '@repo/core/hooks';
 import type { Gender } from '@repo/core/types';
 import { toFriendlyMessage } from '@repo/core/utils';
 import { signUpSchema } from '@repo/core/validators';
-import { BackButton, Button, ErrorCard, Screen, TextField } from '@repo/ui';
+import { BackButton, Button, ErrorCard, Screen, TextField, ICON_COLORS } from '@repo/ui';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -213,7 +213,7 @@ export default function SignUp() {
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color="#9CA3AF"
+                    color={ICON_COLORS.ink3}
                   />
                 </Pressable>
               }
@@ -239,7 +239,7 @@ export default function SignUp() {
                   <Ionicons
                     name={showConfirm ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color="#9CA3AF"
+                    color={ICON_COLORS.ink3}
                   />
                 </Pressable>
               }

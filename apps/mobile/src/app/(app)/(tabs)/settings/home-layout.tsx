@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useProfile, useUpdateProfile } from '@repo/core/hooks';
 import type { Profile } from '@repo/core/types';
 import { normalizeHomeLayout, type HomeLayoutItem } from '@repo/core/utils';
-import { PageHeader, Screen } from '@repo/ui';
+import { PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { useEffect, useRef, useState } from 'react';
@@ -232,13 +232,13 @@ function HomeLayoutEditor({ profile }: { profile: Profile }) {
                   <Ionicons
                     name="reorder-three-outline"
                     size={20}
-                    color={dark ? '#6B7178' : '#9CA3AF'}
+                    color={dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3}
                   />
                 </View>
               </PanGestureHandler>
 
               <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
-                <Ionicons name={meta.icon} size={16} color="#4D7C0F" />
+                <Ionicons name={meta.icon} size={16} color={ICON_COLORS.limeInk} />
               </View>
 
               <View className="flex-1">
@@ -256,9 +256,12 @@ function HomeLayoutEditor({ profile }: { profile: Profile }) {
               <Switch
                 value={!isHidden}
                 onValueChange={() => toggleHidden(key)}
-                trackColor={{ false: dark ? '#23272C' : '#E3E5E8', true: '#B9F227' }}
+                trackColor={{
+                  false: dark ? ICON_COLORS.lineDark : '#E3E5E8',
+                  true: ICON_COLORS.lime,
+                }}
                 thumbColor="#FFFFFF"
-                ios_backgroundColor={dark ? '#23272C' : '#E3E5E8'}
+                ios_backgroundColor={dark ? ICON_COLORS.lineDark : '#E3E5E8'}
               />
             </View>
           </View>

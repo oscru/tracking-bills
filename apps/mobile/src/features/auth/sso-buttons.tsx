@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { toFriendlyMessage } from '@repo/core/utils';
-import { ErrorCard } from '@repo/ui';
+import { ErrorCard, ICON_COLORS } from '@repo/ui';
 import { useColorScheme } from 'nativewind';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
@@ -47,7 +47,7 @@ function SsoButton({
  * configure here. */
 export function SsoButtons() {
   const { colorScheme } = useColorScheme();
-  const iconColor = colorScheme === 'dark' ? '#F2F3F5' : '#1A1D21';
+  const iconColor = colorScheme === 'dark' ? ICON_COLORS.inkDark : ICON_COLORS.ink;
   const oauth = useOAuthSignIn();
 
   return (

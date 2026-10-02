@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
+import { ICON_COLORS } from '@repo/ui';
 
 const RULES: { label: string; test: (password: string) => boolean }[] = [
   { label: 'Mínimo 8 caracteres', test: (p) => p.length >= 8 },
@@ -23,7 +24,7 @@ export function PasswordChecklist({ password }: PasswordChecklistProps) {
             <Ionicons
               name={met ? 'checkmark-circle' : 'ellipse-outline'}
               size={16}
-              color={met ? '#4D7C0F' : '#9CA3AF'}
+              color={met ? ICON_COLORS.limeInk : ICON_COLORS.ink3}
             />
             <Text
               className={`text-xs ${met ? 'text-ink dark:text-ink-dark' : 'text-ink-3 dark:text-ink-3-dark'}`}

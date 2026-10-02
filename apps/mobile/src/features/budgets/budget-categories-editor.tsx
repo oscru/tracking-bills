@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCategories } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import { formatCurrency } from '@repo/core/utils';
-import { CategoryDot } from '@repo/ui';
+import { CategoryDot, ICON_COLORS } from '@repo/ui';
 import { useColorScheme } from 'nativewind';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -36,8 +36,14 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
   const [amountSheetOpen, setAmountSheetOpen] = useState(false);
 
   const chosen = categories
-    .map((c) => ({ allocation: c, category: (allCategories ?? []).find((cat) => cat.id === c.categoryId) }))
-    .filter((c): c is { allocation: CategoryAllocation; category: NonNullable<typeof c.category> } => c.category != null);
+    .map((c) => ({
+      allocation: c,
+      category: (allCategories ?? []).find((cat) => cat.id === c.categoryId),
+    }))
+    .filter(
+      (c): c is { allocation: CategoryAllocation; category: NonNullable<typeof c.category> } =>
+        c.category != null,
+    );
 
   const allocatedSum = categories.reduce((sum, c) => sum + c.amount, 0);
   const remaining = totalAmount - allocatedSum;
@@ -45,7 +51,12 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
   const tolerance = totalAmount * 0.1;
   const overTolerance = overBy > tolerance;
 
-  const remainingColor = remaining >= 0 ? 'text-pos dark:text-pos-dark' : overTolerance ? 'text-danger dark:text-danger-dark' : 'text-warning dark:text-warning-dark';
+  const remainingColor =
+    remaining >= 0
+      ? 'text-pos dark:text-pos-dark'
+      : overTolerance
+        ? 'text-danger dark:text-danger-dark'
+        : 'text-warning dark:text-warning-dark';
 
   const editingCategory = editingCategoryId
     ? (allCategories ?? []).find((c) => c.id === editingCategoryId)
@@ -56,7 +67,8 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
   // Editing an already-added category: "restante" should still count its own current amount as available.
   const remainingForSheet = editingCategoryId ? remaining + (editingAmount ?? 0) : remaining;
 
-  const remove = (categoryId: string) => onChange(categories.filter((c) => c.categoryId !== categoryId));
+  const remove = (categoryId: string) =>
+    onChange(categories.filter((c) => c.categoryId !== categoryId));
 
   const startAdd = (categoryId: string) => {
     setEditingCategoryId(categoryId);
@@ -83,16 +95,20 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
   return (
     <View className="gap-3">
       <View className="flex-row items-center justify-between rounded-2xl bg-surface p-4 dark:bg-surface-dark">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Restante por repartir</Text>
-        <Text className={`text-base font-bold ${remainingColor}`}>{formatCurrency(remaining, currency)}</Text>
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+          Restante por repartir
+        </Text>
+        <Text className={`text-base font-bold ${remainingColor}`}>
+          {formatCurrency(remaining, currency)}
+        </Text>
       </View>
 
       {overTolerance ? (
         <View className="rounded-xl bg-warning-tint p-3.5 dark:bg-warning-tint-dark">
           <Text className="text-xs leading-[17px] text-warning dark:text-warning-dark">
             Repartiste {formatCurrency(overBy, currency)} más de tu presupuesto de{' '}
-            {formatCurrency(totalAmount, currency)} — más del 10% de tolerancia. Puedes crearlo así, pero
-            considera ajustar los montos.
+            {formatCurrency(totalAmount, currency)} — más del 10% de tolerancia. Puedes crearlo así,
+            pero considera ajustar los montos.
           </Text>
         </View>
       ) : null}
@@ -119,7 +135,11 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
                 {formatCurrency(allocation.amount, currency)}
               </Text>
               <Pressable onPress={() => remove(c.id)} hitSlop={8}>
-                <Ionicons name="close-circle" size={20} color={dark ? '#6B7178' : '#9CA3AF'} />
+                <Ionicons
+                  name="close-circle"
+                  size={20}
+                  color={dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3}
+                />
               </Pressable>
             </Pressable>
           ))}
@@ -130,7 +150,7 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
         onPress={() => setPickerOpen(true)}
         className="h-12 flex-row items-center justify-center gap-1.5 rounded-ctl border border-dashed border-line dark:border-line-dark"
       >
-        <Ionicons name="add" size={18} color="#4D7C0F" />
+        <Ionicons name="add" size={18} color={ICON_COLORS.limeInk} />
         <Text className="text-[14px] font-semibold text-lime-ink dark:text-lime-ink-dark">
           Añadir categoría
         </Text>

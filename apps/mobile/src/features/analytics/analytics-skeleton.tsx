@@ -39,7 +39,10 @@ function InsightsStripSkeleton() {
   return (
     <View className="flex-row gap-2.5">
       {Array.from({ length: 4 }).map((_, i) => (
-        <View key={i} className="min-w-[136px] gap-1.5 rounded-2xl bg-surface p-3.5 dark:bg-surface-dark">
+        <View
+          key={i}
+          className="min-w-[136px] gap-1.5 rounded-2xl bg-surface p-3.5 dark:bg-surface-dark"
+        >
           <Skeleton width={16} height={16} radius={4} />
           <Skeleton width={50} height={15} />
           <Skeleton width={80} height={11} />

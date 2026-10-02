@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { TransactionType } from '@repo/core/types';
-import { BottomSheet } from '@repo/ui';
+import { BottomSheet, ICON_COLORS } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -35,13 +35,10 @@ function FilterRow({
   onPress: () => void;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      className="flex-row items-center gap-3 py-5 active:opacity-60"
-    >
+    <Pressable onPress={onPress} className="flex-row items-center gap-3 py-5 active:opacity-60">
       <Text className="flex-1 text-base font-semibold text-ink dark:text-ink-dark">{title}</Text>
       <Text className="text-[15px] text-ink-2 dark:text-ink-2-dark">{value}</Text>
-      <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+      <Ionicons name="chevron-forward" size={18} color={ICON_COLORS.ink3} />
     </Pressable>
   );
 }
@@ -107,8 +104,11 @@ export function FiltersSheet({
       ? 'Todas las categorías'
       : pluralLabel(categoryIds.length, 'categoría', 'categorías');
   const accountLabel =
-    accountIds.length === 0 ? 'Todas las cuentas' : pluralLabel(accountIds.length, 'cuenta', 'cuentas');
-  const tagLabel = tagIds.length === 0 ? 'Todas las tags' : pluralLabel(tagIds.length, 'tag', 'tags');
+    accountIds.length === 0
+      ? 'Todas las cuentas'
+      : pluralLabel(accountIds.length, 'cuenta', 'cuentas');
+  const tagLabel =
+    tagIds.length === 0 ? 'Todas las tags' : pluralLabel(tagIds.length, 'tag', 'tags');
 
   return (
     <>

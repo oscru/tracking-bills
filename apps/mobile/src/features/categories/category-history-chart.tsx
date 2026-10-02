@@ -5,7 +5,7 @@ import {
   formatMonthShort,
   groupByAccountCurrency,
 } from '@repo/core/utils';
-import { SegmentedControl } from '@repo/ui';
+import { SegmentedControl, ICON_COLORS } from '@repo/ui';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState } from 'react';
 import { Text, View, useWindowDimensions } from 'react-native';
@@ -40,9 +40,9 @@ export function CategoryHistoryChart({ categoryId, color }: Props) {
   }, [transactions, categoryId]);
   const hasAnyData = groups.length > 0;
 
-  const accent = color ?? '#4D7C0F';
-  const axisColor = dark ? '#6B7178' : '#9CA3AF';
-  const gridColor = dark ? '#23272C' : '#EDEFF2';
+  const accent = color ?? ICON_COLORS.limeInk;
+  const axisColor = dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3;
+  const gridColor = dark ? ICON_COLORS.lineDark : ICON_COLORS.line;
 
   const chartWidth = Math.max(
     windowWidth - SCREEN_PADDING * 2 - CARD_PADDING * 2 - Y_AXIS_GUTTER,

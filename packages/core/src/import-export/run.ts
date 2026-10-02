@@ -1,6 +1,7 @@
 import { attachTagsBulk, createAccount, createCategory, createTag, createTransactions } from '../supabase';
 import type { TransactionCreateInput } from '../validators';
-import { AUTO_ACCOUNT_TYPE, AUTO_CATEGORY_COLOR } from './constants';
+import { AUTO_CATEGORY_COLOR } from './constants';
+import { guessAccountType } from './guess-account-type';
 import type { EntityRef, ImportPlan } from './plan';
 
 export interface ImportRunResult {
@@ -37,7 +38,7 @@ export async function runImportPlan(plan: ImportPlan): Promise<ImportRunResult> 
   for (const a of plan.newAccounts) {
     const created = await createAccount({
       name: a.name,
-      type: AUTO_ACCOUNT_TYPE,
+      type: guessAccountType(a.name),
       currency: a.currency,
       initial_balance: 0,
       show_on_home: true,

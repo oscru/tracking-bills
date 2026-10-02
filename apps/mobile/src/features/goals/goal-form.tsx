@@ -1,8 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts } from '@repo/core/hooks';
-import { addDaysISO, formatCurrency, suggestedGoalContribution, todayISODate } from '@repo/core/utils';
+import {
+  addDaysISO,
+  formatCurrency,
+  suggestedGoalContribution,
+  todayISODate,
+} from '@repo/core/utils';
 import { goalCreateSchema, type GoalCreateInput } from '@repo/core/validators';
-import { Button, Chip, CurrencyField, ErrorCard, SwitchRow, TextField } from '@repo/ui';
+import {
+  Button,
+  Chip,
+  CurrencyField,
+  ErrorCard,
+  SwitchRow,
+  TextField,
+  ICON_COLORS,
+} from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -79,7 +92,8 @@ export function GoalForm({
     paceFromDays(initial?.contribution_interval_days),
   );
   const [customDaysText, setCustomDaysText] = useState(
-    initial?.contribution_interval_days != null && paceFromDays(initial.contribution_interval_days) === 'custom'
+    initial?.contribution_interval_days != null &&
+      paceFromDays(initial.contribution_interval_days) === 'custom'
       ? String(initial.contribution_interval_days)
       : '',
   );
@@ -144,7 +158,11 @@ export function GoalForm({
   };
 
   return (
-    <ScrollView className="flex-1" contentContainerClassName="gap-5 pb-8" keyboardShouldPersistTaps="handled">
+    <ScrollView
+      className="flex-1"
+      contentContainerClassName="gap-5 pb-8"
+      keyboardShouldPersistTaps="handled"
+    >
       <View className="items-center gap-2">
         <Pressable
           onPress={() => setIconPickerOpen(true)}
@@ -153,7 +171,7 @@ export function GoalForm({
           <Ionicons
             name={(icon as keyof typeof Ionicons.glyphMap) ?? 'flag-outline'}
             size={26}
-            color="#4D7C0F"
+            color={ICON_COLORS.limeInk}
           />
         </Pressable>
         <Pressable onPress={() => setIconPickerOpen(true)} hitSlop={8}>
@@ -241,7 +259,7 @@ export function GoalForm({
             }}
             className="h-12 flex-row items-center justify-center gap-1.5 rounded-ctl border border-dashed border-line dark:border-line-dark"
           >
-            <Ionicons name="add" size={18} color="#4D7C0F" />
+            <Ionicons name="add" size={18} color={ICON_COLORS.limeInk} />
             <Text className="text-[14px] font-semibold text-lime-ink dark:text-lime-ink-dark">
               Agregar fecha límite
             </Text>
@@ -347,7 +365,9 @@ export function GoalForm({
 
       {hasLinkedAccount ? (
         <View className="gap-2">
-          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Cuenta de ahorro</Text>
+          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+            Cuenta de ahorro
+          </Text>
           <Pressable
             onPress={() => setAccountPickerOpen(true)}
             className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"

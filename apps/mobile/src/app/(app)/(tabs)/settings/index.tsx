@@ -1,4 +1,11 @@
-import { useAccounts, useBudgets, useCategories, useGoals, useSession, useTags } from '@repo/core/hooks';
+import {
+  useAccounts,
+  useBudgets,
+  useCategories,
+  useGoals,
+  useSession,
+  useTags,
+} from '@repo/core/hooks';
 import { Avatar, ListRow, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
@@ -13,7 +20,8 @@ export default function SettingsScreen() {
   const { data: tags, isLoading: loadingTags } = useTags();
   const { data: budgets, isLoading: loadingBudgets } = useBudgets();
   const { data: goals, isLoading: loadingGoals } = useGoals();
-  const loading = loadingAccounts || loadingCategories || loadingTags || loadingBudgets || loadingGoals;
+  const loading =
+    loadingAccounts || loadingCategories || loadingTags || loadingBudgets || loadingGoals;
 
   const customCategories = (categories ?? []).length;
   const activeBudgets = (budgets ?? []).length;

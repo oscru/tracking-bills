@@ -12,7 +12,7 @@ import {
   topTransactions,
   type AnalyticsPeriod,
 } from '@repo/core/utils';
-import { Chip, Screen, SegmentedControl, type SegmentedOption } from '@repo/ui';
+import { Chip, Screen, SegmentedControl, type SegmentedOption, ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -70,7 +70,7 @@ export default function AnalyticsScreen() {
   const currency =
     selectedCurrency && currencies.includes(selectedCurrency)
       ? selectedCurrency
-      : currencies[0] ?? defaultCurrency;
+      : (currencies[0] ?? defaultCurrency);
   const tx = useMemo(
     () => (transactions ?? []).filter((t) => (t.account?.currency ?? defaultCurrency) === currency),
     [transactions, currency, defaultCurrency],
@@ -99,11 +99,13 @@ export default function AnalyticsScreen() {
 
   const heatmapCells = useMemo<HeatmapCell[]>(() => {
     if (period === 'year') {
-      return monthlyTransactionTotalsForYear(tx, referenceDate.getFullYear(), heatmapMetric).map((m) => ({
-        key: m.month,
-        label: formatMonthShort(m.month).replace(/\s.*$/, ''),
-        total: m.total,
-      }));
+      return monthlyTransactionTotalsForYear(tx, referenceDate.getFullYear(), heatmapMetric).map(
+        (m) => ({
+          key: m.month,
+          label: formatMonthShort(m.month).replace(/\s.*$/, ''),
+          total: m.total,
+        }),
+      );
     }
 
     const days = dailyTransactionTotals(tx, range.from, range.to, heatmapMetric).map((d) => ({
@@ -201,7 +203,7 @@ export default function AnalyticsScreen() {
 
       <View className="flex-row items-center justify-center gap-4">
         <Pressable onPress={() => shift(-1)} hitSlop={10} accessibilityLabel="Periodo anterior">
-          <Ionicons name="chevron-back" size={22} color="#9CA3AF" />
+          <Ionicons name="chevron-back" size={22} color={ICON_COLORS.ink3} />
         </Pressable>
         {period === 'month' ? (
           <Pressable
@@ -212,7 +214,7 @@ export default function AnalyticsScreen() {
             <Text className="text-center text-base font-bold text-ink dark:text-ink-dark">
               {periodLabel(period, referenceDate)}
             </Text>
-            <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
+            <Ionicons name="chevron-down" size={16} color={ICON_COLORS.ink3} />
           </Pressable>
         ) : (
           <Text className="min-w-[140px] text-center text-base font-bold text-ink dark:text-ink-dark">
@@ -228,7 +230,7 @@ export default function AnalyticsScreen() {
           <Ionicons
             name="chevron-forward"
             size={22}
-            color={insights.isCurrentPeriod ? '#D1D5DB' : '#9CA3AF'}
+            color={insights.isCurrentPeriod ? '#D1D5DB' : ICON_COLORS.ink3}
           />
         </Pressable>
       </View>
@@ -248,7 +250,11 @@ export default function AnalyticsScreen() {
       ) : null}
 
       {isLoading ? (
-        <ScrollView className="flex-1" contentContainerClassName="pb-24" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="pb-24"
+          showsVerticalScrollIndicator={false}
+        >
           <AnalyticsSkeleton />
         </ScrollView>
       ) : (
@@ -267,7 +273,7 @@ export default function AnalyticsScreen() {
                     key={opt.value}
                     label={opt.label}
                     selected={heatmapMetric === opt.value}
-                    dotColor={opt.value === 'income' ? '#16A34A' : '#E5484D'}
+                    dotColor={opt.value === 'income' ? ICON_COLORS.pos : ICON_COLORS.danger}
                     onPress={() => setHeatmapMetric(opt.value)}
                   />
                 ))}

@@ -1,7 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useGoals, useTransactions, useUpdateAccount } from '@repo/core/hooks';
 import { accountBalance, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
-import { Button, ConfirmSheet, ErrorCard, Fab, PageHeader, Screen, SwitchRow } from '@repo/ui';
+import {
+  Button,
+  ConfirmSheet,
+  ErrorCard,
+  Fab,
+  PageHeader,
+  Screen,
+  SwitchRow,
+  ICON_COLORS,
+} from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -72,7 +81,8 @@ export default function AccountDetail() {
         // confirm sheet, but a concurrent edit from another device could
         // still make the DB-level check (`check_account_archive_zero_balance`)
         // the one that actually catches it.
-        onError: (e) => setArchiveBlockedMessage(toFriendlyMessage(e, 'No se pudo archivar la cuenta')),
+        onError: (e) =>
+          setArchiveBlockedMessage(toFriendlyMessage(e, 'No se pudo archivar la cuenta')),
       },
     );
   };
@@ -101,7 +111,7 @@ export default function AccountDetail() {
               className="flex-1 rounded-2xl border border-pos/30 bg-lime-tint p-4 active:opacity-70 dark:border-pos-dark/30 dark:bg-lime-tint-dark"
             >
               <View className="flex-row items-center gap-1.5">
-                <Ionicons name="arrow-down-circle" size={16} color="#16A34A" />
+                <Ionicons name="arrow-down-circle" size={16} color={ICON_COLORS.pos} />
                 <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
                   Ingresos
                 </Text>
@@ -118,8 +128,10 @@ export default function AccountDetail() {
               className="flex-1 rounded-2xl border border-line bg-[#F1F2F4] p-4 active:opacity-70 dark:border-line-dark dark:bg-line-dark"
             >
               <View className="flex-row items-center gap-1.5">
-                <Ionicons name="arrow-up-circle" size={16} color="#1A1D21" />
-                <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">Gastos</Text>
+                <Ionicons name="arrow-up-circle" size={16} color={ICON_COLORS.ink} />
+                <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
+                  Gastos
+                </Text>
               </View>
               <Text className="mt-1 text-2xl font-bold text-ink dark:text-ink-dark">
                 {expenseCount}

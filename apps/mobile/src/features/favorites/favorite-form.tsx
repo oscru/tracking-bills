@@ -6,7 +6,16 @@ import {
   favoriteTransactionCreateSchema,
   type FavoriteTransactionCreateInput,
 } from '@repo/core/validators';
-import { Button, CategoryDot, CurrencyField, ErrorCard, SegmentedControl, SwitchRow, TextField } from '@repo/ui';
+import {
+  Button,
+  CategoryDot,
+  CurrencyField,
+  ErrorCard,
+  SegmentedControl,
+  SwitchRow,
+  TextField,
+  ICON_COLORS,
+} from '@repo/ui';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -142,7 +151,7 @@ export function FavoriteForm({
           <Ionicons
             name={(icon as keyof typeof Ionicons.glyphMap) ?? 'add-outline'}
             size={26}
-            color="#4D7C0F"
+            color={ICON_COLORS.limeInk}
           />
         </Pressable>
         <Pressable onPress={() => setIconPickerOpen(true)} hitSlop={8}>
@@ -216,7 +225,11 @@ export function FavoriteForm({
           >
             <View className="flex-row items-center gap-2">
               {selectedCategory ? (
-                <CategoryDot color={selectedCategory.color} icon={selectedCategory.icon} size={16} />
+                <CategoryDot
+                  color={selectedCategory.color}
+                  icon={selectedCategory.icon}
+                  size={16}
+                />
               ) : null}
               <Text
                 className={

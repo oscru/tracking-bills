@@ -40,7 +40,9 @@ export function Screen({
       {children}
     </ScrollView>
   ) : (
-    <View className={`flex-1 px-5 ${vertical} ${web} ${center ? 'justify-center' : ''} ${className}`}>
+    <View
+      className={`flex-1 px-5 ${vertical} ${web} ${center ? 'justify-center' : ''} ${className}`}
+    >
       {children}
     </View>
   );

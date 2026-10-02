@@ -9,7 +9,7 @@ import {
   groupByAccountCurrency,
   todayISODate,
 } from '@repo/core/utils';
-import { CategoryDot, PageHeader, Screen } from '@repo/ui';
+import { CategoryDot, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -184,7 +184,7 @@ export default function CategoryMonthSpendingScreen() {
         </ScrollView>
       ) : (
         <View className="mt-16 items-center gap-2">
-          <Ionicons name="pie-chart-outline" size={28} color="#9CA3AF" />
+          <Ionicons name="pie-chart-outline" size={28} color={ICON_COLORS.ink3} />
           <Text className="text-base font-semibold text-ink dark:text-ink-dark">Sin gastos</Text>
           <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
             Sin movimientos en esta categoría este mes.

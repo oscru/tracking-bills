@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useTransactions } from '@repo/core/hooks';
 import { categorySpendBreakdown, groupByAccountCurrency, todayISODate } from '@repo/core/utils';
-import { PageHeader, Screen } from '@repo/ui';
+import { PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, Text, View } from 'react-native';
@@ -87,7 +87,7 @@ export default function MonthlySpendingScreen() {
         </ScrollView>
       ) : (
         <View className="mt-16 items-center gap-2">
-          <Ionicons name="pie-chart-outline" size={28} color="#9CA3AF" />
+          <Ionicons name="pie-chart-outline" size={28} color={ICON_COLORS.ink3} />
           <Text className="text-base font-semibold text-ink dark:text-ink-dark">Sin gastos</Text>
           <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
             No hay gastos registrados en este mes.

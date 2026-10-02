@@ -1,7 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { AccountType } from '@repo/core/types';
 import { accountCreateSchema, type AccountCreateInput } from '@repo/core/validators';
-import { BottomSheet, Button, ColorPicker, CurrencyField, ErrorCard, TextField } from '@repo/ui';
+import {
+  BottomSheet,
+  Button,
+  ColorPicker,
+  CurrencyField,
+  ErrorCard,
+  TextField,
+  ICON_COLORS,
+} from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -104,12 +112,12 @@ export function AccountForm({
           className="flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 py-3 dark:border-line-dark dark:bg-surface-dark"
         >
           <View className="flex-row items-center gap-2.5">
-            <Ionicons name={ACCOUNT_TYPE_ICON[type]} size={18} color="#4D7C0F" />
+            <Ionicons name={ACCOUNT_TYPE_ICON[type]} size={18} color={ICON_COLORS.limeInk} />
             <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
               {ACCOUNT_TYPE_LABEL[type]}
             </Text>
           </View>
-          <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
+          <Ionicons name="chevron-down" size={18} color={ICON_COLORS.ink3} />
         </Pressable>
       </View>
 
@@ -118,7 +126,9 @@ export function AccountForm({
         {editing ? (
           <>
             <View className="h-[52px] flex-row items-center rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark">
-              <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">{currency}</Text>
+              <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
+                {currency}
+              </Text>
             </View>
             <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
               No se puede cambiar después de crear la cuenta.
@@ -130,7 +140,7 @@ export function AccountForm({
             className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
           >
             <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">{currency}</Text>
-            <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
+            <Ionicons name="chevron-down" size={18} color={ICON_COLORS.ink3} />
           </Pressable>
         )}
         {errors.currency ? (
@@ -175,12 +185,14 @@ export function AccountForm({
               className="flex-row items-center gap-3 border-t border-line px-5 py-3.5 dark:border-line-dark"
             >
               <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
-                <Ionicons name={t.icon} size={16} color="#4D7C0F" />
+                <Ionicons name={t.icon} size={16} color={ICON_COLORS.limeInk} />
               </View>
               <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
                 {t.label}
               </Text>
-              {type === t.value ? <Ionicons name="checkmark" size={18} color="#4D7C0F" /> : null}
+              {type === t.value ? (
+                <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+              ) : null}
             </Pressable>
           ))}
         </ScrollView>

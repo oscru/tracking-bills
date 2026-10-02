@@ -1,6 +1,7 @@
 import { formatCompactAmount } from '@repo/core/utils';
 import { useColorScheme } from 'nativewind';
 import { Pressable, Text, View } from 'react-native';
+import { ICON_COLORS } from '@repo/ui';
 
 export interface HeatmapCell {
   key: string;
@@ -35,31 +36,35 @@ function chunk<T>(arr: T[], size: number): T[][] {
 // hard to tell apart at a glance; distinct steps (like a calendar-heatmap
 // legend) make each band recognizable on its own.
 const EXPENSE_LIGHT_STEPS: { bg: string; fg: string }[] = [
-  { bg: '#FBD5D6', fg: '#1A1D21' },
-  { bg: '#F3989C', fg: '#1A1D21' },
+  { bg: '#FBD5D6', fg: ICON_COLORS.ink },
+  { bg: '#F3989C', fg: ICON_COLORS.ink },
   { bg: '#EB6367', fg: '#FFFFFF' },
-  { bg: '#E5484D', fg: '#FFFFFF' },
+  { bg: ICON_COLORS.danger, fg: '#FFFFFF' },
 ];
 const EXPENSE_DARK_STEPS: { bg: string; fg: string }[] = [
-  { bg: '#4A2A2D', fg: '#F2F3F5' },
-  { bg: '#7A3A3E', fg: '#F2F3F5' },
+  { bg: '#4A2A2D', fg: ICON_COLORS.inkDark },
+  { bg: '#7A3A3E', fg: ICON_COLORS.inkDark },
   { bg: '#B14A50', fg: '#FFFFFF' },
-  { bg: '#F16A6E', fg: '#1A1D21' },
+  { bg: ICON_COLORS.dangerDark, fg: ICON_COLORS.ink },
 ];
 const INCOME_LIGHT_STEPS: { bg: string; fg: string }[] = [
-  { bg: '#D5F0DE', fg: '#1A1D21' },
-  { bg: '#98D8B1', fg: '#1A1D21' },
+  { bg: '#D5F0DE', fg: ICON_COLORS.ink },
+  { bg: '#98D8B1', fg: ICON_COLORS.ink },
   { bg: '#4FB776', fg: '#FFFFFF' },
-  { bg: '#16A34A', fg: '#FFFFFF' },
+  { bg: ICON_COLORS.pos, fg: '#FFFFFF' },
 ];
 const INCOME_DARK_STEPS: { bg: string; fg: string }[] = [
-  { bg: '#22392C', fg: '#F2F3F5' },
-  { bg: '#2E5B40', fg: '#F2F3F5' },
+  { bg: '#22392C', fg: ICON_COLORS.inkDark },
+  { bg: '#2E5B40', fg: ICON_COLORS.inkDark },
   { bg: '#3C9058', fg: '#FFFFFF' },
-  { bg: '#22C55E', fg: '#1A1D21' },
+  { bg: ICON_COLORS.posDark, fg: ICON_COLORS.ink },
 ];
 
-function bucketColor(bucket: number, dark: boolean, variant: HeatmapVariant): { bg: string; fg: string } {
+function bucketColor(
+  bucket: number,
+  dark: boolean,
+  variant: HeatmapVariant,
+): { bg: string; fg: string } {
   const steps =
     variant === 'income'
       ? dark
@@ -77,7 +82,7 @@ function intensity(
   dark: boolean,
   variant: HeatmapVariant,
 ): { bg: string; fg: string } {
-  if (total <= 0) return { bg: 'transparent', fg: dark ? '#F2F3F5' : '#1A1D21' };
+  if (total <= 0) return { bg: 'transparent', fg: dark ? ICON_COLORS.inkDark : ICON_COLORS.ink };
   const ratio = maxTotal > 0 ? Math.min(total / maxTotal, 1) : 0;
   const bucket = Math.max(1, Math.ceil(ratio * 4));
   return bucketColor(bucket, dark, variant);
@@ -104,7 +109,10 @@ export function CalendarHeatmap({
       {weekdayHeader ? (
         <View className="flex-row">
           {weekdayHeader.map((d, i) => (
-            <Text key={i} className="flex-1 text-center text-[11px] text-ink-3 dark:text-ink-3-dark">
+            <Text
+              key={i}
+              className="flex-1 text-center text-[11px] text-ink-3 dark:text-ink-3-dark"
+            >
               {d}
             </Text>
           ))}
@@ -128,7 +136,7 @@ export function CalendarHeatmap({
                   aspectRatio: 1,
                   backgroundColor: bg,
                   borderWidth: selected ? 2 : 0,
-                  borderColor: '#B9F227',
+                  borderColor: ICON_COLORS.lime,
                 }}
               >
                 <Text className="text-[13px] font-semibold leading-none" style={{ color: fg }}>

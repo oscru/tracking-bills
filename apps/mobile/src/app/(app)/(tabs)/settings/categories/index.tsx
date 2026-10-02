@@ -2,7 +2,15 @@ import { useCategoryTree } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { CategoryNode, CategoryType } from '@repo/core/types';
 import { toFriendlyMessage } from '@repo/core/utils';
-import { CategoryDot, ErrorCard, Fab, PageHeader, Screen, SegmentedControl, TextField } from '@repo/ui';
+import {
+  CategoryDot,
+  ErrorCard,
+  Fab,
+  PageHeader,
+  Screen,
+  SegmentedControl,
+  TextField,
+} from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -131,7 +139,11 @@ export default function CategoriesScreen() {
           <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar las categorías')} />
         </View>
       ) : (
-        <ScrollView className="flex-1" contentContainerClassName="pb-8" keyboardShouldPersistTaps="handled">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="pb-8"
+          keyboardShouldPersistTaps="handled"
+        >
           <Group type={type} search={search} onEdit={goEdit} />
         </ScrollView>
       )}

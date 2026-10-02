@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BudgetPeriodType } from '@repo/core/types';
-import { Chip, CurrencyField, SwitchRow, TextField } from '@repo/ui';
+import { Chip, CurrencyField, SwitchRow, TextField, ICON_COLORS } from '@repo/ui';
 import { Pressable, Text, View } from 'react-native';
 
 import { DateField } from '../transactions/date-field';
@@ -73,11 +73,21 @@ export function BudgetBasicsFields({
       />
 
       <View className="gap-2">
-        <CurrencyField label="Monto" value={amountText} onChangeText={onChangeAmount} currency={currency} />
+        <CurrencyField
+          label="Monto"
+          value={amountText}
+          onChangeText={onChangeAmount}
+          currency={currency}
+        />
         {onChangeCurrency ? (
           <View className="flex-row flex-wrap gap-2">
             {(currencyOptions ?? [currency]).map((c) => (
-              <Chip key={c} label={c} selected={currency === c} onPress={() => onChangeCurrency(c)} />
+              <Chip
+                key={c}
+                label={c}
+                selected={currency === c}
+                onPress={() => onChangeCurrency(c)}
+              />
             ))}
           </View>
         ) : (
@@ -105,7 +115,9 @@ export function BudgetBasicsFields({
 
       {periodType === 'custom' ? (
         <View className="gap-2">
-          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Rango de fechas</Text>
+          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+            Rango de fechas
+          </Text>
           <DateRangeField
             from={customFrom}
             to={customTo}
@@ -116,7 +128,11 @@ export function BudgetBasicsFields({
                 onPress={onPress}
                 className="h-[52px] flex-row items-center gap-2 rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
               >
-                <Ionicons name="calendar-outline" size={16} color={active ? '#4D7C0F' : '#9CA3AF'} />
+                <Ionicons
+                  name="calendar-outline"
+                  size={16}
+                  color={active ? ICON_COLORS.limeInk : ICON_COLORS.ink3}
+                />
                 <Text
                   className={
                     active

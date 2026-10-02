@@ -1,7 +1,20 @@
 import { useCategories, useCreateTransaction } from '@repo/core/hooks';
 import type { TransactionCreateInput } from '@repo/core/validators';
-import { applyAmountKey, evalAmount, formatCurrency, toFriendlyMessage, todayISODate } from '@repo/core/utils';
-import { AmountDisplay, BottomSheet, Button, ErrorCard, NumericKeypad, type KeypadKey } from '@repo/ui';
+import {
+  applyAmountKey,
+  evalAmount,
+  formatCurrency,
+  toFriendlyMessage,
+  todayISODate,
+} from '@repo/core/utils';
+import {
+  AmountDisplay,
+  BottomSheet,
+  Button,
+  ErrorCard,
+  NumericKeypad,
+  type KeypadKey,
+} from '@repo/ui';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -55,7 +68,8 @@ export function AdjustBalanceSheet({
     setError(null);
   };
 
-  const adjustmentType: 'income' | 'expense' | null = diff === 0 ? null : diff > 0 ? 'income' : 'expense';
+  const adjustmentType: 'income' | 'expense' | null =
+    diff === 0 ? null : diff > 0 ? 'income' : 'expense';
 
   const askConfirm = () => {
     if (value == null) return setError('Monto inválido');
@@ -104,9 +118,7 @@ export function AdjustBalanceSheet({
         {diff !== 0 ? (
           <Text
             className={`text-center text-[13px] font-semibold ${
-              diff > 0
-                ? 'text-pos dark:text-pos-dark'
-                : 'text-danger dark:text-danger-dark'
+              diff > 0 ? 'text-pos dark:text-pos-dark' : 'text-danger dark:text-danger-dark'
             }`}
           >
             {diff > 0 ? 'Se registrará un ingreso de ' : 'Se registrará un gasto de '}
@@ -131,9 +143,8 @@ export function AdjustBalanceSheet({
             <Text className="font-semibold text-ink dark:text-ink-dark">
               {formatCurrency(currentBalance, currency)}
             </Text>{' '}
-            a{' '}
-            <Text className="font-semibold text-ink dark:text-ink-dark">{display}</Text> creará
-            un nuevo{' '}
+            a <Text className="font-semibold text-ink dark:text-ink-dark">{display}</Text> creará un
+            nuevo{' '}
             <Text className="font-semibold text-ink dark:text-ink-dark">
               {adjustmentType === 'income' ? 'ingreso' : 'gasto'}
             </Text>{' '}

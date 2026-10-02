@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { addDaysISO, formatDate, todayISODate } from '@repo/core/utils';
-import { BottomSheet, Chip } from '@repo/ui';
+import { BottomSheet, Chip, ICON_COLORS } from '@repo/ui';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -21,12 +21,7 @@ interface DateFieldProps {
  * (e.g. a birth date decades ago). */
 const YEARS_BACK = 120;
 
-export function DateField({
-  value,
-  onChange,
-  showQuickChips = true,
-  placeholder,
-}: DateFieldProps) {
+export function DateField({ value, onChange, showQuickChips = true, placeholder }: DateFieldProps) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<'calendar' | 'years'>('calendar');
   const parsed = useMemo(() => {
@@ -96,7 +91,7 @@ export function DateField({
         >
           {value ? formatDate(value) : (placeholder ?? '')}
         </Text>
-        <Ionicons name="calendar-outline" size={18} color="#9CA3AF" />
+        <Ionicons name="calendar-outline" size={18} color={ICON_COLORS.ink3} />
       </Pressable>
 
       <BottomSheet
@@ -112,7 +107,7 @@ export function DateField({
                 hitSlop={8}
                 className="flex-row items-center gap-1 active:opacity-60"
               >
-                <Ionicons name="chevron-back" size={18} color="#9CA3AF" />
+                <Ionicons name="chevron-back" size={18} color={ICON_COLORS.ink3} />
                 <Text className="text-[15px] font-semibold text-ink-2 dark:text-ink-2-dark">
                   {monthTitle}
                 </Text>
@@ -137,7 +132,9 @@ export function DateField({
                   >
                     {y}
                   </Text>
-                  {y === viewYear ? <Ionicons name="checkmark" size={18} color="#4D7C0F" /> : null}
+                  {y === viewYear ? (
+                    <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+                  ) : null}
                 </Pressable>
               ))}
             </ScrollView>
@@ -150,7 +147,7 @@ export function DateField({
           >
             <View className="flex-row items-center justify-between">
               <Pressable onPress={() => shiftMonth(-1)} hitSlop={8} className="p-1">
-                <Ionicons name="chevron-back" size={20} color="#9CA3AF" />
+                <Ionicons name="chevron-back" size={20} color={ICON_COLORS.ink3} />
               </Pressable>
               <Pressable
                 onPress={() => setView('years')}
@@ -160,10 +157,10 @@ export function DateField({
                 <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
                   {monthTitle} {viewYear}
                 </Text>
-                <Ionicons name="chevron-down" size={14} color="#9CA3AF" />
+                <Ionicons name="chevron-down" size={14} color={ICON_COLORS.ink3} />
               </Pressable>
               <Pressable onPress={() => shiftMonth(1)} hitSlop={8} className="p-1">
-                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                <Ionicons name="chevron-forward" size={20} color={ICON_COLORS.ink3} />
               </Pressable>
             </View>
 

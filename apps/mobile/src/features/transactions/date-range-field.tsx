@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { formatDate, todayISODate } from '@repo/core/utils';
-import { BottomSheet, Chip, SegmentedControl } from '@repo/ui';
+import { BottomSheet, Chip, SegmentedControl, ICON_COLORS } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -36,7 +36,13 @@ function monthBounds(date: Date): [string, string] {
 }
 
 /** Date filter field: a single day or an inclusive range, picked from one calendar. */
-export function DateRangeField({ from, to, onChange, renderTrigger, forceRangeMode = false }: DateRangeFieldProps) {
+export function DateRangeField({
+  from,
+  to,
+  onChange,
+  renderTrigger,
+  forceRangeMode = false,
+}: DateRangeFieldProps) {
   const initialMode = forceRangeMode || (from && to && from !== to) ? 'range' : 'day';
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'day' | 'range'>(initialMode);
@@ -107,7 +113,11 @@ export function DateRangeField({ from, to, onChange, renderTrigger, forceRangeMo
           onPress={openPicker}
           className="h-10 flex-row items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
         >
-          <Ionicons name="calendar-outline" size={14} color={from ? '#4D7C0F' : '#9CA3AF'} />
+          <Ionicons
+            name="calendar-outline"
+            size={14}
+            color={from ? ICON_COLORS.limeInk : ICON_COLORS.ink3}
+          />
           <Text
             className={`text-[13px] font-semibold ${from ? 'text-lime-ink dark:text-lime-ink-dark' : 'text-ink-2 dark:text-ink-2-dark'}`}
           >
@@ -167,13 +177,13 @@ export function DateRangeField({ from, to, onChange, renderTrigger, forceRangeMo
 
           <View className="flex-row items-center justify-between">
             <Pressable onPress={() => shiftMonth(-1)} hitSlop={8} className="p-1">
-              <Ionicons name="chevron-back" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-back" size={20} color={ICON_COLORS.ink3} />
             </Pressable>
             <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
               {monthTitle} {viewYear}
             </Text>
             <Pressable onPress={() => shiftMonth(1)} hitSlop={8} className="p-1">
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={20} color={ICON_COLORS.ink3} />
             </Pressable>
           </View>
 

@@ -43,7 +43,8 @@ export default function EditGoal() {
           icon: goal.icon,
           target_amount: Number(goal.target_amount),
           deadline: goal.deadline,
-          contribution_amount: goal.contribution_amount != null ? Number(goal.contribution_amount) : null,
+          contribution_amount:
+            goal.contribution_amount != null ? Number(goal.contribution_amount) : null,
           contribution_interval_days: goal.contribution_interval_days,
           account_id: goal.account_id,
         }}

@@ -92,7 +92,8 @@ export default function BudgetsScreen() {
                 />
 
                 <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                  {b.categories.length} categoría{b.categories.length === 1 ? '' : 's'} · {rangeLabel}
+                  {b.categories.length} categoría{b.categories.length === 1 ? '' : 's'} ·{' '}
+                  {rangeLabel}
                 </Text>
               </Pressable>
             );

@@ -3,6 +3,7 @@ import type { PeriodInsights } from '@repo/core/utils';
 import { formatCurrency } from '@repo/core/utils';
 import { useColorScheme } from 'nativewind';
 import { ScrollView, Text, View } from 'react-native';
+import { ICON_COLORS } from '@repo/ui';
 
 interface Props {
   insights: PeriodInsights;
@@ -50,11 +51,11 @@ function Chip({
 export function InsightsStrip({ insights, currency, metric = 'expense' }: Props) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
-  const posColor = dark ? '#22C55E' : '#16A34A';
-  const dangerColor = dark ? '#F16A6E' : '#E5484D';
-  const warningColor = dark ? '#F3B25E' : '#B45309';
-  const neutralColor = dark ? '#F2F3F5' : '#1A1D21';
-  const mutedColor = dark ? '#6B7178' : '#9CA3AF';
+  const posColor = dark ? ICON_COLORS.posDark : ICON_COLORS.pos;
+  const dangerColor = dark ? ICON_COLORS.dangerDark : ICON_COLORS.danger;
+  const warningColor = dark ? ICON_COLORS.warningDark : ICON_COLORS.warning;
+  const neutralColor = dark ? ICON_COLORS.inkDark : ICON_COLORS.ink;
+  const mutedColor = dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3;
 
   const {
     pctChangeVsPrevious,
@@ -70,7 +71,8 @@ export function InsightsStrip({ insights, currency, metric = 'expense' }: Props)
   // arrow, opposite color depending on which metric is being viewed.
   const changeUp = (pctChangeVsPrevious ?? 0) >= 0;
   const changeIsGood = metric === 'income' ? changeUp : !changeUp;
-  const changeColor = pctChangeVsPrevious == null ? mutedColor : changeIsGood ? posColor : dangerColor;
+  const changeColor =
+    pctChangeVsPrevious == null ? mutedColor : changeIsGood ? posColor : dangerColor;
   const changeValue =
     pctChangeVsPrevious == null ? '—' : `${changeUp ? '+' : ''}${Math.round(pctChangeVsPrevious)}%`;
 

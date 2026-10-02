@@ -1,7 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useCreateFavoriteTransaction, useFormError } from '@repo/core/hooks';
 import { favoriteTransactionCreateSchema } from '@repo/core/validators';
-import { BottomSheet, Button, CurrencyField, ErrorCard, SwitchRow, TextField } from '@repo/ui';
+import {
+  BottomSheet,
+  Button,
+  CurrencyField,
+  ErrorCard,
+  SwitchRow,
+  TextField,
+  ICON_COLORS,
+} from '@repo/ui';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -27,7 +35,11 @@ interface Props {
 export function FavoriteQuickCreateSheet({ visible, onClose, initial, onCreated }: Props) {
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Guardar como favorito">
-      <QuickFavoriteFields key={visible ? 'open' : 'closed'} initial={initial} onCreated={onCreated} />
+      <QuickFavoriteFields
+        key={visible ? 'open' : 'closed'}
+        initial={initial}
+        onCreated={onCreated}
+      />
     </BottomSheet>
   );
 }
@@ -103,7 +115,7 @@ function QuickFavoriteFields({
           <Ionicons
             name={(icon as keyof typeof Ionicons.glyphMap) ?? 'add-outline'}
             size={26}
-            color="#4D7C0F"
+            color={ICON_COLORS.limeInk}
           />
         </Pressable>
         <Pressable onPress={() => setIconPickerOpen(true)} hitSlop={8}>

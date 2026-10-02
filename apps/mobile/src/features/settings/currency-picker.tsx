@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CURRENCIES, type CurrencyMeta } from '@repo/core/utils';
-import { BottomSheet, Button } from '@repo/ui';
+import { BottomSheet, Button, ICON_COLORS } from '@repo/ui';
 import { memo, useMemo, useState } from 'react';
 import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
 
@@ -36,7 +36,7 @@ const Row = memo(function Row({
         </Text>
         <Text className="text-xs text-ink-2 dark:text-ink-2-dark">{item.code}</Text>
       </View>
-      {selected ? <Ionicons name="checkmark" size={18} color="#4D7C0F" /> : null}
+      {selected ? <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} /> : null}
     </Pressable>
   );
 });
@@ -76,7 +76,7 @@ export function CurrencyPicker({ visible, onClose, selectedCode, onSelect, codes
           value={q}
           onChangeText={setQ}
           placeholder="Buscar moneda o código…"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={ICON_COLORS.ink3}
           autoCapitalize="none"
           className="h-11 rounded-ctl border border-line bg-surface px-3 text-[15px] text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark"
         />
@@ -137,7 +137,7 @@ const MultiRow = memo(function MultiRow({
       <Ionicons
         name={selected ? 'checkmark-circle' : 'ellipse-outline'}
         size={22}
-        color={selected ? '#4D7C0F' : '#9CA3AF'}
+        color={selected ? ICON_COLORS.limeInk : ICON_COLORS.ink3}
       />
     </Pressable>
   );
@@ -186,7 +186,7 @@ export function CurrencyMultiPicker({
           value={q}
           onChangeText={setQ}
           placeholder="Buscar moneda o código…"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={ICON_COLORS.ink3}
           autoCapitalize="none"
           className="h-11 rounded-ctl border border-line bg-surface px-3 text-[15px] text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark"
         />

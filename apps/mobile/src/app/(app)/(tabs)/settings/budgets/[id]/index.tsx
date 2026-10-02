@@ -1,4 +1,10 @@
-import { useBudgets, useDeleteBudget, useFormError, useTransactions, useUpdateBudget } from '@repo/core/hooks';
+import {
+  useBudgets,
+  useDeleteBudget,
+  useFormError,
+  useTransactions,
+  useUpdateBudget,
+} from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetProgress, formatDate } from '@repo/core/utils';
@@ -39,7 +45,9 @@ export default function BudgetDetail() {
   if (!budget) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Presupuesto no encontrado.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">
+          Presupuesto no encontrado.
+        </Text>
       </Screen>
     );
   }
@@ -60,7 +68,8 @@ export default function BudgetDetail() {
       : `${PERIOD_LABEL[budget.period_type]}${budget.repeats ? ' · se repite' : ''} · ${rangeLabel}`) +
     ` · ${budget.currency}`;
 
-  const toggleArchive = () => updateBudget.mutate({ id: budget.id, patch: { archived: !budget.archived } });
+  const toggleArchive = () =>
+    updateBudget.mutate({ id: budget.id, patch: { archived: !budget.archived } });
 
   return (
     <Screen edges={['top']} className="gap-5">
@@ -70,12 +79,16 @@ export default function BudgetDetail() {
         <ScrollView className="flex-1" contentContainerClassName="gap-5 pb-24">
           {budget.archived ? (
             <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
-              <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">Archivado</Text>
+              <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
+                Archivado
+              </Text>
             </View>
           ) : null}
 
           <View className="gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">
-            <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">{periodLabel}</Text>
+            <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+              {periodLabel}
+            </Text>
             <BudgetProgressBar
               spent={progress.spent}
               amount={Number(budget.amount)}
@@ -102,11 +115,16 @@ export default function BudgetDetail() {
                 return (
                   <View
                     key={c.id}
-                    className={i > 0 ? 'gap-2 border-t border-line pt-3 dark:border-line-dark' : 'gap-2'}
+                    className={
+                      i > 0 ? 'gap-2 border-t border-line pt-3 dark:border-line-dark' : 'gap-2'
+                    }
                   >
                     <View className="flex-row items-center gap-2">
                       <CategoryDot color={c.color} icon={c.icon} size={14} />
-                      <Text className="flex-1 text-sm text-ink dark:text-ink-dark" numberOfLines={1}>
+                      <Text
+                        className="flex-1 text-sm text-ink dark:text-ink-dark"
+                        numberOfLines={1}
+                      >
                         {resolveCategoryLabel(c)}
                       </Text>
                     </View>

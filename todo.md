@@ -205,26 +205,121 @@ al corregir.
 
 ## 🟢 Pulido / deuda técnica (no rompen nada hoy)
 
-- [ ] `budgets-card.tsx` (Home) y `budgets-progress-card.tsx` (Analytics)
+- [x] `budgets-card.tsx` (Home) y `budgets-progress-card.tsx` (Analytics)
       duplican ~15 líneas de cálculo idénticas, y ya divergieron (Home recorta
       a top-3, Analytics no).
-- [ ] `budgetProgress`/`goalProgress`/`categorySpentInRange` en `packages/core`
+      **Fix (2026-10-02):** extraído a `features/budgets/use-budget-progress-rows.ts`
+      — un hook `useBudgetProgressRows(currency?)` compartido. Home lo llama
+      sin `currency` (no está acotado a una sola) y sigue recortando a
+      top-3 localmente; Analytics le pasa su `currency` seleccionada. Mismo
+      cálculo, una sola fuente — ya no pueden volver a divergir en silencio.
+      Verificado con `tsc --noEmit` en `apps/mobile`.
+- [x] `budgetProgress`/`goalProgress`/`categorySpentInRange` en `packages/core`
       repiten el mismo patrón de filtrado tres veces.
-- [ ] Home y Analytics mantienen dos UIs distintas para "gasto por categoría"
+      **Fix (2026-10-02):** extraído a `sumSettledAmount(transactions,
+      currency, predicate)` — las reglas que nunca cambian (`is_completed`,
+      misma `currency`) viven ahí una sola vez; cada función conserva su
+      propio `predicate` (categoría+rango de fechas, categoría única+rango,
+      o `goal_id`). Verifiqué equivalencia exacta con un caso de prueba
+      comparando el loop viejo vs. el nuevo (mismo resultado, 150). `tsc
+      --noEmit` limpio en ambos paquetes.
+- [x] Home y Analytics mantienen dos UIs distintas para "gasto por categoría"
       sobre la misma data.
-- [ ] Colores hex hardcodeados (`#9CA3AF`, `#4D7C0F`, etc.) repetidos en vez de
+      **Revisado (2026-10-02) — no era deuda técnica real, el hallazgo fue
+      impreciso.** Home (`category-spend-card.tsx`) es una dona +
+      lista (`categorySpendBreakdown`) respondiendo "¿en qué se fue mi
+      dinero este mes?". Analytics (`category-trend-card.tsx`) es solo lista
+      con flechas ▲/▼ (`categoryTrend`) respondiendo "¿qué categoría subió o
+      bajó vs. el mes pasado?". No es código duplicado — son dos preguntas
+      distintas, no hay nada seguro que deduplicar sin perder funcionalidad.
+      Se deja así; el riesgo real (si cambia la regla de "qué cuenta como
+      gasto de categoría" hay que tocar ambas por separado) queda anotado
+      aquí por si se quiere unificar el concepto más adelante, pero no es
+      una acción pendiente.
+- [x] Colores hex hardcodeados (`#9CA3AF`, `#4D7C0F`, etc.) repetidos en vez de
       tokens del design system "Lima + tinta".
-- [ ] Toda cuenta auto-creada por import queda tipo `debit` sin importar el
+      **Fix completo (2026-10-02).** Resultó mucho más grande de lo que
+      sugería el hallazgo original: >200 ocurrencias de hex en todo el app,
+      la mayoría paletas de categorías/gráficas (intencionalmente variadas,
+      NO tocadas). Centralicé los que sí son tokens repetidos del design
+      system: nuevo `packages/ui/src/icon-colors.ts` exporta `ICON_COLORS`
+      (18 valores, espejo exacto de `preset.js`), exportado desde `@repo/ui`.
+      Reemplazadas **176 ocurrencias en 48 archivos** (codemod + 3 ediciones
+      manuales para los únicos `#FFFFFF` inequívocos — los pareados con su
+      contraparte oscura `dark ? '#16191D' : '#FFFFFF'`, que sí son
+      claramente `surface`/`surfaceDark`; el resto de `#FFFFFF` sueltos en
+      `calendar-heatmap.tsx` son texto sobre celdas de color, no el token
+      "surface", y se dejaron igual a propósito). Deliberadamente fuera de
+      alcance: colores de paleta de categorías/gráficas, y cualquier
+      `#FFFFFF`/gris genérico sin una contraparte oscura que confirme que es
+      realmente ese token — mapear por valor numérico sin ese contexto
+      arriesgaba cambiar el significado semántico, no solo el nombre.
+      **No añade dark-mode** donde no existía: un call site que antes usaba
+      un solo hex fijo (sin `useColorScheme`) sigue usando un solo token fijo
+      — mismo comportamiento, solo centralizado. Verificado: 0 ocurrencias
+      restantes de los 18 valores fuera de `icon-colors.ts`, `tsc --noEmit`
+      limpio en `packages/ui`/`packages/core`/`apps/mobile`, `eslint .`
+      limpio (0 errores).
+- [x] Toda cuenta auto-creada por import queda tipo `debit` sin importar el
       nombre real (ej. "Tarjeta Oro").
-- [ ] Todo el cálculo de dinero usa floats de JS pese a que la DB usa
+      **Fix (2026-10-02):** nuevo `guess-account-type.ts` — heurística
+      best-effort por palabras clave en el nombre (español/inglés, sin
+      acentos): efectivo/cash→`cash`, ahorro→`savings`,
+      tarjeta/visa/mastercard/amex (sin decir "débito")→`credit_card`,
+      préstamo/hipoteca→`loan`, inversión/afore→`investment`, crédito
+      genérico→`credit`, cualquier otra cosa sigue cayendo en `debit` (mismo
+      fallback de siempre). El formato de import no trae ninguna columna de
+      tipo de cuenta — el nombre es la única pista real que hay. No es
+      arriesgado si se equivoca: `type` no está bloqueado tras crear la
+      cuenta (a diferencia de `currency`/`initial_balance`), se corrige en un
+      toque desde "Editar cuenta". Probado con 11 nombres de ejemplo, todos
+      clasificados correctamente. `AUTO_ACCOUNT_TYPE` (la constante fija que
+      reemplaza) se eliminó por quedar sin uso. `tsc --noEmit` limpio en
+      `packages/core` y `apps/mobile`.
+- [x] Todo el cálculo de dinero usa floats de JS pese a que la DB usa
       `numeric(14,2)` — riesgo bajo de desvíos de centavos en sumas largas.
+      **Decisión de alcance:** un fix decimal "de punta a punta" (que los
+      `numeric` lleguen de Supabase como string + librería de precisión
+      decimal) requeriría reemplazar el parser JSON global del cliente —
+      afecta cada tabla de la app, no solo dinero, altísimo riesgo para un
+      hallazgo de riesgo bajo. En su lugar: **aritmética en centavos
+      enteros**, el patrón estándar para esto en JS — exacto en IEEE754
+      (hasta 2^53), sin dependencias nuevas, sin tocar la capa de datos.
+      **Fix (2026-10-02):** nuevos helpers `toCents`/`fromCents` en
+      `packages/core/src/utils/index.ts`; reescritas las 12 funciones que
+      acumulan dinero para sumar en centavos y convertir a float solo al
+      final: `accountBalance`/`transactionEffect`/`projectedAccountBalance`,
+      `totalBalancesByCurrency`, `monthTotals`, `categorySpendBreakdown`,
+      `categoryMonthlyHistory`, `monthlyIncomeExpenseHistory`, `rangeTotals`,
+      `dailyTransactionTotals`, `monthlyTransactionTotalsForYear`,
+      `categoryTrend`, y el `sumSettledAmount` compartido (de donde salen
+      `budgetProgress`/`categorySpentInRange`/`goalProgress`). Las firmas
+      públicas no cambiaron — siguen devolviendo `number` (dólares/pesos),
+      solo cambió cómo se acumula internamente. `evalAmount` (la calculadora
+      del teclado) se dejó igual a propósito: ya redondeaba a centavos al
+      final y opera sobre expresiones cortas tecleadas por el usuario, no
+      sobre sumas de cientos de transacciones — no es el mismo riesgo.
+      **Probado** con el caso clásico de deriva de float (sumar 0.10 mil
+      veces: float da `99.9999999999986`, centavos da `100` exacto) y con un
+      balance de cuenta mixto (float: `2200.1200000000003`, centavos:
+      `2200.12` exacto). `tsc --noEmit` limpio en `packages/core` y
+      `apps/mobile`, `eslint .` sin errores.
 - [x] No existe borrado de categorías en la UI (solo archivar), pero la DB sí
       tiene `on delete cascade` en `parent_id` — deuda latente si se agrega
       borrado en el futuro.
       **Resuelto: se construyó el borrado** (ver "Rediseños implementados").
-- [ ] `isCurrentMonth` en Home se congela al montar el componente — una sesión
+- [x] `isCurrentMonth` en Home se congela al montar el componente — una sesión
       larga que cruce medianoche deja el botón "mes siguiente" deshabilitado un
       día de más.
+      **Fix (2026-10-02):** `now = useMemo(() => new Date(), [])` (congelado
+      para siempre al montar) eliminado. `selectedYear`/`selectedMonthIdx`
+      ahora se siembran con inicializadores de `useState` (`() => new
+      Date().getFullYear()` etc. — solo se leen una vez, como debe ser, para
+      no resetear la navegación del usuario en cada render). `isCurrentMonth`
+      se deriva del `today` que ya existía en el componente (`todayISODate()`,
+      sin memoizar, ya se releía fresco en cada render) en vez de crear una
+      fecha nueva — se recalcula solo, sin timers ni efectos nuevos. `tsc
+      --noEmit` y `eslint .` limpios.
 
 ---
 
@@ -370,12 +465,17 @@ al corregir.
 
 ## Backlog (pendiente — requiere pensar la estructura antes de tocar código)
 
-- [ ] **Texto engañoso al eliminar una meta ligada a cuenta.** El diálogo de
+- [x] **Texto engañoso al eliminar una meta ligada a cuenta.** El diálogo de
       `goals/[id]/index.tsx` dice "Solo se puede eliminar si no tiene
       aportaciones registradas", pero para una meta ligada eso es falso: sus
       aportaciones usan `to_account_id`, no `goal_id`, así que el
       `on delete restrict` nunca aplica — se puede eliminar siempre, con o sin
       historial, sin aviso real de que eso pasa.
+      **Fix (2026-10-02):** el diálogo ahora distingue los dos casos. Meta
+      ligada: "Se elimina la meta y su vínculo con '{cuenta}' — el dinero se
+      queda intacto en esa cuenta, tenga o no aportaciones registradas." Meta
+      virtual: sigue el texto original (sí aplica el `on delete restrict`
+      ahí). `tsc --noEmit` y `eslint .` limpios.
 - [ ] **Eliminar (no archivar) una cuenta ligada sin fondos no avisa** sobre la
       meta que se va a desvincular (el `on delete set null` de la DB lo
       resuelve sin corromper datos, pero `accounts/[id]/edit.tsx` no muestra

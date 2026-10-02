@@ -31,7 +31,8 @@ function categoryBlockReason(
   if (category.slug) return 'es una categoría del sistema';
   if (!category.archived) return 'no está archivada';
   if (transactions.some((t) => t.category_id === category.id)) return 'tiene movimientos asociados';
-  if (favorites.some((f) => f.category_id === category.id)) return 'está asignada a un movimiento favorito';
+  if (favorites.some((f) => f.category_id === category.id))
+    return 'está asignada a un movimiento favorito';
   if (budgets.some((b) => b.categories.some((c) => c.category.id === category.id))) {
     return 'está asignada a un presupuesto';
   }
@@ -97,9 +98,17 @@ export default function CategoryDetail() {
   // (`parent_id on delete cascade`) — if ANY of them can't be deleted
   // either, the whole thing fails, so surface the first one here instead of
   // letting the user hit that only after confirming.
-  const ownBlockReason = categoryBlockReason(category, transactions ?? [], favorites ?? [], budgets ?? []);
+  const ownBlockReason = categoryBlockReason(
+    category,
+    transactions ?? [],
+    favorites ?? [],
+    budgets ?? [],
+  );
   const blockedSubcategory = subcategories
-    .map((s) => ({ s, reason: categoryBlockReason(s, transactions ?? [], favorites ?? [], budgets ?? []) }))
+    .map((s) => ({
+      s,
+      reason: categoryBlockReason(s, transactions ?? [], favorites ?? [], budgets ?? []),
+    }))
     .find((x) => x.reason != null);
   const deleteBlockedReason = ownBlockReason
     ? `No puedes eliminarla: ${ownBlockReason}.`

@@ -1,6 +1,13 @@
 import type { BudgetPeriodType } from '@repo/core/types';
 import { todayISODate } from '@repo/core/utils';
-import { createContext, useContext, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from 'react';
 
 import type { CategoryAllocation } from './budget-categories-editor';
 
@@ -49,7 +56,11 @@ export function BudgetDraftProvider({
   initialCurrency: string;
 }) {
   const [draft, setDraft] = useState<BudgetDraft>(() => defaultDraft(initialCurrency));
-  return <BudgetDraftContext.Provider value={{ draft, setDraft }}>{children}</BudgetDraftContext.Provider>;
+  return (
+    <BudgetDraftContext.Provider value={{ draft, setDraft }}>
+      {children}
+    </BudgetDraftContext.Provider>
+  );
 }
 
 export function useBudgetDraft(): BudgetDraftContextValue {

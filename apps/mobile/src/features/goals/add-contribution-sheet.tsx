@@ -24,7 +24,14 @@ interface Props {
 /** Records a real transfer from a real account into a goal — the source
  * account's balance drops, same as any other transfer. Only accounts in the
  * goal's own currency are offered, since a contribution isn't converted. */
-export function AddContributionSheet({ visible, onClose, goalId, goalName, goalCurrency, goalAccountId }: Props) {
+export function AddContributionSheet({
+  visible,
+  onClose,
+  goalId,
+  goalName,
+  goalCurrency,
+  goalAccountId,
+}: Props) {
   const { data: accounts } = useAccounts();
   const create = useCreateTransaction();
 
@@ -75,7 +82,9 @@ export function AddContributionSheet({ visible, onClose, goalId, goalName, goalC
     <BottomSheet visible={visible} onClose={onClose} title={`Aportar a ${goalName}`}>
       <View className="gap-4 px-5 pb-8">
         <View className="gap-2">
-          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Desde la cuenta</Text>
+          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+            Desde la cuenta
+          </Text>
           <Pressable
             onPress={() => setAccountPickerOpen(true)}
             className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"

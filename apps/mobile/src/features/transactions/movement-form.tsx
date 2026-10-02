@@ -155,7 +155,8 @@ export function MovementForm({
   // hand — seeded once at mount, same as `draft`/`initial` just above.
   const [tagIds, setTagIds] = useState<string[]>(() => {
     const base = draft?.tagIds ?? initial?.tags ?? [];
-    const tripTagId = mode === 'create' && !draft && profile?.travel_mode ? profile.travel_trip_tag_id : null;
+    const tripTagId =
+      mode === 'create' && !draft && profile?.travel_mode ? profile.travel_trip_tag_id : null;
     return tripTagId && !base.includes(tripTagId) ? [...base, tripTagId] : base;
   });
   const [description, setDescription] = useState(draft?.description ?? initial?.description ?? '');
@@ -213,7 +214,12 @@ export function MovementForm({
   const favoriteInitial: FavoriteFormInitial =
     type === 'transfer'
       ? { type, account_id: fromId, to_account_id: toId, description: description.trim() || null }
-      : { type, account_id: fromId, category_id: categoryId, description: description.trim() || null };
+      : {
+          type,
+          account_id: fromId,
+          category_id: categoryId,
+          description: description.trim() || null,
+        };
 
   // Archived tags stay selectable here only if they're already on this
   // transaction, so editing an old movement doesn't silently drop its tag.
@@ -528,7 +534,11 @@ export function MovementForm({
               >
                 <View className="flex-row items-center gap-2">
                   {selectedCategory ? (
-                    <CategoryDot color={selectedCategory.color} icon={selectedCategory.icon} size={16} />
+                    <CategoryDot
+                      color={selectedCategory.color}
+                      icon={selectedCategory.icon}
+                      size={16}
+                    />
                   ) : null}
                   <Text
                     className={
@@ -537,7 +547,9 @@ export function MovementForm({
                         : 'text-base text-ink-3 dark:text-ink-3-dark'
                     }
                   >
-                    {selectedCategory ? resolveCategoryLabel(selectedCategory) : 'Elige una categoría'}
+                    {selectedCategory
+                      ? resolveCategoryLabel(selectedCategory)
+                      : 'Elige una categoría'}
                   </Text>
                 </View>
                 <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
@@ -562,7 +574,9 @@ export function MovementForm({
               Ver todas ›
             </Text>
           </Pressable>
-          {profile?.travel_mode && profile.travel_trip_tag_id && tagIds.includes(profile.travel_trip_tag_id) ? (
+          {profile?.travel_mode &&
+          profile.travel_trip_tag_id &&
+          tagIds.includes(profile.travel_trip_tag_id) ? (
             <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
               Se añadió la tag de tu viaje automáticamente — modo viaje está activo.
             </Text>

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency, formatDate } from '@repo/core/utils';
-import { CategoryDot } from '@repo/ui';
+import { CategoryDot, ICON_COLORS } from '@repo/ui';
 import { useFocusEffect } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -40,7 +40,14 @@ const VIEW_META: SwipeMeta = { side: 'right', tone: 'muted', icon: 'eye-outline'
 function swipeColors(tone: SwipeMeta['tone'], dark: boolean) {
   return {
     bg: tone === 'ink' ? 'bg-ink dark:bg-lime' : 'bg-[#F1F2F4] dark:bg-line-dark',
-    icon: tone === 'ink' ? (dark ? '#1A1D21' : '#B9F227') : dark ? '#F2F3F5' : '#1A1D21',
+    icon:
+      tone === 'ink'
+        ? dark
+          ? ICON_COLORS.ink
+          : ICON_COLORS.lime
+        : dark
+          ? ICON_COLORS.inkDark
+          : ICON_COLORS.ink,
     text: tone === 'ink' ? 'text-lime dark:text-ink' : 'text-ink dark:text-ink-dark',
   };
 }
@@ -209,7 +216,12 @@ export function TransactionListItem({
   const close = useCallback(() => {
     openState.current = 'closed';
     dragX.setValue(0);
-    Animated.spring(rowOffset, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 20 }).start();
+    Animated.spring(rowOffset, {
+      toValue: 0,
+      useNativeDriver: true,
+      bounciness: 0,
+      speed: 20,
+    }).start();
   }, [dragX, rowOffset]);
 
   const snapTo = useCallback(
@@ -338,7 +350,11 @@ export function TransactionListItem({
         triggered.current = false;
         gestureActive.current = true;
         gestureStartOffset.current =
-          openState.current === 'left' ? ACTION_WIDTH : openState.current === 'right' ? -ACTION_WIDTH : 0;
+          openState.current === 'left'
+            ? ACTION_WIDTH
+            : openState.current === 'right'
+              ? -ACTION_WIDTH
+              : 0;
         return;
       }
       if (oldState === State.ACTIVE) {
@@ -377,7 +393,7 @@ export function TransactionListItem({
     subtitle = `${account?.name ?? '—'} → ${goal?.name ?? to_account?.name ?? '—'}`;
     sign = '';
     amountClass = 'text-ink-2 dark:text-ink-2-dark';
-    color = '#4D7C0F';
+    color = ICON_COLORS.limeInk;
   } else {
     const categoryLabel = category ? resolveCategoryLabel(category) : 'Sin categoría';
     const trimmedDescription = description?.trim();
@@ -386,15 +402,13 @@ export function TransactionListItem({
       ? [categoryLabel, account?.name].filter(Boolean).join(' · ')
       : account?.name || formatDate(transaction_date);
     sign = type === 'income' ? '+' : '−';
-    amountClass = type === 'income' ? 'text-pos dark:text-pos-dark' : 'text-danger dark:text-danger-dark';
+    amountClass =
+      type === 'income' ? 'text-pos dark:text-pos-dark' : 'text-danger dark:text-danger-dark';
     color = category?.color ?? '#94A3B8';
   }
 
   return (
-    <View
-      className="overflow-hidden"
-      onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}
-    >
+    <View className="overflow-hidden" onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}>
       <SwipeAction
         translateX={translateX}
         meta={EDIT_META}
@@ -419,7 +433,7 @@ export function TransactionListItem({
           >
             <View
               className="h-[38px] w-[38px] items-center justify-center rounded-full"
-              style={{ backgroundColor: type === 'transfer' ? '#F2FBDC' : color + '1F' }}
+              style={{ backgroundColor: type === 'transfer' ? ICON_COLORS.limeTint : color + '1F' }}
             >
               {type === 'transfer' ? (
                 <Ionicons name="swap-horizontal" size={18} color={color} />
@@ -440,7 +454,7 @@ export function TransactionListItem({
               </Text>
               {primaryTag ? (
                 <View className="mt-0.5 flex-row items-center gap-1">
-                  <Ionicons name="pricetag-outline" size={10} color="#9CA3AF" />
+                  <Ionicons name="pricetag-outline" size={10} color={ICON_COLORS.ink3} />
                   <Text className="text-[11px] text-ink-3 dark:text-ink-3-dark" numberOfLines={1}>
                     {primaryTag.name}
                     {extraTags > 0 ? ` +${extraTags}` : ''}

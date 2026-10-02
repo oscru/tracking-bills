@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheet, CategoryDot } from '@repo/ui';
+import { BottomSheet, CategoryDot, ICON_COLORS } from '@repo/ui';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 export interface MultiSelectOption {
@@ -26,7 +26,7 @@ function Checkbox({ checked }: { checked: boolean }) {
         checked ? 'border-lime bg-lime' : 'border-line dark:border-line-dark'
       }`}
     >
-      {checked ? <Ionicons name="checkmark" size={14} color="#1A1D21" /> : null}
+      {checked ? <Ionicons name="checkmark" size={14} color={ICON_COLORS.ink} /> : null}
     </View>
   );
 }

@@ -3,7 +3,7 @@ import { useAccounts, useCategoryTree, useTags, useTransactions } from '@repo/co
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionType } from '@repo/core/types';
 import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
-import { ErrorCard, Fab, Screen, TextField } from '@repo/ui';
+import { ErrorCard, Fab, Screen, TextField, ICON_COLORS } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, SectionList, Text, View } from 'react-native';
@@ -111,12 +111,12 @@ export default function TransactionsScreen() {
   );
   const filtered = Boolean(
     type ||
-      categoryIds.length ||
-      from ||
-      accountIds.length ||
-      tagIds.length ||
-      debouncedSearch ||
-      pendingOnly,
+    categoryIds.length ||
+    from ||
+    accountIds.length ||
+    tagIds.length ||
+    debouncedSearch ||
+    pendingOnly,
   );
 
   const { data: transactions, isLoading, isRefetching, refetch, error } = useTransactions(filters);
@@ -151,7 +151,10 @@ export default function TransactionsScreen() {
     [accounts],
   );
   const tagOptions = useMemo(
-    () => (tags ?? []).filter((t) => !t.archived).map((t) => ({ value: t.id, label: t.name, dotColor: t.color })),
+    () =>
+      (tags ?? [])
+        .filter((t) => !t.archived)
+        .map((t) => ({ value: t.id, label: t.name, dotColor: t.color })),
     [tags],
   );
 
@@ -214,7 +217,7 @@ export default function TransactionsScreen() {
           <Ionicons
             name="funnel-outline"
             size={20}
-            color={activeFilterCount > 0 ? '#1A1D21' : '#9CA3AF'}
+            color={activeFilterCount > 0 ? ICON_COLORS.ink : ICON_COLORS.ink3}
           />
           {activeFilterCount > 0 ? (
             <View className="absolute -right-1.5 -top-1.5 h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-canvas bg-ink px-1 dark:border-canvas-dark dark:bg-lime">
@@ -227,7 +230,11 @@ export default function TransactionsScreen() {
       </View>
 
       {isLoading ? (
-        <ScrollView className="flex-1" contentContainerClassName="pb-24" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="pb-24"
+          showsVerticalScrollIndicator={false}
+        >
           <TransactionsSkeleton />
         </ScrollView>
       ) : error ? (
@@ -271,7 +278,7 @@ export default function TransactionsScreen() {
           )}
           ListEmptyComponent={
             <View className="mt-16 items-center gap-1">
-              <Ionicons name="search-outline" size={28} color="#9CA3AF" />
+              <Ionicons name="search-outline" size={28} color={ICON_COLORS.ink3} />
               <Text className="mt-2 text-base font-semibold text-ink dark:text-ink-dark">
                 Sin movimientos
               </Text>

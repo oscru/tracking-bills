@@ -3,7 +3,15 @@ import { useCategories } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { CategoryType } from '@repo/core/types';
 import { categoryCreateSchema, type CategoryCreateInput } from '@repo/core/validators';
-import { Button, CategoryDot, Chip, ColorPicker, ErrorCard, TextField } from '@repo/ui';
+import {
+  Button,
+  CategoryDot,
+  Chip,
+  ColorPicker,
+  ErrorCard,
+  TextField,
+  ICON_COLORS,
+} from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -84,7 +92,7 @@ export function CategoryForm({
           <Ionicons
             name={(icon as keyof typeof Ionicons.glyphMap) ?? 'pricetag-outline'}
             size={26}
-            color="#4D7C0F"
+            color={ICON_COLORS.limeInk}
           />
         </Pressable>
         <Pressable onPress={() => setIconPickerOpen(true)} hitSlop={8}>

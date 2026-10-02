@@ -36,7 +36,8 @@ function TrendBadge({ pct, metric }: { pct: number | null; metric: 'expense' | '
  * `categoryTrend`'s top 3, biggest current amount first. */
 export function CategoryTrendCard({ trend, onSeeAll, metric = 'expense' }: Props) {
   const top = trend.slice(0, TOP_N);
-  const emptyLabel = metric === 'income' ? 'Sin ingresos en este periodo.' : 'Sin gastos en este periodo.';
+  const emptyLabel =
+    metric === 'income' ? 'Sin ingresos en este periodo.' : 'Sin gastos en este periodo.';
 
   return (
     <View className="gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">

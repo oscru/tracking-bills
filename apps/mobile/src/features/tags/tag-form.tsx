@@ -21,7 +21,15 @@ interface Props {
   footer?: ReactNode;
 }
 
-export function TagForm({ initial, submitLabel, submitting, error, onSubmit, onDirty, footer }: Props) {
+export function TagForm({
+  initial,
+  submitLabel,
+  submitting,
+  error,
+  onSubmit,
+  onDirty,
+  footer,
+}: Props) {
   const [name, setName] = useState(initial?.name ?? '');
   const [color, setColor] = useState(initial?.color ?? CATEGORY_COLORS[0]);
   const [nameError, setNameError] = useState<string | undefined>();
@@ -37,7 +45,11 @@ export function TagForm({ initial, submitLabel, submitting, error, onSubmit, onD
   };
 
   return (
-    <ScrollView className="flex-1" contentContainerClassName="gap-5 pb-8" keyboardShouldPersistTaps="handled">
+    <ScrollView
+      className="flex-1"
+      contentContainerClassName="gap-5 pb-8"
+      keyboardShouldPersistTaps="handled"
+    >
       <TextField
         label="Nombre"
         value={name}

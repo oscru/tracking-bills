@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { type ColorValue, View } from 'react-native';
+import { ICON_COLORS } from '@repo/ui';
 
 // Tabs with a nested Stack (settings, transactions) otherwise keep whatever
 // screen was last pushed — e.g. leave an account's edit screen on top after
@@ -33,7 +34,7 @@ function TabIcon({
       <Ionicons name={name} color={color} size={24} />
       <View
         className="h-[3px] w-5 rounded-full"
-        style={{ backgroundColor: focused ? '#B9F227' : 'transparent' }}
+        style={{ backgroundColor: focused ? ICON_COLORS.lime : 'transparent' }}
       />
     </View>
   );
@@ -47,14 +48,14 @@ export default function AppLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: dark ? '#F2F3F5' : '#1A1D21',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: dark ? ICON_COLORS.inkDark : ICON_COLORS.ink,
+        tabBarInactiveTintColor: ICON_COLORS.ink3,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
         tabBarStyle: {
           height: 64,
           paddingTop: 6,
-          backgroundColor: dark ? '#16191D' : '#FFFFFF',
-          borderTopColor: dark ? '#23272C' : '#EDEFF2',
+          backgroundColor: dark ? ICON_COLORS.surfaceDark : ICON_COLORS.surface,
+          borderTopColor: dark ? ICON_COLORS.lineDark : ICON_COLORS.line,
         },
       }}
     >

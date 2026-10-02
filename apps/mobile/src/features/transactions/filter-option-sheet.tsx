@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheet } from '@repo/ui';
+import { BottomSheet, ICON_COLORS } from '@repo/ui';
 import { Pressable, Text, View } from 'react-native';
 
 export interface FilterOption {
@@ -42,7 +42,9 @@ export function FilterOptionSheet({
           className="flex-row items-center justify-between border-t border-line px-5 py-3 dark:border-line-dark"
         >
           <Text className="text-[15px] text-ink-2 dark:text-ink-2-dark">{allLabel}</Text>
-          {value === null ? <Ionicons name="checkmark" size={18} color="#4D7C0F" /> : null}
+          {value === null ? (
+            <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+          ) : null}
         </Pressable>
         {options.map((opt) => (
           <Pressable
@@ -59,7 +61,9 @@ export function FilterOptionSheet({
             <Text className="flex-1 text-[15px] font-bold text-ink dark:text-ink-dark">
               {opt.label}
             </Text>
-            {value === opt.value ? <Ionicons name="checkmark" size={18} color="#4D7C0F" /> : null}
+            {value === opt.value ? (
+              <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+            ) : null}
           </Pressable>
         ))}
       </View>

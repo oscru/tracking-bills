@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Text, TextInput, View, type TextInputProps } from 'react-native';
 
-export interface CurrencyFieldProps
-  extends Omit<TextInputProps, 'value' | 'onChangeText' | 'keyboardType'> {
+export interface CurrencyFieldProps extends Omit<
+  TextInputProps,
+  'value' | 'onChangeText' | 'keyboardType'
+> {
   label?: string;
   /** Plain numeric string, e.g. "1500.5" — no symbol, no thousands separators. Same shape `TextField`'s decimal-pad amount fields already use. */
   value: string;
@@ -36,7 +38,9 @@ function toRawNumeric(text: string): string {
   const digitsAndDots = text.replace(/[^\d.]/g, '');
   const firstDot = digitsAndDots.indexOf('.');
   if (firstDot === -1) return digitsAndDots;
-  return digitsAndDots.slice(0, firstDot + 1) + digitsAndDots.slice(firstDot + 1).replace(/\./g, '');
+  return (
+    digitsAndDots.slice(0, firstDot + 1) + digitsAndDots.slice(firstDot + 1).replace(/\./g, '')
+  );
 }
 
 /** Adds the currency symbol and thousands separators for display, preserving

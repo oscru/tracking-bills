@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { Gender } from '@repo/core/types';
-import { BottomSheet } from '@repo/ui';
+import { BottomSheet, ICON_COLORS } from '@repo/ui';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -36,7 +36,7 @@ export function GenderField({ label = 'Género', value, onChange, error }: Gende
         >
           {selected?.label ?? 'Selecciona una opción'}
         </Text>
-        <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
+        <Ionicons name="chevron-down" size={18} color={ICON_COLORS.ink3} />
       </Pressable>
       {error ? <Text className="text-xs text-danger dark:text-danger-dark">{error}</Text> : null}
 
@@ -54,7 +54,9 @@ export function GenderField({ label = 'Género', value, onChange, error }: Gende
               <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
                 {opt.label}
               </Text>
-              {value === opt.value ? <Ionicons name="checkmark" size={18} color="#4D7C0F" /> : null}
+              {value === opt.value ? (
+                <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+              ) : null}
             </Pressable>
           ))}
         </View>

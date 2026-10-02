@@ -1,7 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useGoals, useTransactions } from '@repo/core/hooks';
-import { daysUntil, formatDate, goalProgress, todayISODate, toFriendlyMessage } from '@repo/core/utils';
-import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl } from '@repo/ui';
+import {
+  daysUntil,
+  formatDate,
+  goalProgress,
+  todayISODate,
+  toFriendlyMessage,
+} from '@repo/core/utils';
+import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl, ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -75,7 +81,7 @@ export default function GoalsScreen() {
                     <Ionicons
                       name={(g.icon as keyof typeof Ionicons.glyphMap) ?? 'flag-outline'}
                       size={16}
-                      color="#4D7C0F"
+                      color={ICON_COLORS.limeInk}
                     />
                   </View>
                   <View className="flex-1">
@@ -108,7 +114,10 @@ export default function GoalsScreen() {
       )}
 
       <View className="absolute bottom-6 right-5">
-        <Fab accessibilityLabel="Nuevo objetivo" onPress={() => router.push('/(app)/settings/goals/new')} />
+        <Fab
+          accessibilityLabel="Nuevo objetivo"
+          onPress={() => router.push('/(app)/settings/goals/new')}
+        />
       </View>
     </Screen>
   );

@@ -5,6 +5,7 @@ import { todayISODate, topFavorites } from '@repo/core/utils';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { useMemo } from 'react';
+import { ICON_COLORS } from '@repo/ui';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { draftTransactionStore } from '../transactions/draft-transaction-store';
@@ -56,7 +57,11 @@ export function FavoritesRow() {
     <View className="gap-2 pb-2">
       <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">Favoritos</Text>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-4">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerClassName="gap-4"
+      >
         {featured.map((f) => {
           const { bg, fg } = favoriteTint(f);
           return (
@@ -71,7 +76,10 @@ export function FavoritesRow() {
               >
                 <Ionicons name={f.icon as keyof typeof Ionicons.glyphMap} size={22} color={fg} />
               </View>
-              <Text className="text-[11px] font-medium text-ink dark:text-ink-dark" numberOfLines={1}>
+              <Text
+                className="text-[11px] font-medium text-ink dark:text-ink-dark"
+                numberOfLines={1}
+              >
                 {f.label}
               </Text>
             </Pressable>
@@ -83,7 +91,7 @@ export function FavoritesRow() {
           className="w-14 items-center gap-1.5"
         >
           <View className="h-[52px] w-[52px] items-center justify-center rounded-full border border-dashed border-line dark:border-line-dark">
-            <Ionicons name="add" size={20} color="#9CA3AF" />
+            <Ionicons name="add" size={20} color={ICON_COLORS.ink3} />
           </View>
           <Text className="text-[11px] font-medium text-ink-3 dark:text-ink-3-dark">Nuevo</Text>
         </Pressable>
@@ -93,7 +101,11 @@ export function FavoritesRow() {
           className="w-14 items-center gap-1.5"
         >
           <View className="h-[52px] w-[52px] items-center justify-center rounded-full bg-ink dark:bg-ink-dark">
-            <Ionicons name="arrow-forward" size={20} color={dark ? '#16191D' : '#FFFFFF'} />
+            <Ionicons
+              name="arrow-forward"
+              size={20}
+              color={dark ? ICON_COLORS.surfaceDark : ICON_COLORS.surface}
+            />
           </View>
           <Text className="text-[11px] font-medium text-ink dark:text-ink-dark" numberOfLines={1}>
             Ver todas

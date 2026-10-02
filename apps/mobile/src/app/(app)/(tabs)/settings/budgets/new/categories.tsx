@@ -24,7 +24,10 @@ export default function NewBudgetCategories() {
   const submit = () => {
     clearError();
     setFieldError(null);
-    const categories = draft.categories.map((c) => ({ category_id: c.categoryId, amount: c.amount }));
+    const categories = draft.categories.map((c) => ({
+      category_id: c.categoryId,
+      amount: c.amount,
+    }));
     const payload =
       draft.periodType === 'custom'
         ? {
@@ -62,7 +65,10 @@ export default function NewBudgetCategories() {
       <PageHeader title="Elige sus categorías" onBack={() => router.back()} />
 
       <View className="gap-1 rounded-2xl bg-lime-tint px-4 py-3 dark:bg-lime-tint-dark">
-        <Text className="text-xs font-semibold text-lime-ink dark:text-lime-ink-dark" numberOfLines={1}>
+        <Text
+          className="text-xs font-semibold text-lime-ink dark:text-lime-ink-dark"
+          numberOfLines={1}
+        >
           {draft.name || 'Presupuesto'}
         </Text>
         <Text className="text-lg font-bold text-ink dark:text-ink-dark">

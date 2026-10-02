@@ -1,5 +1,6 @@
 import type { CategorySpend } from '@repo/core/utils';
 import { formatCurrency } from '@repo/core/utils';
+import { ICON_COLORS } from '@repo/ui';
 import { useColorScheme } from 'nativewind';
 import { Text, View } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
@@ -22,7 +23,7 @@ export function CategorySpendDonut({ breakdown, total, currency, radius = 72 }: 
       donut
       radius={radius}
       innerRadius={radius * 0.62}
-      innerCircleColor={dark ? '#16191D' : '#FFFFFF'}
+      innerCircleColor={dark ? ICON_COLORS.surfaceDark : ICON_COLORS.surface}
       centerLabelComponent={() => (
         <View className="items-center">
           <Text className="text-[11px] text-ink-2 dark:text-ink-2-dark">Total</Text>

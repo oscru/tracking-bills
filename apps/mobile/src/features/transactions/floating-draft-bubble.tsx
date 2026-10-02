@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts } from '@repo/core/hooks';
 import { evalAmount, formatCurrency } from '@repo/core/utils';
+import { ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Animated, Dimensions, PanResponder, Pressable, Text, View } from 'react-native';
@@ -14,8 +15,8 @@ const HEIGHT = 42;
 const EDGE_MARGIN = 10;
 const TAP_SLOP = 6;
 const TAB_BAR_CLEARANCE = 96;
-const BUBBLE_BG = '#1A1D21';
-const BUBBLE_FG = '#B9F227';
+const BUBBLE_BG = ICON_COLORS.ink;
+const BUBBLE_FG = ICON_COLORS.lime;
 
 const TYPE_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   income: 'arrow-down-circle',
@@ -73,9 +74,12 @@ export function FloatingDraftBubble() {
   if (!minimized || !snapshot) return null;
 
   const currency =
-    accounts?.find((a) => a.id === snapshot.accountId)?.currency ?? accounts?.[0]?.currency ?? 'MXN';
+    accounts?.find((a) => a.id === snapshot.accountId)?.currency ??
+    accounts?.[0]?.currency ??
+    'MXN';
   const amountValue = evalAmount(snapshot.amount);
-  const amountLabel = amountValue != null && amountValue > 0 ? formatCurrency(amountValue, currency) : null;
+  const amountLabel =
+    amountValue != null && amountValue > 0 ? formatCurrency(amountValue, currency) : null;
 
   return (
     <Animated.View
@@ -97,7 +101,11 @@ export function FloatingDraftBubble() {
             {amountLabel}
           </Text>
         ) : (
-          <Ionicons name={TYPE_ICON[snapshot.type] ?? 'receipt-outline'} size={20} color={BUBBLE_FG} />
+          <Ionicons
+            name={TYPE_ICON[snapshot.type] ?? 'receipt-outline'}
+            size={20}
+            color={BUBBLE_FG}
+          />
         )}
       </View>
 

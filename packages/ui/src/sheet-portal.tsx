@@ -58,7 +58,9 @@ export function SheetPortalHost({ children }: { children: ReactNode }) {
 export function useSheetPortalRegister(): Register {
   const register = useContext(SheetPortalContext);
   if (!register) {
-    throw new Error('BottomSheet must be rendered under a <SheetPortalHost> (mounted in the root layout).');
+    throw new Error(
+      'BottomSheet must be rendered under a <SheetPortalHost> (mounted in the root layout).',
+    );
   }
   return register;
 }

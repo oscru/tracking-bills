@@ -1,20 +1,42 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useCategories, useProfile, useRunImportPlan, useTags } from '@repo/core/hooks';
-import { buildImportPlan, parseWorkbook, readWorkbookFromBase64, type ImportPlan } from '@repo/core/import-export';
-import { Button, PageHeader, Screen } from '@repo/ui';
+import {
+  useAccounts,
+  useCategories,
+  useProfile,
+  useRunImportPlan,
+  useTags,
+} from '@repo/core/hooks';
+import {
+  buildImportPlan,
+  parseWorkbook,
+  readWorkbookFromBase64,
+  type ImportPlan,
+} from '@repo/core/import-export';
+import { Button, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
-import { readPickedFileAsBase64, XLSX_MIME_TYPES } from '../../../../../features/import-export/file-io';
+import {
+  readPickedFileAsBase64,
+  XLSX_MIME_TYPES,
+} from '../../../../../features/import-export/file-io';
 
 type Step =
   | { name: 'pick' }
   | { name: 'reading' }
   | { name: 'preview'; fileName: string; plan: ImportPlan }
   | { name: 'importing'; plan: ImportPlan }
-  | { name: 'done'; result: { accountsCreated: number; categoriesCreated: number; tagsCreated: number; transactionsCreated: number } }
+  | {
+      name: 'done';
+      result: {
+        accountsCreated: number;
+        categoriesCreated: number;
+        tagsCreated: number;
+        transactionsCreated: number;
+      };
+    }
   | { name: 'error'; message: string };
 
 export default function ImportScreen() {
@@ -50,7 +72,8 @@ export default function ImportScreen() {
     setStep({ name: 'importing', plan });
     runPlan.mutate(plan, {
       onSuccess: (result) => setStep({ name: 'done', result }),
-      onError: (err) => setStep({ name: 'error', message: err instanceof Error ? err.message : String(err) }),
+      onError: (err) =>
+        setStep({ name: 'error', message: err instanceof Error ? err.message : String(err) }),
     });
   };
 
@@ -69,12 +92,15 @@ export default function ImportScreen() {
         </StatusView>
       ) : null}
 
-      {step.name === 'reading' ? (
-        <StatusView spinner title="Leyendo el archivo…" />
-      ) : null}
+      {step.name === 'reading' ? <StatusView spinner title="Leyendo el archivo…" /> : null}
 
       {step.name === 'preview' ? (
-        <PreviewStep fileName={step.fileName} plan={step.plan} onConfirm={() => confirmImport(step.plan)} onCancel={() => setStep({ name: 'pick' })} />
+        <PreviewStep
+          fileName={step.fileName}
+          plan={step.plan}
+          onConfirm={() => confirmImport(step.plan)}
+          onCancel={() => setStep({ name: 'pick' })}
+        />
       ) : null}
 
       {step.name === 'importing' ? (
@@ -94,8 +120,17 @@ export default function ImportScreen() {
       ) : null}
 
       {step.name === 'error' ? (
-        <StatusView icon="alert-circle" tint="danger" title="Algo salió mal" subtitle={step.message}>
-          <Button label="Reintentar" variant="secondary" onPress={() => setStep({ name: 'pick' })} />
+        <StatusView
+          icon="alert-circle"
+          tint="danger"
+          title="Algo salió mal"
+          subtitle={step.message}
+        >
+          <Button
+            label="Reintentar"
+            variant="secondary"
+            onPress={() => setStep({ name: 'pick' })}
+          />
         </StatusView>
       ) : null}
     </Screen>
@@ -103,9 +138,9 @@ export default function ImportScreen() {
 }
 
 const ICON_TINT = {
-  neutral: { bg: 'bg-[#F1F2F4] dark:bg-line-dark', color: '#9CA3AF' },
-  lime: { bg: 'bg-lime-tint dark:bg-lime-tint-dark', color: '#4D7C0F' },
-  danger: { bg: 'bg-danger-tint dark:bg-danger-tint-dark', color: '#E5484D' },
+  neutral: { bg: 'bg-[#F1F2F4] dark:bg-line-dark', color: ICON_COLORS.ink3 },
+  lime: { bg: 'bg-lime-tint dark:bg-lime-tint-dark', color: ICON_COLORS.limeInk },
+  danger: { bg: 'bg-danger-tint dark:bg-danger-tint-dark', color: ICON_COLORS.danger },
 } as const;
 
 /** Centered full-bleed status: icon badge, headline, optional subtitle, then
@@ -130,12 +165,18 @@ function StatusView({
   return (
     <View className="flex-1 items-center justify-center gap-6 px-4">
       <View className={`h-20 w-20 items-center justify-center rounded-full ${bg}`}>
-        {spinner ? <ActivityIndicator size="large" color={color} /> : icon ? <Ionicons name={icon} size={36} color={color} /> : null}
+        {spinner ? (
+          <ActivityIndicator size="large" color={color} />
+        ) : icon ? (
+          <Ionicons name={icon} size={36} color={color} />
+        ) : null}
       </View>
       <View className="items-center gap-2">
         <Text className="text-center text-xl font-bold text-ink dark:text-ink-dark">{title}</Text>
         {subtitle ? (
-          <Text className="text-center text-sm leading-5 text-ink-2 dark:text-ink-2-dark">{subtitle}</Text>
+          <Text className="text-center text-sm leading-5 text-ink-2 dark:text-ink-2-dark">
+            {subtitle}
+          </Text>
         ) : null}
       </View>
       {children ? <View className="w-full gap-4">{children}</View> : null}
@@ -144,7 +185,11 @@ function StatusView({
 }
 
 function SummaryCard({ children }: { children: ReactNode }) {
-  return <View className="w-full gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">{children}</View>;
+  return (
+    <View className="w-full gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">
+      {children}
+    </View>
+  );
 }
 
 function SummaryLine({ label, value }: { label: string; value: number }) {
@@ -179,7 +224,10 @@ function PreviewStep({
       </Text>
 
       <View className="gap-2 rounded-2xl border border-line p-4 dark:border-line-dark">
-        <SummaryLine label="Movimientos y transferencias a crear" value={summary.transactionsToCreate} />
+        <SummaryLine
+          label="Movimientos y transferencias a crear"
+          value={summary.transactionsToCreate}
+        />
         <SummaryLine label="Cuentas nuevas" value={summary.accountsToCreate} />
         <SummaryLine label="Categorías/subcategorías nuevas" value={summary.categoriesToCreate} />
         <SummaryLine label="Tags nuevos" value={summary.tagsToCreate} />
@@ -188,7 +236,8 @@ function PreviewStep({
       {errors.length > 0 ? (
         <View className="gap-2">
           <Text className="text-sm font-semibold text-danger dark:text-danger-dark">
-            {errors.length} fila{errors.length === 1 ? '' : 's'} con error — no se {errors.length === 1 ? 'importará' : 'importarán'}
+            {errors.length} fila{errors.length === 1 ? '' : 's'} con error — no se{' '}
+            {errors.length === 1 ? 'importará' : 'importarán'}
           </Text>
           <IssueList issues={errors} />
         </View>
@@ -230,9 +279,7 @@ function IssueList({ issues }: { issues: ImportPlan['issues'] }) {
         </Text>
       ))}
       {issues.length > 30 ? (
-        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-          y {issues.length - 30} más…
-        </Text>
+        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">y {issues.length - 30} más…</Text>
       ) : null}
     </View>
   );

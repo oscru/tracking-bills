@@ -1,10 +1,9 @@
-import { useBudgets, useTransactions } from '@repo/core/hooks';
-import { budgetProgress, formatDate } from '@repo/core/utils';
+import { formatDate } from '@repo/core/utils';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../budgets/budget-progress-bar';
+import { useBudgetProgressRows } from '../budgets/use-budget-progress-rows';
 
 interface Props {
   /** Analytics scopes everything on screen to one currency at a time (no
@@ -23,27 +22,7 @@ interface Props {
  * too). Each budget shows in its own locked currency. */
 export function BudgetsProgressCard({ currency }: Props) {
   const router = useRouter();
-  const { data: budgets } = useBudgets();
-  const { data: transactions } = useTransactions();
-
-  const rows = useMemo(() => {
-    return (budgets ?? [])
-      .filter((b) => !b.archived && b.currency === currency)
-      .map((budget) => {
-        const categoryIds = budget.categories.map((c) => c.category.id);
-        return {
-          budget,
-          progress: budgetProgress(
-            categoryIds,
-            Number(budget.amount),
-            budget.currency,
-            budget,
-            transactions ?? [],
-          ),
-        };
-      })
-      .sort((a, b) => b.progress.pct - a.progress.pct);
-  }, [budgets, transactions, currency]);
+  const rows = useBudgetProgressRows(currency);
 
   if (rows.length === 0) return null;
 
@@ -58,7 +37,9 @@ export function BudgetsProgressCard({ currency }: Props) {
       {rows.map(({ budget, progress }) => (
         <Pressable
           key={budget.id}
-          onPress={() => router.push({ pathname: '/(app)/settings/budgets/[id]', params: { id: budget.id } })}
+          onPress={() =>
+            router.push({ pathname: '/(app)/settings/budgets/[id]', params: { id: budget.id } })
+          }
           className="gap-2"
         >
           <View className="flex-row items-center gap-2">

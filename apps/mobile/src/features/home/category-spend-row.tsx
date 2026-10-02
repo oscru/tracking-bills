@@ -22,17 +22,11 @@ export function CategorySpendRow({ entry, total, currency, onPress }: Props) {
   const Wrapper = onPress ? Pressable : View;
 
   return (
-    <Wrapper
-      onPress={onPress}
-      className={`gap-2 py-2.5 ${onPress ? 'active:opacity-60' : ''}`}
-    >
+    <Wrapper onPress={onPress} className={`gap-2 py-2.5 ${onPress ? 'active:opacity-60' : ''}`}>
       <View className="flex-row items-center gap-2.5">
         <CategoryDot color={entry.color} icon={entry.icon} size={18} />
         <View className="flex-1">
-          <Text
-            className="text-[15px] font-medium text-ink dark:text-ink-dark"
-            numberOfLines={1}
-          >
+          <Text className="text-[15px] font-medium text-ink dark:text-ink-dark" numberOfLines={1}>
             {entry.name}
           </Text>
           <Text className="text-xs text-ink-3 dark:text-ink-3-dark">

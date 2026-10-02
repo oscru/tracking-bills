@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatCurrency } from '@repo/core/utils';
 import { useColorScheme } from 'nativewind';
 import { Text, View } from 'react-native';
+import { ICON_COLORS } from '@repo/ui';
 
 interface Props {
   spent: number;
@@ -20,12 +21,19 @@ interface Props {
  * categories assigned at all, shows an explicit warning instead (see
  * `BudgetProgress.hasCategories`) — that state must never look like "0%
  * spent, on track". */
-export function BudgetProgressBar({ spent, amount, pct, isOverBudget, currency, hasCategories }: Props) {
+export function BudgetProgressBar({
+  spent,
+  amount,
+  pct,
+  isOverBudget,
+  currency,
+  hasCategories,
+}: Props) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
-  const posColor = dark ? '#22C55E' : '#16A34A';
-  const warningColor = dark ? '#F3B25E' : '#B45309';
-  const dangerColor = dark ? '#F16A6E' : '#E5484D';
+  const posColor = dark ? ICON_COLORS.posDark : ICON_COLORS.pos;
+  const warningColor = dark ? ICON_COLORS.warningDark : ICON_COLORS.warning;
+  const dangerColor = dark ? ICON_COLORS.dangerDark : ICON_COLORS.danger;
   const barColor = isOverBudget ? dangerColor : pct >= 80 ? warningColor : posColor;
 
   if (!hasCategories) {
@@ -44,7 +52,9 @@ export function BudgetProgressBar({ spent, amount, pct, isOverBudget, currency, 
       <View className="flex-row items-center justify-between">
         <Text className="text-sm text-ink dark:text-ink-dark">
           {formatCurrency(spent, currency)}{' '}
-          <Text className="text-ink-3 dark:text-ink-3-dark">de {formatCurrency(amount, currency)}</Text>
+          <Text className="text-ink-3 dark:text-ink-3-dark">
+            de {formatCurrency(amount, currency)}
+          </Text>
         </Text>
         <Text className="text-sm font-semibold" style={{ color: barColor }}>
           {Math.round(pct)}%

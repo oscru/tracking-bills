@@ -104,7 +104,9 @@ export function WeeklySpendCard({ onPress }: Props) {
                         </View>
                         <Text
                           className={`text-[10px] font-medium ${
-                            isToday ? 'text-ink dark:text-ink-dark' : 'text-ink-3 dark:text-ink-3-dark'
+                            isToday
+                              ? 'text-ink dark:text-ink-dark'
+                              : 'text-ink-3 dark:text-ink-3-dark'
                           }`}
                         >
                           {WEEKDAY_LABELS[i]}

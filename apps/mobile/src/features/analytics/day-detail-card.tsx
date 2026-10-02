@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency, formatDate, longestNoSpendStreak, noSpendStreak } from '@repo/core/utils';
-import { CategoryDot } from '@repo/ui';
+import { CategoryDot, ICON_COLORS } from '@repo/ui';
 import { useColorScheme } from 'nativewind';
 import { Pressable, Text, View } from 'react-native';
 
@@ -18,7 +18,7 @@ interface Props {
 export function DayDetailCard({ dateISO, transactions, currency, onPressTransaction }: Props) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
-  const warningColor = dark ? '#F3B25E' : '#B45309';
+  const warningColor = dark ? ICON_COLORS.warningDark : ICON_COLORS.warning;
   const dayTx = transactions
     .filter((t) => t.transaction_date === dateISO && t.type !== 'transfer')
     .sort((a, b) => b.created_at.localeCompare(a.created_at));

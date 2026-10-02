@@ -15,7 +15,7 @@ import {
   goalProgress,
   todayISODate,
 } from '@repo/core/utils';
-import { Button, ConfirmSheet, ErrorCard, Fab, PageHeader, Screen } from '@repo/ui';
+import { Button, ConfirmSheet, ErrorCard, Fab, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -65,7 +65,13 @@ export default function GoalDetail() {
   const linkedAccount = goal.account_id
     ? ((accounts ?? []).find((a) => a.id === goal.account_id) ?? null)
     : null;
-  const progress = goalProgress(goal.id, targetAmount, goal.currency, transactions ?? [], linkedAccount);
+  const progress = goalProgress(
+    goal.id,
+    targetAmount,
+    goal.currency,
+    transactions ?? [],
+    linkedAccount,
+  );
   const pace =
     goal.contribution_amount != null && goal.contribution_interval_days != null
       ? goalPace(
@@ -78,10 +84,16 @@ export default function GoalDetail() {
 
   const contributions = (transactions ?? [])
     .filter((t) => (goal.account_id ? t.to_account_id === goal.account_id : t.goal_id === goal.id))
-    .sort((a, b) => b.transaction_date.localeCompare(a.transaction_date) || b.created_at.localeCompare(a.created_at));
+    .sort(
+      (a, b) =>
+        b.transaction_date.localeCompare(a.transaction_date) ||
+        b.created_at.localeCompare(a.created_at),
+    );
 
-  const toggleArchive = () => updateGoal.mutate({ id: goal.id, patch: { archived: !goal.archived } });
-  const markCompleted = (v: boolean) => updateGoal.mutate({ id: goal.id, patch: { is_completed: v } });
+  const toggleArchive = () =>
+    updateGoal.mutate({ id: goal.id, patch: { archived: !goal.archived } });
+  const markCompleted = (v: boolean) =>
+    updateGoal.mutate({ id: goal.id, patch: { is_completed: v } });
 
   const paceColor =
     pace == null
@@ -115,7 +127,9 @@ export default function GoalDetail() {
               ) : null}
               {goal.archived ? (
                 <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
-                  <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">Archivado</Text>
+                  <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
+                    Archivado
+                  </Text>
                 </View>
               ) : null}
             </View>
@@ -127,7 +141,7 @@ export default function GoalDetail() {
                 <Ionicons
                   name={(goal.icon as keyof typeof Ionicons.glyphMap) ?? 'flag-outline'}
                   size={20}
-                  color="#4D7C0F"
+                  color={ICON_COLORS.limeInk}
                 />
               </View>
               <View className="flex-1">
@@ -163,8 +177,8 @@ export default function GoalDetail() {
             {pace ? (
               <View className="gap-0.5 border-t border-line pt-3 dark:border-line-dark">
                 <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                  Ritmo planeado: {formatCurrency(Number(goal.contribution_amount), goal.currency)} cada{' '}
-                  {goal.contribution_interval_days} días
+                  Ritmo planeado: {formatCurrency(Number(goal.contribution_amount), goal.currency)}{' '}
+                  cada {goal.contribution_interval_days} días
                 </Text>
                 <Text className={`text-xs font-semibold ${paceColor}`}>{paceText}</Text>
               </View>
@@ -180,7 +194,11 @@ export default function GoalDetail() {
           ) : null}
 
           {goal.is_completed && !goal.archived ? (
-            <Pressable onPress={() => markCompleted(false)} className="items-center py-1" hitSlop={8}>
+            <Pressable
+              onPress={() => markCompleted(false)}
+              className="items-center py-1"
+              hitSlop={8}
+            >
               <Text className="text-xs font-medium text-ink-2 dark:text-ink-2-dark">
                 Marcar como no completada
               </Text>
@@ -281,7 +299,11 @@ export default function GoalDetail() {
       <ConfirmSheet
         visible={confirmDelete}
         title="¿Eliminar objetivo?"
-        description="Solo se puede eliminar si no tiene aportaciones registradas. No afecta tus movimientos."
+        description={
+          linkedAccount
+            ? `Se elimina la meta y su vínculo con "${linkedAccount.name}" — el dinero se queda intacto en esa cuenta, tenga o no aportaciones registradas. No afecta tus movimientos.`
+            : 'Solo se puede eliminar si no tiene aportaciones registradas. No afecta tus movimientos.'
+        }
         confirmLabel="Eliminar"
         destructive
         onCancel={() => setConfirmDelete(false)}

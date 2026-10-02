@@ -3,7 +3,9 @@ import { View } from 'react-native';
 
 function Row({ isFirst }: { isFirst: boolean }) {
   return (
-    <View className={`gap-1.5 py-3.5 ${isFirst ? '' : 'border-t border-line dark:border-line-dark'}`}>
+    <View
+      className={`gap-1.5 py-3.5 ${isFirst ? '' : 'border-t border-line dark:border-line-dark'}`}
+    >
       <Skeleton width={120} height={15} />
       <Skeleton width={90} height={12} />
     </View>

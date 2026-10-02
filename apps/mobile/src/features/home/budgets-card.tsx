@@ -1,10 +1,8 @@
-import { useBudgets, useTransactions } from '@repo/core/hooks';
-import { budgetProgress } from '@repo/core/utils';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../budgets/budget-progress-bar';
+import { useBudgetProgressRows } from '../budgets/use-budget-progress-rows';
 
 const TOP_N = 3;
 
@@ -13,27 +11,7 @@ const TOP_N = 3;
  * own locked currency — they're not blended into a single number. */
 export function BudgetsCard() {
   const router = useRouter();
-  const { data: budgets } = useBudgets();
-  const { data: transactions } = useTransactions();
-
-  const rows = useMemo(() => {
-    return (budgets ?? [])
-      .filter((budget) => !budget.archived)
-      .map((budget) => {
-        const categoryIds = budget.categories.map((c) => c.category.id);
-        return {
-          budget,
-          progress: budgetProgress(
-            categoryIds,
-            Number(budget.amount),
-            budget.currency,
-            budget,
-            transactions ?? [],
-          ),
-        };
-      })
-      .sort((a, b) => b.progress.pct - a.progress.pct);
-  }, [budgets, transactions]);
+  const rows = useBudgetProgressRows();
 
   // A budget with no categories isn't "under control" — it's broken, just
   // quiet about it (`isOverBudget` is false because nothing can ever be
@@ -73,7 +51,10 @@ export function BudgetsCard() {
               <Pressable
                 key={budget.id}
                 onPress={() =>
-                  router.push({ pathname: '/(app)/settings/budgets/[id]', params: { id: budget.id } })
+                  router.push({
+                    pathname: '/(app)/settings/budgets/[id]',
+                    params: { id: budget.id },
+                  })
                 }
                 className="gap-2"
               >

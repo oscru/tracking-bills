@@ -8,6 +8,27 @@ export * from './errors';
 export * from './currencies';
 export { HOME_LAYOUT_ITEMS, type HomeLayoutItem };
 
+/**
+ * Converts a DB-sourced amount to integer cents (`Math.round(amount * 100)`).
+ * Every money total in this file accumulates in cents instead of raw float
+ * dollars: Supabase/PostgREST already delivers `numeric` columns as JS
+ * floats (there's no way to avoid that without replacing the client's JSON
+ * parser globally — not worth it for what's otherwise a low-risk issue), but
+ * once a value is in hand, integer cents are exact in IEEE754 for any
+ * realistic amount (safe to 2^53 cents, ~90 trillion units of currency), so
+ * summing hundreds of transactions can't drift the way summing their raw
+ * float dollar amounts could. Only convert back to dollars (`fromCents`) at
+ * the boundary where a total becomes a public result.
+ */
+function toCents(amount: number | string): number {
+  return Math.round(Number(amount) * 100);
+}
+
+/** The inverse of `toCents` — call once, at the boundary where a cents-based accumulator becomes the public float result. */
+function fromCents(cents: number): number {
+  return cents / 100;
+}
+
 /** Format a numeric amount as a localized currency string. */
 export function formatCurrency(amount: number, currency = 'MXN', locale = 'es-MX'): string {
   return new Intl.NumberFormat(locale, {
@@ -182,16 +203,16 @@ interface BalanceTx {
   is_completed: boolean;
 }
 
-/** One transaction's signed effect on one account's balance, regardless of `is_completed`. */
-function transactionEffect(t: BalanceTx, accountId: string): number {
-  const amount = Number(t.amount);
+/** One transaction's signed effect on one account's balance, in cents, regardless of `is_completed`. */
+function transactionEffectCents(t: BalanceTx, accountId: string): number {
+  const cents = toCents(t.amount);
   if (t.type === 'transfer') {
     let delta = 0;
-    if (t.account_id === accountId) delta -= amount;
-    if (t.to_account_id === accountId) delta += amount;
+    if (t.account_id === accountId) delta -= cents;
+    if (t.to_account_id === accountId) delta += cents;
     return delta;
   }
-  return t.account_id === accountId ? (t.type === 'income' ? amount : -amount) : 0;
+  return t.account_id === accountId ? (t.type === 'income' ? cents : -cents) : 0;
 }
 
 /**
@@ -201,12 +222,12 @@ function transactionEffect(t: BalanceTx, accountId: string): number {
  * this number an accurate record of the money really in the account.
  */
 export function accountBalance(account: BalanceAccount, transactions: BalanceTx[]): number {
-  let balance = Number(account.initial_balance);
+  let balanceCents = toCents(account.initial_balance);
   for (const t of transactions) {
     if (!t.is_completed) continue;
-    balance += transactionEffect(t, account.id);
+    balanceCents += transactionEffectCents(t, account.id);
   }
-  return balance;
+  return fromCents(balanceCents);
 }
 
 /**
@@ -219,7 +240,7 @@ export function projectedAccountBalance(
   transactions: BalanceTx[],
   pending: BalanceTx,
 ): number {
-  return accountBalance(account, transactions) + transactionEffect(pending, account.id);
+  return fromCents(toCents(accountBalance(account, transactions)) + transactionEffectCents(pending, account.id));
 }
 
 export interface CurrencyTotal {
@@ -240,15 +261,17 @@ export function totalBalancesByCurrency(
   accounts: BalanceAccount[],
   transactions: BalanceTx[],
 ): CurrencyTotal[] {
-  const byCurrency = new Map<string, CurrencyTotal>();
+  const totalCentsByCurrency = new Map<string, { totalCents: number; accountCount: number }>();
   for (const a of accounts) {
     if (a.include_in_total === false) continue;
-    const entry = byCurrency.get(a.currency) ?? { currency: a.currency, total: 0, accountCount: 0 };
-    entry.total += accountBalance(a, transactions);
+    const entry = totalCentsByCurrency.get(a.currency) ?? { totalCents: 0, accountCount: 0 };
+    entry.totalCents += toCents(accountBalance(a, transactions));
     entry.accountCount += 1;
-    byCurrency.set(a.currency, entry);
+    totalCentsByCurrency.set(a.currency, entry);
   }
-  return [...byCurrency.values()].sort((a, b) => b.total - a.total);
+  return [...totalCentsByCurrency.entries()]
+    .map(([currency, { totalCents, accountCount }]) => ({ currency, total: fromCents(totalCents), accountCount }))
+    .sort((a, b) => b.total - a.total);
 }
 
 /**
@@ -368,20 +391,20 @@ interface MonthTotalsTx {
  * *settled* transactions count, same rule as `accountBalance`.
  */
 export function monthTotals(transactions: MonthTotalsTx[], month: string): MonthCurrencyTotals[] {
-  const byCurrency = new Map<string, MonthCurrencyTotals>();
+  const byCurrency = new Map<string, { income: number; expense: number }>();
   for (const t of transactions) {
     if (!t.is_completed) continue;
     if (!t.transaction_date.startsWith(month)) continue;
     if (t.type !== 'income' && t.type !== 'expense') continue;
     const currency = t.account?.currency ?? 'MXN';
-    const entry = byCurrency.get(currency) ?? { currency, income: 0, expense: 0 };
-    if (t.type === 'income') entry.income += Number(t.amount);
-    else entry.expense += Number(t.amount);
+    const entry = byCurrency.get(currency) ?? { income: 0, expense: 0 };
+    if (t.type === 'income') entry.income += toCents(t.amount);
+    else entry.expense += toCents(t.amount);
     byCurrency.set(currency, entry);
   }
-  return [...byCurrency.values()].sort(
-    (a, b) => b.income + b.expense - (a.income + a.expense),
-  );
+  return [...byCurrency.entries()]
+    .map(([currency, { income, expense }]) => ({ currency, income: fromCents(income), expense: fromCents(expense) }))
+    .sort((a, b) => b.income + b.expense - (a.income + a.expense));
 }
 
 export interface CategorySpend {
@@ -410,25 +433,27 @@ interface SpendTx {
  * — amounts here are never converted or blended across currencies.
  */
 export function categorySpendBreakdown(transactions: SpendTx[], month: string): CategorySpend[] {
-  const byCategory = new Map<string, CategorySpend>();
+  const byCategory = new Map<string, Omit<CategorySpend, 'total'> & { totalCents: number }>();
   for (const t of transactions) {
     if (!t.is_completed) continue;
     if (t.type !== 'expense' || !t.transaction_date.startsWith(month)) continue;
     const key = t.category?.id ?? '__none__';
     const entry = byCategory.get(key);
     if (entry) {
-      entry.total += Number(t.amount);
+      entry.totalCents += toCents(t.amount);
     } else {
       byCategory.set(key, {
         categoryId: t.category?.id ?? null,
         name: t.category?.name ?? 'Sin categoría',
         color: t.category?.color ?? '#94A3B8',
         icon: t.category?.icon ?? null,
-        total: Number(t.amount),
+        totalCents: toCents(t.amount),
       });
     }
   }
-  return [...byCategory.values()].sort((a, b) => b.total - a.total);
+  return [...byCategory.values()]
+    .map(({ totalCents, ...rest }) => ({ ...rest, total: fromCents(totalCents) }))
+    .sort((a, b) => b.total - a.total);
 }
 
 /** Today's date as `YYYY-MM-DD` in local time. */
@@ -534,15 +559,15 @@ export function categoryMonthlyHistory(
     const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1);
     keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
   }
-  const totals = new Map(keys.map((k) => [k, 0]));
+  const totalCents = new Map(keys.map((k) => [k, 0]));
   for (const t of transactions) {
     if (!t.is_completed) continue;
     if (t.category_id !== categoryId) continue;
     const key = t.transaction_date.slice(0, 7);
-    if (!totals.has(key)) continue;
-    totals.set(key, (totals.get(key) ?? 0) + Number(t.amount));
+    if (!totalCents.has(key)) continue;
+    totalCents.set(key, (totalCents.get(key) ?? 0) + toCents(t.amount));
   }
-  return keys.map((month) => ({ month, total: totals.get(month) ?? 0 }));
+  return keys.map((month) => ({ month, total: fromCents(totalCents.get(month) ?? 0) }));
 }
 
 interface MonthlyTrendTx {
@@ -569,16 +594,19 @@ export function monthlyIncomeExpenseHistory(
     const d = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - i, 1);
     keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
   }
-  const totals = new Map(keys.map((k) => [k, { income: 0, expense: 0 }]));
+  const totalCents = new Map(keys.map((k) => [k, { income: 0, expense: 0 }]));
   for (const t of transactions) {
     if (!t.is_completed) continue;
     const key = t.transaction_date.slice(0, 7);
-    const bucket = totals.get(key);
+    const bucket = totalCents.get(key);
     if (!bucket) continue;
-    if (t.type === 'income') bucket.income += Number(t.amount);
-    else if (t.type === 'expense') bucket.expense += Number(t.amount);
+    if (t.type === 'income') bucket.income += toCents(t.amount);
+    else if (t.type === 'expense') bucket.expense += toCents(t.amount);
   }
-  return keys.map((month) => ({ month, ...(totals.get(month) ?? { income: 0, expense: 0 }) }));
+  return keys.map((month) => {
+    const bucket = totalCents.get(month) ?? { income: 0, expense: 0 };
+    return { month, income: fromCents(bucket.income), expense: fromCents(bucket.expense) };
+  });
 }
 
 // --- analytics (the "Análisis" tab: calendar heatmap + trend) -------------
@@ -654,15 +682,15 @@ interface RangeTx {
 
 /** Income / expense totals within an inclusive `[fromISO, toISO]` range, excluding transfers. Only settled transactions count. */
 function rangeTotals(transactions: RangeTx[], fromISO: string, toISO: string): { income: number; expense: number } {
-  let income = 0;
-  let expense = 0;
+  let incomeCents = 0;
+  let expenseCents = 0;
   for (const t of transactions) {
     if (!t.is_completed) continue;
     if (t.transaction_date < fromISO || t.transaction_date > toISO) continue;
-    if (t.type === 'income') income += Number(t.amount);
-    else if (t.type === 'expense') expense += Number(t.amount);
+    if (t.type === 'income') incomeCents += toCents(t.amount);
+    else if (t.type === 'expense') expenseCents += toCents(t.amount);
   }
-  return { income, expense };
+  return { income: fromCents(incomeCents), expense: fromCents(expenseCents) };
 }
 
 /**
@@ -677,16 +705,16 @@ export function dailyTransactionTotals(
   toISO: string,
   type: 'expense' | 'income' = 'expense',
 ): { date: string; total: number }[] {
-  const totals = new Map<string, number>();
+  const totalCents = new Map<string, number>();
   for (const t of transactions) {
     if (!t.is_completed) continue;
     if (t.type !== type) continue;
     if (t.transaction_date < fromISO || t.transaction_date > toISO) continue;
-    totals.set(t.transaction_date, (totals.get(t.transaction_date) ?? 0) + Number(t.amount));
+    totalCents.set(t.transaction_date, (totalCents.get(t.transaction_date) ?? 0) + toCents(t.amount));
   }
   const days: { date: string; total: number }[] = [];
   for (let cursor = fromISO; cursor <= toISO; cursor = addDaysISO(cursor, 1)) {
-    days.push({ date: cursor, total: totals.get(cursor) ?? 0 });
+    days.push({ date: cursor, total: fromCents(totalCents.get(cursor) ?? 0) });
   }
   return days;
 }
@@ -701,16 +729,16 @@ export function monthlyTransactionTotalsForYear(
   year: number,
   type: 'expense' | 'income' = 'expense',
 ): { month: string; total: number }[] {
-  const totals = new Map<string, number>();
-  for (let m = 1; m <= 12; m++) totals.set(`${year}-${String(m).padStart(2, '0')}`, 0);
+  const totalCents = new Map<string, number>();
+  for (let m = 1; m <= 12; m++) totalCents.set(`${year}-${String(m).padStart(2, '0')}`, 0);
   for (const t of transactions) {
     if (!t.is_completed) continue;
     if (t.type !== type) continue;
     const key = t.transaction_date.slice(0, 7);
-    if (!totals.has(key)) continue;
-    totals.set(key, (totals.get(key) ?? 0) + Number(t.amount));
+    if (!totalCents.has(key)) continue;
+    totalCents.set(key, (totalCents.get(key) ?? 0) + toCents(t.amount));
   }
-  return [...totals.entries()].map(([month, total]) => ({ month, total }));
+  return [...totalCents.entries()].map(([month, total]) => ({ month, total: fromCents(total) }));
 }
 
 /**
@@ -837,8 +865,14 @@ export function categoryTrend(
   const { from, to } = periodRange(period, referenceDate);
   const prev = previousPeriodRange(period, referenceDate);
 
-  const byCategory = new Map<string, CategoryTrend>();
-  const touch = (t: SpendTx, field: 'currentTotal' | 'previousTotal') => {
+  const byCategory = new Map<
+    string,
+    Omit<CategoryTrend, 'currentTotal' | 'previousTotal' | 'pctChange'> & {
+      currentCents: number;
+      previousCents: number;
+    }
+  >();
+  const touch = (t: SpendTx, field: 'currentCents' | 'previousCents') => {
     const key = t.category?.id ?? '__none__';
     let entry = byCategory.get(key);
     if (!entry) {
@@ -847,27 +881,32 @@ export function categoryTrend(
         name: t.category?.name ?? 'Sin categoría',
         color: t.category?.color ?? '#94A3B8',
         icon: t.category?.icon ?? null,
-        currentTotal: 0,
-        previousTotal: 0,
-        pctChange: null,
+        currentCents: 0,
+        previousCents: 0,
       };
       byCategory.set(key, entry);
     }
-    entry[field] += Number(t.amount);
+    entry[field] += toCents(t.amount);
   };
 
   for (const t of transactions) {
     if (!t.is_completed) continue;
     if (t.type !== type) continue;
-    if (t.transaction_date >= from && t.transaction_date <= to) touch(t, 'currentTotal');
-    else if (t.transaction_date >= prev.from && t.transaction_date <= prev.to) touch(t, 'previousTotal');
+    if (t.transaction_date >= from && t.transaction_date <= to) touch(t, 'currentCents');
+    else if (t.transaction_date >= prev.from && t.transaction_date <= prev.to) touch(t, 'previousCents');
   }
 
   return [...byCategory.values()]
-    .map((c) => ({
-      ...c,
-      pctChange: c.previousTotal > 0 ? ((c.currentTotal - c.previousTotal) / c.previousTotal) * 100 : null,
-    }))
+    .map(({ currentCents, previousCents, ...rest }) => {
+      const currentTotal = fromCents(currentCents);
+      const previousTotal = fromCents(previousCents);
+      return {
+        ...rest,
+        currentTotal,
+        previousTotal,
+        pctChange: previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal) * 100 : null,
+      };
+    })
     .filter((c) => c.currentTotal > 0 || c.previousTotal > 0)
     .sort((a, b) => b.currentTotal - a.currentTotal);
 }
@@ -972,6 +1011,29 @@ export interface BudgetProgress {
 }
 
 /**
+ * Sum of `amount` across every *settled* transaction in `currency` matching
+ * `predicate` — the one piece every "how much was spent/saved" function
+ * below needs (`budgetProgress`, `categorySpentInRange`, `goalProgress`'s
+ * virtual-goal branch). Only the shared, never-varying rules (settled only,
+ * same currency) live here; each caller's own `predicate` carries whatever
+ * else distinguishes it (category, date range, `goal_id`, transaction type).
+ */
+function sumSettledAmount<T extends { amount: number | string; is_completed: boolean; account: { currency: string } | null }>(
+  transactions: T[],
+  currency: string,
+  predicate: (t: T) => boolean,
+): number {
+  let totalCents = 0;
+  for (const t of transactions) {
+    if (!t.is_completed) continue;
+    if (t.account?.currency !== currency) continue;
+    if (!predicate(t)) continue;
+    totalCents += toCents(t.amount);
+  }
+  return fromCents(totalCents);
+}
+
+/**
  * How much of a budget has been spent — across every one of its linked
  * categories — in its current occurrence (see `budgetPeriodRange`). Only
  * *settled* expenses count, same rule as `accountBalance`. A budget locks
@@ -989,20 +1051,21 @@ export function budgetProgress(
 ): BudgetProgress {
   const { from, to } = budgetPeriodRange(budget, referenceDate);
   const categorySet = new Set(categoryIds);
-  let spent = 0;
-  for (const t of transactions) {
-    if (!t.is_completed) continue;
-    if (t.type !== 'expense') continue;
-    if (t.account?.currency !== currency) continue;
-    if (!t.category?.id || !categorySet.has(t.category.id)) continue;
-    if (t.transaction_date < from || t.transaction_date > to) continue;
-    spent += Number(t.amount);
-  }
+  const spent = sumSettledAmount(
+    transactions,
+    currency,
+    (t) =>
+      t.type === 'expense' &&
+      t.category?.id != null &&
+      categorySet.has(t.category.id) &&
+      t.transaction_date >= from &&
+      t.transaction_date <= to,
+  );
   return {
     from,
     to,
     spent,
-    remaining: amount - spent,
+    remaining: fromCents(toCents(amount) - toCents(spent)),
     pct: amount > 0 ? (spent / amount) * 100 : 0,
     isOverBudget: spent > amount,
     hasCategories: categoryIds.length > 0,
@@ -1017,16 +1080,11 @@ export function categorySpentInRange(
   fromISO: string,
   toISO: string,
 ): number {
-  let spent = 0;
-  for (const t of transactions) {
-    if (!t.is_completed) continue;
-    if (t.type !== 'expense') continue;
-    if (t.account?.currency !== currency) continue;
-    if (t.category?.id !== categoryId) continue;
-    if (t.transaction_date < fromISO || t.transaction_date > toISO) continue;
-    spent += Number(t.amount);
-  }
-  return spent;
+  return sumSettledAmount(
+    transactions,
+    currency,
+    (t) => t.type === 'expense' && t.category?.id === categoryId && t.transaction_date >= fromISO && t.transaction_date <= toISO,
+  );
 }
 
 // --- goals --------------------------------------------------------------
@@ -1081,21 +1139,12 @@ export function goalProgress(
   transactions: GoalTx[],
   linkedAccount?: GoalLinkedAccount | null,
 ): GoalProgress {
-  let saved: number;
-  if (linkedAccount) {
-    saved = accountBalance(linkedAccount, transactions);
-  } else {
-    saved = 0;
-    for (const t of transactions) {
-      if (!t.is_completed) continue;
-      if (t.goal_id !== goalId) continue;
-      if (t.account?.currency !== currency) continue;
-      saved += Number(t.amount);
-    }
-  }
+  const saved = linkedAccount
+    ? accountBalance(linkedAccount, transactions)
+    : sumSettledAmount(transactions, currency, (t) => t.goal_id === goalId);
   return {
     saved,
-    remaining: targetAmount - saved,
+    remaining: fromCents(toCents(targetAmount) - toCents(saved)),
     pct: targetAmount > 0 ? (saved / targetAmount) * 100 : 0,
     isComplete: saved >= targetAmount,
   };

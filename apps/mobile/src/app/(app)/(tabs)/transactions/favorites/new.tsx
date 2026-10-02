@@ -3,7 +3,10 @@ import type { TransactionType } from '@repo/core/types';
 import { PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { FavoriteForm, type FavoriteFormInitial } from '../../../../../features/favorites/favorite-form';
+import {
+  FavoriteForm,
+  type FavoriteFormInitial,
+} from '../../../../../features/favorites/favorite-form';
 
 export default function NewFavorite() {
   const router = useRouter();

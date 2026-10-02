@@ -14,7 +14,7 @@ import {
   visibleHomeLayout,
   type HomeLayoutItem,
 } from '@repo/core/utils';
-import { Fab, Screen } from '@repo/ui';
+import { Fab, Screen, ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState, type ReactNode } from 'react';
@@ -68,9 +68,11 @@ export default function HomeScreen() {
   );
   const loading = loadingAccounts || loadingTx;
 
-  const now = useMemo(() => new Date(), []);
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [selectedMonthIdx, setSelectedMonthIdx] = useState(now.getMonth());
+  // Seeds the initial month only — frozen on purpose, re-reading it on every
+  // render would reset `selectedYear`/`selectedMonthIdx` back to "now"
+  // whenever the user has navigated to a different month.
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+  const [selectedMonthIdx, setSelectedMonthIdx] = useState(() => new Date().getMonth());
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
 
   const monthDate = useMemo(
@@ -82,7 +84,12 @@ export default function HomeScreen() {
   const yearLabel = String(selectedYear);
   const monthStart = `${selectedMonth}-01`;
   const monthEnd = todayISODate(new Date(selectedYear, selectedMonthIdx + 1, 0));
-  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonthIdx === now.getMonth();
+  // Derived from `today` (read fresh every render, not memoized/frozen) — a
+  // session left open across midnight should re-enable "mes siguiente"
+  // without needing a remount, the moment anything else causes this screen
+  // to re-render.
+  const [todayYear, todayMonth] = today.split('-').map(Number);
+  const isCurrentMonth = selectedYear === todayYear && selectedMonthIdx === (todayMonth ?? 1) - 1;
 
   const shiftMonth = (delta: number) => {
     const next = new Date(selectedYear, selectedMonthIdx + delta, 1);
@@ -141,7 +148,11 @@ export default function HomeScreen() {
           className="flex-row items-center gap-3 rounded-2xl bg-warning-tint p-4 active:opacity-80 dark:bg-warning-tint-dark"
         >
           <View className="h-10 w-10 items-center justify-center rounded-full bg-surface dark:bg-surface-dark">
-            <Ionicons name="time-outline" size={20} color={dark ? '#F3B25E' : '#B45309'} />
+            <Ionicons
+              name="time-outline"
+              size={20}
+              color={dark ? ICON_COLORS.warningDark : ICON_COLORS.warning}
+            />
           </View>
           <View className="flex-1">
             <Text className="text-[15px] font-bold text-warning dark:text-warning-dark">
@@ -152,7 +163,11 @@ export default function HomeScreen() {
               Aún no se han realizado, toca para revisarlos
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={dark ? '#F3B25E' : '#B45309'} />
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={dark ? ICON_COLORS.warningDark : ICON_COLORS.warning}
+          />
         </Pressable>
       ) : null,
 
@@ -168,7 +183,11 @@ export default function HomeScreen() {
           className="flex-row items-center gap-3 rounded-2xl bg-lime-tint p-4 active:opacity-80 dark:bg-lime-tint-dark"
         >
           <View className="h-10 w-10 items-center justify-center rounded-full bg-surface dark:bg-surface-dark">
-            <Ionicons name="calendar-outline" size={20} color={dark ? '#A3E635' : '#4D7C0F'} />
+            <Ionicons
+              name="calendar-outline"
+              size={20}
+              color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk}
+            />
           </View>
           <View className="flex-1">
             <Text className="text-[15px] font-bold text-lime-ink dark:text-lime-ink-dark">
@@ -182,7 +201,11 @@ export default function HomeScreen() {
                 : `El más cercano en ${nearestUpcomingDays} día${nearestUpcomingDays === 1 ? '' : 's'}`}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={dark ? '#A3E635' : '#4D7C0F'} />
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk}
+          />
         </Pressable>
       ) : null,
 
@@ -216,9 +239,7 @@ export default function HomeScreen() {
         </View>
       ),
 
-    weeklySpend: (
-      <WeeklySpendCard onPress={() => router.push('/(app)/analytics')} />
-    ),
+    weeklySpend: <WeeklySpendCard onPress={() => router.push('/(app)/analytics')} />,
 
     monthlyTrend: <MonthlyTrendChart />,
 
@@ -240,7 +261,11 @@ export default function HomeScreen() {
                 }`}
                 style={a.color ? { backgroundColor: `${a.color}26` } : undefined}
               >
-                <Ionicons name={ACCOUNT_TYPE_ICON[a.type]} size={16} color={a.color ?? '#4D7C0F'} />
+                <Ionicons
+                  name={ACCOUNT_TYPE_ICON[a.type]}
+                  size={16}
+                  color={a.color ?? ICON_COLORS.limeInk}
+                />
               </View>
               <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
                 {a.name}
@@ -266,7 +291,7 @@ export default function HomeScreen() {
     <Screen className="gap-5">
       <View className="flex-row items-center justify-center gap-4">
         <Pressable onPress={() => shiftMonth(-1)} hitSlop={10} accessibilityLabel="Mes anterior">
-          <Ionicons name="chevron-back" size={22} color="#9CA3AF" />
+          <Ionicons name="chevron-back" size={22} color={ICON_COLORS.ink3} />
         </Pressable>
         <Pressable
           onPress={() => setMonthPickerOpen(true)}
@@ -287,7 +312,7 @@ export default function HomeScreen() {
           <Ionicons
             name="chevron-forward"
             size={22}
-            color={isCurrentMonth ? '#D1D5DB' : '#9CA3AF'}
+            color={isCurrentMonth ? '#D1D5DB' : ICON_COLORS.ink3}
           />
         </Pressable>
       </View>
@@ -304,7 +329,11 @@ export default function HomeScreen() {
       />
 
       {loading ? (
-        <ScrollView className="flex-1" contentContainerClassName="pb-24" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="pb-24"
+          showsVerticalScrollIndicator={false}
+        >
           <HomeSkeleton />
         </ScrollView>
       ) : (
@@ -322,7 +351,7 @@ export default function HomeScreen() {
                 <Ionicons
                   name={hidden ? 'eye-outline' : 'eye-off-outline'}
                   size={20}
-                  color="#9CA3AF"
+                  color={ICON_COLORS.ink3}
                 />
               </Pressable>
             </View>
@@ -366,7 +395,10 @@ export default function HomeScreen() {
                 </Text>
               ) : (
                 month.map((m) => (
-                  <Text key={m.currency} className="mt-1 text-xl font-bold text-pos dark:text-pos-dark">
+                  <Text
+                    key={m.currency}
+                    className="mt-1 text-xl font-bold text-pos dark:text-pos-dark"
+                  >
                     {hidden ? '•••' : formatCurrency(m.income, m.currency)}
                     {month.length > 1 ? ` ${m.currency}` : ''}
                   </Text>

@@ -51,9 +51,6 @@ export const DEFAULT_IS_COMPLETED = true;
 /** What a blank Category cell falls back to — matches the seeded starter category. */
 export const FALLBACK_CATEGORY_NAME = 'Otro';
 
-/** Type + defaults given to an account auto-created during import. */
-export const AUTO_ACCOUNT_TYPE = 'debit' as const;
-
 /** Color given to a category/subcategory auto-created during import — same neutral tone as the seeded "Otro" category. */
 export const AUTO_CATEGORY_COLOR = '#94a3b8';
 

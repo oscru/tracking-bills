@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useTags, useTransactions, useUpdateTag } from '@repo/core/hooks';
 import { tagCounts } from '@repo/core/utils';
-import { Button, ConfirmSheet, Fab, PageHeader, Screen } from '@repo/ui';
+import { Button, ConfirmSheet, Fab, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -40,8 +40,7 @@ export default function TagDetail() {
     );
   }
 
-  const toggleArchive = () =>
-    updateTag.mutate({ id: tag.id, patch: { archived: !tag.archived } });
+  const toggleArchive = () => updateTag.mutate({ id: tag.id, patch: { archived: !tag.archived } });
 
   return (
     <Screen edges={['top']} className="gap-5">
@@ -66,7 +65,7 @@ export default function TagDetail() {
             className="rounded-2xl border border-line bg-surface p-4 active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
           >
             <View className="flex-row items-center gap-1.5">
-              <Ionicons name="swap-vertical" size={16} color={tag.color ?? '#4D7C0F'} />
+              <Ionicons name="swap-vertical" size={16} color={tag.color ?? ICON_COLORS.limeInk} />
               <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
                 Transacciones
               </Text>

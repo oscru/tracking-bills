@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCategories, useCategoryTree, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { Category, CategoryType } from '@repo/core/types';
-import { BottomSheet, CategoryDot, Chip } from '@repo/ui';
+import { BottomSheet, CategoryDot, Chip, ICON_COLORS } from '@repo/ui';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
@@ -65,7 +65,9 @@ export function CategoryPicker({
       .filter((p) => !p.archived || p.id === selectedId)
       .map((p) => ({
         ...p,
-        children: p.children.filter((c) => !excluded.has(c.id) && (!c.archived || c.id === selectedId)),
+        children: p.children.filter(
+          (c) => !excluded.has(c.id) && (!c.archived || c.id === selectedId),
+        ),
       }));
     if (parentOnly) {
       roots = roots.map((p) => ({ ...p, children: [] }));
@@ -107,7 +109,7 @@ export function CategoryPicker({
           value={q}
           onChangeText={setQ}
           placeholder="Buscar categoría…"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={ICON_COLORS.ink3}
           className="h-11 rounded-ctl border border-line bg-surface px-3 text-[15px] text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark"
         />
       </View>
@@ -158,7 +160,9 @@ export function CategoryPicker({
               <Text className="flex-1 text-[15px] font-bold text-ink dark:text-ink-dark">
                 {resolveCategoryLabel(p)}
               </Text>
-              {selectedId === p.id ? <Ionicons name="checkmark" size={18} color="#4D7C0F" /> : null}
+              {selectedId === p.id ? (
+                <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+              ) : null}
             </Pressable>
             {p.children.map((c) => (
               <Pressable
@@ -171,7 +175,7 @@ export function CategoryPicker({
                   {resolveCategoryLabel(c)}
                 </Text>
                 {selectedId === c.id ? (
-                  <Ionicons name="checkmark" size={16} color="#4D7C0F" />
+                  <Ionicons name="checkmark" size={16} color={ICON_COLORS.limeInk} />
                 ) : null}
               </Pressable>
             ))}

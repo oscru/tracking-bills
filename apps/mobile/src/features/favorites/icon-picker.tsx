@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheet, Chip } from '@repo/ui';
+import { BottomSheet, Chip, ICON_COLORS } from '@repo/ui';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
@@ -22,8 +22,8 @@ export function IconPicker({ visible, onClose, value, onSelect }: Props) {
   const [group, setGroup] = useState<IconCatalogGroup | null>(null);
 
   const results = useMemo(() => searchIconCatalog(q, group), [q, group]);
-  const selectedColor = dark ? '#A3E635' : '#4D7C0F';
-  const idleColor = dark ? '#9BA1A8' : '#6B7280';
+  const selectedColor = dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk;
+  const idleColor = dark ? ICON_COLORS.ink2Dark : ICON_COLORS.ink2;
 
   const pick = (icon: string) => {
     onSelect(icon);
@@ -38,7 +38,7 @@ export function IconPicker({ visible, onClose, value, onSelect }: Props) {
           value={q}
           onChangeText={setQ}
           placeholder="Buscar ícono…"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={ICON_COLORS.ink3}
           className="h-11 rounded-ctl border border-line bg-surface px-3 text-[15px] text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark"
         />
       </View>
@@ -75,10 +75,16 @@ export function IconPicker({ visible, onClose, value, onSelect }: Props) {
                 accessibilityState={{ selected }}
                 onPress={() => pick(entry.name)}
                 className={`h-[52px] w-[52px] items-center justify-center rounded-full ${
-                  selected ? 'bg-lime-tint dark:bg-lime-tint-dark' : 'bg-[#F6F7F9] dark:bg-line-dark'
+                  selected
+                    ? 'bg-lime-tint dark:bg-lime-tint-dark'
+                    : 'bg-[#F6F7F9] dark:bg-line-dark'
                 }`}
               >
-                <Ionicons name={entry.name} size={22} color={selected ? selectedColor : idleColor} />
+                <Ionicons
+                  name={entry.name}
+                  size={22}
+                  color={selected ? selectedColor : idleColor}
+                />
               </Pressable>
             );
           })}

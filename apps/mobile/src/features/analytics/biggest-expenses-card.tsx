@@ -25,7 +25,8 @@ export function BiggestExpensesCard({
 }: Props) {
   const top = expenses.slice(0, TOP_N);
   const title = metric === 'income' ? 'Ingresos más grandes' : 'Gastos más grandes';
-  const emptyLabel = metric === 'income' ? 'Sin ingresos en este periodo.' : 'Sin gastos en este periodo.';
+  const emptyLabel =
+    metric === 'income' ? 'Sin ingresos en este periodo.' : 'Sin gastos en este periodo.';
 
   return (
     <View className="gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">

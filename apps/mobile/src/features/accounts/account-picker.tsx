@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts } from '@repo/core/hooks';
 import type { Account } from '@repo/core/types';
-import { BottomSheet } from '@repo/ui';
+import { BottomSheet, ICON_COLORS } from '@repo/ui';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
@@ -61,7 +61,7 @@ export function AccountPicker({
           value={q}
           onChangeText={setQ}
           placeholder="Buscar cuenta…"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={ICON_COLORS.ink3}
           className="h-11 rounded-ctl border border-line bg-surface px-3 text-[15px] text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark"
         />
       </View>
@@ -79,7 +79,9 @@ export function AccountPicker({
                 {ACCOUNT_TYPE_LABEL[a.type]} · {a.currency}
               </Text>
             </View>
-            {selectedId === a.id ? <Ionicons name="checkmark" size={18} color="#4D7C0F" /> : null}
+            {selectedId === a.id ? (
+              <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+            ) : null}
           </Pressable>
         ))}
 
