@@ -365,9 +365,12 @@ export type Database = {
       }
       profiles: {
         Row: {
+          birth_date: string | null
           created_at: string
           currency: string
           email: string | null
+          full_name: string | null
+          gender: string | null
           home_hidden_items: string[]
           home_layout: string[] | null
           id: string
@@ -376,9 +379,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          birth_date?: string | null
           created_at?: string
           currency?: string
           email?: string | null
+          full_name?: string | null
+          gender?: string | null
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id: string
@@ -387,9 +393,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          birth_date?: string | null
           created_at?: string
           currency?: string
           email?: string | null
+          full_name?: string | null
+          gender?: string | null
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id?: string

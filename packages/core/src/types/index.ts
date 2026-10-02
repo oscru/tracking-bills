@@ -40,10 +40,14 @@ export type CategoryType = 'income' | 'expense';
 /** Overrides the OS light/dark setting when not "system". */
 export type ThemePreference = 'system' | 'light' | 'dark';
 
+/** Collected at sign-up. Null for OAuth sign-ins (no profile-completion flow yet). */
+export type Gender = 'female' | 'male' | 'other' | 'prefer_not_to_say';
+
 // Row aliases, with the loose `text` columns narrowed to their domain unions.
-export type Profile = Omit<Row<'profiles'>, 'plan' | 'theme_preference'> & {
+export type Profile = Omit<Row<'profiles'>, 'plan' | 'theme_preference' | 'gender'> & {
   plan: Plan;
   theme_preference: ThemePreference;
+  gender: Gender | null;
 };
 export type Account = Omit<Row<'accounts'>, 'type'> & { type: AccountType };
 export type Category = Omit<Row<'categories'>, 'type'> & { type: CategoryType };

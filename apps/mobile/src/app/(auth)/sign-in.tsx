@@ -6,6 +6,8 @@ import { Link } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { SsoButtons } from '../../features/auth/sso-buttons';
+
 export default function SignIn() {
   const signIn = useSignIn();
   const [email, setEmail] = useState('');
@@ -66,6 +68,8 @@ export default function SignIn() {
         <ErrorCard message={errors.form} />
 
         <Button label="Entrar" onPress={onSubmit} loading={signIn.isPending} />
+
+        <SsoButtons />
 
         <View className="flex-row justify-center gap-1">
           <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿No tienes cuenta?</Text>

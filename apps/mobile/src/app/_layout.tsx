@@ -10,10 +10,17 @@ import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as WebBrowser from 'expo-web-browser';
 
 import { FloatingDraftBubble } from '../features/transactions/floating-draft-bubble';
 
 const queryClient = createQueryClient();
+
+// On web, Google/Apple sign-in opens a popup that redirects back to this
+// same app; this call (a no-op on native) posts that popup's callback URL
+// to the opener and closes it. Runs unconditionally at load time because
+// the popup reloads the whole app fresh at the redirect URL.
+WebBrowser.maybeCompleteAuthSession();
 
 function AuthGate() {
   const { session, loading } = useSession();
