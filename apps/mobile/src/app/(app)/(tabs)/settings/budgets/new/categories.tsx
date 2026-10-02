@@ -1,4 +1,4 @@
-import { useAccounts, useCreateBudget, useFormError, useProfile } from '@repo/core/hooks';
+import { useCreateBudget, useFormError } from '@repo/core/hooks';
 import { budgetCreateSchema } from '@repo/core/validators';
 import { formatCurrency } from '@repo/core/utils';
 import { Button, ErrorCard, PageHeader, Screen } from '@repo/ui';
@@ -10,16 +10,14 @@ import { BudgetCategoriesEditor } from '../../../../../../features/budgets/budge
 import { useBudgetDraft } from '../../../../../../features/budgets/budget-draft-context';
 
 /** Step 2: split the step-1 total across one or more categories. The total
- * itself is locked here — going back to step 1 is the only way to change it. */
+ * and currency are both locked here — going back to step 1 is the only way
+ * to change them. */
 export default function NewBudgetCategories() {
   const router = useRouter();
-  const { data: accounts } = useAccounts();
-  const { data: profile } = useProfile();
   const { draft, setDraft } = useBudgetDraft();
   const create = useCreateBudget();
   const { error, setError, clearError } = useFormError();
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const totalAmount = Number(draft.amountText.replace(',', '.')) || 0;
 
@@ -32,6 +30,7 @@ export default function NewBudgetCategories() {
         ? {
             name: draft.name.trim(),
             amount: totalAmount,
+            currency: draft.currency,
             categories,
             period_type: 'custom' as const,
             start_date: draft.customFrom ?? '',
@@ -40,6 +39,7 @@ export default function NewBudgetCategories() {
         : {
             name: draft.name.trim(),
             amount: totalAmount,
+            currency: draft.currency,
             categories,
             period_type: draft.periodType,
             start_date: draft.startDate,
@@ -66,7 +66,7 @@ export default function NewBudgetCategories() {
           {draft.name || 'Presupuesto'}
         </Text>
         <Text className="text-lg font-bold text-ink dark:text-ink-dark">
-          {formatCurrency(totalAmount, currency)}
+          {formatCurrency(totalAmount, draft.currency)}
         </Text>
       </View>
 
@@ -75,7 +75,7 @@ export default function NewBudgetCategories() {
           categories={draft.categories}
           onChange={(categories) => setDraft((d) => ({ ...d, categories }))}
           totalAmount={totalAmount}
-          currency={currency}
+          currency={draft.currency}
         />
 
         <ErrorCard message={fieldError ?? error} />

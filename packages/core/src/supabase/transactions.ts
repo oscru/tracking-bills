@@ -133,6 +133,19 @@ export async function updateTransaction(
   patch: TransactionUpdateInput,
 ): Promise<Transaction> {
   const payload = transactionUpdateSchema.parse(patch) as UpdateRow<'transactions'>;
+  // A patch is a partial — a key that's simply absent leaves that column
+  // untouched. So switching `type` without also nulling the previous type's
+  // exclusive fields (e.g. an expense's `category_id` surviving a switch to
+  // `transfer`) leaves the row in a shape `transactions_transfer_shape`
+  // rejects, or worse, silently matching no check at all if it doesn't.
+  if (payload.type === 'transfer') {
+    payload.category_id = null;
+    if (payload.to_account_id) payload.goal_id = null;
+    else if (payload.goal_id) payload.to_account_id = null;
+  } else if (payload.type) {
+    payload.to_account_id = null;
+    payload.goal_id = null;
+  }
   return unwrap(
     await supabase.from('transactions').update(payload).eq('id', id).select().single(),
   ) as Transaction;

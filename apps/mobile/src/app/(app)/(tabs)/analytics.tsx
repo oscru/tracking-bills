@@ -56,8 +56,25 @@ export default function AnalyticsScreen() {
   const { data: accounts } = useAccounts();
   const { data: profile } = useProfile();
   const { data: transactions, isLoading } = useTransactions();
-  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
-  const tx = useMemo(() => transactions ?? [], [transactions]);
+  const defaultCurrency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
+
+  // All analytics below are scoped to one currency at a time — there's no
+  // exchange rate in this app to blend them correctly. `selectedCurrency`
+  // stays `null` ("use whichever is first") until the user actually taps a
+  // chip, so it tracks the data instead of freezing a possibly-stale choice.
+  const [selectedCurrency, setSelectedCurrency] = useState<string | null>(null);
+  const currencies = useMemo(() => {
+    const set = new Set((transactions ?? []).map((t) => t.account?.currency ?? defaultCurrency));
+    return [...set].sort();
+  }, [transactions, defaultCurrency]);
+  const currency =
+    selectedCurrency && currencies.includes(selectedCurrency)
+      ? selectedCurrency
+      : currencies[0] ?? defaultCurrency;
+  const tx = useMemo(
+    () => (transactions ?? []).filter((t) => (t.account?.currency ?? defaultCurrency) === currency),
+    [transactions, currency, defaultCurrency],
+  );
 
   const [period, setPeriod] = useState<AnalyticsPeriod>('month');
   const [referenceDate, setReferenceDate] = useState(() => new Date());
@@ -166,6 +183,22 @@ export default function AnalyticsScreen() {
         }}
       />
 
+      {currencies.length > 1 ? (
+        <View className="flex-row flex-wrap gap-2">
+          {currencies.map((c) => (
+            <Chip
+              key={c}
+              label={c}
+              selected={currency === c}
+              onPress={() => {
+                setSelectedCurrency(c);
+                setSelectedDate(null);
+              }}
+            />
+          ))}
+        </View>
+      ) : null}
+
       <View className="flex-row items-center justify-center gap-4">
         <Pressable onPress={() => shift(-1)} hitSlop={10} accessibilityLabel="Periodo anterior">
           <Ionicons name="chevron-back" size={22} color="#9CA3AF" />
@@ -264,7 +297,7 @@ export default function AnalyticsScreen() {
 
           <InsightsStrip insights={insights} currency={currency} metric={heatmapMetric} />
 
-          {period === 'month' ? <BudgetsProgressCard currency={currency} /> : null}
+          {period === 'month' ? <BudgetsProgressCard /> : null}
 
           <CategoryTrendCard trend={trend} onSeeAll={openMonthCategories} metric={heatmapMetric} />
 

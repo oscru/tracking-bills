@@ -131,6 +131,7 @@ export type Database = {
           amount: number
           archived: boolean
           created_at: string
+          currency: string
           end_date: string | null
           id: string
           name: string
@@ -144,6 +145,7 @@ export type Database = {
           amount: number
           archived?: boolean
           created_at?: string
+          currency?: string
           end_date?: string | null
           id?: string
           name: string
@@ -157,6 +159,7 @@ export type Database = {
           amount?: number
           archived?: boolean
           created_at?: string
+          currency?: string
           end_date?: string | null
           id?: string
           name?: string
@@ -319,6 +322,7 @@ export type Database = {
           contribution_amount: number | null
           contribution_interval_days: number | null
           created_at: string
+          currency: string
           deadline: string | null
           icon: string
           id: string
@@ -332,6 +336,7 @@ export type Database = {
           contribution_amount?: number | null
           contribution_interval_days?: number | null
           created_at?: string
+          currency?: string
           deadline?: string | null
           icon: string
           id?: string
@@ -345,6 +350,7 @@ export type Database = {
           contribution_amount?: number | null
           contribution_interval_days?: number | null
           created_at?: string
+          currency?: string
           deadline?: string | null
           icon?: string
           id?: string
@@ -369,6 +375,7 @@ export type Database = {
           created_at: string
           currency: string
           email: string | null
+          enabled_currencies: string[]
           full_name: string | null
           gender: string | null
           home_hidden_items: string[]
@@ -376,6 +383,8 @@ export type Database = {
           id: string
           plan: string
           theme_preference: string
+          travel_mode: boolean
+          travel_trip_tag_id: string | null
           updated_at: string
         }
         Insert: {
@@ -383,6 +392,7 @@ export type Database = {
           created_at?: string
           currency?: string
           email?: string | null
+          enabled_currencies?: string[]
           full_name?: string | null
           gender?: string | null
           home_hidden_items?: string[]
@@ -390,6 +400,8 @@ export type Database = {
           id: string
           plan?: string
           theme_preference?: string
+          travel_mode?: boolean
+          travel_trip_tag_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -397,6 +409,7 @@ export type Database = {
           created_at?: string
           currency?: string
           email?: string | null
+          enabled_currencies?: string[]
           full_name?: string | null
           gender?: string | null
           home_hidden_items?: string[]
@@ -404,9 +417,19 @@ export type Database = {
           id?: string
           plan?: string
           theme_preference?: string
+          travel_mode?: boolean
+          travel_trip_tag_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_travel_trip_tag_id_fkey"
+            columns: ["travel_trip_tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tags: {
         Row: {

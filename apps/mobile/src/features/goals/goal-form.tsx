@@ -20,6 +20,9 @@ export interface GoalFormInitial {
 interface Props {
   initial?: GoalFormInitial;
   currency: string;
+  /** Present only while the currency is still pickable (creation) — omit to show it locked, since an existing goal can't change currency. */
+  currencyOptions?: string[];
+  onChangeCurrency?: (v: string) => void;
   submitLabel: string;
   submitting: boolean;
   error?: string | null;
@@ -45,7 +48,18 @@ function paceFromDays(days: number | null | undefined): PacePeriod {
   return PACE_OPTIONS.find((o) => o.days === days)?.value ?? 'custom';
 }
 
-export function GoalForm({ initial, currency, submitLabel, submitting, error, onSubmit, onDirty, footer }: Props) {
+export function GoalForm({
+  initial,
+  currency,
+  currencyOptions,
+  onChangeCurrency,
+  submitLabel,
+  submitting,
+  error,
+  onSubmit,
+  onDirty,
+  footer,
+}: Props) {
   const [name, setName] = useState(initial?.name ?? '');
   const [icon, setIcon] = useState<string | null>(initial?.icon ?? null);
   const [amountText, setAmountText] = useState(
@@ -99,6 +113,7 @@ export function GoalForm({ initial, currency, submitLabel, submitting, error, on
       name: name.trim(),
       icon,
       target_amount: targetAmount,
+      currency,
       deadline,
       contribution_amount: hasPace ? contributionAmount : null,
       contribution_interval_days: hasPace ? intervalDays : null,
@@ -143,15 +158,36 @@ export function GoalForm({ initial, currency, submitLabel, submitting, error, on
         maxLength={60}
       />
 
-      <CurrencyField
-        label="Monto a alcanzar"
-        value={amountText}
-        onChangeText={(v) => {
-          setAmountText(v);
-          dirty();
-        }}
-        currency={currency}
-      />
+      <View className="gap-2">
+        <CurrencyField
+          label="Monto a alcanzar"
+          value={amountText}
+          onChangeText={(v) => {
+            setAmountText(v);
+            dirty();
+          }}
+          currency={currency}
+        />
+        {onChangeCurrency ? (
+          <View className="flex-row flex-wrap gap-2">
+            {(currencyOptions ?? [currency]).map((c) => (
+              <Chip
+                key={c}
+                label={c}
+                selected={currency === c}
+                onPress={() => {
+                  onChangeCurrency(c);
+                  dirty();
+                }}
+              />
+            ))}
+          </View>
+        ) : (
+          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+            Divisa: {currency} — no se puede cambiar después de crear el objetivo.
+          </Text>
+        )}
+      </View>
 
       <View className="gap-2">
         <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">

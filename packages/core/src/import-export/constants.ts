@@ -14,6 +14,7 @@ export const HEADER_ALIASES = {
   account: ['account', 'cuenta'],
   status: ['status', 'estado'],
   category: ['category', 'categoría', 'categoria'],
+  currency: ['currency', 'moneda', 'divisa'],
   subcategory: [
     'subcategory',
     'sub-category',

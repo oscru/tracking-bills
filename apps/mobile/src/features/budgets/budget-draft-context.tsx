@@ -7,6 +7,7 @@ import type { CategoryAllocation } from './budget-categories-editor';
 export interface BudgetDraft {
   name: string;
   amountText: string;
+  currency: string;
   periodType: BudgetPeriodType;
   /** Weekly/biweekly/monthly only — 'custom' uses customFrom/customTo instead. */
   startDate: string;
@@ -16,10 +17,11 @@ export interface BudgetDraft {
   categories: CategoryAllocation[];
 }
 
-function defaultDraft(): BudgetDraft {
+function defaultDraft(currency: string): BudgetDraft {
   return {
     name: '',
     amountText: '',
+    currency,
     periodType: 'monthly',
     startDate: todayISODate(),
     customFrom: null,
@@ -39,8 +41,14 @@ const BudgetDraftContext = createContext<BudgetDraftContextValue | null>(null);
 /** Holds the in-progress "nuevo presupuesto" wizard state across its two
  * screens (step 1: básicos, step 2: categorías) — scoped to that route
  * subtree so it resets whenever the flow is re-entered. */
-export function BudgetDraftProvider({ children }: { children: ReactNode }) {
-  const [draft, setDraft] = useState<BudgetDraft>(defaultDraft);
+export function BudgetDraftProvider({
+  children,
+  initialCurrency,
+}: {
+  children: ReactNode;
+  initialCurrency: string;
+}) {
+  const [draft, setDraft] = useState<BudgetDraft>(() => defaultDraft(initialCurrency));
   return <BudgetDraftContext.Provider value={{ draft, setDraft }}>{children}</BudgetDraftContext.Provider>;
 }
 

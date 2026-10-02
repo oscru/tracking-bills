@@ -43,6 +43,8 @@ export default function EditTransaction() {
         amount: tx.amount,
         account_id: tx.account_id,
         to_account_id: tx.to_account_id,
+        goal_id: tx.goal_id,
+        goalName: tx.goal?.name,
         category_id: tx.category_id,
         tags: tx.tags.map((t) => t.id),
         description: tx.description,

@@ -26,8 +26,11 @@ export const accountCreateSchema = z.object({
   include_in_total: z.boolean().default(true),
 });
 
+// `currency`, like `initial_balance`, is locked after creation — changing it
+// would silently reinterpret every transaction already booked against the
+// account instead of converting anything.
 export const accountUpdateSchema = accountCreateSchema
-  .omit({ initial_balance: true })
+  .omit({ initial_balance: true, currency: true })
   .partial()
   .extend({ archived: z.boolean().optional() });
 

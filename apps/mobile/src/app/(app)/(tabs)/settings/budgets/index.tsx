@@ -1,4 +1,4 @@
-import { useAccounts, useBudgets, useProfile, useTransactions } from '@repo/core/hooks';
+import { useBudgets, useTransactions } from '@repo/core/hooks';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetProgress, formatDate, toFriendlyMessage } from '@repo/core/utils';
 import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl } from '@repo/ui';
@@ -23,11 +23,8 @@ const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
 export default function BudgetsScreen() {
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
-  const { data: accounts } = useAccounts();
-  const { data: profile } = useProfile();
   const { data: budgets, isLoading, error } = useBudgets();
   const { data: transactions } = useTransactions();
-  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const visible = (budgets ?? []).filter((b) => (status === 'archived' ? b.archived : !b.archived));
 
@@ -53,7 +50,13 @@ export default function BudgetsScreen() {
         <ScrollView className="flex-1" contentContainerClassName="gap-3 pb-24">
           {visible.map((b) => {
             const categoryIds = b.categories.map((c) => c.category.id);
-            const progress = budgetProgress(categoryIds, Number(b.amount), b, transactions ?? []);
+            const progress = budgetProgress(
+              categoryIds,
+              Number(b.amount),
+              b.currency,
+              b,
+              transactions ?? [],
+            );
             const rangeLabel = `${formatDate(progress.from)} – ${formatDate(progress.to)}`;
             const periodLabel =
               b.period_type === 'custom'
@@ -84,7 +87,7 @@ export default function BudgetsScreen() {
                   amount={Number(b.amount)}
                   pct={progress.pct}
                   isOverBudget={progress.isOverBudget}
-                  currency={currency}
+                  currency={b.currency}
                 />
 
                 <Text className="text-xs text-ink-3 dark:text-ink-3-dark">

@@ -15,6 +15,8 @@ interface Props {
   onSelect: (id: string) => void;
   /** Hide this account (e.g. the transfer's "from" account in the "to" picker). */
   excludeId?: string | null;
+  /** Only show accounts in this currency — a transfer/contribution can't cross currencies without a conversion step this app doesn't have. */
+  currencyFilter?: string | null;
 }
 
 /** Searchable flat list of active accounts — avoids an unbounded row of pills. */
@@ -25,6 +27,7 @@ export function AccountPicker({
   selectedId,
   onSelect,
   excludeId,
+  currencyFilter,
 }: Props) {
   const [q, setQ] = useState('');
   const { data: accounts } = useAccounts();
@@ -32,11 +35,12 @@ export function AccountPicker({
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const active = (accounts ?? []).filter(
-      (a: Account) => !a.archived && a.id !== excludeId,
+      (a: Account) =>
+        !a.archived && a.id !== excludeId && (!currencyFilter || a.currency === currencyFilter),
     );
     if (!needle) return active;
     return active.filter((a) => a.name.toLowerCase().includes(needle));
-  }, [accounts, q, excludeId]);
+  }, [accounts, q, excludeId, currencyFilter]);
 
   const pick = (id: string) => {
     onSelect(id);

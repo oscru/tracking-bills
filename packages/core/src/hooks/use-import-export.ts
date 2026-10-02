@@ -8,8 +8,7 @@ import { queryKeys } from './keys';
 export function useRunImportPlan() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ plan, defaultCurrency }: { plan: ImportPlan; defaultCurrency: string }) =>
-      runImportPlan(plan, { defaultCurrency }),
+    mutationFn: (plan: ImportPlan) => runImportPlan(plan),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
       qc.invalidateQueries({ queryKey: queryKeys.categories.all });

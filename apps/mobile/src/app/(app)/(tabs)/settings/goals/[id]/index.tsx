@@ -1,13 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import {
-  useAccounts,
-  useDeleteGoal,
-  useFormError,
-  useGoals,
-  useProfile,
-  useTransactions,
-  useUpdateGoal,
-} from '@repo/core/hooks';
+import { useDeleteGoal, useFormError, useGoals, useTransactions, useUpdateGoal } from '@repo/core/hooks';
 import {
   daysUntil,
   formatCurrency,
@@ -35,8 +27,6 @@ function deadlineLabel(deadline: string | null): string {
 export default function GoalDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data: accounts } = useAccounts();
-  const { data: profile } = useProfile();
   const { data: goals, isLoading } = useGoals();
   const { data: transactions } = useTransactions();
   const updateGoal = useUpdateGoal();
@@ -45,7 +35,6 @@ export default function GoalDetail() {
   const [contributeOpen, setContributeOpen] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const goal = (goals ?? []).find((g) => g.id === id);
 
@@ -65,7 +54,7 @@ export default function GoalDetail() {
   }
 
   const targetAmount = Number(goal.target_amount);
-  const progress = goalProgress(goal.id, targetAmount, transactions ?? []);
+  const progress = goalProgress(goal.id, targetAmount, goal.currency, transactions ?? []);
   const pace =
     goal.contribution_amount != null && goal.contribution_interval_days != null
       ? goalPace(
@@ -95,7 +84,7 @@ export default function GoalDetail() {
       ? null
       : pace.status === 'on-track'
         ? 'Vas exactamente al ritmo planeado'
-        : `Vas ${formatCurrency(Math.abs(pace.difference), currency)} ${pace.status === 'ahead' ? 'adelantado' : 'atrasado'} de tu ritmo planeado`;
+        : `Vas ${formatCurrency(Math.abs(pace.difference), goal.currency)} ${pace.status === 'ahead' ? 'adelantado' : 'atrasado'} de tu ritmo planeado`;
 
   return (
     <Screen edges={['top']} className="gap-5">
@@ -120,7 +109,8 @@ export default function GoalDetail() {
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                  {progress.isComplete ? '¡Meta alcanzada!' : deadlineLabel(goal.deadline)}
+                  {progress.isComplete ? '¡Meta alcanzada!' : deadlineLabel(goal.deadline)} ·{' '}
+                  {goal.currency}
                 </Text>
                 {goal.deadline ? (
                   <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
@@ -135,13 +125,13 @@ export default function GoalDetail() {
               target={targetAmount}
               pct={progress.pct}
               isComplete={progress.isComplete}
-              currency={currency}
+              currency={goal.currency}
             />
 
             {pace ? (
               <View className="gap-0.5 border-t border-line pt-3 dark:border-line-dark">
                 <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                  Ritmo planeado: {formatCurrency(Number(goal.contribution_amount), currency)} cada{' '}
+                  Ritmo planeado: {formatCurrency(Number(goal.contribution_amount), goal.currency)} cada{' '}
                   {goal.contribution_interval_days} días
                 </Text>
                 <Text className={`text-xs font-semibold ${paceColor}`}>{paceText}</Text>
@@ -177,7 +167,7 @@ export default function GoalDetail() {
                       </Text>
                     </View>
                     <Text className="text-[15px] font-semibold text-pos dark:text-pos-dark">
-                      +{formatCurrency(t.amount, currency)}
+                      +{formatCurrency(t.amount, goal.currency)}
                     </Text>
                   </View>
                 ))}
@@ -220,6 +210,7 @@ export default function GoalDetail() {
         onClose={() => setContributeOpen(false)}
         goalId={goal.id}
         goalName={goal.name}
+        goalCurrency={goal.currency}
       />
 
       <ConfirmSheet

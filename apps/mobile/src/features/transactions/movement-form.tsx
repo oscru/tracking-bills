@@ -2,6 +2,7 @@ import {
   useAccounts,
   useCategories,
   useFavoriteTransactions,
+  useProfile,
   useRecordFavoriteTransactionUse,
   useTags,
 } from '@repo/core/hooks';
@@ -51,6 +52,10 @@ export interface MovementFormInitial {
   amount?: number;
   account_id?: string | null;
   to_account_id?: string | null;
+  /** A transfer's destination can be a goal instead of an account — see `goalName`. */
+  goal_id?: string | null;
+  /** Display name for `goal_id`, since this form never loads the full goals list. */
+  goalName?: string | null;
   category_id?: string | null;
   /** Tag ids currently on the transaction. */
   tags?: string[];
@@ -111,6 +116,7 @@ export function MovementForm({
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
   const { data: tags } = useTags();
+  const { data: profile } = useProfile();
   const { data: favorites } = useFavoriteTransactions();
   const recordFavoriteUse = useRecordFavoriteTransactionUse();
   const activeAccounts = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
@@ -135,10 +141,23 @@ export function MovementForm({
   const [pickedTo, setTo] = useState<string | null>(
     draft?.toAccountId ?? initial?.to_account_id ?? null,
   );
+  // A transfer aimed at a goal instead of an account (see `add-contribution-sheet.tsx`
+  // for how those get created). This form has no UI to *pick* a goal — it only
+  // preserves one already on the transaction being edited, clearing it the moment
+  // the user picks a destination account instead (see the "A" `AccountPicker` below).
+  const [goalId, setGoalId] = useState<string | null>(initial?.goal_id ?? null);
+  const [goalName] = useState<string | null>(initial?.goalName ?? null);
   const [categoryId, setCategoryId] = useState<string | null>(
     draft?.categoryId ?? initial?.category_id ?? null,
   );
-  const [tagIds, setTagIds] = useState<string[]>(draft?.tagIds ?? initial?.tags ?? []);
+  // Travel mode: a brand-new movement (not a restored minimized draft, not an
+  // edit) defaults to the trip tag, same as if the user had picked it by
+  // hand — seeded once at mount, same as `draft`/`initial` just above.
+  const [tagIds, setTagIds] = useState<string[]>(() => {
+    const base = draft?.tagIds ?? initial?.tags ?? [];
+    const tripTagId = mode === 'create' && !draft && profile?.travel_mode ? profile.travel_trip_tag_id : null;
+    return tripTagId && !base.includes(tripTagId) ? [...base, tripTagId] : base;
+  });
   const [description, setDescription] = useState(draft?.description ?? initial?.description ?? '');
   const [date, setDate] = useState(draft?.date ?? initial?.transaction_date ?? todayISODate());
   const [isCompleted, setIsCompleted] = useState(
@@ -220,7 +239,24 @@ export function MovementForm({
   const changeType = (next: TransactionType) => {
     setType(next);
     if (next === 'transfer') setCategoryId(null);
-    else setTo(null);
+    else {
+      setTo(null);
+      setGoalId(null);
+    }
+  };
+
+  // Changing the source account can leave a picked destination account in a
+  // different currency — this app has no exchange rate to convert through,
+  // so a mismatched destination is cleared rather than left silently wrong.
+  // A goal destination is cleared on any source change at all: it was tied
+  // to this exact source account's currency when first picked (see
+  // `AddContributionSheet`), and this form has no way to re-verify that
+  // without fetching the full goals list just for this one check.
+  const selectFrom = (id: string) => {
+    setFrom(id);
+    const nextCurrency = activeAccounts.find((a) => a.id === id)?.currency;
+    if (selectedToAccount && selectedToAccount.currency !== nextCurrency) setTo(null);
+    if (goalId) setGoalId(null);
   };
 
   // Quick-fills the account/category/description/amount a favorite carries —
@@ -257,13 +293,15 @@ export function MovementForm({
     };
     const payload =
       type === 'transfer'
-        ? { ...common, type: 'transfer' as const, to_account_id: toId ?? '' }
+        ? toId
+          ? { ...common, type: 'transfer' as const, to_account_id: toId }
+          : { ...common, type: 'transfer' as const, goal_id: goalId ?? '' }
         : { ...common, type, category_id: categoryId };
 
     const parsed = transactionCreateSchema.safeParse(payload);
     if (!parsed.success) {
       setFormError(
-        type === 'transfer' && !toId
+        type === 'transfer' && !toId && !goalId
           ? 'Elige la cuenta destino'
           : (parsed.error.issues[0]?.message ?? 'Revisa los datos'),
       );
@@ -355,7 +393,7 @@ export function MovementForm({
                   key={a.id}
                   label={a.name}
                   selected={fromId === a.id}
-                  onPress={() => setFrom(a.id)}
+                  onPress={() => selectFrom(a.id)}
                 />
               ))}
         </View>
@@ -435,8 +473,18 @@ export function MovementForm({
                 onPress={() => setToAccountPickerOpen(true)}
                 className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
               >
-                <Text className="text-base text-ink dark:text-ink-dark">
-                  {selectedToAccount ? selectedToAccount.name : 'Elige una cuenta'}
+                <Text
+                  className={
+                    selectedToAccount || goalId
+                      ? 'text-base text-ink dark:text-ink-dark'
+                      : 'text-base text-ink-3 dark:text-ink-3-dark'
+                  }
+                >
+                  {selectedToAccount
+                    ? selectedToAccount.name
+                    : goalId
+                      ? `Aportación a “${goalName ?? 'tu meta'}”`
+                      : 'Elige una cuenta'}
                 </Text>
                 <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
                   Ver todas ›
@@ -444,7 +492,11 @@ export function MovementForm({
               </Pressable>
             </Field>
             <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-              No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas.
+              {goalId && !selectedToAccount
+                ? 'Esta transferencia va hacia una meta de ahorro, no a otra cuenta — elige una cuenta aquí si quieres redirigirla.'
+                : selectedFromAccount
+                  ? `No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas en ${selectedFromAccount.currency} (esta app no convierte divisas).`
+                  : 'No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas.'}
             </Text>
           </>
         ) : (
@@ -504,6 +556,11 @@ export function MovementForm({
               Ver todas ›
             </Text>
           </Pressable>
+          {profile?.travel_mode && profile.travel_trip_tag_id && tagIds.includes(profile.travel_trip_tag_id) ? (
+            <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+              Se añadió la tag de tu viaje automáticamente — modo viaje está activo.
+            </Text>
+          ) : null}
         </Field>
 
         <TextField
@@ -573,15 +630,19 @@ export function MovementForm({
         onClose={() => setAccountPickerOpen(false)}
         title={type === 'transfer' ? 'Cuenta origen' : 'Cuenta'}
         selectedId={fromId}
-        onSelect={setFrom}
+        onSelect={selectFrom}
       />
       <AccountPicker
         visible={toAccountPickerOpen}
         onClose={() => setToAccountPickerOpen(false)}
         title="Cuenta destino"
         selectedId={toId}
-        onSelect={setTo}
+        onSelect={(id) => {
+          setTo(id);
+          setGoalId(null);
+        }}
         excludeId={fromId}
+        currencyFilter={selectedFromAccount?.currency ?? null}
       />
       <MultiSelectSheet
         visible={tagPickerOpen}

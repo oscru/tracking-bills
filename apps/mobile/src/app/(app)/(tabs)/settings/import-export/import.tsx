@@ -33,11 +33,13 @@ export default function ImportScreen() {
 
     setStep({ name: 'reading' });
     try {
-      if (!accounts || !categories || !tags) throw new Error('Aún se están cargando tus datos, intenta de nuevo.');
+      if (!accounts || !categories || !tags || !profile) {
+        throw new Error('Aún se están cargando tus datos, intenta de nuevo.');
+      }
       const base64 = await readPickedFileAsBase64(asset);
       const sheets = readWorkbookFromBase64(base64);
       const parsed = parseWorkbook(sheets);
-      const plan = buildImportPlan(parsed, { accounts, categories, tags });
+      const plan = buildImportPlan(parsed, { accounts, categories, tags }, profile.currency);
       setStep({ name: 'preview', fileName: asset.name, plan });
     } catch (err) {
       setStep({ name: 'error', message: err instanceof Error ? err.message : String(err) });
@@ -46,13 +48,10 @@ export default function ImportScreen() {
 
   const confirmImport = (plan: ImportPlan) => {
     setStep({ name: 'importing', plan });
-    runPlan.mutate(
-      { plan, defaultCurrency: profile?.currency ?? 'MXN' },
-      {
-        onSuccess: (result) => setStep({ name: 'done', result }),
-        onError: (err) => setStep({ name: 'error', message: err instanceof Error ? err.message : String(err) }),
-      },
-    );
+    runPlan.mutate(plan, {
+      onSuccess: (result) => setStep({ name: 'done', result }),
+      onError: (err) => setStep({ name: 'error', message: err instanceof Error ? err.message : String(err) }),
+    });
   };
 
   return (

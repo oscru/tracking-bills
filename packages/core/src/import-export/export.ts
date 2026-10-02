@@ -3,8 +3,11 @@ import type { TransactionWithRefs } from '../supabase';
 import { MOVEMENTS_SHEET_NAME, TRANSFERS_SHEET_NAME } from './constants';
 import { writeWorkbookToBase64 } from './workbook';
 
-const MOVEMENT_HEADER = ['Date', 'Description', 'Value', 'Account', 'Status', 'Category', 'Subcategory', 'Tags'];
-const TRANSFER_HEADER = ['Date', 'From Account', 'To Account', 'Value', 'Tags'];
+// `Currency` is a trailing addition beyond the reference format's own columns
+// (see the module doc below) — purely so a file this app exports round-trips
+// its accounts' currencies on re-import instead of falling back to a guess.
+const MOVEMENT_HEADER = ['Date', 'Description', 'Value', 'Account', 'Status', 'Category', 'Subcategory', 'Tags', 'Currency'];
+const TRANSFER_HEADER = ['Date', 'From Account', 'To Account', 'Value', 'Tags', 'Currency'];
 
 function movementRow(
   tx: TransactionWithRefs,
@@ -25,6 +28,7 @@ function movementRow(
     parentName,
     subName,
     tx.tags.map((t) => t.name).join(', '),
+    tx.account?.currency ?? '',
   ];
 }
 
@@ -34,7 +38,16 @@ function transferRow(tx: TransactionWithRefs): unknown[] {
   // placeholder rather than silently dropped — it won't round-trip as a
   // goal contribution on re-import, but the record itself isn't lost.
   const toName = tx.to_account?.name ?? (tx.goal ? `Objetivo: ${tx.goal.name}` : '');
-  return [tx.transaction_date, tx.account?.name ?? '', toName, Number(tx.amount), tx.tags.map((t) => t.name).join(', ')];
+  // Both sides of a transfer are always the same currency (the app no longer
+  // permits creating one otherwise), so the source account's is enough.
+  return [
+    tx.transaction_date,
+    tx.account?.name ?? '',
+    toName,
+    Number(tx.amount),
+    tx.tags.map((t) => t.name).join(', '),
+    tx.account?.currency ?? '',
+  ];
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useAccounts, useProfile } from '@repo/core/hooks';
+import { useProfile } from '@repo/core/hooks';
 import { PageHeader, Screen, Button, ErrorCard } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -7,15 +7,13 @@ import { ScrollView } from 'react-native';
 import { BudgetBasicsFields } from '../../../../../../features/budgets/budget-basics-fields';
 import { useBudgetDraft } from '../../../../../../features/budgets/budget-draft-context';
 
-/** Step 1: name, amount (locked once you move on to step 2), and the
- * period's size/anchor/repetition. */
+/** Step 1: name, amount + currency (both locked once the budget is created),
+ * and the period's size/anchor/repetition. */
 export default function NewBudgetBasics() {
   const router = useRouter();
-  const { data: accounts } = useAccounts();
   const { data: profile } = useProfile();
   const { draft, setDraft } = useBudgetDraft();
   const [fieldError, setFieldError] = useState<string | null>(null);
-  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const goToCategories = () => {
     setFieldError(null);
@@ -48,7 +46,9 @@ export default function NewBudgetBasics() {
             setDraft((d) => ({ ...d, amountText: v }));
             setFieldError(null);
           }}
-          currency={currency}
+          currency={draft.currency}
+          currencyOptions={profile?.enabled_currencies}
+          onChangeCurrency={(v) => setDraft((d) => ({ ...d, currency: v }))}
           periodType={draft.periodType}
           onChangePeriodType={(v) => {
             setDraft((d) => ({ ...d, periodType: v }));

@@ -6,10 +6,11 @@ import {
   categorySpendBreakdown,
   daysUntil,
   formatCurrency,
+  groupByAccountCurrency,
   monthTotals,
   splitPendingByDate,
   todayISODate,
-  totalBalance,
+  totalBalancesByCurrency,
   visibleHomeLayout,
   type HomeLayoutItem,
 } from '@repo/core/utils';
@@ -42,8 +43,14 @@ export default function HomeScreen() {
 
   const active = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
   const visibleAccounts = useMemo(() => active.filter((a) => a.show_on_home), [active]);
+  // The default currency only seeds the account-creation form now — it's no
+  // longer a forced conversion target, so totals below group by each
+  // account's own currency instead of blending them into one number.
   const currency = profile?.currency ?? active[0]?.currency ?? 'MXN';
-  const balance = useMemo(() => totalBalance(active, transactions ?? []), [active, transactions]);
+  const balances = useMemo(
+    () => totalBalancesByCurrency(active, transactions ?? []),
+    [active, transactions],
+  );
   const today = todayISODate();
   // Overdue (should've already happened) and upcoming (still ahead of
   // schedule) mean very different things, so they get two separate cards —
@@ -87,10 +94,16 @@ export default function HomeScreen() {
     () => monthTotals(transactions ?? [], selectedMonth),
     [transactions, selectedMonth],
   );
-  const categoryBreakdown = useMemo(
-    () => categorySpendBreakdown(transactions ?? [], selectedMonth),
-    [transactions, selectedMonth],
-  );
+  // One breakdown per currency present in the user's transactions — never
+  // blended together (see `groupByAccountCurrency`).
+  const categoryBreakdowns = useMemo(() => {
+    return groupByAccountCurrency(transactions ?? [])
+      .map((g) => ({
+        currency: g.currency,
+        breakdown: categorySpendBreakdown(g.transactions, selectedMonth),
+      }))
+      .filter((g) => g.breakdown.length > 0);
+  }, [transactions, selectedMonth]);
 
   const openMonth = (type: 'income' | 'expense') =>
     router.push({
@@ -173,19 +186,38 @@ export default function HomeScreen() {
         </Pressable>
       ) : null,
 
-    budgets: <BudgetsCard currency={currency} />,
+    budgets: <BudgetsCard />,
 
-    categorySpend: (
-      <CategorySpendCard
-        breakdown={categoryBreakdown}
-        currency={currency}
-        onSeeAll={openMonthlySpending}
-        onSelectCategory={openCategory}
-      />
-    ),
+    categorySpend:
+      categoryBreakdowns.length === 0 ? (
+        <CategorySpendCard
+          breakdown={[]}
+          currency={currency}
+          onSeeAll={openMonthlySpending}
+          onSelectCategory={openCategory}
+        />
+      ) : (
+        <View className="gap-3">
+          {categoryBreakdowns.map((g) => (
+            <View key={g.currency} className="gap-1.5">
+              {categoryBreakdowns.length > 1 ? (
+                <Text className="px-1 text-xs font-semibold text-ink-3 dark:text-ink-3-dark">
+                  {g.currency}
+                </Text>
+              ) : null}
+              <CategorySpendCard
+                breakdown={g.breakdown}
+                currency={g.currency}
+                onSeeAll={openMonthlySpending}
+                onSelectCategory={openCategory}
+              />
+            </View>
+          ))}
+        </View>
+      ),
 
     weeklySpend: (
-      <WeeklySpendCard currency={currency} onPress={() => router.push('/(app)/analytics')} />
+      <WeeklySpendCard onPress={() => router.push('/(app)/analytics')} />
     ),
 
     monthlyTrend: <MonthlyTrendChart />,
@@ -294,30 +326,73 @@ export default function HomeScreen() {
                 />
               </Pressable>
             </View>
-            <Text className="mt-1 text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
-              {hidden ? '• • • •' : formatCurrency(balance, currency)}
-            </Text>
+            {balances.length === 0 ? (
+              <Text className="mt-1 text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
+                {hidden ? '• • • •' : formatCurrency(0, currency)}
+              </Text>
+            ) : (
+              <View className={balances.length > 1 ? 'mt-1 gap-1' : undefined}>
+                {balances.map((b) => (
+                  <View
+                    key={b.currency}
+                    className={balances.length > 1 ? 'flex-row items-baseline gap-1.5' : undefined}
+                  >
+                    <Text className="text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
+                      {hidden ? '• • • •' : formatCurrency(b.total, b.currency)}
+                    </Text>
+                    {balances.length > 1 ? (
+                      <Text className="text-sm font-semibold text-ink-3 dark:text-ink-3-dark">
+                        {b.currency}
+                      </Text>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
 
-          {/* Fixed, like the balance card above — not user-reorderable/hideable. */}
+          {/* Fixed, like the balance card above — not user-reorderable/hideable. One
+          row per currency that actually moved money this month; "sin movimientos"
+          when none did. */}
           <View className="flex-row gap-3">
             <Pressable
               onPress={() => openMonth('income')}
               className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
             >
               <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Ingresos</Text>
-              <Text className="mt-1 text-xl font-bold text-pos dark:text-pos-dark">
-                {hidden ? '•••' : formatCurrency(month.income, currency)}
-              </Text>
+              {month.length === 0 ? (
+                <Text className="mt-1 text-xl font-bold text-pos dark:text-pos-dark">
+                  {hidden ? '•••' : formatCurrency(0, currency)}
+                </Text>
+              ) : (
+                month.map((m) => (
+                  <Text key={m.currency} className="mt-1 text-xl font-bold text-pos dark:text-pos-dark">
+                    {hidden ? '•••' : formatCurrency(m.income, m.currency)}
+                    {month.length > 1 ? ` ${m.currency}` : ''}
+                  </Text>
+                ))
+              )}
             </Pressable>
             <Pressable
               onPress={() => openMonth('expense')}
               className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
             >
               <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Gastos</Text>
-              <Text className="mt-1 text-xl font-bold text-danger dark:text-danger-dark">
-                {hidden ? '•••' : formatCurrency(month.expense, currency)}
-              </Text>
+              {month.length === 0 ? (
+                <Text className="mt-1 text-xl font-bold text-danger dark:text-danger-dark">
+                  {hidden ? '•••' : formatCurrency(0, currency)}
+                </Text>
+              ) : (
+                month.map((m) => (
+                  <Text
+                    key={m.currency}
+                    className="mt-1 text-xl font-bold text-danger dark:text-danger-dark"
+                  >
+                    {hidden ? '•••' : formatCurrency(m.expense, m.currency)}
+                    {month.length > 1 ? ` ${m.currency}` : ''}
+                  </Text>
+                ))
+              )}
             </Pressable>
           </View>
 

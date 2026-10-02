@@ -9,6 +9,8 @@ export type EntityRef = { existingId: string } | { newKey: string };
 export interface NewAccountPlan {
   key: string;
   name: string;
+  /** From the file's Currency/Moneda column if any row for this account specified one, otherwise the import's default. Locked in from here on — accounts can't change currency after creation. */
+  currency: string;
 }
 export interface NewCategoryPlan {
   key: string;
@@ -70,6 +72,7 @@ const refKey = (ref: EntityRef) => ('existingId' in ref ? `existing:${ref.existi
 
 class CatalogResolver {
   private accountIndex = new Map<string, Account>();
+  private accountById = new Map<string, Account>();
   private topCategoryIndex = new Map<string, Category>();
   private subCategoryIndex = new Map<string, Category>();
   private tagIndex = new Map<string, Tag>();
@@ -79,10 +82,15 @@ class CatalogResolver {
   newSubcategories = new Map<string, NewSubcategoryPlan>();
   newTags = new Map<string, NewTagPlan>();
 
-  constructor(catalogs: ImportCatalogs) {
+  constructor(
+    catalogs: ImportCatalogs,
+    private defaultCurrency: string,
+    private issues: RowIssue[],
+  ) {
     for (const a of catalogs.accounts) {
       const k = keyName(a.name);
       if (!this.accountIndex.has(k)) this.accountIndex.set(k, a);
+      this.accountById.set(a.id, a);
     }
     for (const c of catalogs.categories) {
       if (c.parent_id == null) {
@@ -99,12 +107,46 @@ class CatalogResolver {
     }
   }
 
-  account(name: string): EntityRef {
+  /**
+   * Resolves an account by name, same as before, but now also tracks
+   * currency: an existing account's currency is authoritative (a conflicting
+   * hint from the file is just a warning, never changes it — accounts are
+   * locked to their currency); a brand-new account takes the first currency
+   * hint any of its rows gives it, falling back to `defaultCurrency` when
+   * none ever does. `currencyOf` resolves either case back to a plain string
+   * for the mismatch check in `buildImportPlan`.
+   */
+  account(name: string, currencyHint: string | null, context: { sheet: string; row: number }): EntityRef {
     const k = keyName(name);
     const existing = this.accountIndex.get(k);
-    if (existing) return { existingId: existing.id };
-    if (!this.newAccounts.has(k)) this.newAccounts.set(k, { key: k, name: name.trim() });
+    if (existing) {
+      if (currencyHint && currencyHint !== existing.currency) {
+        this.issues.push({
+          sheet: context.sheet,
+          row: context.row,
+          level: 'warning',
+          message: `Divisa del archivo (${currencyHint}) distinta a la de la cuenta existente "${existing.name}" (${existing.currency}) — se usará la de la cuenta`,
+        });
+      }
+      return { existingId: existing.id };
+    }
+    const plan = this.newAccounts.get(k);
+    if (!plan) {
+      this.newAccounts.set(k, { key: k, name: name.trim(), currency: currencyHint ?? this.defaultCurrency });
+    } else if (currencyHint && currencyHint !== plan.currency) {
+      this.issues.push({
+        sheet: context.sheet,
+        row: context.row,
+        level: 'warning',
+        message: `Divisa del archivo (${currencyHint}) distinta a la que se usará para la nueva cuenta "${plan.name}" (${plan.currency}) — se usará ${plan.currency}`,
+      });
+    }
     return { newKey: k };
+  }
+
+  currencyOf(ref: EntityRef): string {
+    if ('existingId' in ref) return this.accountById.get(ref.existingId)?.currency ?? this.defaultCurrency;
+    return this.newAccounts.get(ref.newKey)?.currency ?? this.defaultCurrency;
   }
 
   topCategory(name: string, type: 'income' | 'expense'): EntityRef {
@@ -144,12 +186,24 @@ class CatalogResolver {
  * accounts/categories/subcategories/tags by name (case-insensitive), and
  * queuing a creation for whichever ones don't exist yet. Pure and
  * synchronous: nothing is written until `runImportPlan` executes the result.
+ *
+ * `defaultCurrency` seeds any new account the file never gives a Currency
+ * hint for. A transfer whose two accounts would land in different
+ * currencies is rejected here (as a row error, excluded from `transfers`)
+ * instead of discovering it later as a DB constraint violation mid-import —
+ * this app has no exchange rate to move value across currencies with.
  */
-export function buildImportPlan(parsed: ParsedWorkbook, catalogs: ImportCatalogs): ImportPlan {
-  const resolver = new CatalogResolver(catalogs);
+export function buildImportPlan(
+  parsed: ParsedWorkbook,
+  catalogs: ImportCatalogs,
+  defaultCurrency: string,
+): ImportPlan {
+  const issues = [...parsed.issues];
+  const resolver = new CatalogResolver(catalogs, defaultCurrency, issues);
 
   const movements: ResolvedMovement[] = parsed.movements.map((m) => {
-    const accountRef = resolver.account(m.accountName);
+    const context = { sheet: m.sourceSheet, row: m.sourceRow };
+    const accountRef = resolver.account(m.accountName, m.currencyCode, context);
     const categoryRef = resolver.topCategory(m.categoryName, m.type);
     const transactionCategoryRef = m.subcategoryName
       ? resolver.subCategory(m.subcategoryName, m.type, m.categoryName, categoryRef)
@@ -158,12 +212,29 @@ export function buildImportPlan(parsed: ParsedWorkbook, catalogs: ImportCatalogs
     return { ...m, accountRef, transactionCategoryRef, tagRefs };
   });
 
-  const transfers: ResolvedTransfer[] = parsed.transfers.map((t) => ({
-    ...t,
-    fromAccountRef: resolver.account(t.fromAccountName),
-    toAccountRef: resolver.account(t.toAccountName),
-    tagRefs: t.tagNames.map((n) => resolver.tag(n)),
-  }));
+  const transfers: ResolvedTransfer[] = [];
+  for (const t of parsed.transfers) {
+    const context = { sheet: t.sourceSheet, row: t.sourceRow };
+    const fromAccountRef = resolver.account(t.fromAccountName, t.currencyCode, context);
+    const toAccountRef = resolver.account(t.toAccountName, t.currencyCode, context);
+    const fromCurrency = resolver.currencyOf(fromAccountRef);
+    const toCurrency = resolver.currencyOf(toAccountRef);
+    if (fromCurrency !== toCurrency) {
+      issues.push({
+        sheet: t.sourceSheet,
+        row: t.sourceRow,
+        level: 'error',
+        message: `"${t.fromAccountName}" (${fromCurrency}) y "${t.toAccountName}" (${toCurrency}) tienen divisas distintas — no se puede transferir entre ellas`,
+      });
+      continue;
+    }
+    transfers.push({
+      ...t,
+      fromAccountRef,
+      toAccountRef,
+      tagRefs: t.tagNames.map((n) => resolver.tag(n)),
+    });
+  }
 
   const newAccounts = [...resolver.newAccounts.values()];
   const newCategories = [...resolver.newCategories.values()];
@@ -177,14 +248,14 @@ export function buildImportPlan(parsed: ParsedWorkbook, catalogs: ImportCatalogs
     newTags,
     movements,
     transfers,
-    issues: parsed.issues,
+    issues,
     summary: {
       transactionsToCreate: movements.length + transfers.length,
       accountsToCreate: newAccounts.length,
       categoriesToCreate: newCategories.length + newSubcategories.length,
       tagsToCreate: newTags.length,
-      rowErrors: parsed.issues.filter((i) => i.level === 'error').length,
-      rowWarnings: parsed.issues.filter((i) => i.level === 'warning').length,
+      rowErrors: issues.filter((i) => i.level === 'error').length,
+      rowWarnings: issues.filter((i) => i.level === 'warning').length,
     },
   };
 }

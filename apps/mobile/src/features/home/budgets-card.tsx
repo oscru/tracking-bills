@@ -9,8 +9,9 @@ import { BudgetProgressBar } from '../budgets/budget-progress-bar';
 const TOP_N = 3;
 
 /** Home's "at a glance" budget status — the envelopes closest to (or past)
- * their current-period limit, most urgent first. */
-export function BudgetsCard({ currency }: { currency: string }) {
+ * their current-period limit, most urgent first. Each budget shows in its
+ * own locked currency — they're not blended into a single number. */
+export function BudgetsCard() {
   const router = useRouter();
   const { data: budgets } = useBudgets();
   const { data: transactions } = useTransactions();
@@ -22,7 +23,13 @@ export function BudgetsCard({ currency }: { currency: string }) {
         const categoryIds = budget.categories.map((c) => c.category.id);
         return {
           budget,
-          progress: budgetProgress(categoryIds, Number(budget.amount), budget, transactions ?? []),
+          progress: budgetProgress(
+            categoryIds,
+            Number(budget.amount),
+            budget.currency,
+            budget,
+            transactions ?? [],
+          ),
         };
       })
       .sort((a, b) => b.progress.pct - a.progress.pct);
@@ -75,7 +82,7 @@ export function BudgetsCard({ currency }: { currency: string }) {
                   amount={Number(budget.amount)}
                   pct={progress.pct}
                   isOverBudget={progress.isOverBudget}
-                  currency={currency}
+                  currency={budget.currency}
                 />
               </Pressable>
             ))}

@@ -44,6 +44,7 @@ export default function EditAccount() {
           initial_balance: Number(account.initial_balance),
           color: account.color,
         }}
+        enabledCurrencies={[account.currency]}
         submitLabel="Guardar cambios"
         submitting={update.isPending}
         error={error}

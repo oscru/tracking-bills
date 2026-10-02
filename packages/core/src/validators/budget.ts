@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { currencyCodeSchema } from './account';
+
 const name = z.string().trim().min(1, 'Ponle un nombre').max(60);
 const amount = z.number().positive('El monto debe ser mayor a 0').finite();
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida');
@@ -11,7 +13,7 @@ const categoryAllocation = z.object({
 });
 const categories = z.array(categoryAllocation).min(1, 'Agrega al menos una categoría');
 
-const commonFields = { name, amount, categories, start_date: isoDate };
+const commonFields = { name, amount, currency: currencyCodeSchema, categories, start_date: isoDate };
 
 /**
  * Create payload — a discriminated union on `period_type`. Weekly/biweekly/

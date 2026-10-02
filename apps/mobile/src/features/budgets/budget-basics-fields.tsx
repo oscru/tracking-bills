@@ -25,6 +25,9 @@ interface Props {
   amountText: string;
   onChangeAmount: (v: string) => void;
   currency: string;
+  /** Present only while the currency is still pickable (creation) — omit to show it locked, since an existing budget can't change currency. */
+  currencyOptions?: string[];
+  onChangeCurrency?: (v: string) => void;
   periodType: BudgetPeriodType;
   onChangePeriodType: (v: BudgetPeriodType) => void;
   /** When a weekly/biweekly/monthly budget starts. Not used for 'custom' — that has its own range below. */
@@ -47,6 +50,8 @@ export function BudgetBasicsFields({
   amountText,
   onChangeAmount,
   currency,
+  currencyOptions,
+  onChangeCurrency,
   periodType,
   onChangePeriodType,
   startDate,
@@ -67,7 +72,20 @@ export function BudgetBasicsFields({
         maxLength={60}
       />
 
-      <CurrencyField label="Monto" value={amountText} onChangeText={onChangeAmount} currency={currency} />
+      <View className="gap-2">
+        <CurrencyField label="Monto" value={amountText} onChangeText={onChangeAmount} currency={currency} />
+        {onChangeCurrency ? (
+          <View className="flex-row flex-wrap gap-2">
+            {(currencyOptions ?? [currency]).map((c) => (
+              <Chip key={c} label={c} selected={currency === c} onPress={() => onChangeCurrency(c)} />
+            ))}
+          </View>
+        ) : (
+          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+            Divisa: {currency} — no se puede cambiar después de crear el presupuesto.
+          </Text>
+        )}
+      </View>
 
       <View className="gap-2">
         <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">

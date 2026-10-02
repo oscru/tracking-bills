@@ -1,5 +1,10 @@
 import { useTransactions } from '@repo/core/hooks';
-import { categoryMonthlyHistory, formatCurrency, formatMonthShort } from '@repo/core/utils';
+import {
+  categoryMonthlyHistory,
+  formatCurrency,
+  formatMonthShort,
+  groupByAccountCurrency,
+} from '@repo/core/utils';
 import { SegmentedControl } from '@repo/ui';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState } from 'react';
@@ -14,29 +19,31 @@ const Y_AXIS_GUTTER = 40; // room gifted-charts reserves for the y-axis labels
 interface Props {
   categoryId: string;
   color: string | null;
-  currency: string;
 }
 
-/** A category's monthly spend history, switchable between bar and line. */
-export function CategoryHistoryChart({ categoryId, color, currency }: Props) {
+/** A category's monthly spend history, switchable between bar and line. One
+ * chart per currency present, never blended together. */
+export function CategoryHistoryChart({ categoryId, color }: Props) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const { width: windowWidth } = useWindowDimensions();
   const { data: transactions } = useTransactions();
   const [kind, setKind] = useState<'bar' | 'line'>('bar');
 
-  const history = useMemo(
-    () => categoryMonthlyHistory(transactions ?? [], categoryId, MONTHS),
-    [transactions, categoryId],
-  );
+  const groups = useMemo(() => {
+    return groupByAccountCurrency(transactions ?? [])
+      .map((g) => ({
+        currency: g.currency,
+        history: categoryMonthlyHistory(g.transactions, categoryId, MONTHS),
+      }))
+      .filter((g) => g.history.some((h) => h.total > 0));
+  }, [transactions, categoryId]);
+  const hasAnyData = groups.length > 0;
 
-  const total = history.reduce((sum, h) => sum + h.total, 0);
-  const hasData = total > 0;
   const accent = color ?? '#4D7C0F';
   const axisColor = dark ? '#6B7178' : '#9CA3AF';
   const gridColor = dark ? '#23272C' : '#EDEFF2';
 
-  const points = history.map((h) => ({ value: h.total, label: formatMonthShort(h.month) }));
   const chartWidth = Math.max(
     windowWidth - SCREEN_PADDING * 2 - CARD_PADDING * 2 - Y_AXIS_GUTTER,
     160,
@@ -59,51 +66,66 @@ export function CategoryHistoryChart({ categoryId, color, currency }: Props) {
   };
 
   return (
-    <View className="gap-3 rounded-2xl border border-line bg-surface p-4 dark:border-line-dark dark:bg-surface-dark">
-      <View>
+    <View className="gap-4 rounded-2xl border border-line bg-surface p-4 dark:border-line-dark dark:bg-surface-dark">
+      <View className="flex-row items-center justify-between">
         <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
           Historial · últimos {MONTHS} meses
         </Text>
-        <Text className="mt-0.5 text-lg font-bold text-ink dark:text-ink-dark">
-          {formatCurrency(total, currency)}
-        </Text>
+        <SegmentedControl
+          options={[
+            { value: 'bar', label: 'Barras', icon: 'bar-chart-outline' },
+            { value: 'line', label: 'Línea', icon: 'analytics-outline' },
+          ]}
+          value={kind}
+          onChange={setKind}
+        />
       </View>
 
-      <SegmentedControl
-        options={[
-          { value: 'bar', label: 'Barras', icon: 'bar-chart-outline' },
-          { value: 'line', label: 'Línea', icon: 'analytics-outline' },
-        ]}
-        value={kind}
-        onChange={setKind}
-      />
+      {hasAnyData ? (
+        groups.map(({ currency, history }) => {
+          const total = history.reduce((sum, h) => sum + h.total, 0);
+          const points = history.map((h) => ({ value: h.total, label: formatMonthShort(h.month) }));
+          return (
+            <View key={currency} className="gap-2">
+              <View>
+                {groups.length > 1 ? (
+                  <Text className="text-xs font-semibold text-ink-3 dark:text-ink-3-dark">
+                    {currency}
+                  </Text>
+                ) : null}
+                <Text className="mt-0.5 text-lg font-bold text-ink dark:text-ink-dark">
+                  {formatCurrency(total, currency)}
+                </Text>
+              </View>
 
-      {hasData ? (
-        kind === 'bar' ? (
-          <BarChart
-            data={points}
-            barWidth={Math.max(chartWidth / (MONTHS * 2.2), 14)}
-            spacing={chartWidth / MONTHS / 2}
-            barBorderRadius={4}
-            frontColor={accent}
-            {...shared}
-          />
-        ) : (
-          <LineChart
-            data={points}
-            color={accent}
-            thickness={2.5}
-            curved
-            areaChart
-            startFillColor={accent}
-            endFillColor={accent}
-            startOpacity={0.22}
-            endOpacity={0.02}
-            dataPointsColor={accent}
-            dataPointsRadius={3}
-            {...shared}
-          />
-        )
+              {kind === 'bar' ? (
+                <BarChart
+                  data={points}
+                  barWidth={Math.max(chartWidth / (MONTHS * 2.2), 14)}
+                  spacing={chartWidth / MONTHS / 2}
+                  barBorderRadius={4}
+                  frontColor={accent}
+                  {...shared}
+                />
+              ) : (
+                <LineChart
+                  data={points}
+                  color={accent}
+                  thickness={2.5}
+                  curved
+                  areaChart
+                  startFillColor={accent}
+                  endFillColor={accent}
+                  startOpacity={0.22}
+                  endOpacity={0.02}
+                  dataPointsColor={accent}
+                  dataPointsRadius={3}
+                  {...shared}
+                />
+              )}
+            </View>
+          );
+        })
       ) : (
         <View className="items-center justify-center py-10">
           <Text className="text-sm text-ink-2 dark:text-ink-2-dark">

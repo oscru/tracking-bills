@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useCategoryTree, useProfile, useTags, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useCategoryTree, useTags, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionType } from '@repo/core/types';
 import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
@@ -91,7 +91,6 @@ export default function TransactionsScreen() {
   );
 
   const { data: accounts } = useAccounts();
-  const { data: profile } = useProfile();
   const { data: tags } = useTags();
   // Category filter always lists one type's tree — income if that's the active
   // type filter, expense otherwise (categories don't apply to transfers).
@@ -121,8 +120,6 @@ export default function TransactionsScreen() {
   );
 
   const { data: transactions, isLoading, isRefetching, refetch, error } = useTransactions(filters);
-
-  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
   const sections = useMemo(() => groupByDay(transactions ?? []), [transactions]);
 
   const clearAll = () => {
@@ -262,7 +259,13 @@ export default function TransactionsScreen() {
                 {dayHeaderLabel(section.date)}
               </Text>
               <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">
-                {formatCurrency(section.net, currency)}
+                {section.nets
+                  .map((n) =>
+                    section.nets.length > 1
+                      ? `${formatCurrency(n.net, n.currency)} ${n.currency}`
+                      : formatCurrency(n.net, n.currency),
+                  )
+                  .join(' · ')}
               </Text>
             </View>
           )}

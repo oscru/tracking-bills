@@ -13,11 +13,14 @@ interface Props {
   onClose: () => void;
   goalId: string;
   goalName: string;
+  /** The goal's locked currency — only accounts in this same currency can contribute (see `goalProgress`). */
+  goalCurrency: string;
 }
 
 /** Records a real transfer from a real account into a goal — the source
- * account's balance drops, same as any other transfer. */
-export function AddContributionSheet({ visible, onClose, goalId, goalName }: Props) {
+ * account's balance drops, same as any other transfer. Only accounts in the
+ * goal's own currency are offered, since a contribution isn't converted. */
+export function AddContributionSheet({ visible, onClose, goalId, goalName, goalCurrency }: Props) {
   const { data: accounts } = useAccounts();
   const create = useCreateTransaction();
 
@@ -83,6 +86,9 @@ export function AddContributionSheet({ visible, onClose, goalId, goalName }: Pro
               {selectedAccount ? selectedAccount.name : 'Elige una cuenta'}
             </Text>
           </Pressable>
+          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+            Solo se muestran cuentas en {goalCurrency} — esta meta no convierte divisas.
+          </Text>
         </View>
 
         <CurrencyField
@@ -92,7 +98,7 @@ export function AddContributionSheet({ visible, onClose, goalId, goalName }: Pro
             setAmountText(v);
             setFieldError(null);
           }}
-          currency={selectedAccount?.currency ?? 'MXN'}
+          currency={selectedAccount?.currency ?? goalCurrency}
         />
 
         <View className="gap-2">
@@ -121,6 +127,7 @@ export function AddContributionSheet({ visible, onClose, goalId, goalName }: Pro
           setAccountId(id);
           setFieldError(null);
         }}
+        currencyFilter={goalCurrency}
       />
     </BottomSheet>
   );

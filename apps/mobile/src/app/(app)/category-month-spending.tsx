@@ -1,8 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useCategories, useProfile, useTransactions } from '@repo/core/hooks';
+import { useCategories, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
-import { categorySpendBreakdown, formatCurrency, formatDate, todayISODate } from '@repo/core/utils';
+import {
+  categorySpendBreakdown,
+  formatCurrency,
+  formatDate,
+  groupByAccountCurrency,
+  todayISODate,
+} from '@repo/core/utils';
 import { CategoryDot, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
@@ -12,16 +18,9 @@ import { CategorySpendDonut } from '../../features/home/category-spend-donut';
 import { CategorySpendRow } from '../../features/home/category-spend-row';
 import { CategorySpendSkeleton } from '../../features/home/category-spend-skeleton';
 
-/** One actual expense in the list below the subcategory breakdown. */
-function ExpenseRow({
-  tx,
-  currency,
-  onPress,
-}: {
-  tx: TransactionWithRefs;
-  currency: string;
-  onPress: () => void;
-}) {
+/** One actual expense in the list below the subcategory breakdown — always
+ * formatted in its own account's currency, never a shared default. */
+function ExpenseRow({ tx, onPress }: { tx: TransactionWithRefs; onPress: () => void }) {
   const description = tx.description?.trim();
   const categoryLabel = tx.category ? resolveCategoryLabel(tx.category) : 'Sin categoría';
 
@@ -38,7 +37,7 @@ function ExpenseRow({
         </Text>
       </View>
       <Text className="text-[15px] font-semibold text-danger dark:text-danger-dark">
-        −{formatCurrency(tx.amount, currency)}
+        −{formatCurrency(tx.amount, tx.account?.currency ?? 'MXN')}
       </Text>
     </Pressable>
   );
@@ -49,11 +48,8 @@ export default function CategoryMonthSpendingScreen() {
   const params = useLocalSearchParams<{ categoryId: string; month?: string; label?: string }>();
   const month = params.month ?? todayISODate().slice(0, 7);
 
-  const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
   const { data: transactions, isLoading } = useTransactions();
-  const { data: profile } = useProfile();
-  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const category = (categories ?? []).find((c) => c.id === params.categoryId) ?? null;
 
@@ -72,6 +68,7 @@ export default function CategoryMonthSpendingScreen() {
         .filter(
           (t) =>
             t.type === 'expense' &&
+            t.is_completed &&
             t.transaction_date.startsWith(month) &&
             t.category != null &&
             relevantIds.has(t.category.id),
@@ -84,11 +81,19 @@ export default function CategoryMonthSpendingScreen() {
     [transactions, month, relevantIds],
   );
 
-  // Same breakdown shape as the month-wide one, just scoped to this
-  // category's transactions — each slice lands on a subcategory (or this
-  // category itself, for expenses not further broken down).
-  const breakdown = useMemo(() => categorySpendBreakdown(categoryTx, month), [categoryTx, month]);
-  const total = breakdown.reduce((sum, c) => sum + c.total, 0);
+  // One breakdown per currency present among this category's expenses — each
+  // slice lands on a subcategory (or this category itself, for expenses not
+  // further broken down).
+  const groups = useMemo(() => {
+    return groupByAccountCurrency(categoryTx)
+      .map((g) => ({
+        currency: g.currency,
+        transactions: g.transactions,
+        breakdown: categorySpendBreakdown(g.transactions, month),
+      }))
+      .filter((g) => g.breakdown.length > 0);
+  }, [categoryTx, month]);
+  const total = categoryTx.reduce((sum, t) => sum + Number(t.amount), 0);
 
   const goTransaction = (id: string) =>
     router.push({ pathname: '/(app)/transactions/[id]', params: { id } });
@@ -124,30 +129,44 @@ export default function CategoryMonthSpendingScreen() {
           contentContainerClassName="gap-5 pb-8"
           showsVerticalScrollIndicator={false}
         >
-          <View className="items-center rounded-card bg-surface p-6 dark:bg-surface-dark">
-            <CategorySpendDonut
-              breakdown={breakdown}
-              total={total}
-              currency={currency}
-              radius={100}
-            />
-          </View>
+          {groups.map((g) => (
+            <View key={g.currency} className="gap-5">
+              {groups.length > 1 ? (
+                <Text className="px-1 text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+                  {g.currency}
+                </Text>
+              ) : null}
 
-          {breakdown.length > 1 ? (
-            <View className="gap-1">
-              <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                Por subcategoría
-              </Text>
-              <View className="rounded-card border border-line px-4 dark:border-line-dark">
-                {breakdown.map((c, i) => (
-                  <View key={c.categoryId ?? 'none'}>
-                    {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
-                    <CategorySpendRow entry={c} total={total} currency={currency} />
-                  </View>
-                ))}
+              <View className="items-center rounded-card bg-surface p-6 dark:bg-surface-dark">
+                <CategorySpendDonut
+                  breakdown={g.breakdown}
+                  total={g.breakdown.reduce((sum, c) => sum + c.total, 0)}
+                  currency={g.currency}
+                  radius={100}
+                />
               </View>
+
+              {g.breakdown.length > 1 ? (
+                <View className="gap-1">
+                  <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+                    Por subcategoría
+                  </Text>
+                  <View className="rounded-card border border-line px-4 dark:border-line-dark">
+                    {g.breakdown.map((c, i) => (
+                      <View key={c.categoryId ?? 'none'}>
+                        {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
+                        <CategorySpendRow
+                          entry={c}
+                          total={g.breakdown.reduce((sum, x) => sum + x.total, 0)}
+                          currency={g.currency}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
             </View>
-          ) : null}
+          ))}
 
           <View className="gap-1">
             <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
@@ -157,7 +176,7 @@ export default function CategoryMonthSpendingScreen() {
               {categoryTx.map((tx, i) => (
                 <View key={tx.id}>
                   {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
-                  <ExpenseRow tx={tx} currency={currency} onPress={() => goTransaction(tx.id)} />
+                  <ExpenseRow tx={tx} onPress={() => goTransaction(tx.id)} />
                 </View>
               ))}
             </View>

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { currencyCodeSchema } from './account';
+
 const name = z.string().trim().min(1, 'Ponle un nombre').max(60);
 const icon = z.string().trim().min(1, 'Elige un ícono');
 const targetAmount = z.number().positive('El monto debe ser mayor a 0').finite();
@@ -11,6 +13,8 @@ const commonFields = {
   name,
   icon,
   target_amount: targetAmount,
+  // Locked after creation — see `goalUpdateSchema`, which omits it.
+  currency: currencyCodeSchema,
   deadline,
   contribution_amount: contributionAmount,
   contribution_interval_days: contributionIntervalDays,

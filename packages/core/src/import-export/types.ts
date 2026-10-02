@@ -28,6 +28,8 @@ export interface MovementDraft {
   amount: number;
   type: 'income' | 'expense';
   accountName: string;
+  /** From an optional Currency/Moneda column — `null` when the file doesn't specify one for this row. */
+  currencyCode: string | null;
   isCompleted: boolean;
   categoryName: string;
   subcategoryName: string | null;
@@ -41,6 +43,8 @@ export interface TransferDraft {
   fromAccountName: string;
   toAccountName: string;
   amount: number;
+  /** From an optional Currency/Moneda column — both accounts must end up in this same currency (see `buildImportPlan`). */
+  currencyCode: string | null;
   tagNames: string[];
 }
 

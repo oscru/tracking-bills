@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useGoals, useProfile, useTransactions } from '@repo/core/hooks';
+import { useGoals, useTransactions } from '@repo/core/hooks';
 import { daysUntil, formatDate, goalProgress, todayISODate, toFriendlyMessage } from '@repo/core/utils';
 import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl } from '@repo/ui';
 import { useRouter } from 'expo-router';
@@ -24,11 +24,8 @@ function deadlineLabel(deadline: string | null): string {
 export default function GoalsScreen() {
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
-  const { data: accounts } = useAccounts();
-  const { data: profile } = useProfile();
   const { data: goals, isLoading, error } = useGoals();
   const { data: transactions } = useTransactions();
-  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const visible = (goals ?? []).filter((g) => (status === 'archived' ? g.archived : !g.archived));
 
@@ -53,7 +50,12 @@ export default function GoalsScreen() {
       ) : (
         <ScrollView className="flex-1" contentContainerClassName="gap-3 pb-24">
           {visible.map((g) => {
-            const progress = goalProgress(g.id, Number(g.target_amount), transactions ?? []);
+            const progress = goalProgress(
+              g.id,
+              Number(g.target_amount),
+              g.currency,
+              transactions ?? [],
+            );
             return (
               <Pressable
                 key={g.id}
@@ -88,7 +90,7 @@ export default function GoalsScreen() {
                   target={Number(g.target_amount)}
                   pct={progress.pct}
                   isComplete={progress.isComplete}
-                  currency={currency}
+                  currency={g.currency}
                 />
               </Pressable>
             );

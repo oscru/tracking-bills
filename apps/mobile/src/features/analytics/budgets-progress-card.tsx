@@ -6,16 +6,12 @@ import { Pressable, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../budgets/budget-progress-bar';
 
-interface Props {
-  currency: string;
-}
-
 /** Every active budget's current occurrence — the fuller, "Ver todas"-style
  * counterpart to Home's top-3 preview. Budgets are now anchored to their own
  * `start_date` rather than the calendar, so this no longer tries to force
  * anything onto whichever month Análisis happens to be showing — it's always
- * "right now", same as Home. */
-export function BudgetsProgressCard({ currency }: Props) {
+ * "right now", same as Home. Each budget shows in its own locked currency. */
+export function BudgetsProgressCard() {
   const router = useRouter();
   const { data: budgets } = useBudgets();
   const { data: transactions } = useTransactions();
@@ -27,7 +23,13 @@ export function BudgetsProgressCard({ currency }: Props) {
         const categoryIds = budget.categories.map((c) => c.category.id);
         return {
           budget,
-          progress: budgetProgress(categoryIds, Number(budget.amount), budget, transactions ?? []),
+          progress: budgetProgress(
+            categoryIds,
+            Number(budget.amount),
+            budget.currency,
+            budget,
+            transactions ?? [],
+          ),
         };
       })
       .sort((a, b) => b.progress.pct - a.progress.pct);
@@ -57,7 +59,7 @@ export function BudgetsProgressCard({ currency }: Props) {
             amount={Number(budget.amount)}
             pct={progress.pct}
             isOverBudget={progress.isOverBudget}
-            currency={currency}
+            currency={budget.currency}
           />
         </Pressable>
       ))}

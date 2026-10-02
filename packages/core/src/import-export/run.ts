@@ -24,20 +24,21 @@ function resolveId(ref: EntityRef, created: Map<string, string>): string {
  * subcategories need their (possibly also new) parent to exist first, and
  * tag links need real transaction ids, which only exist after the insert.
  *
+ * Each new account already carries its own resolved `currency` (from the
+ * file's Currency column, or the plan's default — see `buildImportPlan`),
+ * so there's nothing left to decide about currency here.
+ *
  * Not wrapped in a single DB transaction: if the transaction insert fails,
  * any catalog rows already created stay created. That's fine here — re-running
  * the same plan afterward matches them by name instead of duplicating them.
  */
-export async function runImportPlan(
-  plan: ImportPlan,
-  { defaultCurrency }: { defaultCurrency: string },
-): Promise<ImportRunResult> {
+export async function runImportPlan(plan: ImportPlan): Promise<ImportRunResult> {
   const accountIdByKey = new Map<string, string>();
   for (const a of plan.newAccounts) {
     const created = await createAccount({
       name: a.name,
       type: AUTO_ACCOUNT_TYPE,
-      currency: defaultCurrency,
+      currency: a.currency,
       initial_balance: 0,
       show_on_home: true,
       include_in_total: true,

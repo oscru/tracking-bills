@@ -71,6 +71,30 @@ function parseDate(row: unknown[], index: number | undefined): string | null {
   return null;
 }
 
+/** A 3-letter code, uppercased — anything else (blank, "US Dollars", a typo)
+ * is treated as not specified rather than guessed at. */
+function parseCurrencyCode(
+  row: unknown[],
+  index: number | undefined,
+  issues: RowIssue[],
+  sheet: string,
+  rowNum: number,
+): string | null {
+  const text = cellText(row, index);
+  if (!text) return null;
+  const code = text.toUpperCase();
+  if (!/^[A-Z]{3}$/.test(code)) {
+    issues.push({
+      sheet,
+      row: rowNum,
+      level: 'warning',
+      message: `Divisa "${text}" no reconocida — se ignora para esta fila`,
+    });
+    return null;
+  }
+  return code;
+}
+
 function parseTagNames(row: unknown[], index: number | undefined): string[] {
   const text = cellText(row, index);
   if (!text) return [];
@@ -169,6 +193,7 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
           fromAccountName,
           toAccountName,
           amount,
+          currencyCode: parseCurrencyCode(row, cols.currency, issues, sheet.name, rowNum),
           tagNames: parseTagNames(row, cols.tags),
         };
         transfersByKey.set(transferKey(draft), draft);
@@ -218,6 +243,7 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
           amount: Math.abs(rawAmount),
           type: rawAmount < 0 ? 'expense' : 'income',
           accountName,
+          currencyCode: parseCurrencyCode(row, cols.currency, issues, sheet.name, rowNum),
           isCompleted: parseIsCompleted(row, cols.status, issues, sheet.name, rowNum),
           categoryName,
           subcategoryName: cellText(row, cols.subcategory),

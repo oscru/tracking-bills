@@ -1,4 +1,4 @@
-import { useAccounts, useFormError, useGoals, useProfile, useUpdateGoal } from '@repo/core/hooks';
+import { useFormError, useGoals, useUpdateGoal } from '@repo/core/hooks';
 import { PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Text } from 'react-native';
@@ -8,12 +8,9 @@ import { GoalForm } from '../../../../../../features/goals/goal-form';
 export default function EditGoal() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data: accounts } = useAccounts();
-  const { data: profile } = useProfile();
   const { data: goals, isLoading } = useGoals();
   const update = useUpdateGoal();
   const { error, setError, clearError } = useFormError();
-  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const goal = (goals ?? []).find((g) => g.id === id);
 
@@ -45,7 +42,7 @@ export default function EditGoal() {
           contribution_amount: goal.contribution_amount != null ? Number(goal.contribution_amount) : null,
           contribution_interval_days: goal.contribution_interval_days,
         }}
-        currency={currency}
+        currency={goal.currency}
         submitLabel="Guardar cambios"
         submitting={update.isPending}
         error={error}

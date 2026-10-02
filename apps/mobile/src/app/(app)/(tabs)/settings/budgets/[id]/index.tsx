@@ -1,12 +1,4 @@
-import {
-  useAccounts,
-  useBudgets,
-  useDeleteBudget,
-  useFormError,
-  useProfile,
-  useTransactions,
-  useUpdateBudget,
-} from '@repo/core/hooks';
+import { useBudgets, useDeleteBudget, useFormError, useTransactions, useUpdateBudget } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetProgress, formatDate } from '@repo/core/utils';
@@ -27,8 +19,6 @@ const PERIOD_LABEL: Record<BudgetPeriodType, string> = {
 export default function BudgetDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data: accounts } = useAccounts();
-  const { data: profile } = useProfile();
   const { data: budgets, isLoading } = useBudgets();
   const { data: transactions } = useTransactions();
   const updateBudget = useUpdateBudget();
@@ -36,7 +26,6 @@ export default function BudgetDetail() {
   const { error, setError } = useFormError();
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const currency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
 
   const budget = (budgets ?? []).find((b) => b.id === id);
 
@@ -56,13 +45,20 @@ export default function BudgetDetail() {
   }
 
   const categoryIds = budget.categories.map((c) => c.category.id);
-  const progress = budgetProgress(categoryIds, Number(budget.amount), budget, transactions ?? []);
+  const progress = budgetProgress(
+    categoryIds,
+    Number(budget.amount),
+    budget.currency,
+    budget,
+    transactions ?? [],
+  );
 
   const rangeLabel = `${formatDate(progress.from)} – ${formatDate(progress.to)}`;
   const periodLabel =
-    budget.period_type === 'custom'
+    (budget.period_type === 'custom'
       ? rangeLabel
-      : `${PERIOD_LABEL[budget.period_type]}${budget.repeats ? ' · se repite' : ''} · ${rangeLabel}`;
+      : `${PERIOD_LABEL[budget.period_type]}${budget.repeats ? ' · se repite' : ''} · ${rangeLabel}`) +
+    ` · ${budget.currency}`;
 
   const toggleArchive = () => updateBudget.mutate({ id: budget.id, patch: { archived: !budget.archived } });
 
@@ -85,7 +81,7 @@ export default function BudgetDetail() {
               amount={Number(budget.amount)}
               pct={progress.pct}
               isOverBudget={progress.isOverBudget}
-              currency={currency}
+              currency={budget.currency}
             />
           </View>
 
@@ -95,7 +91,13 @@ export default function BudgetDetail() {
             </Text>
             <View className="gap-3 rounded-2xl border border-line p-4 dark:border-line-dark">
               {budget.categories.map(({ category: c, amount: allocated }, i) => {
-                const catProgress = budgetProgress([c.id], allocated, budget, transactions ?? []);
+                const catProgress = budgetProgress(
+                  [c.id],
+                  allocated,
+                  budget.currency,
+                  budget,
+                  transactions ?? [],
+                );
                 return (
                   <View
                     key={c.id}
@@ -112,7 +114,7 @@ export default function BudgetDetail() {
                       amount={allocated}
                       pct={catProgress.pct}
                       isOverBudget={catProgress.isOverBudget}
-                      currency={currency}
+                      currency={budget.currency}
                     />
                   </View>
                 );

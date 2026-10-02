@@ -170,6 +170,7 @@ export function buildCategoryTree(categories: Category[]): CategoryNode[] {
 interface BalanceAccount {
   id: string;
   initial_balance: number | string;
+  currency: string;
   /** Whether this account counts toward `totalBalance` — its own `accountBalance` is unaffected. */
   include_in_total?: boolean;
 }
@@ -221,11 +222,58 @@ export function projectedAccountBalance(
   return accountBalance(account, transactions) + transactionEffect(pending, account.id);
 }
 
-/** Net worth across accounts opted into the total (transfers cancel out). */
-export function totalBalance(accounts: BalanceAccount[], transactions: BalanceTx[]): number {
-  return accounts
-    .filter((a) => a.include_in_total !== false)
-    .reduce((sum, a) => sum + accountBalance(a, transactions), 0);
+export interface CurrencyTotal {
+  currency: string;
+  total: number;
+  /** How many opted-in accounts contributed to this currency's total. */
+  accountCount: number;
+}
+
+/**
+ * Net worth across accounts opted into the total — one row per currency,
+ * highest total first. Amounts in different currencies are never summed
+ * together (there's no exchange rate in this app to do that correctly with),
+ * so a user with both MXN and USD accounts gets two totals, not one blended
+ * number.
+ */
+export function totalBalancesByCurrency(
+  accounts: BalanceAccount[],
+  transactions: BalanceTx[],
+): CurrencyTotal[] {
+  const byCurrency = new Map<string, CurrencyTotal>();
+  for (const a of accounts) {
+    if (a.include_in_total === false) continue;
+    const entry = byCurrency.get(a.currency) ?? { currency: a.currency, total: 0, accountCount: 0 };
+    entry.total += accountBalance(a, transactions);
+    entry.accountCount += 1;
+    byCurrency.set(a.currency, entry);
+  }
+  return [...byCurrency.values()].sort((a, b) => b.total - a.total);
+}
+
+/**
+ * Splits `transactions` by their account's currency — the one place every
+ * analytics screen (category breakdown, weekly spend, monthly trend, the
+ * calendar heatmap, category trend) does its currency segmentation, since
+ * none of those aggregation functions know about currency themselves. Call
+ * this first, then run the usual aggregation on each group — same rationale
+ * as `totalBalancesByCurrency`: amounts in different currencies are never
+ * summed or blended together. Groups are highest-count first, so the
+ * currency with the most activity renders first.
+ */
+export function groupByAccountCurrency<T extends { account: { currency: string } | null }>(
+  transactions: T[],
+): { currency: string; transactions: T[] }[] {
+  const byCurrency = new Map<string, T[]>();
+  for (const t of transactions) {
+    const currency = t.account?.currency ?? 'MXN';
+    const list = byCurrency.get(currency);
+    if (list) list.push(t);
+    else byCurrency.set(currency, [t]);
+  }
+  return [...byCurrency.entries()]
+    .map(([currency, list]) => ({ currency, transactions: list }))
+    .sort((a, b) => b.transactions.length - a.transactions.length);
 }
 
 interface RankableFavorite {
@@ -300,19 +348,40 @@ export function tagCounts(tagId: string, transactions: TagCountTx[]): { expense:
   return { expense, income };
 }
 
-/** Income / expense totals for a `YYYY-MM` month, excluding transfers. */
-export function monthTotals(
-  transactions: { type: string; amount: number | string; transaction_date: string }[],
-  month: string,
-): { income: number; expense: number } {
-  let income = 0;
-  let expense = 0;
+export interface MonthCurrencyTotals {
+  currency: string;
+  income: number;
+  expense: number;
+}
+
+interface MonthTotalsTx {
+  type: string;
+  amount: number | string;
+  transaction_date: string;
+  is_completed: boolean;
+  account: { currency: string } | null;
+}
+
+/**
+ * Income / expense totals for a `YYYY-MM` month, excluding transfers — one
+ * row per currency, same rationale as `totalBalancesByCurrency`. Only
+ * *settled* transactions count, same rule as `accountBalance`.
+ */
+export function monthTotals(transactions: MonthTotalsTx[], month: string): MonthCurrencyTotals[] {
+  const byCurrency = new Map<string, MonthCurrencyTotals>();
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     if (!t.transaction_date.startsWith(month)) continue;
-    if (t.type === 'income') income += Number(t.amount);
-    else if (t.type === 'expense') expense += Number(t.amount);
+    if (t.type !== 'income' && t.type !== 'expense') continue;
+    const currency = t.account?.currency ?? 'MXN';
+    const entry = byCurrency.get(currency) ?? { currency, income: 0, expense: 0 };
+    if (t.type === 'income') entry.income += Number(t.amount);
+    else entry.expense += Number(t.amount);
+    byCurrency.set(currency, entry);
   }
-  return { income, expense };
+  return [...byCurrency.values()].sort(
+    (a, b) => b.income + b.expense - (a.income + a.expense),
+  );
 }
 
 export interface CategorySpend {
@@ -328,6 +397,7 @@ interface SpendTx {
   type: string;
   amount: number | string;
   transaction_date: string;
+  is_completed: boolean;
   category: { id: string; name: string; color: string | null; icon: string | null } | null;
 }
 
@@ -335,10 +405,14 @@ interface SpendTx {
  * Expense total per category for a `YYYY-MM` month, highest first. Transfers
  * and income aren't counted; uncategorized expenses roll into one "Sin
  * categoría" bucket so the breakdown always accounts for the full month.
+ * Only settled expenses count, same rule as `accountBalance`. Pass
+ * transactions already narrowed to one currency (see `groupByAccountCurrency`)
+ * — amounts here are never converted or blended across currencies.
  */
 export function categorySpendBreakdown(transactions: SpendTx[], month: string): CategorySpend[] {
   const byCategory = new Map<string, CategorySpend>();
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     if (t.type !== 'expense' || !t.transaction_date.startsWith(month)) continue;
     const key = t.category?.id ?? '__none__';
     const entry = byCategory.get(key);
@@ -438,6 +512,7 @@ interface CategoryHistoryTx {
   category_id: string | null;
   amount: number | string;
   transaction_date: string;
+  is_completed: boolean;
 }
 
 /**
@@ -445,6 +520,8 @@ interface CategoryHistoryTx {
  * newest, including the current month). A transaction's category type
  * always matches its own type (enforced in the DB), so matching on
  * `category_id` alone is enough — no need to also filter by income/expense.
+ * Only settled transactions count. Pass transactions already narrowed to one
+ * currency (see `groupByAccountCurrency`).
  */
 export function categoryMonthlyHistory(
   transactions: CategoryHistoryTx[],
@@ -459,6 +536,7 @@ export function categoryMonthlyHistory(
   }
   const totals = new Map(keys.map((k) => [k, 0]));
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     if (t.category_id !== categoryId) continue;
     const key = t.transaction_date.slice(0, 7);
     if (!totals.has(key)) continue;
@@ -471,13 +549,15 @@ interface MonthlyTrendTx {
   type: string;
   amount: number | string;
   transaction_date: string;
+  is_completed: boolean;
 }
 
 /**
  * Income and expense totals per month for the last `months` months (oldest →
  * newest, including the current month), across all categories/accounts —
  * the whole-account counterpart to `categoryMonthlyHistory`. Transfers
- * aren't counted.
+ * aren't counted, and only settled transactions do. Pass transactions
+ * already narrowed to one currency (see `groupByAccountCurrency`).
  */
 export function monthlyIncomeExpenseHistory(
   transactions: MonthlyTrendTx[],
@@ -491,6 +571,7 @@ export function monthlyIncomeExpenseHistory(
   }
   const totals = new Map(keys.map((k) => [k, { income: 0, expense: 0 }]));
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     const key = t.transaction_date.slice(0, 7);
     const bucket = totals.get(key);
     if (!bucket) continue;
@@ -568,13 +649,15 @@ interface RangeTx {
   type: string;
   amount: number | string;
   transaction_date: string;
+  is_completed: boolean;
 }
 
-/** Income / expense totals within an inclusive `[fromISO, toISO]` range, excluding transfers. */
+/** Income / expense totals within an inclusive `[fromISO, toISO]` range, excluding transfers. Only settled transactions count. */
 function rangeTotals(transactions: RangeTx[], fromISO: string, toISO: string): { income: number; expense: number } {
   let income = 0;
   let expense = 0;
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     if (t.transaction_date < fromISO || t.transaction_date > toISO) continue;
     if (t.type === 'income') income += Number(t.amount);
     else if (t.type === 'expense') expense += Number(t.amount);
@@ -582,7 +665,12 @@ function rangeTotals(transactions: RangeTx[], fromISO: string, toISO: string): {
   return { income, expense };
 }
 
-/** Every day in `[fromISO, toISO]` with its expense or income total (0 for days with none) — the heatmap's raw data. */
+/**
+ * Every day in `[fromISO, toISO]` with its expense or income total (0 for
+ * days with none) — the heatmap's raw data. Only settled transactions count.
+ * Pass transactions already narrowed to one currency (see
+ * `groupByAccountCurrency`).
+ */
 export function dailyTransactionTotals(
   transactions: RangeTx[],
   fromISO: string,
@@ -591,6 +679,7 @@ export function dailyTransactionTotals(
 ): { date: string; total: number }[] {
   const totals = new Map<string, number>();
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     if (t.type !== type) continue;
     if (t.transaction_date < fromISO || t.transaction_date > toISO) continue;
     totals.set(t.transaction_date, (totals.get(t.transaction_date) ?? 0) + Number(t.amount));
@@ -602,7 +691,11 @@ export function dailyTransactionTotals(
   return days;
 }
 
-/** Each month of `year` with its expense or income total — the year view's per-cell data (one cell per month). */
+/**
+ * Each month of `year` with its expense or income total — the year view's
+ * per-cell data (one cell per month). Only settled transactions count. Pass
+ * transactions already narrowed to one currency (see `groupByAccountCurrency`).
+ */
 export function monthlyTransactionTotalsForYear(
   transactions: RangeTx[],
   year: number,
@@ -611,6 +704,7 @@ export function monthlyTransactionTotalsForYear(
   const totals = new Map<string, number>();
   for (let m = 1; m <= 12; m++) totals.set(`${year}-${String(m).padStart(2, '0')}`, 0);
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     if (t.type !== type) continue;
     const key = t.transaction_date.slice(0, 7);
     if (!totals.has(key)) continue;
@@ -622,12 +716,15 @@ export function monthlyTransactionTotalsForYear(
 /**
  * Consecutive expense-free days counting back from `today` (inclusive) — "racha
  * sin gastar". Stops at the earliest transaction on record so an account with
- * little history doesn't read as an implausibly long streak.
+ * little history doesn't read as an implausibly long streak. Only settled
+ * expenses break the streak — a scheduled/pending one hasn't actually happened.
  */
 export function noSpendStreak(transactions: RangeTx[], today: string): number {
   if (transactions.length === 0) return 0;
   const expenseDates = new Set(
-    transactions.filter((t) => t.type === 'expense' && Number(t.amount) > 0).map((t) => t.transaction_date),
+    transactions
+      .filter((t) => t.is_completed && t.type === 'expense' && Number(t.amount) > 0)
+      .map((t) => t.transaction_date),
   );
   const earliest = transactions.reduce((min, t) => (t.transaction_date < min ? t.transaction_date : min), today);
   let streak = 0;
@@ -641,12 +738,14 @@ export function noSpendStreak(transactions: RangeTx[], today: string): number {
 /**
  * The longest run of consecutive expense-free days anywhere in the account's
  * history, up to and including `today` — the "mejor racha" a given streak
- * gets compared against.
+ * gets compared against. Only settled expenses count.
  */
 export function longestNoSpendStreak(transactions: RangeTx[], today: string = todayISODate()): number {
   if (transactions.length === 0) return 0;
   const expenseDates = new Set(
-    transactions.filter((t) => t.type === 'expense' && Number(t.amount) > 0).map((t) => t.transaction_date),
+    transactions
+      .filter((t) => t.is_completed && t.type === 'expense' && Number(t.amount) > 0)
+      .map((t) => t.transaction_date),
   );
   const earliest = transactions.reduce((min, t) => (t.transaction_date < min ? t.transaction_date : min), today);
   let longest = 0;
@@ -680,7 +779,7 @@ export interface PeriodInsights {
   isCurrentPeriod: boolean;
 }
 
-/** The whole "insights strip" bundle for one period — one call, everything a chip needs. */
+/** The whole "insights strip" bundle for one period — one call, everything a chip needs. Pass transactions already narrowed to one currency (see `groupByAccountCurrency`). */
 export function periodInsights(
   transactions: RangeTx[],
   period: AnalyticsPeriod,
@@ -728,7 +827,7 @@ export interface CategoryTrend {
   pctChange: number | null;
 }
 
-/** Per-category expense or income this period vs. the previous one, highest current amount first — "Categorías en tendencia". */
+/** Per-category expense or income this period vs. the previous one, highest current amount first — "Categorías en tendencia". Only settled transactions count. Pass transactions already narrowed to one currency (see `groupByAccountCurrency`). */
 export function categoryTrend(
   transactions: SpendTx[],
   period: AnalyticsPeriod,
@@ -758,6 +857,7 @@ export function categoryTrend(
   };
 
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     if (t.type !== type) continue;
     if (t.transaction_date >= from && t.transaction_date <= to) touch(t, 'currentTotal');
     else if (t.transaction_date >= prev.from && t.transaction_date <= prev.to) touch(t, 'previousTotal');
@@ -773,15 +873,17 @@ export function categoryTrend(
 }
 
 /** The `limit` largest expenses or income entries within an inclusive `[fromISO, toISO]` range, biggest first. */
-export function topTransactions<T extends { type: string; amount: number | string; transaction_date: string }>(
-  transactions: T[],
-  fromISO: string,
-  toISO: string,
-  type: 'expense' | 'income' = 'expense',
-  limit = 3,
-): T[] {
+export function topTransactions<
+  T extends { type: string; amount: number | string; transaction_date: string; is_completed: boolean },
+>(transactions: T[], fromISO: string, toISO: string, type: 'expense' | 'income' = 'expense', limit = 3): T[] {
   return transactions
-    .filter((t) => t.type === type && t.transaction_date >= fromISO && t.transaction_date <= toISO)
+    .filter(
+      (t) =>
+        t.is_completed &&
+        t.type === type &&
+        t.transaction_date >= fromISO &&
+        t.transaction_date <= toISO,
+    )
     .sort((a, b) => Number(b.amount) - Number(a.amount))
     .slice(0, limit);
 }
@@ -843,6 +945,8 @@ interface BudgetTx {
   amount: number | string;
   transaction_date: string;
   category: { id: string } | null;
+  is_completed: boolean;
+  account: { currency: string } | null;
 }
 
 export interface BudgetProgress {
@@ -855,10 +959,18 @@ export interface BudgetProgress {
   isOverBudget: boolean;
 }
 
-/** How much of a budget has been spent — across every one of its linked categories — in its current occurrence (see `budgetPeriodRange`). */
+/**
+ * How much of a budget has been spent — across every one of its linked
+ * categories — in its current occurrence (see `budgetPeriodRange`). Only
+ * *settled* expenses count, same rule as `accountBalance`. A budget locks
+ * one `currency` at creation, so only expenses from an account in that same
+ * currency count — categories carry no currency of their own, so without
+ * this filter a USD grocery run would count against an MXN budget.
+ */
 export function budgetProgress(
   categoryIds: string[],
   amount: number,
+  currency: string,
   budget: BudgetSpan,
   transactions: BudgetTx[],
   referenceDate: Date = new Date(),
@@ -867,7 +979,9 @@ export function budgetProgress(
   const categorySet = new Set(categoryIds);
   let spent = 0;
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     if (t.type !== 'expense') continue;
+    if (t.account?.currency !== currency) continue;
     if (!t.category?.id || !categorySet.has(t.category.id)) continue;
     if (t.transaction_date < from || t.transaction_date > to) continue;
     spent += Number(t.amount);
@@ -882,16 +996,19 @@ export function budgetProgress(
   };
 }
 
-/** How much was spent in one category within an inclusive range — the per-category line in a budget's breakdown. */
+/** How much was spent in one category within an inclusive range, in one `currency` — the per-category line in a budget's breakdown. Only settled expenses count, same rule as `budgetProgress`. */
 export function categorySpentInRange(
   categoryId: string,
+  currency: string,
   transactions: BudgetTx[],
   fromISO: string,
   toISO: string,
 ): number {
   let spent = 0;
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     if (t.type !== 'expense') continue;
+    if (t.account?.currency !== currency) continue;
     if (t.category?.id !== categoryId) continue;
     if (t.transaction_date < fromISO || t.transaction_date > toISO) continue;
     spent += Number(t.amount);
@@ -905,6 +1022,8 @@ interface GoalTx {
   type: string;
   amount: number | string;
   goal_id: string | null;
+  is_completed: boolean;
+  account: { currency: string } | null;
 }
 
 export interface GoalProgress {
@@ -915,11 +1034,27 @@ export interface GoalProgress {
   isComplete: boolean;
 }
 
-/** How much has been transferred into a goal so far — every `transactions` row with this `goal_id` is a contribution (see `transactions.goal_id`). */
-export function goalProgress(goalId: string, targetAmount: number, transactions: GoalTx[]): GoalProgress {
+/**
+ * How much has been transferred into a goal so far — every *settled*
+ * `transactions` row with this `goal_id` is a contribution (see
+ * `transactions.goal_id`). A planned/pending contribution doesn't count
+ * until it actually happens, same rule as `accountBalance`. A goal locks one
+ * `currency` at creation, so a contribution is only counted when it comes
+ * from an account in that same currency (the UI that creates contributions
+ * already only offers matching accounts — this is the same rule enforced
+ * defensively here too).
+ */
+export function goalProgress(
+  goalId: string,
+  targetAmount: number,
+  currency: string,
+  transactions: GoalTx[],
+): GoalProgress {
   let saved = 0;
   for (const t of transactions) {
+    if (!t.is_completed) continue;
     if (t.goal_id !== goalId) continue;
+    if (t.account?.currency !== currency) continue;
     saved += Number(t.amount);
   }
   return {

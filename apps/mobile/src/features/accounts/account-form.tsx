@@ -5,6 +5,7 @@ import { BottomSheet, Button, ColorPicker, CurrencyField, ErrorCard, TextField }
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { CurrencyPicker } from '../settings/currency-picker';
 import { ACCOUNT_COLORS } from './account-colors';
 import { ACCOUNT_TYPES, ACCOUNT_TYPE_ICON, ACCOUNT_TYPE_LABEL } from './account-types';
 
@@ -18,6 +19,8 @@ export interface AccountFormInitial {
 
 interface Props {
   initial?: AccountFormInitial;
+  /** The currency picker's choices — the caller resolves `profile.enabled_currencies` first, same as every other currency-picking form in the app. */
+  enabledCurrencies: string[];
   submitLabel: string;
   submitting: boolean;
   error?: string | null;
@@ -31,6 +34,7 @@ type FieldErrors = Partial<Record<'name' | 'currency' | 'initial_balance', strin
 
 export function AccountForm({
   initial,
+  enabledCurrencies,
   submitLabel,
   submitting,
   error,
@@ -41,20 +45,21 @@ export function AccountForm({
   const editing = initial != null;
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState<AccountType>(initial?.type ?? 'debit');
-  const [currency, setCurrency] = useState(initial?.currency ?? 'MXN');
+  const [currency, setCurrency] = useState(initial?.currency ?? enabledCurrencies[0] ?? 'MXN');
   const [balance, setBalance] = useState(
     initial?.initial_balance != null ? String(initial.initial_balance) : '',
   );
   const [color, setColor] = useState(initial?.color ?? ACCOUNT_COLORS[0]);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [typePickerOpen, setTypePickerOpen] = useState(false);
+  const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
 
   const submit = () => {
     setErrors({});
     const parsed = accountCreateSchema.safeParse({
       name,
       type,
-      currency: currency.trim().toUpperCase(),
+      currency,
       // The initial balance is fixed at creation — edits go through "Ajustar saldo" instead.
       initial_balance: editing ? Number(initial?.initial_balance ?? 0) : Number(balance || 0),
       color,
@@ -108,16 +113,30 @@ export function AccountForm({
         </Pressable>
       </View>
 
-      <TextField
-        label="Moneda"
-        value={currency}
-        onChangeText={setCurrency}
-        autoCapitalize="characters"
-        autoCorrect={false}
-        maxLength={3}
-        placeholder="MXN"
-        error={errors.currency}
-      />
+      <View className="gap-2">
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Moneda</Text>
+        {editing ? (
+          <>
+            <View className="h-[52px] flex-row items-center rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark">
+              <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">{currency}</Text>
+            </View>
+            <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+              No se puede cambiar después de crear la cuenta.
+            </Text>
+          </>
+        ) : (
+          <Pressable
+            onPress={() => setCurrencyPickerOpen(true)}
+            className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+          >
+            <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">{currency}</Text>
+            <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
+          </Pressable>
+        )}
+        {errors.currency ? (
+          <Text className="text-sm text-danger dark:text-danger-dark">{errors.currency}</Text>
+        ) : null}
+      </View>
 
       {editing ? null : (
         <CurrencyField
@@ -166,6 +185,17 @@ export function AccountForm({
           ))}
         </ScrollView>
       </BottomSheet>
+
+      <CurrencyPicker
+        visible={currencyPickerOpen}
+        onClose={() => setCurrencyPickerOpen(false)}
+        selectedCode={currency}
+        onSelect={(c) => {
+          setCurrency(c.code);
+          setCurrencyPickerOpen(false);
+        }}
+        codes={enabledCurrencies}
+      />
     </ScrollView>
   );
 }
