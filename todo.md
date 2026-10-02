@@ -38,14 +38,31 @@ al corregir.
       `"Objetivo: <nombre>"` al reimportar y hacer match por nombre contra las
       metas del usuario, o (2) marcarlo como error de fila en vez de crear
       cuenta fantasma.
-- [ ] **Cambiar el tipo de una categoría padre (Gasto↔Ingreso) huerfaniza sus
+- [x] **Cambiar el tipo de una categoría padre (Gasto↔Ingreso) huerfaniza sus
       subcategorías.** `apps/mobile/src/features/categories/category-form.tsx:108-120`.
       El trigger `check_category_parent` solo valida al tocar el hijo, nunca al
       actualizar el padre. El hijo queda invisible en toda la UI pero sigue
       referenciado por transacciones viejas.
-- [ ] **Archivar una categoría padre vuelve inseleccionables sus subcategorías
+      **Fix (2026-10-02), criterio: bloquear (no hay forma sensata de migrar
+      automáticamente el tipo de una subcategoría).** Migración
+      `20261002180000_category_parent_type_and_archive_cascade.sql` extiende
+      `check_category_parent` para rechazar el cambio de `type` en un padre
+      que tiene subcategorías. `category-form.tsx` bloquea los chips de
+      Tipo (con hint) cuando la categoría en edición tiene subcategorías, y
+      `errors.ts` traduce el `check_violation` a un mensaje amigable por si
+      llega a fallar igual. Probado contra la DB local. `tsc --noEmit` limpio.
+- [x] **Archivar una categoría padre vuelve inseleccionables sus subcategorías
       activas.** `category-picker.tsx:63-69`. No hay forma de "retirar solo el
       padre" sin perder acceso a hijos vigentes.
+      **Fix (2026-10-02), criterio: cascadear con aviso (aquí sí hay una
+      resolución obvia y segura — "ya no uso esta rama").** Misma migración:
+      trigger `categories_cascade_archive_subcategories` archiva
+      atómicamente las subcategorías activas cuando se archiva el padre (una
+      sola `UPDATE categories SET archived = true` lo hace todo). El diálogo
+      de confirmación en `categories/[id]/index.tsx` lista cuántas y cuáles
+      subcategorías se van a archivar también. Reversible: desarchivar cada
+      una por separado. Probado contra la DB local (solo las activas
+      cambian, una ya archivada se queda igual). `tsc --noEmit` limpio.
 - [ ] **`accounts.currency` e `initial_balance` están documentados como
       "bloqueados tras creación" pero nada en la DB lo impide.** Ninguna
       trigger protege esas columnas; un UPDATE directo reinterpretaría
@@ -247,6 +264,7 @@ al corregir.
       `20261002140000_account_archive_zero_balance`,
       `20261002150000_account_archive_unlinks_goal`,
       `20261002160000_goal_is_completed`,
-      `20261002170000_account_archive_respects_goal_completed`.
+      `20261002170000_account_archive_respects_goal_completed`,
+      `20261002180000_category_parent_type_and_archive_cascade`.
 - [ ] Commitear los archivos modificados de la feature de multi-moneda +
       travel mode + meta-ligada-a-cuenta (actualmente sin stage).

@@ -51,6 +51,14 @@ export function CategoryForm({
 
   const { data: categories } = useCategories();
   const parent = (categories ?? []).find((c) => c.id === parentId) ?? null;
+  // Changing type with subcategories already under it has no sensible
+  // resolution (a subcategory like "Restaurantes" doesn't mean anything as
+  // income just because its parent "Comida" became one) — the DB rejects it
+  // outright (`check_category_parent`), so lock it here instead of letting
+  // the user hit a raw error after filling out the rest of the form.
+  const hasSubcategories = Boolean(
+    initial?.id && (categories ?? []).some((c) => c.parent_id === initial.id),
+  );
 
   const submit = () => {
     setNameError(undefined);
@@ -101,10 +109,11 @@ export function CategoryForm({
 
       <View className="gap-2">
         <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Tipo</Text>
-        <View className="flex-row gap-2">
+        <View className={`flex-row gap-2 ${hasSubcategories ? 'opacity-50' : ''}`}>
           <Chip
             label="Gasto"
             selected={type === 'expense'}
+            disabled={hasSubcategories}
             onPress={() => {
               setType('expense');
               setParentId(null);
@@ -113,12 +122,18 @@ export function CategoryForm({
           <Chip
             label="Ingreso"
             selected={type === 'income'}
+            disabled={hasSubcategories}
             onPress={() => {
               setType('income');
               setParentId(null);
             }}
           />
         </View>
+        {hasSubcategories ? (
+          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+            No puedes cambiar el tipo mientras tenga subcategorías. Muévelas o elimínalas primero.
+          </Text>
+        ) : null}
       </View>
 
       <View className="gap-1.5">

@@ -51,6 +51,9 @@ function fromSupabaseError(error: SupabaseError): string | null {
       if (/non-zero balance/.test(error.message)) {
         return 'No puedes archivar una cuenta con saldo distinto de cero. Ajusta el saldo a 0 antes de archivarla.';
       }
+      if (/cannot change type of a category that has subcategories/.test(error.message)) {
+        return 'No puedes cambiar el tipo de una categoría que tiene subcategorías. Muévelas o elimínalas primero.';
+      }
       return 'Revisa los datos ingresados.';
     case '42501': // insufficient_privilege (RLS)
       return 'No tienes permiso para hacer esto.';

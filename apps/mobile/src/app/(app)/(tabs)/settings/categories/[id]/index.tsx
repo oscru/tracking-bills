@@ -27,6 +27,10 @@ export default function CategoryDetail() {
 
   const category = (categories ?? []).find((c) => c.id === id);
   const subcategories = (categories ?? []).filter((c) => c.parent_id === id);
+  // Archiving the parent cascades to these atomically at the DB level
+  // (`categories_cascade_archive_subcategories`) — surfaced here only so the
+  // confirm dialog can tell the user it's about to happen.
+  const activeSubcategories = subcategories.filter((s) => !s.archived);
 
   const goBack = () =>
     fromTransactionId
@@ -131,7 +135,11 @@ export default function CategoryDetail() {
       <ConfirmSheet
         visible={confirmArchive}
         title="¿Archivar categoría?"
-        description="Dejará de aparecer para elegirla en movimientos nuevos, pero los movimientos que ya la tienen la conservan. Puedes desarchivarla cuando quieras."
+        description={
+          activeSubcategories.length > 0
+            ? `Dejará de aparecer para elegirla en movimientos nuevos. Esto también archivará ${activeSubcategories.length} subcategoría${activeSubcategories.length === 1 ? '' : 's'}: ${activeSubcategories.map((s) => resolveCategoryLabel(s)).join(', ')}. Los movimientos que ya las tienen las conservan. Puedes desarchivar cada una cuando quieras.`
+            : 'Dejará de aparecer para elegirla en movimientos nuevos, pero los movimientos que ya la tienen la conservan. Puedes desarchivarla cuando quieras.'
+        }
         confirmLabel="Archivar"
         onCancel={() => setConfirmArchive(false)}
         onConfirm={() => {
