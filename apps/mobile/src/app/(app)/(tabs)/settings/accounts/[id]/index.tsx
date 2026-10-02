@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useTransactions, useUpdateAccount } from '@repo/core/hooks';
-import { accountBalance, formatCurrency } from '@repo/core/utils';
-import { Button, ConfirmSheet, Fab, PageHeader, Screen, SwitchRow } from '@repo/ui';
+import { useAccounts, useGoals, useTransactions, useUpdateAccount } from '@repo/core/hooks';
+import { accountBalance, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
+import { Button, ConfirmSheet, ErrorCard, Fab, PageHeader, Screen, SwitchRow } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -15,11 +15,14 @@ export default function AccountDetail() {
   const router = useRouter();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: transactions, isLoading: loadingTx } = useTransactions();
+  const { data: goals } = useGoals();
   const updateAccount = useUpdateAccount();
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
+  const [archiveBlockedMessage, setArchiveBlockedMessage] = useState<string | null>(null);
 
   const account = (accounts ?? []).find((a) => a.id === id);
+  const linkedGoal = (goals ?? []).find((g) => g.account_id === id) ?? null;
 
   const { balance, incomeCount, expenseCount } = useMemo(() => {
     if (!account) return { balance: 0, incomeCount: 0, expenseCount: 0 };
@@ -56,8 +59,23 @@ export default function AccountDetail() {
     );
   }
 
-  const toggleArchive = () =>
-    updateAccount.mutate({ id: account.id, patch: { archived: !account.archived } });
+  const toggleArchive = () => {
+    // Archiving unlinks any goal pointed at this account atomically, in the
+    // same DB transaction (`accounts_unlink_goal_on_archive` trigger) — no
+    // separate client-side call needed, so there's no window where the
+    // account ends up archived but still linked if a second request failed.
+    updateAccount.mutate(
+      { id: account.id, patch: { archived: !account.archived } },
+      {
+        onSuccess: () => setArchiveBlockedMessage(null),
+        // Defense in depth: the UI already blocks this before opening the
+        // confirm sheet, but a concurrent edit from another device could
+        // still make the DB-level check (`check_account_archive_zero_balance`)
+        // the one that actually catches it.
+        onError: (e) => setArchiveBlockedMessage(toFriendlyMessage(e, 'No se pudo archivar la cuenta')),
+      },
+    );
+  };
 
   return (
     <Screen edges={['top']} className="gap-5">
@@ -130,13 +148,28 @@ export default function AccountDetail() {
             }
           />
 
-          <View className="border-t border-line pt-5 dark:border-line-dark">
+          <View className="gap-3 border-t border-line pt-5 dark:border-line-dark">
             <Button
               label={account.archived ? 'Desarchivar' : 'Archivar'}
               variant={account.archived ? 'secondary' : 'ghost-danger'}
               loading={updateAccount.isPending}
-              onPress={() => (account.archived ? toggleArchive() : setConfirmArchive(true))}
+              onPress={() => {
+                if (account.archived) return toggleArchive();
+                // A balance left in an archived account is real money that's
+                // easy to forget about — archiving only hides it from
+                // pickers (see `accountBalance`, which ignores `archived`),
+                // it doesn't zero it out. Require settling it first.
+                if (Math.round(balance * 100) !== 0) {
+                  setArchiveBlockedMessage(
+                    'No puedes archivar una cuenta con saldo distinto de cero. Transfiere el saldo a otra cuenta o ajústalo a 0 primero.',
+                  );
+                  return;
+                }
+                setArchiveBlockedMessage(null);
+                setConfirmArchive(true);
+              }}
             />
+            <ErrorCard message={archiveBlockedMessage} />
           </View>
         </ScrollView>
 
@@ -165,7 +198,11 @@ export default function AccountDetail() {
       <ConfirmSheet
         visible={confirmArchive}
         title="¿Archivar cuenta?"
-        description="Dejará de aparecer para elegirla en movimientos nuevos, pero conserva todo su historial. Puedes desarchivarla cuando quieras."
+        description={
+          linkedGoal
+            ? `Dejará de aparecer para elegirla en movimientos nuevos, pero conserva todo su historial. Como está vinculada a la meta "${linkedGoal.name}", esa meta se desvinculará y volverá a llevar su progreso de forma manual. Puedes desarchivar la cuenta y volver a vincularla cuando quieras.`
+            : 'Dejará de aparecer para elegirla en movimientos nuevos, pero conserva todo su historial. Puedes desarchivarla cuando quieras.'
+        }
         confirmLabel="Archivar"
         onCancel={() => setConfirmArchive(false)}
         onConfirm={() => {

@@ -906,8 +906,14 @@ function periodSpanEnd(startISO: string, periodType: Exclude<BudgetPeriodType, '
   const start = new Date(y ?? 2000, (m ?? 1) - 1, d ?? 1);
   if (periodType === 'weekly') return todayISODate(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6));
   if (periodType === 'biweekly') return todayISODate(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 14));
-  // monthly: one calendar month later, minus a day — handles variable month lengths correctly.
-  return todayISODate(new Date(start.getFullYear(), start.getMonth() + 1, start.getDate() - 1));
+  // monthly: one calendar month later, minus a day. A plain `getDate() - 1` on
+  // the target month overflows for a 29th-31st start once the target month is
+  // shorter (e.g. 31-Jan naively lands on 2-Mar instead of 28-Feb), so clamp
+  // the "one month later" date to the target month's actual last day first.
+  const targetMonthIndex = start.getMonth() + 1;
+  const lastDayOfTargetMonth = new Date(start.getFullYear(), targetMonthIndex + 1, 0).getDate();
+  const clampedDay = Math.min(start.getDate(), lastDayOfTargetMonth);
+  return todayISODate(new Date(start.getFullYear(), targetMonthIndex, clampedDay - 1));
 }
 
 /**
@@ -1021,9 +1027,20 @@ export function categorySpentInRange(
 interface GoalTx {
   type: string;
   amount: number | string;
+  account_id: string;
+  to_account_id: string | null;
   goal_id: string | null;
   is_completed: boolean;
   account: { currency: string } | null;
+}
+
+/** The subset of an account `goalProgress` needs when a goal is backed by a
+ * real, dedicated savings account (`goals.account_id`) instead of the
+ * virtual envelope model. */
+interface GoalLinkedAccount {
+  id: string;
+  initial_balance: number | string;
+  currency: string;
 }
 
 export interface GoalProgress {
@@ -1035,27 +1052,39 @@ export interface GoalProgress {
 }
 
 /**
- * How much has been transferred into a goal so far — every *settled*
- * `transactions` row with this `goal_id` is a contribution (see
- * `transactions.goal_id`). A planned/pending contribution doesn't count
- * until it actually happens, same rule as `accountBalance`. A goal locks one
- * `currency` at creation, so a contribution is only counted when it comes
- * from an account in that same currency (the UI that creates contributions
- * already only offers matching accounts — this is the same rule enforced
- * defensively here too).
+ * How much has been saved toward a goal so far.
+ *
+ * - **Virtual goal** (`linkedAccount` omitted — `goals.account_id` is null,
+ *   the original and still-default model): every *settled* `transactions`
+ *   row with this `goal_id` is a contribution (see `transactions.goal_id`).
+ *   A goal locks one `currency` at creation, so a contribution only counts
+ *   when it comes from an account in that same currency (the UI that creates
+ *   contributions already only offers matching accounts — this is the same
+ *   rule enforced defensively here too).
+ * - **Account-linked goal** (`linkedAccount` passed, from `goals.account_id`):
+ *   the account IS the savings, so "saved" is simply that account's real
+ *   balance (`accountBalance`) — contributions to it are ordinary transfers
+ *   (`to_account_id`), not `goal_id`-tagged rows, so the virtual-model
+ *   filter above would see nothing.
  */
 export function goalProgress(
   goalId: string,
   targetAmount: number,
   currency: string,
   transactions: GoalTx[],
+  linkedAccount?: GoalLinkedAccount | null,
 ): GoalProgress {
-  let saved = 0;
-  for (const t of transactions) {
-    if (!t.is_completed) continue;
-    if (t.goal_id !== goalId) continue;
-    if (t.account?.currency !== currency) continue;
-    saved += Number(t.amount);
+  let saved: number;
+  if (linkedAccount) {
+    saved = accountBalance(linkedAccount, transactions);
+  } else {
+    saved = 0;
+    for (const t of transactions) {
+      if (!t.is_completed) continue;
+      if (t.goal_id !== goalId) continue;
+      if (t.account?.currency !== currency) continue;
+      saved += Number(t.amount);
+    }
   }
   return {
     saved,

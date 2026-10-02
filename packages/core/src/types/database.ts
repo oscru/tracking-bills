@@ -318,6 +318,7 @@ export type Database = {
       }
       goals: {
         Row: {
+          account_id: string | null
           archived: boolean
           contribution_amount: number | null
           contribution_interval_days: number | null
@@ -326,12 +327,14 @@ export type Database = {
           deadline: string | null
           icon: string
           id: string
+          is_completed: boolean
           name: string
           target_amount: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           archived?: boolean
           contribution_amount?: number | null
           contribution_interval_days?: number | null
@@ -340,12 +343,14 @@ export type Database = {
           deadline?: string | null
           icon: string
           id?: string
+          is_completed?: boolean
           name: string
           target_amount: number
           updated_at?: string
           user_id?: string
         }
         Update: {
+          account_id?: string | null
           archived?: boolean
           contribution_amount?: number | null
           contribution_interval_days?: number | null
@@ -354,12 +359,20 @@ export type Database = {
           deadline?: string | null
           icon?: string
           id?: string
+          is_completed?: boolean
           name?: string
           target_amount?: number
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "goals_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "goals_user_id_fkey"
             columns: ["user_id"]

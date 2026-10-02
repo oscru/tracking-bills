@@ -124,6 +124,18 @@ function dataRows(sheet: RawSheet): { row: unknown[]; rowNum: number }[] {
     .filter(({ row }) => row.some((c) => c != null && String(c).trim() !== ''));
 }
 
+/** Sorted, comma-joined so tag order (which can differ between two sheets
+ * listing the same row) doesn't produce a different key. */
+function tagsKeyPart(tagNames: string[]): string {
+  return [...tagNames].map((t) => t.toLowerCase()).sort().join(',');
+}
+
+// Identifies a row as "the same transaction" — used only to collapse an exact
+// row that's repeated across a file's redundant sheets (e.g. a combined
+// Movements sheet plus derived Expenses/Incomes subsets). Every field the
+// source row carries must match, or two real, distinct transactions that
+// happen to share date/amount/account/category (e.g. two same-price coffees
+// the same day) would silently get merged into one.
 function movementKey(m: MovementDraft): string {
   return [
     m.date,
@@ -133,11 +145,21 @@ function movementKey(m: MovementDraft): string {
     m.categoryName.toLowerCase(),
     (m.subcategoryName ?? '').toLowerCase(),
     (m.description ?? '').toLowerCase(),
+    m.currencyCode ?? '',
+    m.isCompleted,
+    tagsKeyPart(m.tagNames),
   ].join('|');
 }
 
 function transferKey(t: TransferDraft): string {
-  return [t.date, t.amount, t.fromAccountName.toLowerCase(), t.toAccountName.toLowerCase()].join('|');
+  return [
+    t.date,
+    t.amount,
+    t.fromAccountName.toLowerCase(),
+    t.toAccountName.toLowerCase(),
+    t.currencyCode ?? '',
+    tagsKeyPart(t.tagNames),
+  ].join('|');
 }
 
 /**

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useGoals, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useGoals, useTransactions } from '@repo/core/hooks';
 import { daysUntil, formatDate, goalProgress, todayISODate, toFriendlyMessage } from '@repo/core/utils';
 import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl } from '@repo/ui';
 import { useRouter } from 'expo-router';
@@ -26,6 +26,7 @@ export default function GoalsScreen() {
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const { data: goals, isLoading, error } = useGoals();
   const { data: transactions } = useTransactions();
+  const { data: accounts } = useAccounts();
 
   const visible = (goals ?? []).filter((g) => (status === 'archived' ? g.archived : !g.archived));
 
@@ -50,11 +51,15 @@ export default function GoalsScreen() {
       ) : (
         <ScrollView className="flex-1" contentContainerClassName="gap-3 pb-24">
           {visible.map((g) => {
+            const linkedAccount = g.account_id
+              ? ((accounts ?? []).find((a) => a.id === g.account_id) ?? null)
+              : null;
             const progress = goalProgress(
               g.id,
               Number(g.target_amount),
               g.currency,
               transactions ?? [],
+              linkedAccount,
             );
             return (
               <Pressable
@@ -81,7 +86,11 @@ export default function GoalsScreen() {
                       {g.name}
                     </Text>
                     <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                      {progress.isComplete ? '¡Meta alcanzada!' : deadlineLabel(g.deadline)}
+                      {g.is_completed
+                        ? 'Completada'
+                        : progress.isComplete
+                          ? '¡Monto alcanzado!'
+                          : deadlineLabel(g.deadline)}
                     </Text>
                   </View>
                 </View>

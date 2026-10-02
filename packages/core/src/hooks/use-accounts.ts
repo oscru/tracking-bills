@@ -24,7 +24,13 @@ export function useUpdateAccount() {
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: AccountUpdateInput }) =>
       updateAccount(id, patch),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.accounts.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      // Archiving an account server-side unlinks any goal pointed at it
+      // (`accounts_unlink_goal_on_archive` trigger) — refetch goals too so a
+      // cached goal doesn't keep showing a dead `account_id`.
+      qc.invalidateQueries({ queryKey: queryKeys.goals.all });
+    },
   });
 }
 

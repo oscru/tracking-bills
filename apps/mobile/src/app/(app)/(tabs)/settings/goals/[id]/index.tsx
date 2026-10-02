@@ -1,5 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useDeleteGoal, useFormError, useGoals, useTransactions, useUpdateGoal } from '@repo/core/hooks';
+import {
+  useAccounts,
+  useDeleteGoal,
+  useFormError,
+  useGoals,
+  useTransactions,
+  useUpdateGoal,
+} from '@repo/core/hooks';
 import {
   daysUntil,
   formatCurrency,
@@ -29,6 +36,7 @@ export default function GoalDetail() {
   const router = useRouter();
   const { data: goals, isLoading } = useGoals();
   const { data: transactions } = useTransactions();
+  const { data: accounts } = useAccounts();
   const updateGoal = useUpdateGoal();
   const remove = useDeleteGoal();
   const { error, setError } = useFormError();
@@ -54,7 +62,10 @@ export default function GoalDetail() {
   }
 
   const targetAmount = Number(goal.target_amount);
-  const progress = goalProgress(goal.id, targetAmount, goal.currency, transactions ?? []);
+  const linkedAccount = goal.account_id
+    ? ((accounts ?? []).find((a) => a.id === goal.account_id) ?? null)
+    : null;
+  const progress = goalProgress(goal.id, targetAmount, goal.currency, transactions ?? [], linkedAccount);
   const pace =
     goal.contribution_amount != null && goal.contribution_interval_days != null
       ? goalPace(
@@ -66,10 +77,11 @@ export default function GoalDetail() {
       : null;
 
   const contributions = (transactions ?? [])
-    .filter((t) => t.goal_id === goal.id)
+    .filter((t) => (goal.account_id ? t.to_account_id === goal.account_id : t.goal_id === goal.id))
     .sort((a, b) => b.transaction_date.localeCompare(a.transaction_date) || b.created_at.localeCompare(a.created_at));
 
   const toggleArchive = () => updateGoal.mutate({ id: goal.id, patch: { archived: !goal.archived } });
+  const markCompleted = (v: boolean) => updateGoal.mutate({ id: goal.id, patch: { is_completed: v } });
 
   const paceColor =
     pace == null
@@ -92,9 +104,20 @@ export default function GoalDetail() {
 
       <View className="flex-1">
         <ScrollView className="flex-1" contentContainerClassName="gap-5 pb-24">
-          {goal.archived ? (
-            <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
-              <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">Archivado</Text>
+          {goal.archived || goal.is_completed ? (
+            <View className="flex-row gap-2">
+              {goal.is_completed ? (
+                <View className="self-start rounded-full bg-lime-tint px-3 py-1 dark:bg-lime-tint-dark">
+                  <Text className="text-xs font-semibold text-lime-ink dark:text-lime-ink-dark">
+                    Completada
+                  </Text>
+                </View>
+              ) : null}
+              {goal.archived ? (
+                <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
+                  <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">Archivado</Text>
+                </View>
+              ) : null}
             </View>
           ) : null}
 
@@ -109,12 +132,21 @@ export default function GoalDetail() {
               </View>
               <View className="flex-1">
                 <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                  {progress.isComplete ? '¡Meta alcanzada!' : deadlineLabel(goal.deadline)} ·{' '}
-                  {goal.currency}
+                  {goal.is_completed
+                    ? '¡Meta completada!'
+                    : progress.isComplete
+                      ? '¡Monto alcanzado! Márcala como completada'
+                      : deadlineLabel(goal.deadline)}{' '}
+                  · {goal.currency}
                 </Text>
                 {goal.deadline ? (
                   <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
                     Fecha límite: {formatDate(goal.deadline)}
+                  </Text>
+                ) : null}
+                {linkedAccount ? (
+                  <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
+                    Cuenta de ahorro: {linkedAccount.name}
                   </Text>
                 ) : null}
               </View>
@@ -138,6 +170,22 @@ export default function GoalDetail() {
               </View>
             ) : null}
           </View>
+
+          {progress.isComplete && !goal.is_completed && !goal.archived ? (
+            <Button
+              label="Marcar como completada"
+              loading={updateGoal.isPending}
+              onPress={() => markCompleted(true)}
+            />
+          ) : null}
+
+          {goal.is_completed && !goal.archived ? (
+            <Pressable onPress={() => markCompleted(false)} className="items-center py-1" hitSlop={8}>
+              <Text className="text-xs font-medium text-ink-2 dark:text-ink-2-dark">
+                Marcar como no completada
+              </Text>
+            </Pressable>
+          ) : null}
 
           <Button label="Agregar aportación" onPress={() => setContributeOpen(true)} />
 
@@ -211,12 +259,17 @@ export default function GoalDetail() {
         goalId={goal.id}
         goalName={goal.name}
         goalCurrency={goal.currency}
+        goalAccountId={goal.account_id}
       />
 
       <ConfirmSheet
         visible={confirmArchive}
         title="¿Archivar objetivo?"
-        description="Deja de aparecer entre tus objetivos activos, pero conserva su historial de aportaciones. Puedes desarchivarlo cuando quieras."
+        description={
+          linkedAccount && !goal.is_completed
+            ? `Deja de aparecer entre tus objetivos activos. Como no está marcada como completada, se desvinculará de "${linkedAccount.name}" (esa cuenta queda libre para ligarla a otra meta). Puedes desarchivarlo cuando quieras.`
+            : 'Deja de aparecer entre tus objetivos activos, pero conserva su historial de aportaciones. Puedes desarchivarlo cuando quieras.'
+        }
         confirmLabel="Archivar"
         onCancel={() => setConfirmArchive(false)}
         onConfirm={() => {

@@ -8,6 +8,10 @@ const targetAmount = z.number().positive('El monto debe ser mayor a 0').finite()
 const deadline = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida').nullish();
 const contributionAmount = z.number().positive('Debe ser mayor a 0').finite().nullish();
 const contributionIntervalDays = z.number().int().positive('Debe ser mayor a 0').nullish();
+// Optional dedicated savings account backing this goal (see migration
+// 20261002120000). The DB trigger `check_goal_account` enforces ownership and
+// currency match; the UI only offers matching accounts in the first place.
+const accountId = z.string().uuid().nullish();
 
 const commonFields = {
   name,
@@ -18,6 +22,7 @@ const commonFields = {
   deadline,
   contribution_amount: contributionAmount,
   contribution_interval_days: contributionIntervalDays,
+  account_id: accountId,
 };
 
 /** Either both the pace fields are set, or neither is — mirrors `goals_contribution_pace_shape`. */
@@ -38,7 +43,14 @@ export const goalUpdateSchema = z
     deadline,
     contribution_amount: contributionAmount,
     contribution_interval_days: contributionIntervalDays,
+    account_id: accountId,
     archived: z.boolean().optional(),
+    // Never part of `goalCreateSchema` — a goal is never created already
+    // complete. The UI only offers setting this once progress reaches
+    // `target_amount` (see `goals/[id]/index.tsx`); nothing here re-checks
+    // that, same trust level as every other derived-progress figure in this
+    // app (never stored, always recomputed from transactions).
+    is_completed: z.boolean().optional(),
   })
   .refine(
     (v) =>

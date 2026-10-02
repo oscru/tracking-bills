@@ -1,4 +1,4 @@
-import { useCreateGoal, useFormError, useProfile } from '@repo/core/hooks';
+import { useCreateGoal, useFormError, useGoals, useProfile } from '@repo/core/hooks';
 import { PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -9,7 +9,11 @@ import { GoalForm } from '../../../../../features/goals/goal-form';
 export default function NewGoal() {
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
+  const { data: goals } = useGoals();
   const create = useCreateGoal();
+  const accountsLinkedElsewhere = (goals ?? [])
+    .map((g) => g.account_id)
+    .filter((id): id is string => id != null);
   const { error, setError, clearError } = useFormError();
   // Seeded from the profile once it loads, then lives independently so the
   // chip selection doesn't get clobbered by a later refetch.
@@ -31,6 +35,7 @@ export default function NewGoal() {
         currency={currency ?? profile.currency}
         currencyOptions={profile.enabled_currencies}
         onChangeCurrency={setCurrency}
+        accountsLinkedElsewhere={accountsLinkedElsewhere}
         submitLabel="Guardar"
         submitting={create.isPending}
         error={error}

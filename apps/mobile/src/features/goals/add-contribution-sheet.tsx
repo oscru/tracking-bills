@@ -15,12 +15,16 @@ interface Props {
   goalName: string;
   /** The goal's locked currency — only accounts in this same currency can contribute (see `goalProgress`). */
   goalCurrency: string;
+  /** Set when the goal is backed by a dedicated savings account (`goals.account_id`) — the
+   * contribution is then recorded as a normal `to_account_id` transfer into it instead of a
+   * `goal_id`-tagged one, so it round-trips through CSV export/import like any other transfer. */
+  goalAccountId?: string | null;
 }
 
 /** Records a real transfer from a real account into a goal — the source
  * account's balance drops, same as any other transfer. Only accounts in the
  * goal's own currency are offered, since a contribution isn't converted. */
-export function AddContributionSheet({ visible, onClose, goalId, goalName, goalCurrency }: Props) {
+export function AddContributionSheet({ visible, onClose, goalId, goalName, goalCurrency, goalAccountId }: Props) {
   const { data: accounts } = useAccounts();
   const create = useCreateTransaction();
 
@@ -49,10 +53,10 @@ export function AddContributionSheet({ visible, onClose, goalId, goalName, goalC
     const parsed = transactionCreateSchema.safeParse({
       type: 'transfer',
       account_id: accountId,
-      goal_id: goalId,
       amount,
       transaction_date: date,
       description: description.trim() || null,
+      ...(goalAccountId ? { to_account_id: goalAccountId } : { goal_id: goalId }),
     });
     if (!parsed.success) {
       setFieldError(parsed.error.issues[0]?.message ?? 'Revisa los datos');
@@ -128,6 +132,7 @@ export function AddContributionSheet({ visible, onClose, goalId, goalName, goalC
           setFieldError(null);
         }}
         currencyFilter={goalCurrency}
+        excludeId={goalAccountId}
       />
     </BottomSheet>
   );

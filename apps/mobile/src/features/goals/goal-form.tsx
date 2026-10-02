@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useAccounts } from '@repo/core/hooks';
 import { addDaysISO, formatCurrency, suggestedGoalContribution, todayISODate } from '@repo/core/utils';
 import { goalCreateSchema, type GoalCreateInput } from '@repo/core/validators';
 import { Button, Chip, CurrencyField, ErrorCard, SwitchRow, TextField } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { AccountPicker } from '../accounts/account-picker';
 import { IconPicker } from '../favorites/icon-picker';
 import { DateField } from '../transactions/date-field';
 
@@ -15,6 +17,7 @@ export interface GoalFormInitial {
   deadline?: string | null;
   contribution_amount?: number | null;
   contribution_interval_days?: number | null;
+  account_id?: string | null;
 }
 
 interface Props {
@@ -30,6 +33,10 @@ interface Props {
   /** Called whenever a field changes — the parent should clear its `error` so it doesn't linger once the user starts fixing it. */
   onDirty?: () => void;
   footer?: ReactNode;
+  /** Accounts already linked to some *other* goal (`goals.account_id` is unique)
+   * — hidden from the savings-account picker so the user can't even attempt
+   * a link the DB would reject. */
+  accountsLinkedElsewhere?: string[];
 }
 
 type PacePeriod = 'weekly' | 'biweekly' | 'monthly' | 'custom';
@@ -59,6 +66,7 @@ export function GoalForm({
   onSubmit,
   onDirty,
   footer,
+  accountsLinkedElsewhere,
 }: Props) {
   const [name, setName] = useState(initial?.name ?? '');
   const [icon, setIcon] = useState<string | null>(initial?.icon ?? null);
@@ -78,9 +86,15 @@ export function GoalForm({
   const [contributionAmountText, setContributionAmountText] = useState(
     initial?.contribution_amount != null ? String(initial.contribution_amount) : '',
   );
+  const [hasLinkedAccount, setHasLinkedAccount] = useState(initial?.account_id != null);
+  const [accountId, setAccountId] = useState<string | null>(initial?.account_id ?? null);
+  const [accountPickerOpen, setAccountPickerOpen] = useState(false);
 
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [fieldError, setFieldError] = useState<string | null>(null);
+
+  const { data: accounts } = useAccounts();
+  const selectedAccount = (accounts ?? []).find((a) => a.id === accountId) ?? null;
 
   const dirty = () => {
     setFieldError(null);
@@ -108,6 +122,7 @@ export function GoalForm({
   const submit = () => {
     setFieldError(null);
     if (!icon) return setFieldError('Elige un ícono');
+    if (hasLinkedAccount && !accountId) return setFieldError('Elige una cuenta de ahorro');
 
     const payload = {
       name: name.trim(),
@@ -117,6 +132,7 @@ export function GoalForm({
       deadline,
       contribution_amount: hasPace ? contributionAmount : null,
       contribution_interval_days: hasPace ? intervalDays : null,
+      account_id: hasLinkedAccount ? accountId : null,
     };
 
     const parsed = goalCreateSchema.safeParse(payload);
@@ -177,6 +193,7 @@ export function GoalForm({
                 selected={currency === c}
                 onPress={() => {
                   onChangeCurrency(c);
+                  setAccountId(null);
                   dirty();
                 }}
               />
@@ -317,6 +334,40 @@ export function GoalForm({
         </View>
       ) : null}
 
+      <SwitchRow
+        label="Vincular una cuenta de ahorro"
+        description="Las aportaciones serán transferencias reales a esa cuenta, y el progreso será su saldo — en vez de un sobre virtual"
+        value={hasLinkedAccount}
+        onValueChange={(v) => {
+          setHasLinkedAccount(v);
+          if (!v) setAccountId(null);
+          dirty();
+        }}
+      />
+
+      {hasLinkedAccount ? (
+        <View className="gap-2">
+          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Cuenta de ahorro</Text>
+          <Pressable
+            onPress={() => setAccountPickerOpen(true)}
+            className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+          >
+            <Text
+              className={
+                selectedAccount
+                  ? 'text-base text-ink dark:text-ink-dark'
+                  : 'text-base text-ink-3 dark:text-ink-3-dark'
+              }
+            >
+              {selectedAccount ? selectedAccount.name : 'Elige una cuenta'}
+            </Text>
+          </Pressable>
+          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+            Solo se muestran cuentas en {currency} que no estén ya ligadas a otra meta.
+          </Text>
+        </View>
+      ) : null}
+
       <ErrorCard message={fieldError ?? error} />
 
       <Button label={submitLabel} onPress={submit} loading={submitting} />
@@ -331,6 +382,19 @@ export function GoalForm({
           setIcon(name);
           dirty();
         }}
+      />
+
+      <AccountPicker
+        visible={accountPickerOpen}
+        onClose={() => setAccountPickerOpen(false)}
+        title="Cuenta de ahorro"
+        selectedId={accountId}
+        onSelect={(id) => {
+          setAccountId(id);
+          dirty();
+        }}
+        currencyFilter={currency}
+        excludeIds={accountsLinkedElsewhere}
       />
     </ScrollView>
   );

@@ -13,6 +13,10 @@ export default function EditGoal() {
   const { error, setError, clearError } = useFormError();
 
   const goal = (goals ?? []).find((g) => g.id === id);
+  const accountsLinkedElsewhere = (goals ?? [])
+    .filter((g) => g.id !== id)
+    .map((g) => g.account_id)
+    .filter((accId): accId is string => accId != null);
 
   if (isLoading) {
     return (
@@ -41,8 +45,10 @@ export default function EditGoal() {
           deadline: goal.deadline,
           contribution_amount: goal.contribution_amount != null ? Number(goal.contribution_amount) : null,
           contribution_interval_days: goal.contribution_interval_days,
+          account_id: goal.account_id,
         }}
         currency={goal.currency}
+        accountsLinkedElsewhere={accountsLinkedElsewhere}
         submitLabel="Guardar cambios"
         submitting={update.isPending}
         error={error}
