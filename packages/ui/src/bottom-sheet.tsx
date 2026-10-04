@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useKeyboardHeight } from './use-keyboard-height';
 import { useSheetPortalRegister } from './sheet-portal';
 
 export interface BottomSheetProps {
@@ -25,6 +26,27 @@ const OFFSCREEN_Y = 600;
 
 function SheetBody({ onClose, title, headerAction, children }: Omit<BottomSheetProps, 'visible'>) {
   const insets = useSafeAreaInsets();
+  // Android only (0 on iOS) — see `useKeyboardHeight`'s doc comment for why
+  // `KeyboardAvoidingView`'s own behaviors aren't used there.
+  const keyboardHeight = useKeyboardHeight();
+
+  const sheet = (
+    <View
+      style={{ paddingBottom: insets.bottom + 16 }}
+      className="max-h-[88%] rounded-t-[24px] bg-surface dark:bg-surface-dark"
+    >
+      <View className="items-center py-2.5">
+        <View className="h-1 w-10 rounded-full bg-[#E3E5E8] dark:bg-line-dark" />
+      </View>
+      {(title || headerAction) && (
+        <View className="flex-row items-center justify-between px-5 pb-2">
+          <Text className="text-[17px] font-bold text-ink dark:text-ink-dark">{title}</Text>
+          {headerAction}
+        </View>
+      )}
+      {children}
+    </View>
+  );
 
   return (
     <>
@@ -33,27 +55,27 @@ function SheetBody({ onClose, title, headerAction, children }: Omit<BottomSheetP
         onPress={onClose}
         accessibilityLabel="Cerrar"
       />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        pointerEvents="box-none"
-        style={{ flex: 1, justifyContent: 'flex-end' }}
-      >
-        <View
-          style={{ paddingBottom: insets.bottom + 16 }}
-          className="max-h-[88%] rounded-t-[24px] bg-surface dark:bg-surface-dark"
+      {/* iOS: KeyboardAvoidingView's own "padding" behavior (reliable there).
+          Android: manual paddingBottom from `useKeyboardHeight` — see the
+          matching comment in `screen.tsx` for why. Pushing the bottom edge
+          of this flex-end box up by the keyboard's height shifts the
+          bottom-anchored sheet card up by the same amount. */}
+      {Platform.OS === 'ios' ? (
+        <KeyboardAvoidingView
+          behavior="padding"
+          pointerEvents="box-none"
+          style={{ flex: 1, justifyContent: 'flex-end' }}
         >
-          <View className="items-center py-2.5">
-            <View className="h-1 w-10 rounded-full bg-[#E3E5E8] dark:bg-line-dark" />
-          </View>
-          {(title || headerAction) && (
-            <View className="flex-row items-center justify-between px-5 pb-2">
-              <Text className="text-[17px] font-bold text-ink dark:text-ink-dark">{title}</Text>
-              {headerAction}
-            </View>
-          )}
-          {children}
+          {sheet}
+        </KeyboardAvoidingView>
+      ) : (
+        <View
+          pointerEvents="box-none"
+          style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: keyboardHeight }}
+        >
+          {sheet}
         </View>
-      </KeyboardAvoidingView>
+      )}
     </>
   );
 }

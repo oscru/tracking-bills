@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const uuid = z.string().uuid();
-const amount = z.number().positive('Must be greater than 0').finite();
+const amount = z.number().positive('Debe ser mayor a 0').finite();
 const description = z.string().trim().max(280).nullish();
 // income/expense favorites must be categorized — only a transfer has none,
 // same rule as `transactionCreateSchema`.

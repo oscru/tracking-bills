@@ -9,7 +9,7 @@ const uuid = z.string().uuid();
 const requiredCategoryId = z
   .string({ required_error: 'Elige una categoría', invalid_type_error: 'Elige una categoría' })
   .uuid('Elige una categoría');
-const amount = z.number().positive('Must be greater than 0').finite();
+const amount = z.number().positive('Debe ser mayor a 0').finite();
 const description = z.string().trim().max(280).nullish();
 // Omitted -> the DB defaults it to current_date.
 const transaction_date = isoDateSchema.optional();

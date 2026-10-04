@@ -2,10 +2,10 @@ import { z } from 'zod';
 
 export const categoryTypeSchema = z.enum(['income', 'expense']);
 
-export const hexColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Use a #RRGGBB hex color');
+export const hexColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Usa un color hex #RRGGBB');
 
 export const categoryCreateSchema = z.object({
-  name: z.string().trim().min(1, 'Required').max(60),
+  name: z.string().trim().min(1, 'Ponle un nombre').max(60),
   type: categoryTypeSchema,
   icon: z.string().trim().min(1).max(40).nullish(),
   color: hexColorSchema.nullish(),

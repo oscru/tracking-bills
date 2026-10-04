@@ -481,6 +481,50 @@ al corregir.
       resuelve sin corromper datos, pero `accounts/[id]/edit.tsx` no muestra
       ningún aviso, a diferencia del flujo de archivar que sí lo hace).
 
+## Bugs reportados por el usuario (fuera de la auditoría original)
+
+- [x] **El teclado tapa el campo que estás escribiendo, en todas las vistas
+      (reportado en Android).** `packages/ui/src/screen.tsx` y
+      `bottom-sheet.tsx` tenían `behavior={Platform.OS === 'ios' ? 'padding'
+      : undefined}` en su `KeyboardAvoidingView` — en Android dependía 100%
+      de que el sistema nativo hiciera el resize (`windowSoftInputMode=
+      "adjustResize"`), pero el proyecto corre en **Expo Go** (sin dev
+      client, sin carpeta `android/` nativa), así que no hay ningún
+      `AndroidManifest.xml` propio donde configurar eso.
+      **Primer intento (`behavior: 'height'` en vez de `undefined`) no
+      funcionó** — confirmado con capturas del usuario, el layout no se
+      movía nada. Causa real: `KeyboardAvoidingView` depende de medir su
+      propio layout al abrirse el teclado, y esa medición no se dispara de
+      forma confiable al estar anidado dentro de una pantalla native-stack
+      de Expo Router en Android (limitación conocida de `react-native-screens`).
+      **Fix final (2026-10-04):** nuevo hook `useKeyboardHeight` (en
+      `packages/ui/src/use-keyboard-height.ts`) que escucha directamente los
+      eventos nativos `Keyboard.addListener('keyboardDidShow'/'keyboardDidHide')`
+      — no depende de ninguna medición de layout, solo del evento del
+      sistema. En Android, `Screen`/`BottomSheet` ya no usan
+      `KeyboardAvoidingView`: aplican `paddingBottom` manualmente con la
+      altura real del teclado. iOS no se tocó (`KeyboardAvoidingView
+      behavior="padding"` ya funcionaba bien ahí). **Confirmado por el
+      usuario en dispositivo real — funciona.**
+
+- [x] **Mensajes de validación en inglés en varios formularios (reportado:
+      login).** `packages/core/src/validators/auth.ts` estaba completo en
+      inglés — no solo "Required": reglas de contraseña ("Add a lowercase
+      letter"), email ("Enter a valid email"), fecha de nacimiento ("Enter a
+      valid date"), género. De paso encontré el mismo patrón suelto en otros
+      6 lugares: `account.ts` (nombre de cuenta, código de divisa),
+      `category.ts` (nombre, color hex), `tag.ts` (nombre),
+      `transaction.ts` y `favorite-transaction.ts` (monto).
+      **Fix (2026-10-04):** los 10 mensajes traducidos al español,
+      manteniendo el tono ya establecido en el resto de la app ("Ponle un
+      nombre", "Elige una opción", etc. — el mismo estilo que ya usan
+      `budget.ts`/`goal.ts`). Confirmé que `sign-up.tsx` deriva sus schemas
+      locales (`infoSchema`/`credentialsSchema`) vía `.pick()` sobre
+      `signUpSchema`, así que heredan la traducción automáticamente sin
+      tocar la UI. Verificado con grep que no queda ningún mensaje en inglés
+      en toda la carpeta de validadores. `tsc --noEmit` y `eslint .`
+      limpios.
+
 ## Pendiente aparte (no es deficiencia, es trabajo en curso)
 
 - [ ] **Push de las 14 migraciones a Supabase hosted** (`supabase db push`) —

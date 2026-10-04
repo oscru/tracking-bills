@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { hexColorSchema } from './category';
 
 export const tagCreateSchema = z.object({
-  name: z.string().trim().min(1, 'Required').max(40),
+  name: z.string().trim().min(1, 'Ponle un nombre').max(40),
   color: hexColorSchema.nullish(),
 });
 
