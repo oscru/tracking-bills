@@ -1,6 +1,6 @@
 import { useAccounts, useTransactions } from '@repo/core/hooks';
 import { accountBalance, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
-import { ErrorCard, Fab, ListRow, PageHeader, Screen } from '@repo/ui';
+import { AccountsEmptyIllustration, EmptyState, ErrorCard, Fab, ListRow, PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 
@@ -21,6 +21,12 @@ export default function AccountsScreen() {
         <View className="mt-8">
           <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar las cuentas')} />
         </View>
+      ) : (accounts ?? []).length === 0 ? (
+        <EmptyState
+          illustration={<AccountsEmptyIllustration />}
+          title="Aún no tienes cuentas"
+          description="Crea una cuenta para empezar a registrar tus movimientos."
+        />
       ) : (
         <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
           {(accounts ?? []).map((a, i) => (

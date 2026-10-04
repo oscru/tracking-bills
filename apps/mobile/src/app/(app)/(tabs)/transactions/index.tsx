@@ -3,7 +3,15 @@ import { useAccounts, useCategoryTree, useTags, useTransactions } from '@repo/co
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionType } from '@repo/core/types';
 import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
-import { ErrorCard, Fab, Screen, TextField, ICON_COLORS } from '@repo/ui';
+import {
+  EmptyState,
+  ErrorCard,
+  Fab,
+  Screen,
+  TextField,
+  TransactionsEmptyIllustration,
+  ICON_COLORS,
+} from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, SectionList, Text, View } from 'react-native';
@@ -246,7 +254,7 @@ export default function TransactionsScreen() {
           sections={sections}
           keyExtractor={(t) => t.id}
           className="flex-1"
-          contentContainerClassName="pb-24"
+          contentContainerClassName={sections.length === 0 ? 'grow pb-24' : 'pb-24'}
           stickySectionHeadersEnabled
           // Android's view-recycling optimization for offscreen rows has a
           // well-documented bug where a row can render blank (but still
@@ -277,17 +285,15 @@ export default function TransactionsScreen() {
             </View>
           )}
           ListEmptyComponent={
-            <View className="mt-16 items-center gap-1">
-              <Ionicons name="search-outline" size={28} color={ICON_COLORS.ink3} />
-              <Text className="mt-2 text-base font-semibold text-ink dark:text-ink-dark">
-                Sin movimientos
-              </Text>
-              <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-                {filtered
+            <EmptyState
+              illustration={<TransactionsEmptyIllustration />}
+              title="Sin movimientos"
+              description={
+                filtered
                   ? 'No hay movimientos con estos filtros.'
-                  : 'Toca el botón + para registrar el primero.'}
-              </Text>
-            </View>
+                  : 'Toca el botón + para registrar el primero.'
+              }
+            />
           }
           renderItem={({ item, index, section }) => {
             const isFirst = index === 0;

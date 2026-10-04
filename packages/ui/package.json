@@ -18,7 +18,8 @@
     "nativewind": ">=4",
     "react": "*",
     "react-native": "*",
-    "react-native-safe-area-context": "*"
+    "react-native-safe-area-context": "*",
+    "react-native-svg": "*"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",

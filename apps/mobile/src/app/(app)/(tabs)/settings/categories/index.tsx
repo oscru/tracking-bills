@@ -3,7 +3,9 @@ import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { CategoryNode, CategoryType } from '@repo/core/types';
 import { toFriendlyMessage } from '@repo/core/utils';
 import {
+  CategoriesEmptyIllustration,
   CategoryDot,
+  EmptyState,
   ErrorCard,
   Fab,
   PageHeader,
@@ -51,9 +53,11 @@ function Group({
 
   if (visible.length === 0) {
     return (
-      <Text className="mt-8 text-center text-sm text-ink-2 dark:text-ink-2-dark">
-        Sin categorías todavía.
-      </Text>
+      <EmptyState
+        illustration={<CategoriesEmptyIllustration />}
+        title="Sin categorías todavía"
+        description="Crea una categoría para empezar a clasificar tus movimientos."
+      />
     );
   }
 
@@ -141,7 +145,7 @@ export default function CategoriesScreen() {
       ) : (
         <ScrollView
           className="flex-1"
-          contentContainerClassName="pb-8"
+          contentContainerClassName="grow pb-8"
           keyboardShouldPersistTaps="handled"
         >
           <Group type={type} search={search} onEdit={goEdit} />

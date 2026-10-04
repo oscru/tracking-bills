@@ -12,6 +12,16 @@ export { CategoryDot, type CategoryDotProps } from './category-dot';
 export { Chip, type ChipProps } from './chip';
 export { ColorPicker, type ColorPickerProps } from './color-picker';
 export { ConfirmSheet, type ConfirmSheetProps } from './confirm-sheet';
+export { EmptyState, type EmptyStateProps } from './empty-state';
+export {
+  TagsEmptyIllustration,
+  AccountsEmptyIllustration,
+  BudgetsEmptyIllustration,
+  GoalsEmptyIllustration,
+  CategoriesEmptyIllustration,
+  TransactionsEmptyIllustration,
+  type EmptyIllustrationProps,
+} from './empty-state-illustrations';
 export { ErrorCard, type ErrorCardProps } from './error-card';
 export { Fab, type FabProps } from './fab';
 export { IconButton, type IconButtonProps } from './icon-button';

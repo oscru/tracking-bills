@@ -7,7 +7,16 @@ import {
   todayISODate,
   toFriendlyMessage,
 } from '@repo/core/utils';
-import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl, ICON_COLORS } from '@repo/ui';
+import {
+  EmptyState,
+  ErrorCard,
+  Fab,
+  GoalsEmptyIllustration,
+  PageHeader,
+  Screen,
+  SegmentedControl,
+  ICON_COLORS,
+} from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -49,11 +58,15 @@ export default function GoalsScreen() {
           <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar los objetivos')} />
         </View>
       ) : visible.length === 0 ? (
-        <Text className="mt-8 text-center text-sm text-ink-2 dark:text-ink-2-dark">
-          {status === 'archived'
-            ? 'Sin objetivos archivados.'
-            : 'Sin objetivos todavía. Crea uno para empezar a ahorrar para una meta.'}
-        </Text>
+        <EmptyState
+          illustration={<GoalsEmptyIllustration />}
+          title={status === 'archived' ? 'Sin objetivos archivados' : 'Sin objetivos todavía'}
+          description={
+            status === 'archived'
+              ? undefined
+              : 'Crea uno para empezar a ahorrar para una meta.'
+          }
+        />
       ) : (
         <ScrollView className="flex-1" contentContainerClassName="gap-3 pb-24">
           {visible.map((g) => {

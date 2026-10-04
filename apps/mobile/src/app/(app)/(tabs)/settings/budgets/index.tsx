@@ -1,7 +1,15 @@
 import { useBudgets, useTransactions } from '@repo/core/hooks';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetProgress, formatDate, toFriendlyMessage } from '@repo/core/utils';
-import { ErrorCard, Fab, PageHeader, Screen, SegmentedControl } from '@repo/ui';
+import {
+  BudgetsEmptyIllustration,
+  EmptyState,
+  ErrorCard,
+  Fab,
+  PageHeader,
+  Screen,
+  SegmentedControl,
+} from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -41,11 +49,15 @@ export default function BudgetsScreen() {
           <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar los presupuestos')} />
         </View>
       ) : visible.length === 0 ? (
-        <Text className="mt-8 text-center text-sm text-ink-2 dark:text-ink-2-dark">
-          {status === 'archived'
-            ? 'Sin presupuestos archivados.'
-            : 'Sin presupuestos todavía. Crea uno para controlar tu gasto por categoría.'}
-        </Text>
+        <EmptyState
+          illustration={<BudgetsEmptyIllustration />}
+          title={status === 'archived' ? 'Sin presupuestos archivados' : 'Sin presupuestos todavía'}
+          description={
+            status === 'archived'
+              ? undefined
+              : 'Crea uno para controlar tu gasto por categoría.'
+          }
+        />
       ) : (
         <ScrollView className="flex-1" contentContainerClassName="gap-3 pb-24">
           {visible.map((b) => {

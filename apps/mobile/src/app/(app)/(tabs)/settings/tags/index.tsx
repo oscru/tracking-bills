@@ -1,9 +1,18 @@
 import { useTags, useTransactions } from '@repo/core/hooks';
 import { tagCounts, toFriendlyMessage } from '@repo/core/utils';
-import { ErrorCard, Fab, ListRow, PageHeader, Screen, SegmentedControl } from '@repo/ui';
+import {
+  EmptyState,
+  ErrorCard,
+  Fab,
+  ListRow,
+  PageHeader,
+  Screen,
+  SegmentedControl,
+  TagsEmptyIllustration,
+} from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 
 const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
   { value: 'active', label: 'Activas' },
@@ -30,9 +39,15 @@ export default function TagsScreen() {
           <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar las tags')} />
         </View>
       ) : visible.length === 0 ? (
-        <Text className="mt-8 text-center text-sm text-ink-2 dark:text-ink-2-dark">
-          {status === 'archived' ? 'Sin tags archivadas.' : 'Sin tags todavía.'}
-        </Text>
+        <EmptyState
+          illustration={<TagsEmptyIllustration />}
+          title={status === 'archived' ? 'Sin tags archivadas' : 'Sin tags todavía'}
+          description={
+            status === 'archived'
+              ? undefined
+              : 'Crea una tag para agrupar movimientos entre categorías.'
+          }
+        />
       ) : (
         <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
           {visible.map((tag, i) => {
