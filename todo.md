@@ -525,6 +525,98 @@ al corregir.
       en toda la carpeta de validadores. `tsc --noEmit` y `eslint .`
       limpios.
 
+- [x] **Vista de perfil incompleta — solo mostraba avatar + email, sin nombre/
+      fecha de nacimiento/género ni botón de editar.** `profile.tsx` era un
+      placeholder (ni siquiera tenía `PageHeader`/botón para cerrar el
+      modal). Estos campos se recolectan en el registro
+      (`full_name`/`birth_date`/`gender` en `profiles`, ver migración
+      `20260930120000_profile_signup_fields.sql`) pero no había ningún
+      flujo para verlos ni editarlos después — ni siquiera para usuarios de
+      OAuth, que quedan con estos campos en `null` para siempre (el propio
+      comentario del tipo `Gender` decía "no profile-completion flow yet").
+      **Fix (2026-10-04):**
+      - `profileUpdateSchema` ganó `full_name`/`birth_date`/`gender`
+        (antes solo se podían escribir una vez, al registrarse).
+      - `profile.tsx` se convirtió en carpeta: `profile/index.tsx` (vista,
+        con `PageHeader`, las 3 filas de información, y un `Fab` de editar)
+        + `profile/edit.tsx` (formulario, reutilizando `GenderField`/
+        `DateField`/`TextField` ya usados en el registro — mismo
+        componente, misma validación). Mismo patrón que `GoalForm`/
+        `CategoryForm`: la ruta hace el guard de loading, el formulario
+        (`ProfileInfoForm`) solo se monta una vez que `profile` ya cargó,
+        para que sus `useState` nunca sembren con datos a medio cargar.
+      - Sirve también como la "profile-completion flow" que faltaba para
+        OAuth: cualquier campo en `null` se puede llenar por primera vez
+        desde ahí.
+      Verificado con `tsc --noEmit` y `eslint .` en ambos paquetes.
+
+- [x] **El teclado se quedaba abierto detrás del date picker (y de cualquier
+      sheet), tapando el calendario.** Si quedaba un campo enfocado justo
+      antes de abrir un `BottomSheet` (ej. tocar "Fecha" justo después de
+      escribir la descripción), el teclado no se cerraba solo — en pantallas
+      chicas eso podía dejar el sheet reducido a una franja diminuta.
+      **Fix (2026-10-04), como regla general en `BottomSheet` (no solo en el
+      date picker):** nueva prop `dismissKeyboardOnOpen` (default `true`) —
+      el componente llama `Keyboard.dismiss()` apenas `visible` pasa a
+      `true`. Aplica automáticamente a **todos** los sheets de la app
+      (selector de cuenta, categoría, género, tags, etc.), no solo al
+      calendario. Caso límite que encontré y protegí: 2 sheets
+      (`category-amount-sheet.tsx`, `favorite-quick-create-sheet.tsx`) hacen
+      `autoFocus` en su propio campo al abrir — ahí habría cerrado el
+      teclado que ellos mismos piden, así que les puse
+      `dismissKeyboardOnOpen={false}` para que seguir abriendo con el
+      teclado como antes. Verificado con `tsc --noEmit` y `eslint .` en
+      ambos paquetes.
+
+- [x] **Feature nueva: eliminar cuenta de usuario, con fricción estándar.**
+      No existía ninguna forma de que el usuario borrara su cuenta.
+      **Backend (2026-10-04):** sin Edge Functions en el proyecto, y el
+      cliente móvil nunca debe tener la service-role key que pide el Admin
+      API — en vez de eso, RPC `delete_own_account()` (`security definer`,
+      migración `20261004120000_delete_own_account.sql`) que borra
+      `auth.users where id = auth.uid()` (nunca un parámetro — no hay forma
+      de borrar a otra persona). `profiles.id` ya cascadea desde
+      `auth.users`, y todo lo demás ya cascadea desde `profiles`, así que un
+      solo DELETE se lleva cuentas, transacciones, presupuestos, metas,
+      categorías y tags sin tocar ninguna otra tabla.
+      **Bug encontrado probándolo:** el trigger `check_category_deletable`
+      (de la auditoría original) bloqueaba el borrado en cascada de
+      categorías con transacciones — correcto para el botón normal de
+      "Eliminar categoría", incorrecto aquí, donde las transacciones se
+      borran en la misma operación. Arreglado con una bandera de sesión
+      (`app.deleting_own_account`) que el trigger respeta solo durante este
+      borrado completo (migración
+      `20261004130000_delete_own_account_bypass_category_guard.sql`).
+      Probado end-to-end contra la DB local dos veces (caso simple, y caso
+      completo con cuenta ligada a meta + presupuesto con categoría +
+      tag) — todo llega a 0 correctamente.
+      **Fricción en la UI** (`profile/delete-account.tsx`, nueva pantalla,
+      no un simple confirm): tarjeta de advertencia roja explicando qué se
+      borra; **reautenticación con contraseña** (reutiliza `useSignIn` —
+      si la contraseña es incorrecta, nada se borra); escribir **"ELIMINAR"**
+      literalmente para habilitar el botón; botón final deshabilitado hasta
+      cumplir ambas condiciones. Punto de entrada: link rojo "Eliminar
+      cuenta" en `profile/index.tsx`, debajo de "Cerrar sesión", separado
+      visualmente. `useDeleteOwnAccount` llama la RPC y luego hace sign-out
+      local (la sesión en el dispositivo seguiría "viéndose" válida un rato
+      si no se limpia, aunque el usuario ya no exista en el servidor).
+      **Actualizado (2026-10-04): soporte para OAuth.** Confirmé que
+      `profiles.email` sí se guarda igual para OAuth (el trigger
+      `handle_new_user` copia `auth.users.email` sin distinguir método de
+      registro, y GoTrue llena ese campo con el correo que entrega
+      Google/Apple). Lo que faltaba era la contraseña — un usuario solo-OAuth
+      nunca tiene una. Fix: `delete-account.tsx` detecta vía
+      `user.identities` si existe una identidad `provider: 'email'`
+      (= tiene contraseña). Si la tiene, pide contraseña como antes. Si no,
+      salta ese paso y en su lugar pide **escribir el correo con el que creó
+      la cuenta** (comparado contra `user.email`) — la sesión activa + el
+      correo exacto + "ELIMINAR" es la fricción disponible sin contraseña
+      que verificar. La tarjeta de advertencia también muestra el email de
+      la cuenta a eliminar, para cualquier método.
+      Verificado con `tsc --noEmit` y `eslint .` en ambos paquetes. **No
+      probado en la app real** — no tengo forma de ejecutar el flujo completo
+      (incluye borrar un usuario real) desde aquí.
+
 ## Pendiente aparte (no es deficiencia, es trabajo en curso)
 
 - [ ] **Push de las 14 migraciones a Supabase hosted** (`supabase db push`) —
@@ -542,7 +634,9 @@ al corregir.
       `20261002180000_category_parent_type_and_archive_cascade`,
       `20261002190000_enabled_currencies_in_use`,
       `20261002200000_category_deletable`,
-      `20261002210000_account_locked_fields`.
+      `20261002210000_account_locked_fields`,
+      `20261004120000_delete_own_account`,
+      `20261004130000_delete_own_account_bypass_category_guard`.
 - [x] ~~Commitear los archivos modificados de la feature de multi-moneda +
       travel mode + meta-ligada-a-cuenta~~ — ya se hicieron 3 commits en
       paralelo (`135de98 Added trip mode. Added divisa switch in all viws`,

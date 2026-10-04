@@ -34,7 +34,12 @@ interface Props {
  */
 export function FavoriteQuickCreateSheet({ visible, onClose, initial, onCreated }: Props) {
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Guardar como favorito">
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Guardar como favorito"
+      dismissKeyboardOnOpen={false}
+    >
       <QuickFavoriteFields
         key={visible ? 'open' : 'closed'}
         initial={initial}

@@ -53,7 +53,12 @@ export function CategoryAmountSheet({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Asignar monto">
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Asignar monto"
+      dismissKeyboardOnOpen={false}
+    >
       <View className="gap-4 px-5 pb-8">
         {category ? (
           <View className="flex-row items-center gap-2">

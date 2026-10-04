@@ -614,6 +614,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_own_account: { Args: never; Returns: undefined }
       increment_favorite_transaction_use: {
         Args: { favorite_id: string }
         Returns: undefined

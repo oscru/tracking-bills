@@ -8,7 +8,13 @@ export { queryKeys } from './keys';
 export { useFormError } from './use-form-error';
 
 export { SessionProvider, useSession, type SessionState } from './session-context';
-export { useSignIn, useSignUp, useSignOut, useOAuthCallback } from './use-auth';
+export {
+  useSignIn,
+  useSignUp,
+  useSignOut,
+  useOAuthCallback,
+  useDeleteOwnAccount,
+} from './use-auth';
 export { useProfile, useUpdateProfile } from './use-profile';
 export { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount } from './use-accounts';
 export {

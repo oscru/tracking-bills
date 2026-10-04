@@ -1,6 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { completeOAuthSignIn, signInWithPassword, signOut, signUpWithPassword } from '../supabase';
+import {
+  completeOAuthSignIn,
+  deleteOwnAccount,
+  signInWithPassword,
+  signOut,
+  signUpWithPassword,
+} from '../supabase';
 
 /** Drop every cached query so data isn't shared across auth states. */
 function useAuthCacheReset() {
@@ -31,4 +37,17 @@ export function useSignUp() {
 export function useSignOut() {
   const reset = useAuthCacheReset();
   return useMutation({ mutationFn: signOut, onSuccess: reset });
+}
+
+/** Deletes the account server-side, then signs out locally — see
+ * `deleteOwnAccount`'s doc comment for why both steps are needed. */
+export function useDeleteOwnAccount() {
+  const reset = useAuthCacheReset();
+  return useMutation({
+    mutationFn: async () => {
+      await deleteOwnAccount();
+      await signOut();
+    },
+    onSuccess: reset,
+  });
 }

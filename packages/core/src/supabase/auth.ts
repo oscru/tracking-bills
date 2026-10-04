@@ -2,6 +2,7 @@ import type { AuthError, Session } from '@supabase/supabase-js';
 
 import { signInSchema, signUpSchema, type SignInInput, type SignUpInput } from '../validators';
 import { supabase } from './client';
+import { SupabaseError } from './internal';
 
 /** Thrown when a Supabase Auth call fails. */
 export class AuthCallError extends Error {
@@ -95,4 +96,20 @@ export async function completeOAuthSignIn(callbackUrl: string): Promise<Session>
 export async function sendPasswordReset(email: string): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
   if (error) throw new AuthCallError(error);
+}
+
+/**
+ * Deletes the caller's own account and every row of theirs in every table —
+ * irreversible. The mobile client can't hold the service-role key the Admin
+ * API's `deleteUser` needs, so this calls a `security definer` RPC instead
+ * (see migration `20261004120000_delete_own_account.sql`): it deletes only
+ * `auth.uid()`'s own `auth.users` row, server-side, which cascades through
+ * `profiles` into everything else already set up with `on delete cascade`.
+ * Doesn't sign out locally — the caller should do that right after this
+ * resolves (the session token itself still works for the rest of its
+ * lifetime otherwise, pointing at a user that no longer exists).
+ */
+export async function deleteOwnAccount(): Promise<void> {
+  const { error } = await supabase.rpc('delete_own_account');
+  if (error) throw new SupabaseError(error);
 }

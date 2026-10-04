@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   BackHandler,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -20,6 +21,13 @@ export interface BottomSheetProps {
   /** Right-aligned header action (e.g. a "+ New" link). */
   headerAction?: ReactNode;
   children: ReactNode;
+  /** Dismisses the keyboard the moment this sheet opens — a field left
+   * focused behind it (e.g. tapping a date field right after typing a
+   * description) otherwise keeps its keyboard up, which on a short screen
+   * can squeeze the sheet down to barely anything visible. Default `true`;
+   * set `false` for a sheet that deliberately `autoFocus`es a field of its
+   * own on open (dismissing would just immediately close that). */
+  dismissKeyboardOnOpen?: boolean;
 }
 
 const OFFSCREEN_Y = 600;
@@ -86,7 +94,14 @@ function SheetBody({ onClose, title, headerAction, children }: Omit<BottomSheetP
  * separate native window that can end up rendering behind the app's own tab
  * bar; portaling into the same view tree as the rest of the app avoids that.
  */
-export function BottomSheet({ visible, onClose, title, headerAction, children }: BottomSheetProps) {
+export function BottomSheet({
+  visible,
+  onClose,
+  title,
+  headerAction,
+  children,
+  dismissKeyboardOnOpen = true,
+}: BottomSheetProps) {
   const id = useId();
   const register = useSheetPortalRegister();
   const [mounted, setMounted] = useState(visible);
@@ -95,6 +110,7 @@ export function BottomSheet({ visible, onClose, title, headerAction, children }:
 
   useEffect(() => {
     if (visible) {
+      if (dismissKeyboardOnOpen) Keyboard.dismiss();
       setMounted(true);
       translateY.setValue(OFFSCREEN_Y);
       Animated.parallel([
@@ -114,7 +130,7 @@ export function BottomSheet({ visible, onClose, title, headerAction, children }:
         if (finished) setMounted(false);
       });
     }
-  }, [visible, mounted, backdropOpacity, translateY]);
+  }, [visible, mounted, backdropOpacity, translateY, dismissKeyboardOnOpen]);
 
   useEffect(() => {
     if (Platform.OS !== 'android' || !visible) return;
