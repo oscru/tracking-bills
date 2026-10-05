@@ -288,7 +288,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <Screen className="gap-5">
+    <Screen edges={['top']} className="gap-5">
       <View className="flex-row items-center justify-center gap-4">
         <Pressable onPress={() => shiftMonth(-1)} hitSlop={10} accessibilityLabel="Mes anterior">
           <Ionicons name="chevron-back" size={22} color={ICON_COLORS.ink3} />
@@ -331,7 +331,7 @@ export default function HomeScreen() {
       {loading ? (
         <ScrollView
           className="flex-1"
-          contentContainerClassName="pb-24"
+          contentContainerStyle={{ paddingBottom: 64 }}
           showsVerticalScrollIndicator={false}
         >
           <HomeSkeleton />
@@ -339,7 +339,8 @@ export default function HomeScreen() {
       ) : (
         <ScrollView
           className="flex-1"
-          contentContainerClassName="gap-5 pb-24"
+          contentContainerClassName="gap-5"
+          contentContainerStyle={{ paddingBottom: 64 }}
           showsVerticalScrollIndicator={false}
         >
           <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">

@@ -176,7 +176,7 @@ export default function TransactionsScreen() {
   ].filter(Boolean).length;
 
   return (
-    <Screen className="gap-3">
+    <Screen edges={['top']} className="gap-3">
       <View className="gap-1">
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-bold text-ink dark:text-ink-dark">

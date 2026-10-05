@@ -3,10 +3,12 @@ import {
   useBudgets,
   useCategories,
   useGoals,
+  useProfile,
   useSession,
   useTags,
+  useUpdateProfile,
 } from '@repo/core/hooks';
-import { Avatar, ListRow, Screen } from '@repo/ui';
+import { Avatar, ListRow, Screen, SwitchRow } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
@@ -15,6 +17,8 @@ import { SettingsSkeleton } from '../../../../features/settings/settings-skeleto
 export default function SettingsScreen() {
   const router = useRouter();
   const { user } = useSession();
+  const { data: profile } = useProfile();
+  const updateProfile = useUpdateProfile();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: categories, isLoading: loadingCategories } = useCategories();
   const { data: tags, isLoading: loadingTags } = useTags();
@@ -30,8 +34,20 @@ export default function SettingsScreen() {
   const activeTags = (tags ?? []).filter((t) => !t.archived).length;
 
   return (
-    <Screen className="gap-6">
+    <Screen edges={['top']} className="gap-6">
       <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Opciones</Text>
+
+      {__DEV__ ? (
+        // Temporal — solo para probar el carrusel sin tener que registrar
+        // una cuenta nueva cada vez. Borrar este bloque antes de lanzar (no
+        // aparece en producción de todos modos, __DEV__ es false ahí).
+        <SwitchRow
+          label="🧪 Dev: mostrar tour"
+          description="Prende/apaga el carrusel de bienvenida"
+          value={profile?.has_seen_tour === false}
+          onValueChange={(next) => updateProfile.mutate({ has_seen_tour: !next })}
+        />
+      ) : null}
 
       {loading ? (
         <SettingsSkeleton />
@@ -110,6 +126,12 @@ export default function SettingsScreen() {
               subtitle="Comparte o migra tus movimientos vía Excel"
               showChevron
               onPress={() => router.push('/(app)/settings/import-export')}
+            />
+            <View className="h-px bg-line dark:bg-line-dark" />
+            <ListRow
+              title="Ver tour de nuevo"
+              subtitle="Repite la introducción a la app"
+              onPress={() => updateProfile.mutate({ has_seen_tour: false })}
             />
           </View>
         </>

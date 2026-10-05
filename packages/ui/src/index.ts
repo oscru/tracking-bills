@@ -40,3 +40,8 @@ export { SwitchRow, type SwitchRowProps } from './switch-row';
 export { TextField, type TextFieldProps } from './text-field';
 export { CurrencyField, type CurrencyFieldProps } from './currency-field';
 export { ICON_COLORS } from './icon-colors';
+export {
+  WelcomeCarousel,
+  type WelcomeCarouselProps,
+  type WelcomeCarouselSlide,
+} from './welcome-carousel';

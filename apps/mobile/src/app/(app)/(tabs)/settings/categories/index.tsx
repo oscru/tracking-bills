@@ -124,7 +124,7 @@ export default function CategoriesScreen() {
     router.push({ pathname: '/(app)/settings/categories/[id]', params: { id } });
 
   return (
-    <Screen className="gap-4">
+    <Screen edges={['top']} className="gap-4">
       <PageHeader title="Categorías" onBack={() => router.back()} />
       <SegmentedControl options={TYPE_OPTIONS} value={type} onChange={setType} />
       <TextField

@@ -28,7 +28,7 @@ export default function TagsScreen() {
   const visible = (tags ?? []).filter((t) => (status === 'archived' ? t.archived : !t.archived));
 
   return (
-    <Screen className="gap-4">
+    <Screen edges={['top']} className="gap-4">
       <PageHeader title="Tags" onBack={() => router.back()} />
       <SegmentedControl options={STATUS_OPTIONS} value={status} onChange={setStatus} />
 

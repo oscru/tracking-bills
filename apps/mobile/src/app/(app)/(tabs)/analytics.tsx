@@ -172,7 +172,7 @@ export default function AnalyticsScreen() {
   };
 
   return (
-    <Screen className="gap-5">
+    <Screen edges={['top']} className="gap-5">
       <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Análisis</Text>
 
       <SegmentedControl

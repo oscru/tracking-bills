@@ -37,7 +37,7 @@ export default function BudgetsScreen() {
   const visible = (budgets ?? []).filter((b) => (status === 'archived' ? b.archived : !b.archived));
 
   return (
-    <Screen className="gap-4">
+    <Screen edges={['top']} className="gap-4">
       <PageHeader title="Presupuestos" onBack={() => router.back()} />
 
       <SegmentedControl options={STATUS_OPTIONS} value={status} onChange={setStatus} />

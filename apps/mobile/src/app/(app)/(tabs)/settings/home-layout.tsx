@@ -6,25 +6,13 @@ import { PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  LayoutAnimation,
-  Platform,
-  Switch,
-  Text,
-  UIManager,
-  View,
-} from 'react-native';
+import { ActivityIndicator, LayoutAnimation, Switch, Text, View } from 'react-native';
 import {
   PanGestureHandler,
   State,
   type PanGestureHandlerGestureEvent,
   type PanGestureHandlerStateChangeEvent,
 } from 'react-native-gesture-handler';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 const ROW_HEIGHT = 72;
 const ROW_GAP = 10;

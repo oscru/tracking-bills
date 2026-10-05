@@ -391,6 +391,7 @@ export type Database = {
           enabled_currencies: string[]
           full_name: string | null
           gender: string | null
+          has_seen_tour: boolean
           home_hidden_items: string[]
           home_layout: string[] | null
           id: string
@@ -408,6 +409,7 @@ export type Database = {
           enabled_currencies?: string[]
           full_name?: string | null
           gender?: string | null
+          has_seen_tour?: boolean
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id: string
@@ -425,6 +427,7 @@ export type Database = {
           enabled_currencies?: string[]
           full_name?: string | null
           gender?: string | null
+          has_seen_tour?: boolean
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id?: string

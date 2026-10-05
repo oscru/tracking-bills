@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { type ColorValue, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ICON_COLORS } from '@repo/ui';
 
 // Tabs with a nested Stack (settings, transactions) otherwise keep whatever
@@ -43,6 +44,13 @@ function TabIcon({
 export default function AppLayout() {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
+  // React Navigation adds `paddingBottom: insets.bottom` to the tab bar on
+  // top of whatever `height` is given here — an explicit fixed `height`
+  // that doesn't already include that inset ends up rendering taller than
+  // the space screens reserve for it, so its top edge clips a few pixels
+  // of content. Including `insets.bottom` in both `height` and
+  // `paddingBottom` ourselves keeps the two in sync.
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -52,8 +60,9 @@ export default function AppLayout() {
         tabBarInactiveTintColor: ICON_COLORS.ink3,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
         tabBarStyle: {
-          height: 64,
+          height: 64 + insets.bottom,
           paddingTop: 6,
+          paddingBottom: insets.bottom,
           backgroundColor: dark ? ICON_COLORS.surfaceDark : ICON_COLORS.surface,
           borderTopColor: dark ? ICON_COLORS.lineDark : ICON_COLORS.line,
         },

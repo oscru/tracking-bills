@@ -13,7 +13,7 @@ export default function FavoritesScreen() {
   const { data: favorites, isLoading } = useFavoriteTransactions();
 
   return (
-    <Screen className="gap-4">
+    <Screen edges={['top']} className="gap-4">
       <PageHeader title="Favoritos" onBack={() => router.back()} />
 
       <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">

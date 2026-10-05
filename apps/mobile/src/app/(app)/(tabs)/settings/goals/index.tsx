@@ -46,7 +46,7 @@ export default function GoalsScreen() {
   const visible = (goals ?? []).filter((g) => (status === 'archived' ? g.archived : !g.archived));
 
   return (
-    <Screen className="gap-4">
+    <Screen edges={['top']} className="gap-4">
       <PageHeader title="Objetivos" onBack={() => router.back()} />
 
       <SegmentedControl options={STATUS_OPTIONS} value={status} onChange={setStatus} />

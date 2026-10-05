@@ -45,6 +45,8 @@ export const profileUpdateSchema = z.object({
   travel_mode: z.boolean().optional(),
   /** The tag applied by default while `travel_mode` is on. `null` clears it. */
   travel_trip_tag_id: z.string().uuid().nullable().optional(),
+  /** Auto-shows the welcome carousel once while false. */
+  has_seen_tour: z.boolean().optional(),
 });
 
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;

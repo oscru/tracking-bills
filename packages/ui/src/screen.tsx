@@ -1,8 +1,13 @@
 import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
-import { SafeAreaView, type Edges } from 'react-native-safe-area-context';
+import { SafeAreaView, type Edge, type Edges } from 'react-native-safe-area-context';
 
 import { useKeyboardHeight } from './use-keyboard-height';
+
+function includesBottomEdge(edges: Edges): boolean {
+  if (Array.isArray(edges)) return (edges as readonly Edge[]).includes('bottom');
+  return (edges as Partial<Record<Edge, unknown>>).bottom !== 'off';
+}
 
 export interface ScreenProps {
   children: ReactNode;
@@ -32,8 +37,11 @@ export function Screen({
   // Purely decorative breathing room from the top/bottom edges — kept
   // separate from `SafeAreaView`'s `edges` above (which only accounts for
   // system chrome: notch, home indicator) so it never stacks with a screen's
-  // own manual `insets.bottom` handling for a sticky footer button.
-  const vertical = 'pt-3 pb-4';
+  // own manual `insets.bottom` handling for a sticky footer button. A screen
+  // that drops `'bottom'` from `edges` is one where something else already
+  // owns that edge (the tab bar below it, or its own sticky footer) — it
+  // only needs a sliver of breathing room here, not the full default.
+  const vertical = `pt-3 ${includesBottomEdge(edges) ? 'pb-4' : 'pb-1'}`;
 
   const content = scroll ? (
     <ScrollView

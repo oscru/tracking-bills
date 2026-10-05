@@ -12,7 +12,7 @@ export default function AccountsScreen() {
   const { data: transactions } = useTransactions();
 
   return (
-    <Screen className="gap-4">
+    <Screen edges={['top']} className="gap-4">
       <PageHeader title="Cuentas" onBack={() => router.back()} />
 
       {isLoading ? (
