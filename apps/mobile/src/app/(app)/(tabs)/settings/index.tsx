@@ -3,21 +3,19 @@ import {
   useBudgets,
   useCategories,
   useGoals,
-  useProfile,
   useSession,
   useTags,
   useUpdateProfile,
 } from '@repo/core/hooks';
-import { Avatar, ListRow, Screen, SwitchRow } from '@repo/ui';
+import { Avatar, ListRow, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { SettingsSkeleton } from '../../../../features/settings/settings-skeleton';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { user } = useSession();
-  const { data: profile } = useProfile();
   const updateProfile = useUpdateProfile();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: categories, isLoading: loadingCategories } = useCategories();
@@ -37,21 +35,15 @@ export default function SettingsScreen() {
     <Screen edges={['top']} className="gap-6">
       <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Opciones</Text>
 
-      {__DEV__ ? (
-        // Temporal, para probar el carrusel sin registrar una cuenta nueva
-        // cada vez — nunca aparece en producción (__DEV__ es false ahí).
-        <SwitchRow
-          label="🧪 Dev: mostrar tour"
-          description="Prende/apaga el carrusel de bienvenida"
-          value={profile?.has_seen_tour === false}
-          onValueChange={(next) => updateProfile.mutate({ has_seen_tour: !next })}
-        />
-      ) : null}
-
       {loading ? (
         <SettingsSkeleton />
       ) : (
-        <>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-6"
+          contentContainerStyle={{ paddingBottom: 64 }}
+          showsVerticalScrollIndicator={false}
+        >
           <Pressable
             onPress={() => router.push('/(app)/profile')}
             className="flex-row items-center gap-3 rounded-2xl border border-line px-4 py-4 active:opacity-60 dark:border-line-dark"
@@ -133,7 +125,7 @@ export default function SettingsScreen() {
               onPress={() => updateProfile.mutate({ has_seen_tour: false })}
             />
           </View>
-        </>
+        </ScrollView>
       )}
     </Screen>
   );
