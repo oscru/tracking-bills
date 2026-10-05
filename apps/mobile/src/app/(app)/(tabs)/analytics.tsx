@@ -289,7 +289,7 @@ export default function AnalyticsScreen() {
               />
             </View>
           ) : (
-            <MonthlyTrendChart months={period === 'year' ? 12 : 6} />
+            <MonthlyTrendChart months={period === 'year' ? 12 : 6} referenceDate={referenceDate} />
           )}
 
           {viewMode === 'calendar' && period !== 'year' && selectedDate ? (

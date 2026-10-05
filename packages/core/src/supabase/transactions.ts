@@ -66,43 +66,68 @@ function normalizeTags(row: RawWithRefs): TransactionWithRefs {
   return { ...row, tags: (row.tags ?? []).map((t) => t.tag).filter((t): t is TagRef => t != null) };
 }
 
+// PostgREST caps any single response at its configured `max_rows` (1000 in
+// this project, both locally and on the hosted project) regardless of how
+// many rows actually match — silently, with no error. A caller that doesn't
+// pass `filters.limit` wants the *complete* result set (Análisis and Home's
+// charts/streaks all aggregate across a user's whole history), so past a
+// few hundred transactions they'd silently lose everything older than the
+// most recent page. Page through in that same chunk size until a short
+// page confirms there's nothing left, instead of trusting one request.
+const MAX_PAGE_SIZE = 1000;
+
 export async function listTransactions(
   filters: TransactionFilters = {},
 ): Promise<TransactionWithRefs[]> {
-  let query = supabase
-    .from('transactions')
-    .select(WITH_REFS)
-    .order('transaction_date', { ascending: false })
-    .order('created_at', { ascending: false });
+  const buildQuery = () => {
+    let query = supabase
+      .from('transactions')
+      .select(WITH_REFS)
+      .order('transaction_date', { ascending: false })
+      .order('created_at', { ascending: false });
 
-  if (filters.from) query = query.gte('transaction_date', filters.from);
-  if (filters.to) query = query.lte('transaction_date', filters.to);
-  if (filters.accountIds?.length) query = query.in('account_id', filters.accountIds);
-  if (filters.categoryIds?.length) query = query.in('category_id', filters.categoryIds);
-  if (filters.type) query = query.eq('type', filters.type);
-  if (filters.search) query = query.ilike('description', `%${filters.search}%`);
-  if (filters.isCompleted != null) query = query.eq('is_completed', filters.isCompleted);
+    if (filters.from) query = query.gte('transaction_date', filters.from);
+    if (filters.to) query = query.lte('transaction_date', filters.to);
+    if (filters.accountIds?.length) query = query.in('account_id', filters.accountIds);
+    if (filters.categoryIds?.length) query = query.in('category_id', filters.categoryIds);
+    if (filters.type) query = query.eq('type', filters.type);
+    if (filters.search) query = query.ilike('description', `%${filters.search}%`);
+    if (filters.isCompleted != null) query = query.eq('is_completed', filters.isCompleted);
+    return query;
+  };
 
+  let tagFilteredIds: string[] | null = null;
   if (filters.tagIds?.length) {
     const { data: links, error } = await supabase
       .from('transaction_tags')
       .select('transaction_id')
       .in('tag_id', filters.tagIds);
     if (error) throw new SupabaseError(error);
-    const ids = [...new Set((links ?? []).map((l) => l.transaction_id))];
+    tagFilteredIds = [...new Set((links ?? []).map((l) => l.transaction_id))];
     // No matches: short-circuit rather than send an empty `.in()` (which
     // Postgres/PostgREST would otherwise happily read as "no filter").
-    if (ids.length === 0) return [];
-    query = query.in('id', ids);
+    if (tagFilteredIds.length === 0) return [];
   }
 
   if (filters.limit != null) {
     const offset = filters.offset ?? 0;
-    query = query.range(offset, offset + filters.limit - 1);
+    let query = buildQuery().range(offset, offset + filters.limit - 1);
+    if (tagFilteredIds) query = query.in('id', tagFilteredIds);
+    const rows = unwrap(await query) as unknown as RawWithRefs[];
+    return rows.map(normalizeTags);
   }
 
-  const rows = unwrap(await query) as unknown as RawWithRefs[];
-  return rows.map(normalizeTags);
+  const all: RawWithRefs[] = [];
+  let offset = 0;
+  for (;;) {
+    let query = buildQuery().range(offset, offset + MAX_PAGE_SIZE - 1);
+    if (tagFilteredIds) query = query.in('id', tagFilteredIds);
+    const page = unwrap(await query) as unknown as RawWithRefs[];
+    all.push(...page);
+    if (page.length < MAX_PAGE_SIZE) break;
+    offset += MAX_PAGE_SIZE;
+  }
+  return all.map(normalizeTags);
 }
 
 export async function getTransaction(id: string): Promise<TransactionWithRefs> {

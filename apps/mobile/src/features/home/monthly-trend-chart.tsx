@@ -20,7 +20,16 @@ const Y_AXIS_GUTTER = 40; // room gifted-charts reserves for the y-axis labels
  * general-purpose counterpart to `CategoryHistoryChart`, which is scoped to
  * one category. One chart per currency present, never blended together.
  */
-export function MonthlyTrendChart({ months = DEFAULT_MONTHS }: { months?: number }) {
+export function MonthlyTrendChart({
+  months = DEFAULT_MONTHS,
+  referenceDate,
+}: {
+  months?: number;
+  /** The `months`-month window ends here instead of today — e.g. Análisis
+   * passes its own navigated period so "Tendencia" actually moves when you
+   * page back a year, instead of always showing the months ending today. */
+  referenceDate?: Date;
+}) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const { width: windowWidth } = useWindowDimensions();
@@ -29,9 +38,9 @@ export function MonthlyTrendChart({ months = DEFAULT_MONTHS }: { months?: number
   const groups = useMemo(() => {
     return groupByAccountCurrency(transactions ?? []).map((g) => ({
       currency: g.currency,
-      history: monthlyIncomeExpenseHistory(g.transactions, months),
+      history: monthlyIncomeExpenseHistory(g.transactions, months, referenceDate),
     }));
-  }, [transactions, months]);
+  }, [transactions, months, referenceDate]);
   const hasAnyData = groups.some((g) => g.history.some((h) => h.income > 0 || h.expense > 0));
 
   const axisColor = dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3;
