@@ -34,13 +34,10 @@ export function Screen({
   // On wide web the content column is capped and centered.
   const web = Platform.OS === 'web' ? 'mx-auto w-full max-w-[480px]' : '';
 
-  // Purely decorative breathing room from the top/bottom edges — kept
-  // separate from `SafeAreaView`'s `edges` above (which only accounts for
-  // system chrome: notch, home indicator) so it never stacks with a screen's
-  // own manual `insets.bottom` handling for a sticky footer button. A screen
-  // that drops `'bottom'` from `edges` is one where something else already
-  // owns that edge (the tab bar below it, or its own sticky footer) — it
-  // only needs a sliver of breathing room here, not the full default.
+  // Decorative breathing room, separate from `SafeAreaView`'s `edges`
+  // (system chrome only). A screen that drops `'bottom'` already has
+  // something else owning that edge — the tab bar below it, or its own
+  // sticky footer — so it only needs a sliver here, not the full default.
   const vertical = `pt-3 ${includesBottomEdge(edges) ? 'pb-4' : 'pb-1'}`;
 
   const content = scroll ? (

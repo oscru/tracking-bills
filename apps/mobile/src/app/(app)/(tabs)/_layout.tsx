@@ -45,11 +45,9 @@ export default function AppLayout() {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   // React Navigation adds `paddingBottom: insets.bottom` to the tab bar on
-  // top of whatever `height` is given here — an explicit fixed `height`
-  // that doesn't already include that inset ends up rendering taller than
-  // the space screens reserve for it, so its top edge clips a few pixels
-  // of content. Including `insets.bottom` in both `height` and
-  // `paddingBottom` ourselves keeps the two in sync.
+  // top of whatever `height` is given — a fixed `height` that doesn't
+  // already include that inset renders taller than the space screens
+  // reserve for it, clipping their last few pixels.
   const insets = useSafeAreaInsets();
 
   return (

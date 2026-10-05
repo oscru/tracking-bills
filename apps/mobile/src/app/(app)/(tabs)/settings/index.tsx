@@ -38,9 +38,8 @@ export default function SettingsScreen() {
       <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Opciones</Text>
 
       {__DEV__ ? (
-        // Temporal — solo para probar el carrusel sin tener que registrar
-        // una cuenta nueva cada vez. Borrar este bloque antes de lanzar (no
-        // aparece en producción de todos modos, __DEV__ es false ahí).
+        // Temporal, para probar el carrusel sin registrar una cuenta nueva
+        // cada vez — nunca aparece en producción (__DEV__ es false ahí).
         <SwitchRow
           label="🧪 Dev: mostrar tour"
           description="Prende/apaga el carrusel de bienvenida"
