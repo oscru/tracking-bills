@@ -172,13 +172,21 @@ function transferKey(t: TransferDraft): string {
  */
 export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
   const issues: RowIssue[] = [];
-  const movementsByKey = new Map<string, MovementDraft>();
-  const transfersByKey = new Map<string, TransferDraft>();
+  const movements: MovementDraft[] = [];
+  const transfers: TransferDraft[] = [];
+  // Only a key already contributed by an *earlier, different* sheet gets
+  // skipped — two rows that collide within the same sheet are kept as two
+  // real transactions (e.g. the same $5 bus fare twice in one day isn't a
+  // duplicate just because it has no column that would tell them apart).
+  // Each sheet's own keys are folded in only after it's done, so same-sheet
+  // collisions never see themselves as "already seen".
+  const seenFromEarlierSheets = new Set<string>();
 
   for (const sheet of sheets) {
     const header = sheet.rows[0];
     if (!header) continue;
     const cols = mapHeaders(header);
+    const keysThisSheet = new Set<string>();
 
     const isTransferShape = cols.date != null && cols.value != null && cols.fromAccount != null && cols.toAccount != null;
     const isMovementShape = cols.date != null && cols.value != null && cols.account != null;
@@ -218,8 +226,12 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
           currencyCode: parseCurrencyCode(row, cols.currency, issues, sheet.name, rowNum),
           tagNames: parseTagNames(row, cols.tags),
         };
-        transfersByKey.set(transferKey(draft), draft);
+        const key = transferKey(draft);
+        if (seenFromEarlierSheets.has(key)) continue;
+        transfers.push(draft);
+        keysThisSheet.add(key);
       }
+      for (const k of keysThisSheet) seenFromEarlierSheets.add(k);
       continue;
     }
 
@@ -271,14 +283,15 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
           subcategoryName: cellText(row, cols.subcategory),
           tagNames: parseTagNames(row, cols.tags),
         };
-        movementsByKey.set(movementKey(draft), draft);
+        const key = movementKey(draft);
+        if (seenFromEarlierSheets.has(key)) continue;
+        movements.push(draft);
+        keysThisSheet.add(key);
       }
     }
+
+    for (const k of keysThisSheet) seenFromEarlierSheets.add(k);
   }
 
-  return {
-    movements: [...movementsByKey.values()],
-    transfers: [...transfersByKey.values()],
-    issues,
-  };
+  return { movements, transfers, issues };
 }

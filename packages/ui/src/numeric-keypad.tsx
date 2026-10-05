@@ -80,10 +80,10 @@ const fg: Record<Kind, string> = {
  * stays down on native. The parent owns the expression string.
  */
 export function NumericKeypad({ onKey }: NumericKeypadProps) {
-  const press = (key: KeypadKey) => {
+  const press = (key: KeypadKey, style = Haptics.ImpactFeedbackStyle.Light) => {
     // No haptics engine on web; expo-haptics is native-only.
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      Haptics.impactAsync(style).catch(() => {});
     }
     onKey(key);
   };
@@ -98,6 +98,14 @@ export function NumericKeypad({ onKey }: NumericKeypadProps) {
               accessibilityRole="button"
               accessibilityLabel={cell.label}
               onPress={() => press(cell.key)}
+              // Long-pressing delete wipes the whole amount instead of just
+              // the last character — a stronger haptic marks it as the
+              // bigger action.
+              onLongPress={
+                cell.key === 'back'
+                  ? () => press('clear', Haptics.ImpactFeedbackStyle.Medium)
+                  : undefined
+              }
               style={{ flexGrow: cell.grow ?? 1, flexBasis: 0 }}
               className={`h-14 items-center justify-center rounded-ctl active:opacity-70 ${bg[cell.kind]}`}
             >

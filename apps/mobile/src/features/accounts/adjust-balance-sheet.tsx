@@ -73,7 +73,9 @@ export function AdjustBalanceSheet({
 
   const askConfirm = () => {
     if (value == null) return setError('Monto inválido');
-    if (diff === 0) return setError('Ese ya es el saldo actual');
+    // Target already matches the current balance — nothing to book, but
+    // that's not a failure, so just close instead of surfacing an error.
+    if (diff === 0) return onClose();
     setConfirmOpen(true);
   };
 
