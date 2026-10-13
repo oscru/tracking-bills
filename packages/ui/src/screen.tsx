@@ -36,8 +36,9 @@ export function Screen({
 
   // Decorative breathing room, separate from `SafeAreaView`'s `edges`
   // (system chrome only). A screen that drops `'bottom'` already has
-  // something else owning that edge — the tab bar below it, or its own
-  // sticky footer — so it only needs a sliver here, not the full default.
+  // something else owning that edge — its own sticky footer, or a
+  // floating tab bar meant to overlay it (content should scroll behind
+  // it, not stop short of it — no extra padding added for that here).
   const vertical = `pt-3 ${includesBottomEdge(edges) ? 'pb-4' : 'pb-1'}`;
 
   const content = scroll ? (

@@ -8,8 +8,14 @@ export function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 30_000,
-        gcTime: 5 * 60_000,
+        // Every mutation in `@repo/core/hooks` invalidates what it touches,
+        // so cached data only goes stale from changes made elsewhere (another
+        // device). A short window here made each newly mounted screen refetch
+        // the whole transaction history — and re-render every screen
+        // subscribed to it — just from navigating; pull-to-refresh still
+        // forces a fresh read.
+        staleTime: 5 * 60_000,
+        gcTime: 30 * 60_000,
         retry: 2,
         refetchOnWindowFocus: false,
       },

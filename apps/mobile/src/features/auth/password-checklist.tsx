@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Circle, CircleCheck } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 import { ICON_COLORS } from '@repo/ui';
 
@@ -21,11 +21,11 @@ export function PasswordChecklist({ password }: PasswordChecklistProps) {
         const met = rule.test(password);
         return (
           <View key={rule.label} className="flex-row items-center gap-2">
-            <Ionicons
-              name={met ? 'checkmark-circle' : 'ellipse-outline'}
-              size={16}
-              color={met ? ICON_COLORS.limeInk : ICON_COLORS.ink3}
-            />
+            {met ? (
+              <CircleCheck size={16} color={ICON_COLORS.limeInk} />
+            ) : (
+              <Circle size={16} color={ICON_COLORS.ink3} />
+            )}
             <Text
               className={`text-xs ${met ? 'text-ink dark:text-ink-dark' : 'text-ink-3 dark:text-ink-3-dark'}`}
             >

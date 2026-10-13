@@ -1,8 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useAccounts } from '@repo/core/hooks';
 import { evalAmount, formatCurrency } from '@repo/core/utils';
 import { ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import {
+  ArrowLeftRight,
+  CircleArrowDown,
+  CircleArrowUp,
+  Receipt,
+  X,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useState } from 'react';
 import { Animated, Dimensions, PanResponder, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,10 +25,10 @@ const TAB_BAR_CLEARANCE = 96;
 const BUBBLE_BG = ICON_COLORS.ink;
 const BUBBLE_FG = ICON_COLORS.lime;
 
-const TYPE_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
-  income: 'arrow-down-circle',
-  expense: 'arrow-up-circle',
-  transfer: 'swap-horizontal',
+const TYPE_ICON: Record<string, LucideIcon> = {
+  income: CircleArrowDown,
+  expense: CircleArrowUp,
+  transfer: ArrowLeftRight,
 };
 
 /**
@@ -101,11 +108,10 @@ export function FloatingDraftBubble() {
             {amountLabel}
           </Text>
         ) : (
-          <Ionicons
-            name={TYPE_ICON[snapshot.type] ?? 'receipt-outline'}
-            size={20}
-            color={BUBBLE_FG}
-          />
+          (() => {
+            const TypeIcon = TYPE_ICON[snapshot.type] ?? Receipt;
+            return <TypeIcon size={20} color={BUBBLE_FG} />;
+          })()
         )}
       </View>
 
@@ -115,7 +121,7 @@ export function FloatingDraftBubble() {
         accessibilityLabel="Descartar movimiento"
         className="absolute -right-1.5 -top-1.5 h-6 w-6 items-center justify-center rounded-full border-2 border-canvas bg-danger dark:border-canvas-dark dark:bg-danger-dark"
       >
-        <Ionicons name="close" size={13} color="#fff" />
+        <X size={13} color="#fff" />
       </Pressable>
 
       <DiscardConfirmSheet

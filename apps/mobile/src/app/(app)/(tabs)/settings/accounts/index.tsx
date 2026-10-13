@@ -1,15 +1,31 @@
 import { useAccounts, useTransactions } from '@repo/core/hooks';
 import { accountBalance, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
-import { AccountsEmptyIllustration, EmptyState, ErrorCard, Fab, ListRow, PageHeader, Screen } from '@repo/ui';
+import {
+  AccountsEmptyIllustration,
+  EmptyState,
+  ErrorCard,
+  ListRow,
+  PageHeader,
+  Screen,
+  StaggerItem,
+} from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { Plus } from 'lucide-react-native';
 import { ActivityIndicator, Text, View } from 'react-native';
 
 import { ACCOUNT_TYPE_LABEL } from '../../../../../features/accounts/account-types';
+import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 
 export default function AccountsScreen() {
   const router = useRouter();
   const { data: accounts, isLoading, error } = useAccounts();
   const { data: transactions } = useTransactions();
+
+  useTabBarAction({
+    icon: Plus,
+    accessibilityLabel: 'Nueva cuenta',
+    onPress: () => router.push('/(app)/settings/accounts/new'),
+  });
 
   return (
     <Screen edges={['top']} className="gap-4">
@@ -30,7 +46,7 @@ export default function AccountsScreen() {
       ) : (
         <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
           {(accounts ?? []).map((a, i) => (
-            <View key={a.id}>
+            <StaggerItem key={a.id} index={i}>
               {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
               <ListRow
                 title={a.name}
@@ -49,17 +65,10 @@ export default function AccountsScreen() {
                   })
                 }
               />
-            </View>
+            </StaggerItem>
           ))}
         </View>
       )}
-
-      <View className="absolute bottom-6 right-5">
-        <Fab
-          accessibilityLabel="Nueva cuenta"
-          onPress={() => router.push('/(app)/settings/accounts/new')}
-        />
-      </View>
     </Screen>
   );
 }

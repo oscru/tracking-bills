@@ -1,23 +1,29 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useGoals, useTransactions, useUpdateAccount } from '@repo/core/hooks';
+import {
+  useAccounts,
+  useGoals,
+  useStableRecord,
+  useTransactions,
+  useUpdateAccount,
+} from '@repo/core/hooks';
 import { accountBalance, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
 import {
   Button,
   ConfirmSheet,
   ErrorCard,
-  Fab,
   PageHeader,
   Screen,
   SwitchRow,
   ICON_COLORS,
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { CircleArrowDown, CircleArrowUp, Pencil } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountDetailSkeleton } from '../../../../../../features/accounts/account-detail-skeleton';
 import { AdjustBalanceSheet } from '../../../../../../features/accounts/adjust-balance-sheet';
 import { ACCOUNT_TYPE_LABEL } from '../../../../../../features/accounts/account-types';
+import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 export default function AccountDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -30,7 +36,7 @@ export default function AccountDetail() {
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [archiveBlockedMessage, setArchiveBlockedMessage] = useState<string | null>(null);
 
-  const account = (accounts ?? []).find((a) => a.id === id);
+  const account = useStableRecord((accounts ?? []).find((a) => a.id === id));
   const linkedGoal = (goals ?? []).find((g) => g.account_id === id) ?? null;
 
   const { balance, incomeCount, expenseCount } = useMemo(() => {
@@ -51,6 +57,20 @@ export default function AccountDetail() {
       pathname: '/(app)/transactions',
       params: { type, accountId: id },
     });
+
+  useTabBarAction(
+    account
+      ? {
+          icon: Pencil,
+          accessibilityLabel: 'Editar cuenta',
+          onPress: () =>
+            router.push({
+              pathname: '/(app)/settings/accounts/[id]/edit',
+              params: { id: account.id },
+            }),
+        }
+      : null,
+  );
 
   if (loadingAccounts || loadingTx) {
     return (
@@ -111,7 +131,7 @@ export default function AccountDetail() {
               className="flex-1 rounded-2xl border border-pos/30 bg-lime-tint p-4 active:opacity-70 dark:border-pos-dark/30 dark:bg-lime-tint-dark"
             >
               <View className="flex-row items-center gap-1.5">
-                <Ionicons name="arrow-down-circle" size={16} color={ICON_COLORS.pos} />
+                <CircleArrowDown size={16} color={ICON_COLORS.pos} />
                 <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
                   Ingresos
                 </Text>
@@ -128,7 +148,7 @@ export default function AccountDetail() {
               className="flex-1 rounded-2xl border border-line bg-[#F1F2F4] p-4 active:opacity-70 dark:border-line-dark dark:bg-line-dark"
             >
               <View className="flex-row items-center gap-1.5">
-                <Ionicons name="arrow-up-circle" size={16} color={ICON_COLORS.ink} />
+                <CircleArrowUp size={16} color={ICON_COLORS.ink} />
                 <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
                   Gastos
                 </Text>
@@ -184,19 +204,6 @@ export default function AccountDetail() {
             <ErrorCard message={archiveBlockedMessage} />
           </View>
         </ScrollView>
-
-        <View className="absolute bottom-6 right-5">
-          <Fab
-            icon="pencil"
-            accessibilityLabel="Editar cuenta"
-            onPress={() =>
-              router.push({
-                pathname: '/(app)/settings/accounts/[id]/edit',
-                params: { id: account.id },
-              })
-            }
-          />
-        </View>
       </View>
 
       <AdjustBalanceSheet

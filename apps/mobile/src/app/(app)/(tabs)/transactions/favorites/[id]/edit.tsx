@@ -2,6 +2,7 @@ import {
   useDeleteFavoriteTransaction,
   useFavoriteTransactions,
   useFormError,
+  useStableRecord,
   useUpdateFavoriteTransaction,
 } from '@repo/core/hooks';
 import { Button, PageHeader, Screen } from '@repo/ui';
@@ -20,7 +21,7 @@ export default function EditFavorite() {
   const { error, setError, clearError } = useFormError();
   const [confirming, setConfirming] = useState(false);
 
-  const favorite = (favorites ?? []).find((f) => f.id === id);
+  const favorite = useStableRecord((favorites ?? []).find((f) => f.id === id));
 
   if (isLoading) {
     return (

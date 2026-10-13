@@ -2,18 +2,21 @@ import {
   useBudgets,
   useDeleteBudget,
   useFormError,
+  useStableRecord,
   useTransactions,
   useUpdateBudget,
 } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetProgress, formatDate } from '@repo/core/utils';
-import { Button, CategoryDot, ConfirmSheet, ErrorCard, Fab, PageHeader, Screen } from '@repo/ui';
+import { Button, CategoryDot, ConfirmSheet, ErrorCard, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Pencil } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../../../../../../features/budgets/budget-progress-bar';
+import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 const PERIOD_LABEL: Record<BudgetPeriodType, string> = {
   weekly: 'Semanal',
@@ -33,7 +36,21 @@ export default function BudgetDetail() {
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const budget = (budgets ?? []).find((b) => b.id === id);
+  const budget = useStableRecord((budgets ?? []).find((b) => b.id === id));
+
+  useTabBarAction(
+    budget
+      ? {
+          icon: Pencil,
+          accessibilityLabel: 'Editar presupuesto',
+          onPress: () =>
+            router.push({
+              pathname: '/(app)/settings/budgets/[id]/edit',
+              params: { id: budget.id },
+            }),
+        }
+      : null,
+  );
 
   if (isLoading) {
     return (
@@ -160,19 +177,6 @@ export default function BudgetDetail() {
 
           <ErrorCard message={error} />
         </ScrollView>
-
-        <View className="absolute bottom-6 right-5">
-          <Fab
-            icon="pencil"
-            accessibilityLabel="Editar presupuesto"
-            onPress={() =>
-              router.push({
-                pathname: '/(app)/settings/budgets/[id]/edit',
-                params: { id: budget.id },
-              })
-            }
-          />
-        </View>
       </View>
 
       <ConfirmSheet

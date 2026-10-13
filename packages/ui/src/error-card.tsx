@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { CircleAlert } from 'lucide-react-native';
 import { useEffect, useRef } from 'react';
 import { Animated, Platform, Text, View, useColorScheme } from 'react-native';
 
@@ -58,12 +58,7 @@ export function ErrorCard({ message }: ErrorCardProps) {
     >
       <View className="w-1 bg-danger dark:bg-danger-dark" />
       <View className="flex-1 flex-row items-start gap-2.5 px-3.5 py-3">
-        <Ionicons
-          name="alert-circle"
-          size={17}
-          color={dark ? '#F16A6E' : '#E5484D'}
-          style={{ marginTop: 1 }}
-        />
+        <CircleAlert size={17} color={dark ? '#F16A6E' : '#E5484D'} style={{ marginTop: 1 }} />
         <Text className="flex-1 text-[13px] font-medium leading-[18px] text-danger dark:text-danger-dark">
           {message}
         </Text>

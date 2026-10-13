@@ -3,6 +3,7 @@ import type { Gender } from '@repo/core/types';
 import { formatDate } from '@repo/core/utils';
 import { Avatar, Button, Fab, PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { Pencil } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
 import { ProfileSkeleton } from '../../../features/profile/profile-skeleton';
@@ -66,7 +67,7 @@ export default function ProfileScreen() {
         {loading ? null : (
           <View className="absolute bottom-6 right-5">
             <Fab
-              icon="pencil"
+              icon={Pencil}
               accessibilityLabel="Editar perfil"
               onPress={() => router.push('/(app)/profile/edit')}
             />

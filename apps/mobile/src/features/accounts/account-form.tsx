@@ -10,6 +10,7 @@ import {
   TextField,
   ICON_COLORS,
 } from '@repo/ui';
+import { Check, ChevronDown } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -117,7 +118,7 @@ export function AccountForm({
               {ACCOUNT_TYPE_LABEL[type]}
             </Text>
           </View>
-          <Ionicons name="chevron-down" size={18} color={ICON_COLORS.ink3} />
+          <ChevronDown size={18} color={ICON_COLORS.ink3} />
         </Pressable>
       </View>
 
@@ -140,7 +141,7 @@ export function AccountForm({
             className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
           >
             <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">{currency}</Text>
-            <Ionicons name="chevron-down" size={18} color={ICON_COLORS.ink3} />
+            <ChevronDown size={18} color={ICON_COLORS.ink3} />
           </Pressable>
         )}
         {errors.currency ? (
@@ -191,7 +192,7 @@ export function AccountForm({
                 {t.label}
               </Text>
               {type === t.value ? (
-                <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+                <Check size={18} color={ICON_COLORS.limeInk} />
               ) : null}
             </Pressable>
           ))}

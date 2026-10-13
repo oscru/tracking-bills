@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useAccounts } from '@repo/core/hooks';
 import type { Account } from '@repo/core/types';
 import { BottomSheet, ICON_COLORS } from '@repo/ui';
+import { Check } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
@@ -80,7 +80,7 @@ export function AccountPicker({
               </Text>
             </View>
             {selectedId === a.id ? (
-              <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+              <Check size={18} color={ICON_COLORS.limeInk} />
             ) : null}
           </Pressable>
         ))}

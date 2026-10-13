@@ -22,7 +22,7 @@ export default function NewBudgetLayout() {
 
   return (
     <BudgetDraftProvider initialCurrency={profile.currency}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }} />
     </BudgetDraftProvider>
   );
 }

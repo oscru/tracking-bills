@@ -1,11 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
+import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 export interface SegmentedOption<T extends string> {
   value: T;
   label: string;
   /** Optional glyph shown before the label. */
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: LucideIcon;
 }
 
 export interface SegmentedControlProps<T extends string> {
@@ -50,7 +50,7 @@ export function SegmentedControl<T extends string>({
               active ? 'bg-surface dark:bg-surface-dark' : ''
             }`}
           >
-            {opt.icon ? <Ionicons name={opt.icon} size={15} color={iconColor} /> : null}
+            {opt.icon ? <opt.icon size={15} color={iconColor} /> : null}
             <Text
               className={`text-[13px] font-semibold ${
                 active ? 'text-ink dark:text-ink-dark' : 'text-ink-2 dark:text-ink-2-dark'

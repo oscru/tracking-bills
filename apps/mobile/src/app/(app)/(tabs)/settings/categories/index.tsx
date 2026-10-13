@@ -7,15 +7,18 @@ import {
   CategoryDot,
   EmptyState,
   ErrorCard,
-  Fab,
   PageHeader,
   Screen,
   SegmentedControl,
+  StaggerItem,
   TextField,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+
+import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 
 // Booked automatically by the "Ajustar saldo" flow — not a category a user
 // should see or pick from here.
@@ -74,7 +77,7 @@ function Group({
   return (
     <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
       {sorted.map((p: CategoryNode, i) => (
-        <View key={p.id}>
+        <StaggerItem key={p.id} index={i}>
           {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
           <Pressable
             onPress={() => onEdit(p.id)}
@@ -108,7 +111,7 @@ function Group({
               <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text>
             </Pressable>
           ))}
-        </View>
+        </StaggerItem>
       ))}
     </View>
   );
@@ -122,6 +125,12 @@ export default function CategoriesScreen() {
 
   const goEdit = (id: string) =>
     router.push({ pathname: '/(app)/settings/categories/[id]', params: { id } });
+
+  useTabBarAction({
+    icon: Plus,
+    accessibilityLabel: 'Nueva categoría',
+    onPress: () => router.push('/(app)/settings/categories/new'),
+  });
 
   return (
     <Screen edges={['top']} className="gap-4">
@@ -151,13 +160,6 @@ export default function CategoriesScreen() {
           <Group type={type} search={search} onEdit={goEdit} />
         </ScrollView>
       )}
-
-      <View className="absolute bottom-6 right-5">
-        <Fab
-          accessibilityLabel="Nueva categoría"
-          onPress={() => router.push('/(app)/settings/categories/new')}
-        />
-      </View>
     </Screen>
   );
 }

@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import {
   useAccounts,
   useBudgets,
@@ -22,6 +21,7 @@ import {
   ICON_COLORS,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { Check, ChevronDown, ChevronRight, Moon, Smartphone, Sun, type LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
@@ -30,11 +30,11 @@ import { CurrencyMultiPicker, CurrencyPicker } from '../../../../features/settin
 const THEME_OPTIONS: {
   value: ThemePreference;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: LucideIcon;
 }[] = [
-  { value: 'system', label: 'Sistema', icon: 'phone-portrait-outline' },
-  { value: 'light', label: 'Claro', icon: 'sunny-outline' },
-  { value: 'dark', label: 'Oscuro', icon: 'moon-outline' },
+  { value: 'system', label: 'Sistema', icon: Smartphone },
+  { value: 'light', label: 'Claro', icon: Sun },
+  { value: 'dark', label: 'Oscuro', icon: Moon },
 ];
 
 export default function PreferencesScreen() {
@@ -88,7 +88,7 @@ function CurrencySection({ profile }: { profile: Profile }) {
         <Text className="text-[15px] font-medium capitalize text-ink dark:text-ink-dark">
           {meta ? `${meta.symbol} · ${meta.name} (${meta.code})` : profile.currency}
         </Text>
-        <Ionicons name="chevron-down" size={18} color={ICON_COLORS.ink3} />
+        <ChevronDown size={18} color={ICON_COLORS.ink3} />
       </Pressable>
       <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
         Se preselecciona al crear una cuenta, presupuesto u objetivo nuevo — cada uno conserva su
@@ -169,7 +169,7 @@ function EnabledCurrenciesSection({ profile }: { profile: Profile }) {
         >
           {codes.join(' · ')}
         </Text>
-        <Ionicons name="chevron-forward" size={18} color={ICON_COLORS.ink3} />
+        <ChevronRight size={18} color={ICON_COLORS.ink3} />
       </Pressable>
       <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
         Como elegir idiomas en un traductor: busca y marca las que realmente usas — son las únicas
@@ -313,12 +313,12 @@ function ThemeSection({ value }: { value: ThemePreference }) {
         className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
       >
         <View className="flex-row items-center gap-2.5">
-          <Ionicons name={selected.icon} size={18} color={ICON_COLORS.limeInk} />
+          <selected.icon size={18} color={ICON_COLORS.limeInk} />
           <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
             {selected.label}
           </Text>
         </View>
-        <Ionicons name="chevron-down" size={18} color={ICON_COLORS.ink3} />
+        <ChevronDown size={18} color={ICON_COLORS.ink3} />
       </Pressable>
 
       <BottomSheet visible={pickerOpen} onClose={() => setPickerOpen(false)} title="Tema">
@@ -333,13 +333,13 @@ function ThemeSection({ value }: { value: ThemePreference }) {
               className="flex-row items-center gap-3 border-t border-line px-5 py-3.5 dark:border-line-dark"
             >
               <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
-                <Ionicons name={opt.icon} size={16} color={ICON_COLORS.limeInk} />
+                <opt.icon size={16} color={ICON_COLORS.limeInk} />
               </View>
               <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
                 {opt.label}
               </Text>
               {value === opt.value ? (
-                <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+                <Check size={18} color={ICON_COLORS.limeInk} />
               ) : null}
             </Pressable>
           ))}

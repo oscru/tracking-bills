@@ -16,6 +16,7 @@ import {
   TextField,
   ICON_COLORS,
 } from '@repo/ui';
+import { ArrowLeftRight, CircleArrowDown, CircleArrowUp } from 'lucide-react-native';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -46,9 +47,9 @@ interface Props {
 }
 
 const TYPE_OPTIONS = [
-  { value: 'expense' as const, label: 'Gasto', icon: 'arrow-up-circle' as const },
-  { value: 'income' as const, label: 'Ingreso', icon: 'arrow-down-circle' as const },
-  { value: 'transfer' as const, label: 'Transferencia', icon: 'swap-horizontal' as const },
+  { value: 'expense' as const, label: 'Gasto', icon: CircleArrowUp },
+  { value: 'income' as const, label: 'Ingreso', icon: CircleArrowDown },
+  { value: 'transfer' as const, label: 'Transferencia', icon: ArrowLeftRight },
 ];
 
 export function FavoriteForm({

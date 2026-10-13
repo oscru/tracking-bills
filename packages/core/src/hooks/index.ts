@@ -6,6 +6,7 @@
 export { createQueryClient } from './query-client';
 export { queryKeys } from './keys';
 export { useFormError } from './use-form-error';
+export { useStableRecord } from './use-stable-record';
 
 export { SessionProvider, useSession, type SessionState } from './session-context';
 export {

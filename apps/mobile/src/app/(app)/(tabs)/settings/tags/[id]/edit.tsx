@@ -1,4 +1,4 @@
-import { useDeleteTag, useFormError, useTags, useUpdateTag } from '@repo/core/hooks';
+import { useDeleteTag, useFormError, useStableRecord, useTags, useUpdateTag } from '@repo/core/hooks';
 import { Button, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -15,7 +15,7 @@ export default function EditTag() {
   const { error, setError, clearError } = useFormError();
   const [confirming, setConfirming] = useState(false);
 
-  const tag = (tags ?? []).find((t) => t.id === id);
+  const tag = useStableRecord((tags ?? []).find((t) => t.id === id));
 
   if (isLoading) {
     return (

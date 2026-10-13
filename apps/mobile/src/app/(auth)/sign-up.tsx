@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useSignUp } from '@repo/core/hooks';
 import type { Gender } from '@repo/core/types';
 import { toFriendlyMessage } from '@repo/core/utils';
 import { signUpSchema } from '@repo/core/validators';
 import { BackButton, Button, ErrorCard, Screen, TextField, ICON_COLORS } from '@repo/ui';
 import { Link } from 'expo-router';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -210,11 +210,11 @@ export default function SignUp() {
                   accessibilityRole="button"
                   accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color={ICON_COLORS.ink3}
-                  />
+                  {showPassword ? (
+                    <EyeOff size={20} color={ICON_COLORS.ink3} />
+                  ) : (
+                    <Eye size={20} color={ICON_COLORS.ink3} />
+                  )}
                 </Pressable>
               }
             />
@@ -236,11 +236,11 @@ export default function SignUp() {
                   accessibilityRole="button"
                   accessibilityLabel={showConfirm ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
-                  <Ionicons
-                    name={showConfirm ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color={ICON_COLORS.ink3}
-                  />
+                  {showConfirm ? (
+                    <EyeOff size={20} color={ICON_COLORS.ink3} />
+                  ) : (
+                    <Eye size={20} color={ICON_COLORS.ink3} />
+                  )}
                 </Pressable>
               }
             />

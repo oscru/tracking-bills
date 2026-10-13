@@ -1,11 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency, formatDate } from '@repo/core/utils';
 import { CategoryDot, ICON_COLORS } from '@repo/ui';
 import { useFocusEffect } from 'expo-router';
+import { ArrowLeftRight, Eye, Pencil, Tag, type LucideIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, Text, View } from 'react-native';
 import {
   PanGestureHandler,
@@ -29,12 +29,12 @@ type OpenState = 'closed' | 'left' | 'right';
 interface SwipeMeta {
   side: 'left' | 'right';
   tone: 'ink' | 'muted';
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: LucideIcon;
   label: string;
 }
 
-const EDIT_META: SwipeMeta = { side: 'left', tone: 'ink', icon: 'pencil', label: 'Editar' };
-const VIEW_META: SwipeMeta = { side: 'right', tone: 'muted', icon: 'eye-outline', label: 'Ver' };
+const EDIT_META: SwipeMeta = { side: 'left', tone: 'ink', icon: Pencil, label: 'Editar' };
+const VIEW_META: SwipeMeta = { side: 'right', tone: 'muted', icon: Eye, label: 'Ver' };
 
 /** Tailwind bg + raw icon/text colors for one action's tone, light/dark aware. */
 function swipeColors(tone: SwipeMeta['tone'], dark: boolean) {
@@ -64,7 +64,7 @@ function SwipeAction({
 }) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
-  const { side, tone, icon, label } = meta;
+  const { side, tone, icon: Icon, label } = meta;
   const opacity = translateX.interpolate({
     inputRange: side === 'left' ? [0, ACTION_WIDTH / 2] : [-ACTION_WIDTH / 2, 0],
     outputRange: side === 'left' ? [0, 1] : [1, 0],
@@ -83,7 +83,7 @@ function SwipeAction({
         onPress={onPress}
         className={`flex-1 items-center justify-center gap-1 ${colors.bg}`}
       >
-        <Ionicons name={icon} size={18} color={colors.icon} />
+        <Icon size={18} color={colors.icon} />
         <Text className={`text-xs font-semibold ${colors.text}`}>{label}</Text>
       </Pressable>
     </Animated.View>
@@ -106,7 +106,7 @@ function SwipeFill({
 }) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
-  const { side, tone, icon, label } = meta;
+  const { side, tone, icon: Icon, label } = meta;
   const colors = swipeColors(tone, dark);
   const width = progress.interpolate({
     inputRange: [0, 1],
@@ -130,14 +130,20 @@ function SwipeFill({
         ]}
         className="items-center justify-center gap-1"
       >
-        <Ionicons name={icon} size={18} color={colors.icon} />
+        <Icon size={18} color={colors.icon} />
         <Text className={`text-xs font-semibold ${colors.text}`}>{label}</Text>
       </View>
     </Animated.View>
   );
 }
 
-export function TransactionListItem({
+// Each visible row re-renders whenever the list screen does (every search
+// keystroke, every refetch) unless skipped here — `memo` makes that skip
+// possible since the parent already passes `useCallback`-stabilized
+// onPress/onEdit/onReveal (see their doc comments below) and a per-row
+// `isOpen` boolean, so an unaffected row's props are referentially
+// unchanged and `memo`'s shallow comparison actually catches it.
+export const TransactionListItem = memo(function TransactionListItem({
   transaction,
   onPress,
   onEdit,
@@ -179,6 +185,12 @@ export function TransactionListItem({
 
   const [rowWidth, setRowWidth] = useState(0);
   const [fillMeta, setFillMeta] = useState<SwipeMeta | null>(null);
+  // The two swipe panels behind the row (Editar / Ver) cost ~8 native views
+  // and 2 SVG icons per row — times every row the list keeps mounted, that
+  // was most of what Movimientos had to re-attach each time you came back
+  // to it. They only mount once a touch lands on this row (the pan's BEGAN,
+  // before any movement), and at that point they're still fully hidden.
+  const [actionsMounted, setActionsMounted] = useState(false);
 
   // Re-derive stable (no-arg) handlers from the stable `onPress`/`onEdit`/
   // `onReveal` props + this row's own id — these are what the gesture logic
@@ -347,6 +359,7 @@ export function TransactionListItem({
     (e: PanGestureHandlerStateChangeEvent) => {
       const { state, oldState, translationX } = e.nativeEvent;
       if (state === State.BEGAN) {
+        setActionsMounted(true);
         triggered.current = false;
         gestureActive.current = true;
         gestureStartOffset.current =
@@ -409,16 +422,20 @@ export function TransactionListItem({
 
   return (
     <View className="overflow-hidden" onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}>
-      <SwipeAction
-        translateX={translateX}
-        meta={EDIT_META}
-        onPress={() => fire(handleEdit, EDIT_META, ACTION_WIDTH)}
-      />
-      <SwipeAction
-        translateX={translateX}
-        meta={VIEW_META}
-        onPress={() => fire(handleView, VIEW_META, -ACTION_WIDTH)}
-      />
+      {actionsMounted ? (
+        <>
+          <SwipeAction
+            translateX={translateX}
+            meta={EDIT_META}
+            onPress={() => fire(handleEdit, EDIT_META, ACTION_WIDTH)}
+          />
+          <SwipeAction
+            translateX={translateX}
+            meta={VIEW_META}
+            onPress={() => fire(handleView, VIEW_META, -ACTION_WIDTH)}
+          />
+        </>
+      ) : null}
 
       <PanGestureHandler
         onGestureEvent={onGestureEvent}
@@ -436,7 +453,7 @@ export function TransactionListItem({
               style={{ backgroundColor: type === 'transfer' ? ICON_COLORS.limeTint : color + '1F' }}
             >
               {type === 'transfer' ? (
-                <Ionicons name="swap-horizontal" size={18} color={color} />
+                <ArrowLeftRight size={18} color={color} />
               ) : (
                 <CategoryDot color={color} icon={category?.icon} size={18} />
               )}
@@ -454,7 +471,7 @@ export function TransactionListItem({
               </Text>
               {primaryTag ? (
                 <View className="mt-0.5 flex-row items-center gap-1">
-                  <Ionicons name="pricetag-outline" size={10} color={ICON_COLORS.ink3} />
+                  <Tag size={10} color={ICON_COLORS.ink3} />
                   <Text className="text-[11px] text-ink-3 dark:text-ink-3-dark" numberOfLines={1}>
                     {primaryTag.name}
                     {extraTags > 0 ? ` +${extraTags}` : ''}
@@ -481,4 +498,4 @@ export function TransactionListItem({
       {fillMeta ? <SwipeFill meta={fillMeta} progress={fillProgress} rowWidth={rowWidth} /> : null}
     </View>
   );
-}
+});

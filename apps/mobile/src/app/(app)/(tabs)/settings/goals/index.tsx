@@ -10,18 +10,20 @@ import {
 import {
   EmptyState,
   ErrorCard,
-  Fab,
   GoalsEmptyIllustration,
   PageHeader,
   Screen,
   SegmentedControl,
+  StaggerItem,
   ICON_COLORS,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { Plus } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { GoalProgressBar } from '../../../../../features/goals/goal-progress-bar';
+import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 
 const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
   { value: 'active', label: 'Activos' },
@@ -44,6 +46,12 @@ export default function GoalsScreen() {
   const { data: accounts } = useAccounts();
 
   const visible = (goals ?? []).filter((g) => (status === 'archived' ? g.archived : !g.archived));
+
+  useTabBarAction({
+    icon: Plus,
+    accessibilityLabel: 'Nuevo objetivo',
+    onPress: () => router.push('/(app)/settings/goals/new'),
+  });
 
   return (
     <Screen edges={['top']} className="gap-4">
@@ -69,7 +77,7 @@ export default function GoalsScreen() {
         />
       ) : (
         <ScrollView className="flex-1" contentContainerClassName="gap-3 pb-24">
-          {visible.map((g) => {
+          {visible.map((g, i) => {
             const linkedAccount = g.account_id
               ? ((accounts ?? []).find((a) => a.id === g.account_id) ?? null)
               : null;
@@ -81,57 +89,51 @@ export default function GoalsScreen() {
               linkedAccount,
             );
             return (
-              <Pressable
-                key={g.id}
-                onPress={() =>
-                  router.push({ pathname: '/(app)/settings/goals/[id]', params: { id: g.id } })
-                }
-                className="gap-3 rounded-2xl border border-line bg-surface p-4 active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
-                style={g.archived ? { opacity: 0.6 } : undefined}
-              >
-                <View className="flex-row items-center gap-3">
-                  <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
-                    <Ionicons
-                      name={(g.icon as keyof typeof Ionicons.glyphMap) ?? 'flag-outline'}
-                      size={16}
-                      color={ICON_COLORS.limeInk}
-                    />
+              <StaggerItem key={g.id} index={i}>
+                <Pressable
+                  onPress={() =>
+                    router.push({ pathname: '/(app)/settings/goals/[id]', params: { id: g.id } })
+                  }
+                  className="gap-3 rounded-2xl border border-line bg-surface p-4 active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
+                  style={g.archived ? { opacity: 0.6 } : undefined}
+                >
+                  <View className="flex-row items-center gap-3">
+                    <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
+                      <Ionicons
+                        name={(g.icon as keyof typeof Ionicons.glyphMap) ?? 'flag-outline'}
+                        size={16}
+                        color={ICON_COLORS.limeInk}
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text
+                        className="text-base font-semibold text-ink dark:text-ink-dark"
+                        numberOfLines={1}
+                      >
+                        {g.name}
+                      </Text>
+                      <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
+                        {g.is_completed
+                          ? 'Completada'
+                          : progress.isComplete
+                            ? '¡Monto alcanzado!'
+                            : deadlineLabel(g.deadline)}
+                      </Text>
+                    </View>
                   </View>
-                  <View className="flex-1">
-                    <Text
-                      className="text-base font-semibold text-ink dark:text-ink-dark"
-                      numberOfLines={1}
-                    >
-                      {g.name}
-                    </Text>
-                    <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                      {g.is_completed
-                        ? 'Completada'
-                        : progress.isComplete
-                          ? '¡Monto alcanzado!'
-                          : deadlineLabel(g.deadline)}
-                    </Text>
-                  </View>
-                </View>
-                <GoalProgressBar
-                  saved={progress.saved}
-                  target={Number(g.target_amount)}
-                  pct={progress.pct}
-                  isComplete={progress.isComplete}
-                  currency={g.currency}
-                />
-              </Pressable>
+                  <GoalProgressBar
+                    saved={progress.saved}
+                    target={Number(g.target_amount)}
+                    pct={progress.pct}
+                    isComplete={progress.isComplete}
+                    currency={g.currency}
+                  />
+                </Pressable>
+              </StaggerItem>
             );
           })}
         </ScrollView>
       )}
-
-      <View className="absolute bottom-6 right-5">
-        <Fab
-          accessibilityLabel="Nuevo objetivo"
-          onPress={() => router.push('/(app)/settings/goals/new')}
-        />
-      </View>
     </Screen>
   );
 }

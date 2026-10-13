@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import {
   useAccounts,
   useCategories,
@@ -15,6 +14,7 @@ import {
 import { Button, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
+import { CircleAlert, CircleCheck, Paperclip, type LucideIcon } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
@@ -83,7 +83,7 @@ export default function ImportScreen() {
 
       {step.name === 'pick' ? (
         <StatusView
-          icon="document-attach-outline"
+          icon={Paperclip}
           tint="neutral"
           title="Elige un archivo"
           subtitle="Sube un .xlsx con tus movimientos — podrás revisar todo antes de confirmar."
@@ -108,7 +108,7 @@ export default function ImportScreen() {
       ) : null}
 
       {step.name === 'done' ? (
-        <StatusView icon="checkmark-circle" tint="lime" title="¡Importación completa!">
+        <StatusView icon={CircleCheck} tint="lime" title="¡Importación completa!">
           <SummaryCard>
             <SummaryLine label="Movimientos creados" value={step.result.transactionsCreated} />
             <SummaryLine label="Cuentas nuevas" value={step.result.accountsCreated} />
@@ -121,7 +121,7 @@ export default function ImportScreen() {
 
       {step.name === 'error' ? (
         <StatusView
-          icon="alert-circle"
+          icon={CircleAlert}
           tint="danger"
           title="Algo salió mal"
           subtitle={step.message}
@@ -147,14 +147,14 @@ const ICON_TINT = {
  * whatever action/content the step needs below. Shared by every step here
  * except the scrollable preview, which has its own layout. */
 function StatusView({
-  icon,
+  icon: Icon,
   tint = 'neutral',
   spinner = false,
   title,
   subtitle,
   children,
 }: {
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: LucideIcon;
   tint?: keyof typeof ICON_TINT;
   spinner?: boolean;
   title: string;
@@ -167,8 +167,8 @@ function StatusView({
       <View className={`h-20 w-20 items-center justify-center rounded-full ${bg}`}>
         {spinner ? (
           <ActivityIndicator size="large" color={color} />
-        ) : icon ? (
-          <Ionicons name={icon} size={36} color={color} />
+        ) : Icon ? (
+          <Icon size={36} color={color} />
         ) : null}
       </View>
       <View className="items-center gap-2">

@@ -16,6 +16,7 @@ import {
   TextField,
   ICON_COLORS,
 } from '@repo/ui';
+import { Plus } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -259,7 +260,7 @@ export function GoalForm({
             }}
             className="h-12 flex-row items-center justify-center gap-1.5 rounded-ctl border border-dashed border-line dark:border-line-dark"
           >
-            <Ionicons name="add" size={18} color={ICON_COLORS.limeInk} />
+            <Plus size={18} color={ICON_COLORS.limeInk} />
             <Text className="text-[14px] font-semibold text-lime-ink dark:text-lime-ink-dark">
               Agregar fecha límite
             </Text>

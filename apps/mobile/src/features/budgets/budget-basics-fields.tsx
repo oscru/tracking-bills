@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { Chip, CurrencyField, SwitchRow, TextField, ICON_COLORS } from '@repo/ui';
+import { Calendar } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
 import { DateField } from '../transactions/date-field';
@@ -128,11 +128,7 @@ export function BudgetBasicsFields({
                 onPress={onPress}
                 className="h-[52px] flex-row items-center gap-2 rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
               >
-                <Ionicons
-                  name="calendar-outline"
-                  size={16}
-                  color={active ? ICON_COLORS.limeInk : ICON_COLORS.ink3}
-                />
+                <Calendar size={16} color={active ? ICON_COLORS.limeInk : ICON_COLORS.ink3} />
                 <Text
                   className={
                     active

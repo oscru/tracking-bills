@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { formatDate, todayISODate } from '@repo/core/utils';
+import { formatDate, todayISODate, getDateFormat } from '@repo/core/utils';
 import { BottomSheet, Chip, SegmentedControl, ICON_COLORS } from '@repo/ui';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -70,7 +70,7 @@ export function DateRangeField({
   const today = todayISODate();
   const grid = monthGrid(viewYear, viewMonth);
   const monthTitle = capitalize(
-    new Date(viewYear, viewMonth, 1).toLocaleDateString('es-MX', { month: 'long' }),
+    getDateFormat('es-MX', { month: 'long' }).format(new Date(viewYear, viewMonth, 1)),
   );
 
   const clear = () => {
@@ -113,11 +113,7 @@ export function DateRangeField({
           onPress={openPicker}
           className="h-10 flex-row items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
         >
-          <Ionicons
-            name="calendar-outline"
-            size={14}
-            color={from ? ICON_COLORS.limeInk : ICON_COLORS.ink3}
-          />
+          <Calendar size={14} color={from ? ICON_COLORS.limeInk : ICON_COLORS.ink3} />
           <Text
             className={`text-[13px] font-semibold ${from ? 'text-lime-ink dark:text-lime-ink-dark' : 'text-ink-2 dark:text-ink-2-dark'}`}
           >
@@ -177,13 +173,13 @@ export function DateRangeField({
 
           <View className="flex-row items-center justify-between">
             <Pressable onPress={() => shiftMonth(-1)} hitSlop={8} className="p-1">
-              <Ionicons name="chevron-back" size={20} color={ICON_COLORS.ink3} />
+              <ChevronLeft size={20} color={ICON_COLORS.ink3} />
             </Pressable>
             <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
               {monthTitle} {viewYear}
             </Text>
             <Pressable onPress={() => shiftMonth(1)} hitSlop={8} className="p-1">
-              <Ionicons name="chevron-forward" size={20} color={ICON_COLORS.ink3} />
+              <ChevronRight size={20} color={ICON_COLORS.ink3} />
             </Pressable>
           </View>
 

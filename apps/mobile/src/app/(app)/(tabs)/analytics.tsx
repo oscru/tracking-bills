@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useProfile, useTransactions } from '@repo/core/hooks';
 import {
   categoryTrend,
@@ -14,6 +13,7 @@ import {
 } from '@repo/core/utils';
 import { Chip, Screen, SegmentedControl, type SegmentedOption, ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -42,8 +42,8 @@ const PERIOD_OPTIONS: SegmentedOption<AnalyticsPeriod>[] = [
 type ViewMode = 'calendar' | 'trend';
 
 const VIEW_OPTIONS: SegmentedOption<ViewMode>[] = [
-  { value: 'calendar', label: 'Calendario', icon: 'calendar-outline' },
-  { value: 'trend', label: 'Tendencia', icon: 'trending-up-outline' },
+  { value: 'calendar', label: 'Calendario', icon: Calendar },
+  { value: 'trend', label: 'Tendencia', icon: TrendingUp },
 ];
 
 const METRIC_OPTIONS: SegmentedOption<HeatmapVariant>[] = [
@@ -203,7 +203,7 @@ export default function AnalyticsScreen() {
 
       <View className="flex-row items-center justify-center gap-4">
         <Pressable onPress={() => shift(-1)} hitSlop={10} accessibilityLabel="Periodo anterior">
-          <Ionicons name="chevron-back" size={22} color={ICON_COLORS.ink3} />
+          <ChevronLeft size={22} color={ICON_COLORS.ink3} />
         </Pressable>
         {period === 'month' ? (
           <Pressable
@@ -214,7 +214,7 @@ export default function AnalyticsScreen() {
             <Text className="text-center text-base font-bold text-ink dark:text-ink-dark">
               {periodLabel(period, referenceDate)}
             </Text>
-            <Ionicons name="chevron-down" size={16} color={ICON_COLORS.ink3} />
+            <ChevronDown size={16} color={ICON_COLORS.ink3} />
           </Pressable>
         ) : (
           <Text className="min-w-[140px] text-center text-base font-bold text-ink dark:text-ink-dark">
@@ -227,8 +227,7 @@ export default function AnalyticsScreen() {
           disabled={insights.isCurrentPeriod}
           accessibilityLabel="Periodo siguiente"
         >
-          <Ionicons
-            name="chevron-forward"
+          <ChevronRight
             size={22}
             color={insights.isCurrentPeriod ? '#D1D5DB' : ICON_COLORS.ink3}
           />

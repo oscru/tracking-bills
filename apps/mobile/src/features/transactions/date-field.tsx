@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { addDaysISO, formatDate, todayISODate } from '@repo/core/utils';
+import { addDaysISO, formatDate, todayISODate, getDateFormat } from '@repo/core/utils';
 import { BottomSheet, Chip, ICON_COLORS } from '@repo/ui';
+import { Calendar, Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -53,7 +53,7 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
   const today = todayISODate();
   const grid = useMemo(() => monthGrid(viewYear, viewMonth), [viewYear, viewMonth]);
   const monthTitle = capitalize(
-    new Date(viewYear, viewMonth, 1).toLocaleDateString('es-MX', { month: 'long' }),
+    getDateFormat('es-MX', { month: 'long' }).format(new Date(viewYear, viewMonth, 1)),
   );
 
   return (
@@ -91,7 +91,7 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
         >
           {value ? formatDate(value) : (placeholder ?? '')}
         </Text>
-        <Ionicons name="calendar-outline" size={18} color={ICON_COLORS.ink3} />
+        <Calendar size={18} color={ICON_COLORS.ink3} />
       </Pressable>
 
       <BottomSheet
@@ -107,7 +107,7 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
                 hitSlop={8}
                 className="flex-row items-center gap-1 active:opacity-60"
               >
-                <Ionicons name="chevron-back" size={18} color={ICON_COLORS.ink3} />
+                <ChevronLeft size={18} color={ICON_COLORS.ink3} />
                 <Text className="text-[15px] font-semibold text-ink-2 dark:text-ink-2-dark">
                   {monthTitle}
                 </Text>
@@ -133,7 +133,7 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
                     {y}
                   </Text>
                   {y === viewYear ? (
-                    <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+                    <Check size={18} color={ICON_COLORS.limeInk} />
                   ) : null}
                 </Pressable>
               ))}
@@ -147,7 +147,7 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
           >
             <View className="flex-row items-center justify-between">
               <Pressable onPress={() => shiftMonth(-1)} hitSlop={8} className="p-1">
-                <Ionicons name="chevron-back" size={20} color={ICON_COLORS.ink3} />
+                <ChevronLeft size={20} color={ICON_COLORS.ink3} />
               </Pressable>
               <Pressable
                 onPress={() => setView('years')}
@@ -157,10 +157,10 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
                 <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
                   {monthTitle} {viewYear}
                 </Text>
-                <Ionicons name="chevron-down" size={14} color={ICON_COLORS.ink3} />
+                <ChevronDown size={14} color={ICON_COLORS.ink3} />
               </Pressable>
               <Pressable onPress={() => shiftMonth(1)} hitSlop={8} className="p-1">
-                <Ionicons name="chevron-forward" size={20} color={ICON_COLORS.ink3} />
+                <ChevronRight size={20} color={ICON_COLORS.ink3} />
               </Pressable>
             </View>
 

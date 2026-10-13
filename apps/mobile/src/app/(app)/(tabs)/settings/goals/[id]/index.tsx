@@ -4,6 +4,7 @@ import {
   useDeleteGoal,
   useFormError,
   useGoals,
+  useStableRecord,
   useTransactions,
   useUpdateGoal,
 } from '@repo/core/hooks';
@@ -15,13 +16,15 @@ import {
   goalProgress,
   todayISODate,
 } from '@repo/core/utils';
-import { Button, ConfirmSheet, ErrorCard, Fab, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
+import { Button, ConfirmSheet, ErrorCard, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Pencil } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AddContributionSheet } from '../../../../../../features/goals/add-contribution-sheet';
 import { GoalProgressBar } from '../../../../../../features/goals/goal-progress-bar';
+import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 function deadlineLabel(deadline: string | null): string {
   if (!deadline) return 'Sin fecha límite';
@@ -44,7 +47,18 @@ export default function GoalDetail() {
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const goal = (goals ?? []).find((g) => g.id === id);
+  const goal = useStableRecord((goals ?? []).find((g) => g.id === id));
+
+  useTabBarAction(
+    goal
+      ? {
+          icon: Pencil,
+          accessibilityLabel: 'Editar objetivo',
+          onPress: () =>
+            router.push({ pathname: '/(app)/settings/goals/[id]/edit', params: { id: goal.id } }),
+        }
+      : null,
+  );
 
   if (isLoading) {
     return (
@@ -259,16 +273,6 @@ export default function GoalDetail() {
 
           <ErrorCard message={error} />
         </ScrollView>
-
-        <View className="absolute bottom-6 right-5">
-          <Fab
-            icon="pencil"
-            accessibilityLabel="Editar objetivo"
-            onPress={() =>
-              router.push({ pathname: '/(app)/settings/goals/[id]/edit', params: { id: goal.id } })
-            }
-          />
-        </View>
       </View>
 
       <AddContributionSheet

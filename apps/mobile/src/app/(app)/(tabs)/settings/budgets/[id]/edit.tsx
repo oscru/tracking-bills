@@ -1,4 +1,4 @@
-import { useBudgets, useFormError, useUpdateBudget } from '@repo/core/hooks';
+import { useBudgets, useFormError, useStableRecord, useUpdateBudget } from '@repo/core/hooks';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetUpdateSchema } from '@repo/core/validators';
 import { todayISODate } from '@repo/core/utils';
@@ -20,7 +20,7 @@ export default function EditBudget() {
   const update = useUpdateBudget();
   const { error, setError, clearError } = useFormError();
 
-  const budget = (budgets ?? []).find((b) => b.id === id);
+  const budget = useStableRecord((budgets ?? []).find((b) => b.id === id));
   const currency = budget?.currency ?? 'MXN';
   const isCustom = budget?.period_type === 'custom';
 

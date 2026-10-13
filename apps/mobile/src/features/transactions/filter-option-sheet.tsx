@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { BottomSheet, ICON_COLORS } from '@repo/ui';
+import { Check } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
 export interface FilterOption {
@@ -43,7 +43,7 @@ export function FilterOptionSheet({
         >
           <Text className="text-[15px] text-ink-2 dark:text-ink-2-dark">{allLabel}</Text>
           {value === null ? (
-            <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+            <Check size={18} color={ICON_COLORS.limeInk} />
           ) : null}
         </Pressable>
         {options.map((opt) => (
@@ -62,7 +62,7 @@ export function FilterOptionSheet({
               {opt.label}
             </Text>
             {value === opt.value ? (
-              <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+              <Check size={18} color={ICON_COLORS.limeInk} />
             ) : null}
           </Pressable>
         ))}

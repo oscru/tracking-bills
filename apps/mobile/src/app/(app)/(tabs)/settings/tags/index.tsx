@@ -3,16 +3,19 @@ import { tagCounts, toFriendlyMessage } from '@repo/core/utils';
 import {
   EmptyState,
   ErrorCard,
-  Fab,
   ListRow,
   PageHeader,
   Screen,
   SegmentedControl,
+  StaggerItem,
   TagsEmptyIllustration,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { Plus } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+
+import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 
 const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
   { value: 'active', label: 'Activas' },
@@ -26,6 +29,12 @@ export default function TagsScreen() {
   const { data: transactions } = useTransactions();
 
   const visible = (tags ?? []).filter((t) => (status === 'archived' ? t.archived : !t.archived));
+
+  useTabBarAction({
+    icon: Plus,
+    accessibilityLabel: 'Nueva tag',
+    onPress: () => router.push('/(app)/settings/tags/new'),
+  });
 
   return (
     <Screen edges={['top']} className="gap-4">
@@ -54,7 +63,7 @@ export default function TagsScreen() {
             const { expense, income } = tagCounts(tag.id, transactions ?? []);
             const total = expense + income;
             return (
-              <View key={tag.id}>
+              <StaggerItem key={tag.id} index={i}>
                 {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
                 <ListRow
                   title={tag.name}
@@ -65,18 +74,11 @@ export default function TagsScreen() {
                     router.push({ pathname: '/(app)/settings/tags/[id]', params: { id: tag.id } })
                   }
                 />
-              </View>
+              </StaggerItem>
             );
           })}
         </View>
       )}
-
-      <View className="absolute bottom-6 right-5">
-        <Fab
-          accessibilityLabel="Nueva tag"
-          onPress={() => router.push('/(app)/settings/tags/new')}
-        />
-      </View>
     </Screen>
   );
 }

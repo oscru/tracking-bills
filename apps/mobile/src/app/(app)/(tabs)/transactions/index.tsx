@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useCategoryTree, useTags, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionType } from '@repo/core/types';
@@ -6,13 +5,14 @@ import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
 import {
   EmptyState,
   ErrorCard,
-  Fab,
   Screen,
+  StaggerItem,
   TextField,
   TransactionsEmptyIllustration,
   ICON_COLORS,
 } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { ListFilter } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, SectionList, Text, View } from 'react-native';
 
@@ -21,6 +21,22 @@ import { dayHeaderLabel, groupByDay } from '../../../../features/transactions/da
 import { FiltersSheet } from '../../../../features/transactions/filters-sheet';
 import { TransactionListItem } from '../../../../features/transactions/transaction-list-item';
 import { TransactionsSkeleton } from '../../../../features/transactions/transactions-skeleton';
+
+// Defined once at module scope: an inline `() => <View/>` is a brand-new
+// component type on every render, so React unmounted and remounted every
+// separator in the list each time this screen re-rendered.
+function RowSeparator() {
+  return (
+    <View className="border-x border-line bg-canvas px-3 dark:border-line-dark dark:bg-canvas-dark">
+      <View className="h-px bg-line dark:bg-line-dark" />
+    </View>
+  );
+}
+
+// Only the rows visible on first paint cascade in. Rows further down are
+// mounted by virtualization while you scroll, and animating each of those
+// as it appears just costs frames.
+const STAGGERED_ROWS = 8;
 
 const TITLE: Record<TransactionType, string> = {
   income: 'Ingresos',
@@ -222,11 +238,7 @@ export default function TransactionsScreen() {
               : 'border-line bg-surface dark:border-line-dark dark:bg-surface-dark'
           }`}
         >
-          <Ionicons
-            name="funnel-outline"
-            size={20}
-            color={activeFilterCount > 0 ? ICON_COLORS.ink : ICON_COLORS.ink3}
-          />
+          <ListFilter size={20} color={activeFilterCount > 0 ? ICON_COLORS.ink : ICON_COLORS.ink3} />
           {activeFilterCount > 0 ? (
             <View className="absolute -right-1.5 -top-1.5 h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-canvas bg-ink px-1 dark:border-canvas-dark dark:bg-lime">
               <Text className="text-[10px] font-bold text-lime dark:text-ink">
@@ -238,11 +250,7 @@ export default function TransactionsScreen() {
       </View>
 
       {isLoading ? (
-        <ScrollView
-          className="flex-1"
-          contentContainerClassName="pb-24"
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView className="flex-1" contentContainerClassName="pb-4" showsVerticalScrollIndicator={false}>
           <TransactionsSkeleton />
         </ScrollView>
       ) : error ? (
@@ -254,20 +262,29 @@ export default function TransactionsScreen() {
           sections={sections}
           keyExtractor={(t) => t.id}
           className="flex-1"
-          contentContainerClassName={sections.length === 0 ? 'grow pb-24' : 'pb-24'}
+          contentContainerClassName={sections.length === 0 ? 'grow pb-4' : 'pb-4'}
           stickySectionHeadersEnabled
           // Android's view-recycling optimization for offscreen rows has a
           // well-documented bug where a row can render blank (but still
           // count toward layout/totals) right after the list's data changes
-          // — exactly what inserting a new transaction does. Disabling it
-          // costs nothing noticeable at this list's size.
+          // — exactly what inserting a new transaction does.
           removeClippedSubviews={false}
+          // `removeClippedSubviews={false}` above keeps every rendered row's
+          // native view fully attached instead of detaching off-screen ones
+          // — fine for a short list, but at real scale (users with
+          // thousands of rows) the default `windowSize` of 21 "screens"
+          // keeps far more of these (gesture handler + several Animated
+          // values each) mounted at once than this row actually needs — and
+          // every mounted row is native views the screen re-attaches each
+          // time you come back to this tab. Tightened (2 screens of rows
+          // above/below the viewport) specifically to bound that,
+          // independent of the clipping workaround above.
+          windowSize={5}
+          initialNumToRender={10}
+          maxToRenderPerBatch={8}
+          updateCellsBatchingPeriod={50}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
-          ItemSeparatorComponent={() => (
-            <View className="border-x border-line bg-canvas px-3 dark:border-line-dark dark:bg-canvas-dark">
-              <View className="h-px bg-line dark:bg-line-dark" />
-            </View>
-          )}
+          ItemSeparatorComponent={RowSeparator}
           renderSectionHeader={({ section }) => (
             <View className="flex-row items-center justify-between bg-canvas pb-2 pt-4 dark:bg-canvas-dark">
               <Text className="text-[13px] font-bold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
@@ -298,7 +315,7 @@ export default function TransactionsScreen() {
           renderItem={({ item, index, section }) => {
             const isFirst = index === 0;
             const isLast = index === section.data.length - 1;
-            return (
+            const row = (
               <View
                 className={`overflow-hidden border-x border-line dark:border-line-dark ${
                   isFirst ? 'rounded-t-2xl border-t' : ''
@@ -313,16 +330,14 @@ export default function TransactionsScreen() {
                 />
               </View>
             );
+            return section === sections[0] && index < STAGGERED_ROWS ? (
+              <StaggerItem index={index}>{row}</StaggerItem>
+            ) : (
+              row
+            );
           }}
         />
       )}
-
-      <View className="absolute bottom-6 right-5">
-        <Fab
-          accessibilityLabel="Nuevo movimiento"
-          onPress={() => router.push('/(app)/new-transaction')}
-        />
-      </View>
 
       <FiltersSheet
         visible={filtersOpen}

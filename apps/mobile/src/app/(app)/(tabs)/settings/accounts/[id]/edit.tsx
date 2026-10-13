@@ -1,4 +1,10 @@
-import { useAccounts, useDeleteAccount, useFormError, useUpdateAccount } from '@repo/core/hooks';
+import {
+  useAccounts,
+  useDeleteAccount,
+  useFormError,
+  useStableRecord,
+  useUpdateAccount,
+} from '@repo/core/hooks';
 import { Button, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -15,7 +21,7 @@ export default function EditAccount() {
   const { error, setError, clearError } = useFormError();
   const [confirming, setConfirming] = useState(false);
 
-  const account = (accounts ?? []).find((a) => a.id === id);
+  const account = useStableRecord((accounts ?? []).find((a) => a.id === id));
 
   if (isLoading) {
     return (

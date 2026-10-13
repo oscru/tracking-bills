@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useCategories, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
@@ -11,6 +10,7 @@ import {
 } from '@repo/core/utils';
 import { CategoryDot, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ChartPie } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -184,7 +184,7 @@ export default function CategoryMonthSpendingScreen() {
         </ScrollView>
       ) : (
         <View className="mt-16 items-center gap-2">
-          <Ionicons name="pie-chart-outline" size={28} color={ICON_COLORS.ink3} />
+          <ChartPie size={28} color={ICON_COLORS.ink3} />
           <Text className="text-base font-semibold text-ink dark:text-ink-dark">Sin gastos</Text>
           <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
             Sin movimientos en esta categoría este mes.

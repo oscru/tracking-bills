@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency, formatDate, longestNoSpendStreak, noSpendStreak } from '@repo/core/utils';
 import { CategoryDot, ICON_COLORS } from '@repo/ui';
+import { Flame } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { Pressable, Text, View } from 'react-native';
 
@@ -50,7 +50,7 @@ export function DayDetailCard({ dateISO, transactions, currency, onPressTransact
       {dayTx.length === 0 ? (
         <View className="gap-2">
           <View className="flex-row items-center gap-1.5">
-            <Ionicons name="flame-outline" size={15} color={warningColor} />
+            <Flame size={15} color={warningColor} />
             <Text className="text-sm font-semibold" style={{ color: warningColor }}>
               {streak} día{streak === 1 ? '' : 's'} sin gastar
             </Text>

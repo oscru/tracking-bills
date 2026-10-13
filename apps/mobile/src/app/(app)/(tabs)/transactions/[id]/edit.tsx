@@ -2,6 +2,7 @@ import {
   useDeleteTransaction,
   useFormError,
   useSetTransactionTags,
+  useStableRecord,
   useTransaction,
   useUpdateTransaction,
 } from '@repo/core/hooks';
@@ -14,7 +15,8 @@ import { MovementForm } from '../../../../../features/transactions/movement-form
 export default function EditTransaction() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data: tx, isLoading } = useTransaction(id);
+  const { data: rawTx, isLoading } = useTransaction(id);
+  const tx = useStableRecord(rawTx);
   const update = useUpdateTransaction();
   const setTags = useSetTransactionTags();
   const remove = useDeleteTransaction();

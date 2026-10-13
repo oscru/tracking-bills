@@ -1,9 +1,19 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useProfile, useUpdateProfile } from '@repo/core/hooks';
 import type { Profile } from '@repo/core/types';
 import { normalizeHomeLayout, type HomeLayoutItem } from '@repo/core/utils';
 import { PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import {
+  Calendar,
+  ChartColumn,
+  ChartPie,
+  Clock,
+  Gauge,
+  GripVertical,
+  TrendingUp,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, LayoutAnimation, Switch, Text, View } from 'react-native';
@@ -24,42 +34,42 @@ function clamp(n: number, min: number, max: number): number {
 
 const ITEM_META: Record<
   HomeLayoutItem,
-  { label: string; description: string; icon: keyof typeof Ionicons.glyphMap }
+  { label: string; description: string; icon: LucideIcon }
 > = {
   pending: {
     label: 'Movimientos pendientes',
     description: 'Gastos o ingresos que ya deberían haberse realizado',
-    icon: 'time-outline',
+    icon: Clock,
   },
   upcoming: {
     label: 'Movimientos próximos',
     description: 'Recordatorio de lo que tienes programado a futuro',
-    icon: 'calendar-outline',
+    icon: Calendar,
   },
   budgets: {
     label: 'Presupuestos',
     description: 'Qué tan cerca estás del límite de tus categorías',
-    icon: 'speedometer-outline',
+    icon: Gauge,
   },
   categorySpend: {
     label: 'Gastos por categoría',
     description: 'Gráfica y tus 5 categorías con más gasto',
-    icon: 'pie-chart-outline',
+    icon: ChartPie,
   },
   weeklySpend: {
     label: 'Gastos semanales',
     description: 'Vistazo rápido de lo gastado esta semana, día por día',
-    icon: 'bar-chart-outline',
+    icon: ChartColumn,
   },
   monthlyTrend: {
     label: 'Tendencia mensual',
     description: 'Ingresos vs. gastos de los últimos 6 meses',
-    icon: 'trending-up-outline',
+    icon: TrendingUp,
   },
   accounts: {
     label: 'Tus cuentas',
     description: 'Lista de cuentas y su saldo',
-    icon: 'wallet-outline',
+    icon: Wallet,
   },
 };
 
@@ -217,16 +227,12 @@ function HomeLayoutEditor({ profile }: { profile: Profile }) {
                 activeOffsetY={[-4, 4]}
               >
                 <View hitSlop={10} className="-m-1.5 p-2.5">
-                  <Ionicons
-                    name="reorder-three-outline"
-                    size={20}
-                    color={dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3}
-                  />
+                  <GripVertical size={20} color={dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3} />
                 </View>
               </PanGestureHandler>
 
               <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
-                <Ionicons name={meta.icon} size={16} color={ICON_COLORS.limeInk} />
+                <meta.icon size={16} color={ICON_COLORS.limeInk} />
               </View>
 
               <View className="flex-1">

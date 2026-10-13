@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useCategories } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import { formatCurrency } from '@repo/core/utils';
 import { CategoryDot, ICON_COLORS } from '@repo/ui';
+import { CircleX, Plus } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -135,11 +135,7 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
                 {formatCurrency(allocation.amount, currency)}
               </Text>
               <Pressable onPress={() => remove(c.id)} hitSlop={8}>
-                <Ionicons
-                  name="close-circle"
-                  size={20}
-                  color={dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3}
-                />
+                <CircleX size={20} color={dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3} />
               </Pressable>
             </Pressable>
           ))}
@@ -150,7 +146,7 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
         onPress={() => setPickerOpen(true)}
         className="h-12 flex-row items-center justify-center gap-1.5 rounded-ctl border border-dashed border-line dark:border-line-dark"
       >
-        <Ionicons name="add" size={18} color={ICON_COLORS.limeInk} />
+        <Plus size={18} color={ICON_COLORS.limeInk} />
         <Text className="text-[14px] font-semibold text-lime-ink dark:text-lime-ink-dark">
           Añadir categoría
         </Text>

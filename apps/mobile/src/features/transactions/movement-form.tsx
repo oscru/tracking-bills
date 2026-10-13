@@ -31,6 +31,7 @@ import {
   TextField,
   type KeypadKey,
 } from '@repo/ui';
+import { ArrowLeftRight, CircleArrowDown, CircleArrowUp, Heart, Minus, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -87,9 +88,9 @@ interface Props {
 }
 
 const TYPE_OPTIONS = [
-  { value: 'expense' as const, label: 'Gasto', icon: 'arrow-up-circle' as const },
-  { value: 'income' as const, label: 'Ingreso', icon: 'arrow-down-circle' as const },
-  { value: 'transfer' as const, label: 'Transferencia', icon: 'swap-horizontal' as const },
+  { value: 'expense' as const, label: 'Gasto', icon: CircleArrowUp },
+  { value: 'income' as const, label: 'Ingreso', icon: CircleArrowDown },
+  { value: 'transfer' as const, label: 'Transferencia', icon: ArrowLeftRight },
 ];
 
 function prettyExpr(s: string): string {
@@ -358,19 +359,20 @@ export function MovementForm({
     return (
       <Screen className="gap-3">
         <View className="flex-row items-center gap-3">
-          <IconButton icon="close" onPress={tryCancel} accessibilityLabel="Cancelar" />
+          <IconButton icon={X} onPress={tryCancel} accessibilityLabel="Cancelar" />
           <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
             {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
           </Text>
           <IconButton
-            icon={saveAsFavorite ? 'heart' : 'heart-outline'}
+            icon={Heart}
+            filled={saveAsFavorite}
             onPress={() => setSaveAsFavorite((v) => !v)}
             accessibilityLabel={
               saveAsFavorite ? 'No guardar como favorito' : 'Guardar como favorito'
             }
           />
           {onMinimize ? (
-            <IconButton icon="remove" onPress={minimize} accessibilityLabel="Minimizar" />
+            <IconButton icon={Minus} onPress={minimize} accessibilityLabel="Minimizar" />
           ) : null}
         </View>
 
@@ -434,17 +436,18 @@ export function MovementForm({
   return (
     <Screen edges={['top']} className="gap-4">
       <View className="flex-row items-center gap-3">
-        <IconButton icon="close" onPress={tryCancel} accessibilityLabel="Cancelar" />
+        <IconButton icon={X} onPress={tryCancel} accessibilityLabel="Cancelar" />
         <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
           {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
         </Text>
         <IconButton
-          icon={saveAsFavorite ? 'heart' : 'heart-outline'}
+          icon={Heart}
+          filled={saveAsFavorite}
           onPress={() => setSaveAsFavorite((v) => !v)}
           accessibilityLabel={saveAsFavorite ? 'No guardar como favorito' : 'Guardar como favorito'}
         />
         {onMinimize ? (
-          <IconButton icon="remove" onPress={minimize} accessibilityLabel="Minimizar" />
+          <IconButton icon={Minus} onPress={minimize} accessibilityLabel="Minimizar" />
         ) : null}
       </View>
 

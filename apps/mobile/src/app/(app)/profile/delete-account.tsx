@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useDeleteOwnAccount, useSession, useSignIn } from '@repo/core/hooks';
 import { toFriendlyMessage } from '@repo/core/utils';
 import { Button, ErrorCard, ICON_COLORS, PageHeader, Screen, TextField } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { TriangleAlert } from 'lucide-react-native';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
@@ -67,7 +67,7 @@ export default function DeleteAccount() {
       <PageHeader title="Eliminar cuenta" onBack={() => router.back()} />
 
       <View className="flex-row gap-3 rounded-2xl bg-danger-tint p-4 dark:bg-danger-tint-dark">
-        <Ionicons name="warning" size={20} color={ICON_COLORS.danger} />
+        <TriangleAlert size={20} color={ICON_COLORS.danger} />
         <Text className="flex-1 text-[13px] leading-[18px] text-danger dark:text-danger-dark">
           Esto elimina tu cuenta
           {user?.email ? (

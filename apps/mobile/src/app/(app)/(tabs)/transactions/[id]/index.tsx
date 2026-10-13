@@ -1,5 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useCategories, useTransaction, useTransactions } from '@repo/core/hooks';
+import {
+  useAccounts,
+  useCategories,
+  useStableRecord,
+  useTransaction,
+  useTransactions,
+} from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import {
   accountBalance,
@@ -9,27 +15,21 @@ import {
   formatDateTime,
   projectedAccountBalance,
 } from '@repo/core/utils';
-import {
-  BottomSheet,
-  Chip,
-  Fab,
-  IconButton,
-  ListRow,
-  PageHeader,
-  Screen,
-  ICON_COLORS,
-} from '@repo/ui';
+import { BottomSheet, Chip, IconButton, ListRow, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ArrowRight, Heart, Info, Pencil } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { ACCOUNT_TYPE_ICON } from '../../../../../features/accounts/account-types';
+import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 import { TransactionDetailSkeleton } from '../../../../../features/transactions/transaction-detail-skeleton';
 
 export default function TransactionDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data: tx, isLoading } = useTransaction(id);
+  const { data: rawTx, isLoading } = useTransaction(id);
+  const tx = useStableRecord(rawTx);
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
   // Unfiltered — needed to reconstruct each account's balance as of this
@@ -72,6 +72,17 @@ export default function TransactionDetail() {
       toAccountAfter: toAccount ? projectedAccountBalance(toAccount, before, tx) : null,
     };
   }, [tx, allTransactions, account, toAccount]);
+
+  useTabBarAction(
+    tx
+      ? {
+          icon: Pencil,
+          accessibilityLabel: 'Editar movimiento',
+          onPress: () =>
+            router.push({ pathname: '/(app)/transactions/[id]/edit', params: { id: tx.id } }),
+        }
+      : null,
+  );
 
   if (isLoading) {
     return (
@@ -149,11 +160,7 @@ export default function TransactionDetail() {
         title={title}
         onBack={() => router.back()}
         action={
-          <IconButton
-            icon="heart-outline"
-            onPress={goSaveFavorite}
-            accessibilityLabel="Guardar como favorito"
-          />
+          <IconButton icon={Heart} onPress={goSaveFavorite} accessibilityLabel="Guardar como favorito" />
         }
       />
 
@@ -183,7 +190,7 @@ export default function TransactionDetail() {
               <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
                 {formatActivityMoment(tx.created_at, 'creado')}
               </Text>
-              <Ionicons name="information-circle-outline" size={14} color={ICON_COLORS.ink3} />
+              <Info size={14} color={ICON_COLORS.ink3} />
             </Pressable>
           </View>
 
@@ -289,16 +296,6 @@ export default function TransactionDetail() {
             </View>
           ) : null}
         </ScrollView>
-
-        <View className="absolute bottom-6 right-5">
-          <Fab
-            icon="pencil"
-            accessibilityLabel="Editar movimiento"
-            onPress={() =>
-              router.push({ pathname: '/(app)/transactions/[id]/edit', params: { id: tx.id } })
-            }
-          />
-        </View>
       </View>
 
       <BottomSheet visible={activityOpen} onClose={() => setActivityOpen(false)} title="Actividad">
@@ -358,7 +355,7 @@ function BalanceCard({
             {formatCurrency(before, currency)}
           </Text>
         </View>
-        <Ionicons name="arrow-forward" size={16} color={ICON_COLORS.ink3} />
+        <ArrowRight size={16} color={ICON_COLORS.ink3} />
         <View className="items-end">
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
             {projected ? 'Saldo si se completa' : 'Saldo nuevo'}

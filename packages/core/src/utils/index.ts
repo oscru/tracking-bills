@@ -29,12 +29,37 @@ function fromCents(cents: number): number {
   return cents / 100;
 }
 
+// Building an `Intl` formatter is expensive on Hermes (far more than using
+// one), and these run per row/cell on every render — so each distinct
+// locale+options combination is built once and reused.
+const numberFormatCache = new Map<string, Intl.NumberFormat>();
+const dateFormatCache = new Map<string, Intl.DateTimeFormat>();
+
+/** A cached `Intl.NumberFormat` — same arguments, same instance. */
+export function getNumberFormat(locale: string, options: Intl.NumberFormatOptions): Intl.NumberFormat {
+  const key = `${locale}|${JSON.stringify(options)}`;
+  let format = numberFormatCache.get(key);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, options);
+    numberFormatCache.set(key, format);
+  }
+  return format;
+}
+
+/** A cached `Intl.DateTimeFormat` — use `.format(date)` instead of `date.toLocaleDateString(locale, options)`. */
+export function getDateFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const key = `${locale}|${JSON.stringify(options)}`;
+  let format = dateFormatCache.get(key);
+  if (!format) {
+    format = new Intl.DateTimeFormat(locale, options);
+    dateFormatCache.set(key, format);
+  }
+  return format;
+}
+
 /** Format a numeric amount as a localized currency string. */
 export function formatCurrency(amount: number, currency = 'MXN', locale = 'es-MX'): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-  }).format(amount);
+  return getNumberFormat(locale, { style: 'currency', currency }).format(amount);
 }
 
 /** A short "$1.8k" / "$450" form of an amount — for tight spaces (e.g. a calendar-heatmap cell) where a full `formatCurrency` string wouldn't fit. */
@@ -228,6 +253,45 @@ export function accountBalance(account: BalanceAccount, transactions: BalanceTx[
     balanceCents += transactionEffectCents(t, account.id);
   }
   return fromCents(balanceCents);
+}
+
+/**
+ * `accountBalance` for every account in one pass over `transactions`,
+ * instead of calling it once per account — O(accounts + transactions)
+ * instead of O(accounts × transactions). Use this instead of mapping
+ * `accounts.map(a => accountBalance(a, transactions))` anywhere both lists
+ * can be large (e.g. a full-history import), since each transaction only
+ * ever affects one or two accounts and this looks them up directly instead
+ * of checking every account against every transaction.
+ */
+export function accountBalances(
+  accounts: BalanceAccount[],
+  transactions: BalanceTx[],
+): Map<string, number> {
+  const cents = new Map<string, number>();
+  for (const a of accounts) cents.set(a.id, toCents(a.initial_balance));
+
+  for (const t of transactions) {
+    if (!t.is_completed) continue;
+    const amount = toCents(t.amount);
+    if (t.type === 'transfer') {
+      const from = cents.get(t.account_id);
+      if (from !== undefined) cents.set(t.account_id, from - amount);
+      if (t.to_account_id) {
+        const to = cents.get(t.to_account_id);
+        if (to !== undefined) cents.set(t.to_account_id, to + amount);
+      }
+    } else {
+      const current = cents.get(t.account_id);
+      if (current !== undefined) {
+        cents.set(t.account_id, current + (t.type === 'income' ? amount : -amount));
+      }
+    }
+  }
+
+  const balances = new Map<string, number>();
+  for (const [id, c] of cents) balances.set(id, fromCents(c));
+  return balances;
 }
 
 /**
@@ -477,24 +541,22 @@ export function addDaysISO(iso: string, days: number): string {
 export function formatDate(iso: string, locale = 'es-MX'): string {
   const [y, m, d] = iso.split('-').map(Number);
   if (!y || !m || !d) return iso;
-  return new Date(y, m - 1, d).toLocaleDateString(locale, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  return getDateFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(
+    new Date(y, m - 1, d),
+  );
 }
 
 /** A `timestamptz` ISO string -> a localized date + time label, e.g. "7 sep 2026, 10:32 a.m." */
 export function formatDateTime(iso: string, locale = 'es-MX'): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleString(locale, {
+  return getDateFormat(locale, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-  });
+  }).format(date);
 }
 
 /**
@@ -520,7 +582,7 @@ export function formatActivityMoment(iso: string, verb: string, locale = 'es-MX'
   if (days === 2) return `${cap} antier`;
   if (days >= 3 && days <= 6) return `${cap} hace ${days} días`;
 
-  const dateLabel = date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+  const dateLabel = getDateFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
   return `${cap} el ${dateLabel}`;
 }
 
@@ -528,7 +590,7 @@ export function formatActivityMoment(iso: string, verb: string, locale = 'es-MX'
 export function formatMonthShort(monthKey: string, locale = 'es-MX'): string {
   const [y, m] = monthKey.split('-').map(Number);
   if (!y || !m) return monthKey;
-  const label = new Date(y, m - 1, 1).toLocaleDateString(locale, { month: 'short' });
+  const label = getDateFormat(locale, { month: 'short' }).format(new Date(y, m - 1, 1));
   const currentYear = new Date().getFullYear();
   return y === currentYear ? label : `${label} ${String(y).slice(2)}`;
 }
@@ -657,7 +719,7 @@ export function previousPeriodRange(period: AnalyticsPeriod, referenceDate: Date
 export function periodLabel(period: AnalyticsPeriod, referenceDate: Date, locale = 'es-MX'): string {
   if (period === 'year') return String(referenceDate.getFullYear());
   if (period === 'month') {
-    const label = referenceDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    const label = getDateFormat(locale, { month: 'long', year: 'numeric' }).format(referenceDate);
     return label.charAt(0).toUpperCase() + label.slice(1);
   }
   const { from, to } = periodRange('week', referenceDate);
@@ -668,8 +730,11 @@ export function periodLabel(period: AnalyticsPeriod, referenceDate: Date, locale
   const fromDate = parseISO(from);
   const toDate = parseISO(to);
   const sameMonth = fromDate.getMonth() === toDate.getMonth();
-  const fromLabel = fromDate.toLocaleDateString(locale, sameMonth ? { day: 'numeric' } : { day: 'numeric', month: 'short' });
-  const toLabel = toDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  const fromLabel = getDateFormat(
+    locale,
+    sameMonth ? { day: 'numeric' } : { day: 'numeric', month: 'short' },
+  ).format(fromDate);
+  const toLabel = getDateFormat(locale, { day: 'numeric', month: 'short' }).format(toDate);
   return `${fromLabel} – ${toLabel}`;
 }
 

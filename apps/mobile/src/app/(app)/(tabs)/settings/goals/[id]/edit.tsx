@@ -1,4 +1,4 @@
-import { useFormError, useGoals, useUpdateGoal } from '@repo/core/hooks';
+import { useFormError, useGoals, useStableRecord, useUpdateGoal } from '@repo/core/hooks';
 import { PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Text } from 'react-native';
@@ -12,7 +12,7 @@ export default function EditGoal() {
   const update = useUpdateGoal();
   const { error, setError, clearError } = useFormError();
 
-  const goal = (goals ?? []).find((g) => g.id === id);
+  const goal = useStableRecord((goals ?? []).find((g) => g.id === id));
   const accountsLinkedElsewhere = (goals ?? [])
     .filter((g) => g.id !== id)
     .map((g) => g.account_id)

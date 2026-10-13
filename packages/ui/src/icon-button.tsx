@@ -1,15 +1,18 @@
-import { Ionicons } from '@expo/vector-icons';
+import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, useColorScheme } from 'react-native';
 
 export interface IconButtonProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: LucideIcon;
   onPress: () => void;
   accessibilityLabel: string;
+  /** Fills the glyph instead of just outlining it — e.g. a toggled "favorited" heart. */
+  filled?: boolean;
 }
 
 /** Round 34px icon control — the shared header-button treatment, reusable for any glyph. */
-export function IconButton({ icon, onPress, accessibilityLabel }: IconButtonProps) {
+export function IconButton({ icon: Icon, onPress, accessibilityLabel, filled = false }: IconButtonProps) {
   const dark = useColorScheme() === 'dark';
+  const color = dark ? '#F2F3F5' : '#1A1D21';
   return (
     <Pressable
       onPress={onPress}
@@ -18,7 +21,7 @@ export function IconButton({ icon, onPress, accessibilityLabel }: IconButtonProp
       accessibilityLabel={accessibilityLabel}
       className="h-[34px] w-[34px] items-center justify-center rounded-full bg-[#F1F2F4] active:opacity-70 dark:bg-line-dark"
     >
-      <Ionicons name={icon} size={20} color={dark ? '#F2F3F5' : '#1A1D21'} />
+      <Icon size={20} color={color} fill={filled ? color : 'none'} />
     </Pressable>
   );
 }

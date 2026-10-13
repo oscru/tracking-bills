@@ -1,5 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
+import { getDateFormat } from '@repo/core/utils';
 import { BottomSheet, ICON_COLORS } from '@repo/ui';
+import { Check, ChevronDown, ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -9,7 +10,7 @@ const YEAR_COUNT = 20;
 
 function monthNames(): string[] {
   return Array.from({ length: 12 }, (_, i) =>
-    capitalize(new Date(2000, i, 1).toLocaleDateString('es-MX', { month: 'long' })),
+    capitalize(getDateFormat('es-MX', { month: 'long' }).format(new Date(2000, i, 1))),
   );
 }
 
@@ -60,7 +61,7 @@ export function MonthPickerSheet({ visible, onClose, year, month, maxDate, onSel
               className="flex-row items-center gap-1 rounded-full px-3 py-1.5 active:opacity-60"
             >
               <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">{viewYear}</Text>
-              <Ionicons name="chevron-down" size={16} color={ICON_COLORS.ink3} />
+              <ChevronDown size={16} color={ICON_COLORS.ink3} />
             </Pressable>
           </View>
           <View className="flex-row flex-wrap px-3.5 pb-8">
@@ -101,7 +102,7 @@ export function MonthPickerSheet({ visible, onClose, year, month, maxDate, onSel
               hitSlop={8}
               className="flex-row items-center gap-1 active:opacity-60"
             >
-              <Ionicons name="chevron-back" size={18} color={ICON_COLORS.ink3} />
+              <ChevronLeft size={18} color={ICON_COLORS.ink3} />
               <Text className="text-[15px] font-semibold text-ink-2 dark:text-ink-2-dark">
                 {viewYear}
               </Text>
@@ -127,7 +128,7 @@ export function MonthPickerSheet({ visible, onClose, year, month, maxDate, onSel
                   {y}
                 </Text>
                 {y === year ? (
-                  <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+                  <Check size={18} color={ICON_COLORS.limeInk} />
                 ) : null}
               </Pressable>
             ))}

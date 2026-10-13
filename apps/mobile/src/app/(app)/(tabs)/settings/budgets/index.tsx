@@ -5,16 +5,18 @@ import {
   BudgetsEmptyIllustration,
   EmptyState,
   ErrorCard,
-  Fab,
   PageHeader,
   Screen,
   SegmentedControl,
+  StaggerItem,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { Plus } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../../../../../features/budgets/budget-progress-bar';
+import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 
 const PERIOD_LABEL: Record<BudgetPeriodType, string> = {
   weekly: 'Semanal',
@@ -35,6 +37,12 @@ export default function BudgetsScreen() {
   const { data: transactions } = useTransactions();
 
   const visible = (budgets ?? []).filter((b) => (status === 'archived' ? b.archived : !b.archived));
+
+  useTabBarAction({
+    icon: Plus,
+    accessibilityLabel: 'Nuevo presupuesto',
+    onPress: () => router.push('/(app)/settings/budgets/new'),
+  });
 
   return (
     <Screen edges={['top']} className="gap-4">
@@ -60,7 +68,7 @@ export default function BudgetsScreen() {
         />
       ) : (
         <ScrollView className="flex-1" contentContainerClassName="gap-3 pb-24">
-          {visible.map((b) => {
+          {visible.map((b, i) => {
             const categoryIds = b.categories.map((c) => c.category.id);
             const progress = budgetProgress(
               categoryIds,
@@ -76,49 +84,43 @@ export default function BudgetsScreen() {
                 : `${PERIOD_LABEL[b.period_type]}${b.repeats ? ' · se repite' : ''}`;
 
             return (
-              <Pressable
-                key={b.id}
-                onPress={() =>
-                  router.push({ pathname: '/(app)/settings/budgets/[id]', params: { id: b.id } })
-                }
-                className="gap-3 rounded-2xl border border-line bg-surface p-4 active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
-                style={b.archived ? { opacity: 0.6 } : undefined}
-              >
-                <View>
-                  <Text
-                    className="text-base font-semibold text-ink dark:text-ink-dark"
-                    numberOfLines={1}
-                  >
-                    {b.name}
+              <StaggerItem key={b.id} index={i}>
+                <Pressable
+                  onPress={() =>
+                    router.push({ pathname: '/(app)/settings/budgets/[id]', params: { id: b.id } })
+                  }
+                  className="gap-3 rounded-2xl border border-line bg-surface p-4 active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
+                  style={b.archived ? { opacity: 0.6 } : undefined}
+                >
+                  <View>
+                    <Text
+                      className="text-base font-semibold text-ink dark:text-ink-dark"
+                      numberOfLines={1}
+                    >
+                      {b.name}
+                    </Text>
+                    <Text className="text-xs text-ink-2 dark:text-ink-2-dark">{periodLabel}</Text>
+                  </View>
+
+                  <BudgetProgressBar
+                    spent={progress.spent}
+                    amount={Number(b.amount)}
+                    pct={progress.pct}
+                    isOverBudget={progress.isOverBudget}
+                    currency={b.currency}
+                    hasCategories={progress.hasCategories}
+                  />
+
+                  <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
+                    {b.categories.length} categoría{b.categories.length === 1 ? '' : 's'} ·{' '}
+                    {rangeLabel}
                   </Text>
-                  <Text className="text-xs text-ink-2 dark:text-ink-2-dark">{periodLabel}</Text>
-                </View>
-
-                <BudgetProgressBar
-                  spent={progress.spent}
-                  amount={Number(b.amount)}
-                  pct={progress.pct}
-                  isOverBudget={progress.isOverBudget}
-                  currency={b.currency}
-                  hasCategories={progress.hasCategories}
-                />
-
-                <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                  {b.categories.length} categoría{b.categories.length === 1 ? '' : 's'} ·{' '}
-                  {rangeLabel}
-                </Text>
-              </Pressable>
+                </Pressable>
+              </StaggerItem>
             );
           })}
         </ScrollView>
       )}
-
-      <View className="absolute bottom-6 right-5">
-        <Fab
-          accessibilityLabel="Nuevo presupuesto"
-          onPress={() => router.push('/(app)/settings/budgets/new')}
-        />
-      </View>
     </Screen>
   );
 }

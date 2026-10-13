@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { PeriodInsights } from '@repo/core/utils';
 import { formatCurrency } from '@repo/core/utils';
+import { ChartNoAxesColumn, CircleCheck, Flame, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { ScrollView, Text, View } from 'react-native';
 import { ICON_COLORS } from '@repo/ui';
@@ -13,7 +13,7 @@ interface Props {
 }
 
 function Chip({
-  icon,
+  icon: Icon,
   iconColor,
   value,
   valueColor,
@@ -21,7 +21,7 @@ function Chip({
   sublabel,
   muted,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: LucideIcon;
   iconColor: string;
   value: string;
   valueColor: string;
@@ -34,7 +34,7 @@ function Chip({
       className="min-w-[136px] gap-1.5 rounded-2xl bg-surface p-3.5 dark:bg-surface-dark"
       style={muted ? { opacity: 0.55 } : undefined}
     >
-      <Ionicons name={icon} size={16} color={iconColor} />
+      <Icon size={16} color={iconColor} />
       <Text className="text-[15px] font-bold" style={{ color: valueColor }}>
         {value}
       </Text>
@@ -93,28 +93,28 @@ export function InsightsStrip({ insights, currency, metric = 'expense' }: Props)
       contentContainerClassName="gap-2.5"
     >
       <Chip
-        icon={changeUp ? 'trending-up-outline' : 'trending-down-outline'}
+        icon={changeUp ? TrendingUp : TrendingDown}
         iconColor={changeColor}
         value={changeValue}
         valueColor={changeColor}
         label="vs. periodo anterior"
       />
       <Chip
-        icon="checkmark-circle-outline"
+        icon={CircleCheck}
         iconColor={savingsColor}
         value={savingsValue}
         valueColor={savingsColor}
         label="tasa de ahorro"
       />
       <Chip
-        icon="analytics-outline"
+        icon={ChartNoAxesColumn}
         iconColor={neutralColor}
         value={projectionValue}
         valueColor={neutralColor}
         label={projectionLabel}
       />
       <Chip
-        icon="flame-outline"
+        icon={Flame}
         iconColor={warningColor}
         value={`${noSpendStreakDays} día${noSpendStreakDays === 1 ? '' : 's'} sin gastar`}
         valueColor={warningColor}

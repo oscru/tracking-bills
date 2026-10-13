@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useProfile, useTransactions } from '@repo/core/hooks';
 import {
-  accountBalance,
+  accountBalances,
   addDaysISO,
   categorySpendBreakdown,
   daysUntil,
@@ -13,9 +13,11 @@ import {
   totalBalancesByCurrency,
   visibleHomeLayout,
   type HomeLayoutItem,
+  getDateFormat,
 } from '@repo/core/utils';
-import { Fab, Screen, ICON_COLORS } from '@repo/ui';
+import { Screen, StaggerItem, ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { Calendar, ChevronLeft, ChevronRight, Clock, Eye, EyeOff } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -43,6 +45,13 @@ export default function HomeScreen() {
 
   const active = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
   const visibleAccounts = useMemo(() => active.filter((a) => a.show_on_home), [active]);
+  // One pass over `transactions` for every account instead of one pass per
+  // account — matters once either list is large (a full-history import is
+  // thousands of rows).
+  const accountBalancesById = useMemo(
+    () => accountBalances(active, transactions ?? []),
+    [active, transactions],
+  );
   // The default currency only seeds the account-creation form now — it's no
   // longer a forced conversion target, so totals below group by each
   // account's own currency instead of blending them into one number.
@@ -80,7 +89,7 @@ export default function HomeScreen() {
     [selectedYear, selectedMonthIdx],
   );
   const selectedMonth = `${selectedYear}-${String(selectedMonthIdx + 1).padStart(2, '0')}`;
-  const monthLabel = monthDate.toLocaleDateString('es-MX', { month: 'long' });
+  const monthLabel = getDateFormat('es-MX', { month: 'long' }).format(monthDate);
   const yearLabel = String(selectedYear);
   const monthStart = `${selectedMonth}-01`;
   const monthEnd = todayISODate(new Date(selectedYear, selectedMonthIdx + 1, 0));
@@ -148,11 +157,7 @@ export default function HomeScreen() {
           className="flex-row items-center gap-3 rounded-2xl bg-warning-tint p-4 active:opacity-80 dark:bg-warning-tint-dark"
         >
           <View className="h-10 w-10 items-center justify-center rounded-full bg-surface dark:bg-surface-dark">
-            <Ionicons
-              name="time-outline"
-              size={20}
-              color={dark ? ICON_COLORS.warningDark : ICON_COLORS.warning}
-            />
+            <Clock size={20} color={dark ? ICON_COLORS.warningDark : ICON_COLORS.warning} />
           </View>
           <View className="flex-1">
             <Text className="text-[15px] font-bold text-warning dark:text-warning-dark">
@@ -163,11 +168,7 @@ export default function HomeScreen() {
               Aún no se han realizado, toca para revisarlos
             </Text>
           </View>
-          <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={dark ? ICON_COLORS.warningDark : ICON_COLORS.warning}
-          />
+          <ChevronRight size={18} color={dark ? ICON_COLORS.warningDark : ICON_COLORS.warning} />
         </Pressable>
       ) : null,
 
@@ -183,11 +184,7 @@ export default function HomeScreen() {
           className="flex-row items-center gap-3 rounded-2xl bg-lime-tint p-4 active:opacity-80 dark:bg-lime-tint-dark"
         >
           <View className="h-10 w-10 items-center justify-center rounded-full bg-surface dark:bg-surface-dark">
-            <Ionicons
-              name="calendar-outline"
-              size={20}
-              color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk}
-            />
+            <Calendar size={20} color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk} />
           </View>
           <View className="flex-1">
             <Text className="text-[15px] font-bold text-lime-ink dark:text-lime-ink-dark">
@@ -201,11 +198,7 @@ export default function HomeScreen() {
                 : `El más cercano en ${nearestUpcomingDays} día${nearestUpcomingDays === 1 ? '' : 's'}`}
             </Text>
           </View>
-          <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk}
-          />
+          <ChevronRight size={18} color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk} />
         </Pressable>
       ) : null,
 
@@ -271,7 +264,9 @@ export default function HomeScreen() {
                 {a.name}
               </Text>
               <Text className="text-[15px] font-semibold text-ink dark:text-ink-dark">
-                {hidden ? '•••' : formatCurrency(accountBalance(a, transactions ?? []), a.currency)}
+                {hidden
+                  ? '•••'
+                  : formatCurrency(accountBalancesById.get(a.id) ?? 0, a.currency)}
               </Text>
             </Pressable>
           ))}
@@ -291,7 +286,7 @@ export default function HomeScreen() {
     <Screen edges={['top']} className="gap-5">
       <View className="flex-row items-center justify-center gap-4">
         <Pressable onPress={() => shiftMonth(-1)} hitSlop={10} accessibilityLabel="Mes anterior">
-          <Ionicons name="chevron-back" size={22} color={ICON_COLORS.ink3} />
+          <ChevronLeft size={22} color={ICON_COLORS.ink3} />
         </Pressable>
         <Pressable
           onPress={() => setMonthPickerOpen(true)}
@@ -309,11 +304,7 @@ export default function HomeScreen() {
           disabled={isCurrentMonth}
           accessibilityLabel="Mes siguiente"
         >
-          <Ionicons
-            name="chevron-forward"
-            size={22}
-            color={isCurrentMonth ? '#D1D5DB' : ICON_COLORS.ink3}
-          />
+          <ChevronRight size={22} color={isCurrentMonth ? '#D1D5DB' : ICON_COLORS.ink3} />
         </Pressable>
       </View>
 
@@ -349,11 +340,11 @@ export default function HomeScreen() {
                 Balance total
               </Text>
               <Pressable onPress={() => setHidden((h) => !h)} hitSlop={10}>
-                <Ionicons
-                  name={hidden ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color={ICON_COLORS.ink3}
-                />
+                {hidden ? (
+                  <Eye size={20} color={ICON_COLORS.ink3} />
+                ) : (
+                  <EyeOff size={20} color={ICON_COLORS.ink3} />
+                )}
               </Pressable>
             </View>
             {balances.length === 0 ? (
@@ -429,18 +420,14 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          {layoutOrder.map((key) => (
-            <View key={key}>{cards[key]}</View>
+          {layoutOrder.map((key, i) => (
+            <StaggerItem key={key} index={i}>
+              {cards[key]}
+            </StaggerItem>
           ))}
         </ScrollView>
       )}
 
-      <View className="absolute bottom-6 right-5">
-        <Fab
-          accessibilityLabel="Nuevo movimiento"
-          onPress={() => router.push('/(app)/new-transaction')}
-        />
-      </View>
     </Screen>
   );
 }

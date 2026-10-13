@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useCategories, useCategoryTree, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { Category, CategoryType } from '@repo/core/types';
 import { BottomSheet, CategoryDot, Chip, ICON_COLORS } from '@repo/ui';
+import { Check } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
@@ -161,7 +161,7 @@ export function CategoryPicker({
                 {resolveCategoryLabel(p)}
               </Text>
               {selectedId === p.id ? (
-                <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+                <Check size={18} color={ICON_COLORS.limeInk} />
               ) : null}
             </Pressable>
             {p.children.map((c) => (
@@ -175,7 +175,7 @@ export function CategoryPicker({
                   {resolveCategoryLabel(c)}
                 </Text>
                 {selectedId === c.id ? (
-                  <Ionicons name="checkmark" size={16} color={ICON_COLORS.limeInk} />
+                  <Check size={16} color={ICON_COLORS.limeInk} />
                 ) : null}
               </Pressable>
             ))}

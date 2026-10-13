@@ -1,4 +1,4 @@
-import { useCategories, useFormError, useUpdateCategory } from '@repo/core/hooks';
+import { useCategories, useFormError, useStableRecord, useUpdateCategory } from '@repo/core/hooks';
 import { PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Text } from 'react-native';
@@ -12,7 +12,7 @@ export default function EditCategory() {
   const update = useUpdateCategory();
   const { error, setError, clearError } = useFormError();
 
-  const category = (categories ?? []).find((c) => c.id === id);
+  const category = useStableRecord((categories ?? []).find((c) => c.id === id));
 
   if (isLoading) {
     return (

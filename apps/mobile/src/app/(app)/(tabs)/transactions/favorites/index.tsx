@@ -4,6 +4,7 @@ import type { FavoriteTransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency } from '@repo/core/utils';
 import { PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { Plus } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { favoriteTint } from '../../../../../features/favorites/favorite-colors';
@@ -44,7 +45,7 @@ export default function FavoritesScreen() {
               className="min-h-[112px] items-center justify-center gap-2 rounded-card border border-dashed border-line dark:border-line-dark"
             >
               <View className="h-11 w-11 items-center justify-center rounded-full border border-dashed border-line dark:border-line-dark">
-                <Ionicons name="add" size={20} color={ICON_COLORS.ink3} />
+                <Plus size={20} color={ICON_COLORS.ink3} />
               </View>
               <Text className="text-[13px] font-semibold text-ink-3 dark:text-ink-3-dark">
                 Nuevo favorito

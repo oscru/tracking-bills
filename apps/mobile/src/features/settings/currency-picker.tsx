@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { CURRENCIES, type CurrencyMeta } from '@repo/core/utils';
 import { BottomSheet, Button, ICON_COLORS } from '@repo/ui';
+import { Check, Circle, CircleCheck } from 'lucide-react-native';
 import { memo, useMemo, useState } from 'react';
 import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
 
@@ -36,7 +36,7 @@ const Row = memo(function Row({
         </Text>
         <Text className="text-xs text-ink-2 dark:text-ink-2-dark">{item.code}</Text>
       </View>
-      {selected ? <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} /> : null}
+      {selected ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
     </Pressable>
   );
 });
@@ -134,11 +134,11 @@ const MultiRow = memo(function MultiRow({
           {lockedReason ? ` · ${lockedReason}` : ''}
         </Text>
       </View>
-      <Ionicons
-        name={selected ? 'checkmark-circle' : 'ellipse-outline'}
-        size={22}
-        color={selected ? ICON_COLORS.limeInk : ICON_COLORS.ink3}
-      />
+      {selected ? (
+        <CircleCheck size={22} color={ICON_COLORS.limeInk} />
+      ) : (
+        <Circle size={22} color={ICON_COLORS.ink3} />
+      )}
     </Pressable>
   );
 });

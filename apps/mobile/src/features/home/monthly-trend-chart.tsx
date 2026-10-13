@@ -104,7 +104,11 @@ export function MonthlyTrendChart({
                   noOfSections={3}
                   yAxisTextStyle={{ color: axisColor, fontSize: 10 }}
                   xAxisLabelTextStyle={{ color: axisColor, fontSize: 10 }}
-                  isAnimated
+                  // No `isAnimated`: gifted-charts draws that in with five
+                  // staggered JS-thread width animations (`useNativeDriver:
+                  // false`, ~3s of per-frame JS work) right as Inicio mounts,
+                  // competing with everything else. The card already fades in
+                  // via `StaggerItem` on the UI thread.
                 />
               </View>
             );

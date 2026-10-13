@@ -7,6 +7,7 @@ import {
   listTransactions,
   updateTransaction,
   type TransactionFilters,
+  type TransactionWithRefs,
 } from '../supabase';
 import type { TransactionUpdateInput } from '../validators';
 import { queryKeys } from './keys';
@@ -19,10 +20,31 @@ export function useTransactions(filters: TransactionFilters = {}) {
 }
 
 export function useTransaction(id: string) {
+  const qc = useQueryClient();
   return useQuery({
     queryKey: queryKeys.transactions.detail(id),
     queryFn: () => getTransaction(id),
     enabled: Boolean(id),
+    // Opening a transaction from a list you've already loaded shouldn't
+    // show a spinner for data you were just looking at a second ago — the
+    // list and detail endpoints select the same columns (`WITH_REFS`), so
+    // any cached `transactions.list(...)` query (any filter combo) is a
+    // valid instant seed. Still refetches in the background as normal
+    // (`initialData` alone doesn't mark it fresh forever, just gives the
+    // first paint something real to show).
+    initialData: () => {
+      // Scoped to `['transactions', 'list']` specifically (not `.all`,
+      // which also prefix-matches `['transactions', 'detail', id]` entries
+      // — those hold a single object, not an array, and would break `.find`).
+      const cached = qc.getQueriesData<TransactionWithRefs[]>({
+        queryKey: ['transactions', 'list'],
+      });
+      for (const [, list] of cached) {
+        const match = list?.find((t) => t.id === id);
+        if (match) return match;
+      }
+      return undefined;
+    },
   });
 }
 

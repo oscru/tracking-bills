@@ -6,6 +6,7 @@ import {
   groupByAccountCurrency,
 } from '@repo/core/utils';
 import { SegmentedControl, ICON_COLORS } from '@repo/ui';
+import { ChartColumn, ChartLine } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState } from 'react';
 import { Text, View, useWindowDimensions } from 'react-native';
@@ -73,8 +74,8 @@ export function CategoryHistoryChart({ categoryId, color }: Props) {
         </Text>
         <SegmentedControl
           options={[
-            { value: 'bar', label: 'Barras', icon: 'bar-chart-outline' },
-            { value: 'line', label: 'Línea', icon: 'analytics-outline' },
+            { value: 'bar', label: 'Barras', icon: ChartColumn },
+            { value: 'line', label: 'Línea', icon: ChartLine },
           ]}
           value={kind}
           onChange={setKind}

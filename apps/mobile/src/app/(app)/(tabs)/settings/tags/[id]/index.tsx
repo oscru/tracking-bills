@@ -1,11 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useTags, useTransactions, useUpdateTag } from '@repo/core/hooks';
+import { useStableRecord, useTags, useTransactions, useUpdateTag } from '@repo/core/hooks';
 import { tagCounts } from '@repo/core/utils';
-import { Button, ConfirmSheet, Fab, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
+import { Button, ConfirmSheet, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ArrowUpDown, Pencil } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 import { TagDetailSkeleton } from '../../../../../../features/tags/tag-detail-skeleton';
 
 export default function TagDetail() {
@@ -16,13 +17,27 @@ export default function TagDetail() {
   const updateTag = useUpdateTag();
   const [confirmArchive, setConfirmArchive] = useState(false);
 
-  const tag = (tags ?? []).find((t) => t.id === id);
+  const tag = useStableRecord((tags ?? []).find((t) => t.id === id));
 
   const total = useMemo(() => {
     if (!tag) return 0;
     const { expense, income } = tagCounts(tag.id, transactions ?? []);
     return expense + income;
   }, [tag, transactions]);
+
+  useTabBarAction(
+    tag
+      ? {
+          icon: Pencil,
+          accessibilityLabel: 'Editar tag',
+          onPress: () =>
+            router.push({
+              pathname: '/(app)/settings/tags/[id]/edit',
+              params: { id: tag.id },
+            }),
+        }
+      : null,
+  );
 
   if (loadingTags || loadingTx) {
     return (
@@ -65,7 +80,7 @@ export default function TagDetail() {
             className="rounded-2xl border border-line bg-surface p-4 active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
           >
             <View className="flex-row items-center gap-1.5">
-              <Ionicons name="swap-vertical" size={16} color={tag.color ?? ICON_COLORS.limeInk} />
+              <ArrowUpDown size={16} color={tag.color ?? ICON_COLORS.limeInk} />
               <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
                 Transacciones
               </Text>
@@ -85,19 +100,6 @@ export default function TagDetail() {
             />
           </View>
         </ScrollView>
-
-        <View className="absolute bottom-6 right-5">
-          <Fab
-            icon="pencil"
-            accessibilityLabel="Editar tag"
-            onPress={() =>
-              router.push({
-                pathname: '/(app)/settings/tags/[id]/edit',
-                params: { id: tag.id },
-              })
-            }
-          />
-        </View>
       </View>
 
       <ConfirmSheet

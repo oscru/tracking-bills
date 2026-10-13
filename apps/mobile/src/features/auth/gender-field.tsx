@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { Gender } from '@repo/core/types';
 import { BottomSheet, ICON_COLORS } from '@repo/ui';
+import { Check, ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -36,7 +36,7 @@ export function GenderField({ label = 'Género', value, onChange, error }: Gende
         >
           {selected?.label ?? 'Selecciona una opción'}
         </Text>
-        <Ionicons name="chevron-down" size={18} color={ICON_COLORS.ink3} />
+        <ChevronDown size={18} color={ICON_COLORS.ink3} />
       </Pressable>
       {error ? <Text className="text-xs text-danger dark:text-danger-dark">{error}</Text> : null}
 
@@ -55,7 +55,7 @@ export function GenderField({ label = 'Género', value, onChange, error }: Gende
                 {opt.label}
               </Text>
               {value === opt.value ? (
-                <Ionicons name="checkmark" size={18} color={ICON_COLORS.limeInk} />
+                <Check size={18} color={ICON_COLORS.limeInk} />
               ) : null}
             </Pressable>
           ))}

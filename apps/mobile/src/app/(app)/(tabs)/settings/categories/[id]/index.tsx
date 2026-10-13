@@ -4,18 +4,21 @@ import {
   useDeleteCategory,
   useFavoriteTransactions,
   useFormError,
+  useStableRecord,
   useTransactions,
   useUpdateCategory,
 } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { Category } from '@repo/core/types';
-import { Button, CategoryDot, ConfirmSheet, ErrorCard, Fab, PageHeader, Screen } from '@repo/ui';
+import { Button, CategoryDot, ConfirmSheet, ErrorCard, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Pencil } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CategoryDetailSkeleton } from '../../../../../../features/categories/category-detail-skeleton';
 import { CategoryHistoryChart } from '../../../../../../features/categories/category-history-chart';
+import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 /** Why `category` can't be deleted right now, or `null` if it can. Mirrors
  * the DB trigger `check_category_deletable` exactly — every FK pointing at
@@ -62,7 +65,7 @@ export default function CategoryDetail() {
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const category = (categories ?? []).find((c) => c.id === id);
+  const category = useStableRecord((categories ?? []).find((c) => c.id === id));
   const subcategories = (categories ?? []).filter((c) => c.parent_id === id);
   // Archiving the parent cascades to these atomically at the DB level
   // (`categories_cascade_archive_subcategories`) — surfaced here only so the
@@ -73,6 +76,20 @@ export default function CategoryDetail() {
     fromTransactionId
       ? router.navigate({ pathname: '/(app)/transactions/[id]', params: { id: fromTransactionId } })
       : router.back();
+
+  useTabBarAction(
+    category
+      ? {
+          icon: Pencil,
+          accessibilityLabel: 'Editar categoría',
+          onPress: () =>
+            router.push({
+              pathname: '/(app)/settings/categories/[id]/edit',
+              params: { id: category.id },
+            }),
+        }
+      : null,
+  );
 
   if (isLoading) {
     return (
@@ -198,19 +215,6 @@ export default function CategoryDetail() {
 
           <ErrorCard message={error} />
         </ScrollView>
-
-        <View className="absolute bottom-6 right-5">
-          <Fab
-            icon="pencil"
-            accessibilityLabel="Editar categoría"
-            onPress={() =>
-              router.push({
-                pathname: '/(app)/settings/categories/[id]/edit',
-                params: { id: category.id },
-              })
-            }
-          />
-        </View>
       </View>
 
       <ConfirmSheet

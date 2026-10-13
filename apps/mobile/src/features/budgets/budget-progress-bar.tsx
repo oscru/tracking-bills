@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { formatCurrency } from '@repo/core/utils';
+import { CircleAlert } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { Text, View } from 'react-native';
 import { ICON_COLORS } from '@repo/ui';
@@ -39,7 +39,7 @@ export function BudgetProgressBar({
   if (!hasCategories) {
     return (
       <View className="flex-row items-center gap-2 rounded-xl bg-warning-tint px-3.5 py-3 dark:bg-warning-tint-dark">
-        <Ionicons name="alert-circle" size={16} color={warningColor} />
+        <CircleAlert size={16} color={warningColor} />
         <Text className="flex-1 text-[13px] font-medium leading-[17px] text-warning dark:text-warning-dark">
           Sin categorías asignadas — este presupuesto no está contando ningún gasto.
         </Text>
