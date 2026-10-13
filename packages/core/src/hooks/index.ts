@@ -51,3 +51,10 @@ export {
   useDeleteTransaction,
 } from './use-transactions';
 export { useRunImportPlan } from './use-import-export';
+export {
+  useNotifications,
+  useNotificationReads,
+  useMarkNotificationsRead,
+  useDismissNotification,
+  type NotificationItem,
+} from './use-notifications';

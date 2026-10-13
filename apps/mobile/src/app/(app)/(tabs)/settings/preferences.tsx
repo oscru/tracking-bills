@@ -19,11 +19,20 @@ import {
   SwitchRow,
   TextField,
   ICON_COLORS,
+  useTabBarScrollPadding,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
-import { Check, ChevronDown, ChevronRight, Moon, Smartphone, Sun, type LucideIcon } from 'lucide-react-native';
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Moon,
+  Smartphone,
+  Sun,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View, ScrollView } from 'react-native';
 
 import { CurrencyMultiPicker, CurrencyPicker } from '../../../../features/settings/currency-picker';
 
@@ -38,6 +47,7 @@ const THEME_OPTIONS: {
 ];
 
 export default function PreferencesScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
   const { data: tags, isLoading: tagsLoading } = useTags();
@@ -49,7 +59,13 @@ export default function PreferencesScreen() {
       {isLoading || !profile || tagsLoading || !tags ? (
         <ActivityIndicator className="mt-8" />
       ) : (
-        <>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-6"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
+          showsVerticalScrollIndicator={false}
+        >
           <EnabledCurrenciesSection profile={profile} />
           <CurrencySection profile={profile} />
           <ThemeSection value={profile.theme_preference} />
@@ -61,7 +77,7 @@ export default function PreferencesScreen() {
               Por ahora la app solo está disponible en español.
             </Text>
           </View>
-        </>
+        </ScrollView>
       )}
     </Screen>
   );
@@ -338,9 +354,7 @@ function ThemeSection({ value }: { value: ThemePreference }) {
               <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
                 {opt.label}
               </Text>
-              {value === opt.value ? (
-                <Check size={18} color={ICON_COLORS.limeInk} />
-              ) : null}
+              {value === opt.value ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
             </Pressable>
           ))}
         </View>

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFavoriteTransactions } from '@repo/core/hooks';
 import type { FavoriteTransactionWithRefs } from '@repo/core/supabase';
 import { formatCurrency } from '@repo/core/utils';
-import { PageHeader, Screen, ICON_COLORS } from '@repo/ui';
+import { PageHeader, Screen, ICON_COLORS, useTabBarScrollPadding } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -10,6 +10,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { favoriteTint } from '../../../../../features/favorites/favorite-colors';
 
 export default function FavoritesScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { data: favorites, isLoading } = useFavoriteTransactions();
 
@@ -24,7 +25,7 @@ export default function FavoritesScreen() {
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
       ) : (
-        <ScrollView className="flex-1" contentContainerClassName="pb-24">
+        <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: scrollPadding }}>
           <View className="flex-row flex-wrap justify-between">
             {(favorites ?? []).map((f) => (
               <FavoriteCard

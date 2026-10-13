@@ -1,6 +1,13 @@
 import { useStableRecord, useTags, useTransactions, useUpdateTag } from '@repo/core/hooks';
 import { tagCounts } from '@repo/core/utils';
-import { Button, ConfirmSheet, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
+import {
+  Button,
+  ConfirmSheet,
+  PageHeader,
+  Screen,
+  ICON_COLORS,
+  useTabBarScrollPadding,
+} from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowUpDown, Pencil } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -10,6 +17,7 @@ import { useTabBarAction } from '../../../../../../features/navigation/floating-
 import { TagDetailSkeleton } from '../../../../../../features/tags/tag-detail-skeleton';
 
 export default function TagDetail() {
+  const scrollPadding = useTabBarScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: tags, isLoading: loadingTags } = useTags();
@@ -62,7 +70,11 @@ export default function TagDetail() {
       <PageHeader title={tag.name} onBack={() => router.back()} />
 
       <View className="flex-1">
-        <ScrollView className="flex-1" contentContainerClassName="gap-5 pb-24">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-5"
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
+        >
           <View className="flex-row items-center gap-2">
             <View
               className="h-3 w-3 rounded-full"

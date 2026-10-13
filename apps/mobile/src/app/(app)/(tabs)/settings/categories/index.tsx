@@ -12,6 +12,7 @@ import {
   SegmentedControl,
   StaggerItem,
   TextField,
+  useTabBarScrollPadding,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
@@ -118,6 +119,7 @@ function Group({
 }
 
 export default function CategoriesScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const [type, setType] = useState<CategoryType>('expense');
   const [search, setSearch] = useState('');
@@ -154,8 +156,9 @@ export default function CategoriesScreen() {
       ) : (
         <ScrollView
           className="flex-1"
-          contentContainerClassName="grow pb-8"
+          contentContainerClassName="grow"
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
           <Group type={type} search={search} onEdit={goEdit} />
         </ScrollView>

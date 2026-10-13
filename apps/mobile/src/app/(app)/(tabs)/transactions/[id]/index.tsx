@@ -15,7 +15,16 @@ import {
   formatDateTime,
   projectedAccountBalance,
 } from '@repo/core/utils';
-import { BottomSheet, Chip, IconButton, ListRow, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
+import {
+  BottomSheet,
+  Chip,
+  IconButton,
+  ListRow,
+  PageHeader,
+  Screen,
+  ICON_COLORS,
+  useTabBarScrollPadding,
+} from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowRight, Heart, Info, Pencil } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -26,6 +35,7 @@ import { useTabBarAction } from '../../../../../features/navigation/floating-tab
 import { TransactionDetailSkeleton } from '../../../../../features/transactions/transaction-detail-skeleton';
 
 export default function TransactionDetail() {
+  const scrollPadding = useTabBarScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: rawTx, isLoading } = useTransaction(id);
@@ -160,15 +170,20 @@ export default function TransactionDetail() {
         title={title}
         onBack={() => router.back()}
         action={
-          <IconButton icon={Heart} onPress={goSaveFavorite} accessibilityLabel="Guardar como favorito" />
+          <IconButton
+            icon={Heart}
+            onPress={goSaveFavorite}
+            accessibilityLabel="Guardar como favorito"
+          />
         }
       />
 
       <View className="flex-1">
         <ScrollView
           className="flex-1"
-          contentContainerClassName="gap-5 pb-4"
+          contentContainerClassName="gap-5"
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
           <View className="items-center gap-1 rounded-card bg-surface p-6 dark:bg-surface-dark">
             <Text

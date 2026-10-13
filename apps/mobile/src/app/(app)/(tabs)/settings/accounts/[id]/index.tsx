@@ -14,6 +14,7 @@ import {
   Screen,
   SwitchRow,
   ICON_COLORS,
+  useTabBarScrollPadding,
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowDown, CircleArrowUp, Pencil } from 'lucide-react-native';
@@ -26,6 +27,7 @@ import { ACCOUNT_TYPE_LABEL } from '../../../../../../features/accounts/account-
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 export default function AccountDetail() {
+  const scrollPadding = useTabBarScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
@@ -112,7 +114,11 @@ export default function AccountDetail() {
       <PageHeader title={account.name} onBack={() => router.back()} />
 
       <View className="flex-1">
-        <ScrollView className="flex-1" contentContainerClassName="gap-5 pb-24">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-5"
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
+        >
           <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
             <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
               {ACCOUNT_TYPE_LABEL[account.type]}

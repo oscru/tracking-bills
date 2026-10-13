@@ -13,7 +13,8 @@
     "./validators": "./src/validators/index.ts",
     "./utils": "./src/utils/index.ts",
     "./i18n": "./src/i18n/index.ts",
-    "./import-export": "./src/import-export/index.ts"
+    "./import-export": "./src/import-export/index.ts",
+    "./notifications": "./src/notifications/index.ts"
   },
   "scripts": {
     "lint": "eslint src",

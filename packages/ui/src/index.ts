@@ -20,11 +20,16 @@ export {
   GoalsEmptyIllustration,
   CategoriesEmptyIllustration,
   TransactionsEmptyIllustration,
+  NotificationsEmptyIllustration,
   type EmptyIllustrationProps,
 } from './empty-state-illustrations';
 export { ErrorCard, type ErrorCardProps } from './error-card';
 export { Fab, type FabProps } from './fab';
-export { FloatingTabBarInsetContext, useFloatingTabBarInset } from './floating-tab-bar-inset';
+export {
+  FloatingTabBarInsetContext,
+  useFloatingTabBarInset,
+  useTabBarScrollPadding,
+} from './floating-tab-bar-inset';
 export { IconButton, type IconButtonProps } from './icon-button';
 export { ListRow, type ListRowProps } from './list-row';
 export { NumericKeypad, type NumericKeypadProps, type KeypadKey } from './numeric-keypad';

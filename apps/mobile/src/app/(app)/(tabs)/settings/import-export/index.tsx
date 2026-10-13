@@ -1,13 +1,14 @@
 import { useCategories, useTransactions } from '@repo/core/hooks';
 import { buildExportWorkbookBase64 } from '@repo/core/import-export';
-import { ListRow, PageHeader, Screen } from '@repo/ui';
+import { ListRow, PageHeader, Screen, useTabBarScrollPadding } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Text, View, ScrollView } from 'react-native';
 
 import { saveAndShareXlsx } from '../../../../../features/import-export/file-io';
 
 export default function ImportExportScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { data: transactions } = useTransactions();
   const { data: categories } = useCategories();
@@ -30,36 +31,44 @@ export default function ImportExportScreen() {
     <Screen edges={['top']} className="gap-6">
       <PageHeader title="Importar y exportar" onBack={() => router.back()} />
 
-      <View className="gap-2">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Exportar</Text>
-        <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
-          <ListRow
-            title="Exportar movimientos"
-            subtitle="Genera un Excel con tus movimientos y transferencias"
-            icon={exporting ? undefined : 'share-outline'}
-            trailing={exporting ? <ActivityIndicator /> : undefined}
-            showChevron={!exporting}
-            onPress={exporting ? undefined : exportMovements}
-          />
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="gap-6"
+        contentContainerStyle={{ paddingBottom: scrollPadding }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="gap-2">
+          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Exportar</Text>
+          <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
+            <ListRow
+              title="Exportar movimientos"
+              subtitle="Genera un Excel con tus movimientos y transferencias"
+              icon={exporting ? undefined : 'share-outline'}
+              trailing={exporting ? <ActivityIndicator /> : undefined}
+              showChevron={!exporting}
+              onPress={exporting ? undefined : exportMovements}
+            />
+          </View>
         </View>
-      </View>
 
-      <View className="gap-2">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Importar</Text>
-        <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
-          <ListRow
-            title="Importar desde Excel"
-            subtitle="Sube un archivo y crea tus movimientos automáticamente"
-            icon="document-attach-outline"
-            showChevron
-            onPress={() => router.push('/(app)/settings/import-export/import')}
-          />
+        <View className="gap-2">
+          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Importar</Text>
+          <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
+            <ListRow
+              title="Importar desde Excel"
+              subtitle="Sube un archivo y crea tus movimientos automáticamente"
+              icon="document-attach-outline"
+              showChevron
+              onPress={() => router.push('/(app)/settings/import-export/import')}
+            />
+          </View>
         </View>
-      </View>
 
-      <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-        Las cuentas, categorías y tags que no existan todavía se crean automáticamente al importar.
-      </Text>
+        <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
+          Las cuentas, categorías y tags que no existan todavía se crean automáticamente al
+          importar.
+        </Text>
+      </ScrollView>
     </Screen>
   );
 }

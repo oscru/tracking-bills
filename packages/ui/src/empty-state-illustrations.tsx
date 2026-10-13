@@ -225,3 +225,43 @@ export function TransactionsEmptyIllustration({ size = 112 }: EmptyIllustrationP
     </Svg>
   );
 }
+
+export function NotificationsEmptyIllustration({ size = 112 }: EmptyIllustrationProps) {
+  const { badge, ink, canvas, lime } = useIllustrationColors();
+  const clock = useLoopClock(2600);
+  // Ring: a short, damped swing about the hanging point at the start of each
+  // cycle, then the bell rests for the remainder — a "ding", not a constant
+  // wobble. The clapper lags behind, swinging the other way.
+  const bellRotation = clock.interpolate({
+    inputRange: [0, 0.06, 0.14, 0.22, 0.3, 0.38, 1],
+    outputRange: [0, 14, -11, 7, -3, 0, 0],
+  });
+  const clapperX = clock.interpolate({
+    inputRange: [0, 0.08, 0.16, 0.24, 0.32, 0.4, 1],
+    outputRange: [0, -4, 4, -2.5, 1, 0, 0],
+  });
+  // The sparkle flashes while the bell is ringing, then dims.
+  const sparkleOpacity = clock.interpolate({
+    inputRange: [0, 0.1, 0.4, 1],
+    outputRange: [0.3, 1, 0.3, 0.3],
+  });
+  return (
+    <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
+      <Circle cx={60} cy={60} r={52} fill={badge} />
+      <AnimatedG origin="60,26" rotation={bellRotation}>
+        <AnimatedG translateX={clapperX}>
+          <Circle cx={60} cy={86} r={7} fill={lime} />
+        </AnimatedG>
+        <Circle cx={60} cy={25} r={5} fill={ink} />
+        <Path
+          d="M60 28 C46 28 39 39 39 52 L39 68 L32 79 Q31 82 34 82 L86 82 Q89 82 88 79 L81 68 L81 52 C81 39 74 28 60 28 Z"
+          fill={ink}
+        />
+        <Line x1={37} y1={71} x2={83} y2={71} stroke={canvas} strokeWidth={3} />
+      </AnimatedG>
+      <AnimatedG opacity={sparkleOpacity}>
+        <Path d="M96 20 V30 M91 25 H101" stroke={lime} strokeWidth={2.5} strokeLinecap="round" />
+      </AnimatedG>
+    </Svg>
+  );
+}

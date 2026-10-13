@@ -11,6 +11,7 @@ import {
   TextField,
   TransactionsEmptyIllustration,
   ICON_COLORS,
+  useTabBarScrollPadding,
 } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ListFilter } from 'lucide-react-native';
@@ -64,6 +65,7 @@ const TITLE: Record<TransactionType, string> = {
 };
 
 export default function TransactionsScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const params = useLocalSearchParams<{
     type?: TransactionType;
@@ -303,8 +305,8 @@ export default function TransactionsScreen() {
       {isLoading ? (
         <ScrollView
           className="flex-1"
-          contentContainerClassName="pb-4"
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
           <TransactionsSkeleton />
         </ScrollView>
@@ -321,7 +323,7 @@ export default function TransactionsScreen() {
             stickyHeaderIndices={stickyHeaderIndices}
             // Rows read `openRowId` (which row has its swipe actions out).
             extraData={openRowId}
-            contentContainerStyle={{ paddingBottom: 16 }}
+            contentContainerStyle={{ paddingBottom: scrollPadding }}
             showsVerticalScrollIndicator={false}
             refreshing={isRefetching}
             onRefresh={() => refetch()}

@@ -7,13 +7,14 @@ import {
   useTags,
   useUpdateProfile,
 } from '@repo/core/hooks';
-import { Avatar, ListRow, Screen } from '@repo/ui';
+import { Avatar, ListRow, Screen, useTabBarScrollPadding } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { SettingsSkeleton } from '../../../../features/settings/settings-skeleton';
 
 export default function SettingsScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { user } = useSession();
   const updateProfile = useUpdateProfile();
@@ -41,8 +42,8 @@ export default function SettingsScreen() {
         <ScrollView
           className="flex-1"
           contentContainerClassName="gap-6"
-          contentContainerStyle={{ paddingBottom: 64 }}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
           <Pressable
             onPress={() => router.push('/(app)/profile')}
@@ -103,6 +104,13 @@ export default function SettingsScreen() {
               subtitle="Orden de las tarjetas de la pantalla principal"
               showChevron
               onPress={() => router.push('/(app)/settings/home-layout')}
+            />
+            <View className="h-px bg-line dark:bg-line-dark" />
+            <ListRow
+              title="Notificaciones"
+              subtitle="Recordatorios de pagos, presupuestos y metas"
+              showChevron
+              onPress={() => router.push('/(app)/settings/notifications')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow

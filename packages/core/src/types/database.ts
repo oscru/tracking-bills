@@ -382,6 +382,35 @@ export type Database = {
           },
         ]
       }
+      notification_reads: {
+        Row: {
+          dismissed_at: string | null
+          notification_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string | null
+          notification_id: string
+          read_at?: string
+          user_id?: string
+        }
+        Update: {
+          dismissed_at?: string | null
+          notification_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           birth_date: string | null
@@ -395,6 +424,7 @@ export type Database = {
           home_hidden_items: string[]
           home_layout: string[] | null
           id: string
+          notification_prefs: Json
           plan: string
           theme_preference: string
           travel_mode: boolean
@@ -413,6 +443,7 @@ export type Database = {
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id: string
+          notification_prefs?: Json
           plan?: string
           theme_preference?: string
           travel_mode?: boolean
@@ -431,6 +462,7 @@ export type Database = {
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id?: string
+          notification_prefs?: Json
           plan?: string
           theme_preference?: string
           travel_mode?: boolean

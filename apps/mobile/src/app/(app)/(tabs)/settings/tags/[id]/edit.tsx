@@ -1,4 +1,10 @@
-import { useDeleteTag, useFormError, useStableRecord, useTags, useUpdateTag } from '@repo/core/hooks';
+import {
+  useDeleteTag,
+  useFormError,
+  useStableRecord,
+  useTags,
+  useUpdateTag,
+} from '@repo/core/hooks';
 import { Button, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView, type Edge, type Edges } from 'react-native-safe-area-context';
 
+import { useFloatingTabBarInset } from './floating-tab-bar-inset';
 import { useKeyboardHeight } from './use-keyboard-height';
 
 function includesBottomEdge(edges: Edges): boolean {
@@ -30,6 +31,9 @@ export function Screen({
   // Android only (0 on iOS) — see `useKeyboardHeight`'s doc comment for why
   // `KeyboardAvoidingView`'s own behaviors aren't used there.
   const keyboardHeight = useKeyboardHeight();
+  // Inside the tabs, the floating tab bar overlays the bottom of the screen —
+  // a `scroll` screen's content gets room to scroll fully clear of it.
+  const tabBarInset = useFloatingTabBarInset();
 
   // On wide web the content column is capped and centered.
   const web = Platform.OS === 'web' ? 'mx-auto w-full max-w-[480px]' : '';
@@ -45,6 +49,7 @@ export function Screen({
     <ScrollView
       className="flex-1"
       contentContainerClassName={`grow px-5 ${vertical} ${web} ${center ? 'justify-center' : ''} ${className}`}
+      contentContainerStyle={tabBarInset > 0 ? { paddingBottom: tabBarInset + 24 } : undefined}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive"
       showsVerticalScrollIndicator={false}

@@ -14,7 +14,7 @@ import {
   type HomeLayoutItem,
   getDateFormat,
 } from '@repo/core/utils';
-import { Screen, StaggerItem, ICON_COLORS } from '@repo/ui';
+import { Screen, StaggerItem, ICON_COLORS, useTabBarScrollPadding } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Calendar, ChevronLeft, ChevronRight, Clock, Eye, EyeOff } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
@@ -27,9 +27,11 @@ import { CategorySpendCard } from '../../../features/home/category-spend-card';
 import { HomeSkeleton } from '../../../features/home/home-skeleton';
 import { MonthPickerSheet } from '../../../features/home/month-picker-sheet';
 import { MonthlyTrendChart } from '../../../features/home/monthly-trend-chart';
+import { NotificationBell } from '../../../features/notifications/notification-bell';
 import { WeeklySpendCard } from '../../../features/home/weekly-spend-card';
 
 export default function HomeScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
@@ -252,9 +254,7 @@ export default function HomeScreen() {
                 {a.name}
               </Text>
               <Text className="text-[15px] font-semibold text-ink dark:text-ink-dark">
-                {hidden
-                  ? '•••'
-                  : formatCurrency(accountBalancesById.get(a.id) ?? 0, a.currency)}
+                {hidden ? '•••' : formatCurrency(accountBalancesById.get(a.id) ?? 0, a.currency)}
               </Text>
             </Pressable>
           ))}
@@ -294,6 +294,10 @@ export default function HomeScreen() {
         >
           <ChevronRight size={22} color={isCurrentMonth ? '#D1D5DB' : ICON_COLORS.ink3} />
         </Pressable>
+        {/* Pinned to the row's right edge so the month selector stays centered. */}
+        <View className="absolute bottom-0 right-0 top-0 justify-center">
+          <NotificationBell />
+        </View>
       </View>
 
       <MonthPickerSheet
@@ -310,8 +314,8 @@ export default function HomeScreen() {
       {loading ? (
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ paddingBottom: 64 }}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
           <HomeSkeleton />
         </ScrollView>
@@ -319,8 +323,8 @@ export default function HomeScreen() {
         <ScrollView
           className="flex-1"
           contentContainerClassName="gap-5"
-          contentContainerStyle={{ paddingBottom: 64 }}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
           <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
             <View className="flex-row items-center justify-between">
@@ -415,7 +419,6 @@ export default function HomeScreen() {
           ))}
         </ScrollView>
       )}
-
     </Screen>
   );
 }

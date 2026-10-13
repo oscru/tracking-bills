@@ -11,3 +11,16 @@ export const FloatingTabBarInsetContext = createContext(0);
 export function useFloatingTabBarInset(): number {
   return useContext(FloatingTabBarInsetContext);
 }
+
+/** Breathing room kept between the last item of a scroll and the top of the floating tab bar. */
+const SCROLL_END_GAP = 24;
+
+/**
+ * `paddingBottom` for a scroll view's content inside the tabs: enough to
+ * scroll its last item fully clear of the floating tab bar (which overlays
+ * the content instead of taking layout space), plus a small gap. Outside the
+ * tabs there's no bar, so it's just the gap.
+ */
+export function useTabBarScrollPadding(extra: number = SCROLL_END_GAP): number {
+  return useFloatingTabBarInset() + extra;
+}

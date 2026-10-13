@@ -16,6 +16,7 @@ import {
   SegmentedControl,
   StaggerItem,
   ICON_COLORS,
+  useTabBarScrollPadding,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
@@ -39,6 +40,7 @@ function deadlineLabel(deadline: string | null): string {
 }
 
 export default function GoalsScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const { data: goals, isLoading, error } = useGoals();
@@ -70,13 +72,15 @@ export default function GoalsScreen() {
           illustration={<GoalsEmptyIllustration />}
           title={status === 'archived' ? 'Sin objetivos archivados' : 'Sin objetivos todavía'}
           description={
-            status === 'archived'
-              ? undefined
-              : 'Crea uno para empezar a ahorrar para una meta.'
+            status === 'archived' ? undefined : 'Crea uno para empezar a ahorrar para una meta.'
           }
         />
       ) : (
-        <ScrollView className="flex-1" contentContainerClassName="gap-3 pb-24">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-3"
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
+        >
           {visible.map((g, i) => {
             const linkedAccount = g.account_id
               ? ((accounts ?? []).find((a) => a.id === g.account_id) ?? null)

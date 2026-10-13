@@ -9,11 +9,12 @@ import {
   SegmentedControl,
   StaggerItem,
   TagsEmptyIllustration,
+  useTabBarScrollPadding,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, ScrollView } from 'react-native';
 
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 
@@ -23,6 +24,7 @@ const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
 ];
 
 export default function TagsScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const { data: tags, isLoading, error } = useTags();
@@ -58,26 +60,32 @@ export default function TagsScreen() {
           }
         />
       ) : (
-        <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
-          {visible.map((tag, i) => {
-            const { expense, income } = tagCounts(tag.id, transactions ?? []);
-            const total = expense + income;
-            return (
-              <StaggerItem key={tag.id} index={i}>
-                {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
-                <ListRow
-                  title={tag.name}
-                  subtitle={`${total} transacci${total === 1 ? 'ón' : 'ones'}`}
-                  dotColor={tag.color}
-                  showChevron
-                  onPress={() =>
-                    router.push({ pathname: '/(app)/settings/tags/[id]', params: { id: tag.id } })
-                  }
-                />
-              </StaggerItem>
-            );
-          })}
-        </View>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
+            {visible.map((tag, i) => {
+              const { expense, income } = tagCounts(tag.id, transactions ?? []);
+              const total = expense + income;
+              return (
+                <StaggerItem key={tag.id} index={i}>
+                  {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
+                  <ListRow
+                    title={tag.name}
+                    subtitle={`${total} transacci${total === 1 ? 'ón' : 'ones'}`}
+                    dotColor={tag.color}
+                    showChevron
+                    onPress={() =>
+                      router.push({ pathname: '/(app)/settings/tags/[id]', params: { id: tag.id } })
+                    }
+                  />
+                </StaggerItem>
+              );
+            })}
+          </View>
+        </ScrollView>
       )}
     </Screen>
   );

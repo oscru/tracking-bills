@@ -16,7 +16,15 @@ import {
   goalProgress,
   todayISODate,
 } from '@repo/core/utils';
-import { Button, ConfirmSheet, ErrorCard, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
+import {
+  Button,
+  ConfirmSheet,
+  ErrorCard,
+  PageHeader,
+  Screen,
+  ICON_COLORS,
+  useTabBarScrollPadding,
+} from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
 import { useState } from 'react';
@@ -35,6 +43,7 @@ function deadlineLabel(deadline: string | null): string {
 }
 
 export default function GoalDetail() {
+  const scrollPadding = useTabBarScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: goals, isLoading } = useGoals();
@@ -129,7 +138,11 @@ export default function GoalDetail() {
       <PageHeader title={goal.name} onBack={() => router.back()} />
 
       <View className="flex-1">
-        <ScrollView className="flex-1" contentContainerClassName="gap-5 pb-24">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-5"
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
+        >
           {goal.archived || goal.is_completed ? (
             <View className="flex-row gap-2">
               {goal.is_completed ? (

@@ -9,7 +9,15 @@ import {
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetProgress, formatDate } from '@repo/core/utils';
-import { Button, CategoryDot, ConfirmSheet, ErrorCard, PageHeader, Screen } from '@repo/ui';
+import {
+  Button,
+  CategoryDot,
+  ConfirmSheet,
+  ErrorCard,
+  PageHeader,
+  Screen,
+  useTabBarScrollPadding,
+} from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
 import { useState } from 'react';
@@ -26,6 +34,7 @@ const PERIOD_LABEL: Record<BudgetPeriodType, string> = {
 };
 
 export default function BudgetDetail() {
+  const scrollPadding = useTabBarScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: budgets, isLoading } = useBudgets();
@@ -93,7 +102,11 @@ export default function BudgetDetail() {
       <PageHeader title={budget.name} onBack={() => router.back()} />
 
       <View className="flex-1 gap-5">
-        <ScrollView className="flex-1" contentContainerClassName="gap-5 pb-24">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-5"
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
+        >
           {budget.archived ? (
             <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
               <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">

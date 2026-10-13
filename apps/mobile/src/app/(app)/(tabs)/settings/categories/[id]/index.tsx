@@ -10,7 +10,15 @@ import {
 } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { Category } from '@repo/core/types';
-import { Button, CategoryDot, ConfirmSheet, ErrorCard, PageHeader, Screen } from '@repo/ui';
+import {
+  Button,
+  CategoryDot,
+  ConfirmSheet,
+  ErrorCard,
+  PageHeader,
+  Screen,
+  useTabBarScrollPadding,
+} from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
 import { useState } from 'react';
@@ -43,6 +51,7 @@ function categoryBlockReason(
 }
 
 export default function CategoryDetail() {
+  const scrollPadding = useTabBarScrollPadding();
   const { id, fromTransactionId } = useLocalSearchParams<{
     id: string;
     /** Set only when we were pushed straight from a transaction's detail
@@ -140,8 +149,9 @@ export default function CategoryDetail() {
       <View className="flex-1">
         <ScrollView
           className="flex-1"
-          contentContainerClassName="gap-5 pb-24"
+          contentContainerClassName="gap-5"
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
           <View className="flex-row items-center gap-2">
             <CategoryDot color={category.color} icon={category.icon} size={17} />

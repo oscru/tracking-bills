@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 
+import { NotificationSync } from '../../features/notifications/notification-sync';
 import { ThemeSync } from '../../features/settings/theme-sync';
 import { WelcomeTour } from '../../features/tour/welcome-tour';
 
@@ -7,6 +8,7 @@ export default function AppRootLayout() {
   return (
     <>
       <ThemeSync />
+      <NotificationSync />
       <WelcomeTour />
       <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
         <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />

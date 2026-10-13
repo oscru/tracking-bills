@@ -9,6 +9,7 @@ import {
   Screen,
   SegmentedControl,
   StaggerItem,
+  useTabBarScrollPadding,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
@@ -31,6 +32,7 @@ const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
 ];
 
 export default function BudgetsScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const { data: budgets, isLoading, error } = useBudgets();
@@ -61,13 +63,15 @@ export default function BudgetsScreen() {
           illustration={<BudgetsEmptyIllustration />}
           title={status === 'archived' ? 'Sin presupuestos archivados' : 'Sin presupuestos todavía'}
           description={
-            status === 'archived'
-              ? undefined
-              : 'Crea uno para controlar tu gasto por categoría.'
+            status === 'archived' ? undefined : 'Crea uno para controlar tu gasto por categoría.'
           }
         />
       ) : (
-        <ScrollView className="flex-1" contentContainerClassName="gap-3 pb-24">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-3"
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
+        >
           {visible.map((b, i) => {
             const categoryIds = b.categories.map((c) => c.category.id);
             const progress = budgetProgress(

@@ -1,6 +1,12 @@
 import { FloatingTabBarInsetContext } from '@repo/ui';
 import { Tabs, useRouter, type Href } from 'expo-router';
-import { ArrowLeftRight, ChartNoAxesColumn, FileText, House, type LucideIcon } from 'lucide-react-native';
+import {
+  ArrowLeftRight,
+  ChartNoAxesColumn,
+  FileText,
+  House,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useEffect } from 'react';
 import { type ColorValue } from 'react-native';
 
@@ -73,7 +79,9 @@ export default function AppLayout() {
             name="index"
             options={{
               title: 'Inicio',
-              tabBarIcon: ({ color, focused }) => <TabIcon icon={House} color={color} focused={focused} />,
+              tabBarIcon: ({ color, focused }) => (
+                <TabIcon icon={House} color={color} focused={focused} />
+              ),
             }}
           />
           <Tabs.Screen

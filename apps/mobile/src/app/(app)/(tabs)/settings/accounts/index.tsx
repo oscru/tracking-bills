@@ -8,16 +8,18 @@ import {
   PageHeader,
   Screen,
   StaggerItem,
+  useTabBarScrollPadding,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View, ScrollView } from 'react-native';
 
 import { AccountIcon } from '../../../../../features/accounts/account-icon';
 import { ACCOUNT_TYPE_LABEL } from '../../../../../features/accounts/account-types';
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 
 export default function AccountsScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { data: accounts, isLoading, error } = useAccounts();
   const { data: transactions } = useTransactions();
@@ -45,30 +47,36 @@ export default function AccountsScreen() {
           description="Crea una cuenta para empezar a registrar tus movimientos."
         />
       ) : (
-        <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
-          {(accounts ?? []).map((a, i) => (
-            <StaggerItem key={a.id} index={i}>
-              {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
-              <ListRow
-                title={a.name}
-                subtitle={`${ACCOUNT_TYPE_LABEL[a.type]}${a.archived ? ' · archivada' : ''}`}
-                leading={<AccountIcon account={a} />}
-                trailing={
-                  <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-                    {formatCurrency(accountBalance(a, transactions ?? []), a.currency)}
-                  </Text>
-                }
-                showChevron
-                onPress={() =>
-                  router.push({
-                    pathname: '/(app)/settings/accounts/[id]',
-                    params: { id: a.id },
-                  })
-                }
-              />
-            </StaggerItem>
-          ))}
-        </View>
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
+            {(accounts ?? []).map((a, i) => (
+              <StaggerItem key={a.id} index={i}>
+                {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
+                <ListRow
+                  title={a.name}
+                  subtitle={`${ACCOUNT_TYPE_LABEL[a.type]}${a.archived ? ' · archivada' : ''}`}
+                  leading={<AccountIcon account={a} />}
+                  trailing={
+                    <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
+                      {formatCurrency(accountBalance(a, transactions ?? []), a.currency)}
+                    </Text>
+                  }
+                  showChevron
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(app)/settings/accounts/[id]',
+                      params: { id: a.id },
+                    })
+                  }
+                />
+              </StaggerItem>
+            ))}
+          </View>
+        </ScrollView>
       )}
     </Screen>
   );

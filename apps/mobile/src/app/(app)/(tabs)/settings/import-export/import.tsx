@@ -120,12 +120,7 @@ export default function ImportScreen() {
       ) : null}
 
       {step.name === 'error' ? (
-        <StatusView
-          icon={CircleAlert}
-          tint="danger"
-          title="Algo salió mal"
-          subtitle={step.message}
-        >
+        <StatusView icon={CircleAlert} tint="danger" title="Algo salió mal" subtitle={step.message}>
           <Button
             label="Reintentar"
             variant="secondary"

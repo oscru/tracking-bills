@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { HOME_LAYOUT_ITEMS } from '../home-layout';
+import { notificationPrefsSchema } from '../notifications/prefs';
 import { currencyCodeSchema } from './account';
 
 export const homeLayoutItemSchema = z.enum(HOME_LAYOUT_ITEMS);
@@ -47,6 +48,8 @@ export const profileUpdateSchema = z.object({
   travel_trip_tag_id: z.string().uuid().nullable().optional(),
   /** Auto-shows the welcome carousel once while false. */
   has_seen_tour: z.boolean().optional(),
+  /** Which notifications to send and when — always written as a full object. */
+  notification_prefs: notificationPrefsSchema.optional(),
 });
 
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;

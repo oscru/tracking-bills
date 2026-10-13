@@ -11,7 +11,14 @@ import {
   topTransactions,
   type AnalyticsPeriod,
 } from '@repo/core/utils';
-import { Chip, Screen, SegmentedControl, type SegmentedOption, ICON_COLORS } from '@repo/ui';
+import {
+  Chip,
+  Screen,
+  SegmentedControl,
+  type SegmentedOption,
+  ICON_COLORS,
+  useTabBarScrollPadding,
+} from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Calendar, ChevronDown, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -52,6 +59,7 @@ const METRIC_OPTIONS: SegmentedOption<HeatmapVariant>[] = [
 ];
 
 export default function AnalyticsScreen() {
+  const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { data: accounts } = useAccounts();
   const { data: profile } = useProfile();
@@ -227,10 +235,7 @@ export default function AnalyticsScreen() {
           disabled={insights.isCurrentPeriod}
           accessibilityLabel="Periodo siguiente"
         >
-          <ChevronRight
-            size={22}
-            color={insights.isCurrentPeriod ? '#D1D5DB' : ICON_COLORS.ink3}
-          />
+          <ChevronRight size={22} color={insights.isCurrentPeriod ? '#D1D5DB' : ICON_COLORS.ink3} />
         </Pressable>
       </View>
 
@@ -251,16 +256,17 @@ export default function AnalyticsScreen() {
       {isLoading ? (
         <ScrollView
           className="flex-1"
-          contentContainerClassName="pb-24"
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
           <AnalyticsSkeleton />
         </ScrollView>
       ) : (
         <ScrollView
           className="flex-1"
-          contentContainerClassName="gap-5 pb-24"
+          contentContainerClassName="gap-5"
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
           <SegmentedControl options={VIEW_OPTIONS} value={viewMode} onChange={setViewMode} />
 

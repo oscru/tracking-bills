@@ -31,6 +31,10 @@ export const queryKeys = {
     all: ['goals'] as const,
     list: () => ['goals', 'list'] as const,
   },
+  notificationReads: {
+    all: ['notificationReads'] as const,
+    list: () => ['notificationReads', 'list'] as const,
+  },
   transactions: {
     all: ['transactions'] as const,
     list: (filters: TransactionFilters = {}) => ['transactions', 'list', filters] as const,
