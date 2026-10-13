@@ -1,5 +1,6 @@
 import { BottomSheet, CategoryDot, ICON_COLORS } from '@repo/ui';
 import { Check } from 'lucide-react-native';
+import type { ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 export interface MultiSelectOption {
@@ -7,6 +8,8 @@ export interface MultiSelectOption {
   label: string;
   dotColor?: string | null;
   icon?: string | null;
+  /** Custom leading element (e.g. an account's icon tile) — replaces the dot/icon. */
+  leading?: ReactNode;
 }
 
 interface Props {
@@ -92,9 +95,10 @@ export function MultiSelectSheet({
               className="min-h-[56px] flex-row items-center gap-3 border-t border-line px-5 dark:border-line-dark"
             >
               <Checkbox checked={checked} />
-              {opt.dotColor || opt.icon ? (
-                <CategoryDot color={opt.dotColor} icon={opt.icon} size={16} />
-              ) : null}
+              {opt.leading ??
+                (opt.dotColor || opt.icon ? (
+                  <CategoryDot color={opt.dotColor} icon={opt.icon} size={16} />
+                ) : null)}
               <Text className="flex-1 text-[15px] text-ink dark:text-ink-dark">{opt.label}</Text>
             </Pressable>
           );

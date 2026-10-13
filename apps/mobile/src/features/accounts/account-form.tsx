@@ -16,6 +16,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CurrencyPicker } from '../settings/currency-picker';
 import { ACCOUNT_COLORS } from './account-colors';
+import { AccountIcon } from './account-icon';
 import { ACCOUNT_TYPES, ACCOUNT_TYPE_ICON, ACCOUNT_TYPE_LABEL } from './account-types';
 
 export interface AccountFormInitial {
@@ -83,7 +84,14 @@ export function AccountForm({
       return;
     }
     const data: Partial<AccountCreateInput> = { ...parsed.data };
-    if (editing) delete data.initial_balance;
+    if (editing) {
+      delete data.initial_balance;
+      // The create schema fills these toggles in with their defaults (true),
+      // but this form doesn't show them — sending them on an edit silently
+      // switched "Mostrar en inicio" / "Incluir en el total" back on.
+      delete data.show_on_home;
+      delete data.include_in_total;
+    }
     onSubmit(data as AccountCreateInput);
   };
 
@@ -93,6 +101,20 @@ export function AccountForm({
       contentContainerClassName="gap-5 pb-8"
       keyboardShouldPersistTaps="handled"
     >
+      {/* Live preview — the same tile every account list shows. The glyph
+      comes from the account type; only the color is chosen here. */}
+      <View className="items-center gap-2">
+        <Pressable
+          onPress={() => setTypePickerOpen(true)}
+          accessibilityLabel="Cambiar tipo de cuenta"
+        >
+          <AccountIcon account={{ type, color }} size={64} />
+        </Pressable>
+        <Text className="text-[13px] text-ink-3 dark:text-ink-3-dark">
+          El ícono depende del tipo de cuenta
+        </Text>
+      </View>
+
       <TextField
         label="Nombre"
         value={name}
@@ -113,7 +135,7 @@ export function AccountForm({
           className="flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 py-3 dark:border-line-dark dark:bg-surface-dark"
         >
           <View className="flex-row items-center gap-2.5">
-            <Ionicons name={ACCOUNT_TYPE_ICON[type]} size={18} color={ICON_COLORS.limeInk} />
+            <Ionicons name={ACCOUNT_TYPE_ICON[type]} size={18} color={color} />
             <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
               {ACCOUNT_TYPE_LABEL[type]}
             </Text>
@@ -185,15 +207,11 @@ export function AccountForm({
               }}
               className="flex-row items-center gap-3 border-t border-line px-5 py-3.5 dark:border-line-dark"
             >
-              <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
-                <Ionicons name={t.icon} size={16} color={ICON_COLORS.limeInk} />
-              </View>
+              <AccountIcon account={{ type: t.value, color }} />
               <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
                 {t.label}
               </Text>
-              {type === t.value ? (
-                <Check size={18} color={ICON_COLORS.limeInk} />
-              ) : null}
+              {type === t.value ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
             </Pressable>
           ))}
         </ScrollView>

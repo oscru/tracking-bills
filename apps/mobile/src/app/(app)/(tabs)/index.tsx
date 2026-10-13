@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useProfile, useTransactions } from '@repo/core/hooks';
 import {
   accountBalances,
@@ -22,7 +21,7 @@ import { useColorScheme } from 'nativewind';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { ACCOUNT_TYPE_ICON } from '../../../features/accounts/account-types';
+import { AccountIcon } from '../../../features/accounts/account-icon';
 import { BudgetsCard } from '../../../features/home/budgets-card';
 import { CategorySpendCard } from '../../../features/home/category-spend-card';
 import { HomeSkeleton } from '../../../features/home/home-skeleton';
@@ -248,18 +247,7 @@ export default function HomeScreen() {
                 i > 0 ? 'border-t border-line dark:border-line-dark' : ''
               }`}
             >
-              <View
-                className={`h-9 w-9 items-center justify-center rounded-full ${
-                  a.color ? '' : 'bg-lime-tint dark:bg-lime-tint-dark'
-                }`}
-                style={a.color ? { backgroundColor: `${a.color}26` } : undefined}
-              >
-                <Ionicons
-                  name={ACCOUNT_TYPE_ICON[a.type]}
-                  size={16}
-                  color={a.color ?? ICON_COLORS.limeInk}
-                />
-              </View>
+              <AccountIcon account={a} />
               <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
                 {a.name}
               </Text>

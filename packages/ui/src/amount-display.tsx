@@ -19,16 +19,13 @@ export function AmountDisplay({ display, hint, invalid = false }: AmountDisplayP
           {hint}
         </Text>
       ) : null}
-      <View className="flex-row items-baseline">
-        <Text
-          className={`text-[52px] font-bold tracking-tight ${
-            invalid ? 'text-danger dark:text-danger-dark' : 'text-ink dark:text-ink-dark'
-          }`}
-        >
-          {display}
-        </Text>
-        <View className={`ml-1 h-11 w-[3px] rounded-sm ${accent}`} />
-      </View>
+      <Text
+        className={`text-[52px] font-bold tracking-tight ${
+          invalid ? 'text-danger dark:text-danger-dark' : 'text-ink dark:text-ink-dark'
+        }`}
+      >
+        {display}
+      </Text>
       <View className={`h-[3px] w-36 rounded-sm ${accent}`} />
     </View>
   );

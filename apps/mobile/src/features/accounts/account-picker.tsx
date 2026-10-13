@@ -5,6 +5,7 @@ import { Check } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
+import { AccountIcon } from './account-icon';
 import { ACCOUNT_TYPE_LABEL } from './account-types';
 
 interface Props {
@@ -73,6 +74,7 @@ export function AccountPicker({
             onPress={() => pick(a.id)}
             className="flex-row items-center gap-3 border-t border-line px-5 py-3 dark:border-line-dark"
           >
+            <AccountIcon account={a} />
             <View className="flex-1">
               <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">{a.name}</Text>
               <Text className="text-xs text-ink-2 dark:text-ink-2-dark">

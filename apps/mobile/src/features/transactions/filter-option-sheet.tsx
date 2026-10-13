@@ -1,11 +1,15 @@
 import { BottomSheet, ICON_COLORS } from '@repo/ui';
 import { Check } from 'lucide-react-native';
+import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 export interface FilterOption {
   value: string;
   label: string;
   dotColor?: string | null;
+  icon?: string | null;
+  /** Custom leading element (e.g. an account's icon tile) — replaces the dot/icon. */
+  leading?: ReactNode;
 }
 
 interface Props {

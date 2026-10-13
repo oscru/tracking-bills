@@ -12,6 +12,8 @@ export interface ListRowProps {
   dotColor?: string | null;
   /** Leading icon (e.g. a category's icon) shown instead of the dot when set. */
   icon?: string | null;
+  /** Custom leading element (e.g. an account's icon tile) — replaces the dot/icon. */
+  leading?: ReactNode;
   onPress?: () => void;
   showChevron?: boolean;
 }
@@ -22,6 +24,7 @@ export function ListRow({
   trailing,
   dotColor,
   icon,
+  leading,
   onPress,
   showChevron = false,
 }: ListRowProps) {
@@ -31,7 +34,7 @@ export function ListRow({
       onPress={onPress}
       className={`flex-row items-center gap-3 py-3.5 ${onPress ? 'active:opacity-60' : ''}`}
     >
-      {dotColor || icon ? <CategoryDot color={dotColor} icon={icon} size={15} /> : null}
+      {leading ?? (dotColor || icon ? <CategoryDot color={dotColor} icon={icon} size={15} /> : null)}
 
       <View className="flex-1">
         <Text className="text-base text-ink dark:text-ink-dark">{title}</Text>

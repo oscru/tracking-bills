@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { ActivityIndicator, Text, View } from 'react-native';
 
+import { AccountIcon } from '../../../../../features/accounts/account-icon';
 import { ACCOUNT_TYPE_LABEL } from '../../../../../features/accounts/account-types';
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 
@@ -51,7 +52,7 @@ export default function AccountsScreen() {
               <ListRow
                 title={a.name}
                 subtitle={`${ACCOUNT_TYPE_LABEL[a.type]}${a.archived ? ' · archivada' : ''}`}
-                dotColor={a.color}
+                leading={<AccountIcon account={a} />}
                 trailing={
                   <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
                     {formatCurrency(accountBalance(a, transactions ?? []), a.currency)}

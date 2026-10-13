@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { AccountIcon } from '../../../../features/accounts/account-icon';
 import { FavoritesRow } from '../../../../features/favorites/favorites-row';
 import {
   dayHeaderLabel,
@@ -213,7 +214,12 @@ export default function TransactionsScreen() {
     [categoryTree],
   );
   const accountOptions = useMemo(
-    () => (accounts ?? []).map((a) => ({ value: a.id, label: a.name })),
+    () =>
+      (accounts ?? []).map((a) => ({
+        value: a.id,
+        label: a.name,
+        leading: <AccountIcon account={a} size={30} />,
+      })),
     [accounts],
   );
   const tagOptions = useMemo(

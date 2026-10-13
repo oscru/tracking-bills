@@ -286,7 +286,6 @@ export function MovementForm({
 
   const goToDetails = () => {
     setFormError(null);
-    if (!fromId) return setFormError('Elige una cuenta');
     if (value == null || value <= 0) return setFormError(AMOUNT_ERROR);
     setAmount(String(value));
     setView('details');
@@ -387,30 +386,27 @@ export function MovementForm({
           />
         </View>
 
-        <View className="flex-row flex-wrap justify-center gap-2">
-          {type === 'expense' && favoriteExpenses.length > 0
-            ? favoriteExpenses.map((f) => {
-                const { fg } = favoriteTint(f);
-                return (
-                  <Chip
-                    key={f.id}
-                    label={f.label}
-                    icon={f.icon}
-                    dotColor={fg}
-                    selected={fromId === f.account_id && categoryId === f.category_id}
-                    onPress={() => applyFavorite(f)}
-                  />
-                );
-              })
-            : activeAccounts.map((a) => (
+        {/* Favorites are one-tap shortcuts (amount + account + category).
+        Accounts aren't picked here — the details step has the account
+        field, pre-filled with the first active one — keeping this the
+        calculator alone. */}
+        {type === 'expense' && favoriteExpenses.length > 0 ? (
+          <View className="flex-row flex-wrap justify-center gap-2">
+            {favoriteExpenses.map((f) => {
+              const { fg } = favoriteTint(f);
+              return (
                 <Chip
-                  key={a.id}
-                  label={a.name}
-                  selected={fromId === a.id}
-                  onPress={() => selectFrom(a.id)}
+                  key={f.id}
+                  label={f.label}
+                  icon={f.icon}
+                  dotColor={fg}
+                  selected={fromId === f.account_id && categoryId === f.category_id}
+                  onPress={() => applyFavorite(f)}
                 />
-              ))}
-        </View>
+              );
+            })}
+          </View>
+        ) : null}
 
         <ErrorCard message={formError} />
 
