@@ -5,7 +5,7 @@ import { CategoryDot, ICON_COLORS } from '@repo/ui';
 import { useFocusEffect } from 'expo-router';
 import { ArrowLeftRight, Eye, Pencil, Tag, type LucideIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, Text, View } from 'react-native';
 import {
   PanGestureHandler,
@@ -322,6 +322,27 @@ export const TransactionListItem = memo(function TransactionListItem({
       }
     }, [fillProgress, dragX, rowOffset]),
   );
+
+  // The list (FlashList) recycles rows: when this instance scrolls out of
+  // view it's handed a different transaction instead of being unmounted.
+  // Everything per-transaction — swipe position, open/painted state, the
+  // lazily-mounted panels — has to start over for the new one, or a row
+  // would show up still swiped open / painted from the previous item.
+  const [shownId, setShownId] = useState(transaction.id);
+  if (shownId !== transaction.id) {
+    setShownId(transaction.id);
+    setFillMeta(null);
+    setActionsMounted(false);
+  }
+  useLayoutEffect(() => {
+    openState.current = 'closed';
+    triggered.current = false;
+    gestureActive.current = false;
+    dragX.setValue(0);
+    rowOffset.setValue(0);
+    fillProgress.setValue(0);
+    // eslint-disable-next-line react-hooks/refs -- same false positive as `dragX` above
+  }, [transaction.id, dragX, rowOffset, fillProgress]);
 
   const handleDragUpdate = useCallback(
     (e: { nativeEvent: PanGestureHandlerEventPayload }) => {

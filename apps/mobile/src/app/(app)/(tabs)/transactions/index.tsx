@@ -1,5 +1,6 @@
 import { useAccounts, useCategoryTree, useTags, useTransactions } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
+import type { TransactionWithRefs } from '@repo/core/supabase';
 import type { TransactionType } from '@repo/core/types';
 import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
 import {
@@ -14,29 +15,46 @@ import {
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ListFilter } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, SectionList, Text, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { FavoritesRow } from '../../../../features/favorites/favorites-row';
-import { dayHeaderLabel, groupByDay } from '../../../../features/transactions/day-groups';
+import {
+  dayHeaderLabel,
+  groupByDay,
+  type DayNet,
+} from '../../../../features/transactions/day-groups';
 import { FiltersSheet } from '../../../../features/transactions/filters-sheet';
 import { TransactionListItem } from '../../../../features/transactions/transaction-list-item';
 import { TransactionsSkeleton } from '../../../../features/transactions/transactions-skeleton';
 
-// Defined once at module scope: an inline `() => <View/>` is a brand-new
-// component type on every render, so React unmounted and remounted every
-// separator in the list each time this screen re-rendered.
-function RowSeparator() {
-  return (
-    <View className="border-x border-line bg-canvas px-3 dark:border-line-dark dark:bg-canvas-dark">
-      <View className="h-px bg-line dark:bg-line-dark" />
-    </View>
-  );
-}
+// The list is flat (FlashList has no sections): each day contributes a
+// sticky header item followed by its rows. Rows carry their position in
+// the day so they can draw the day's rounded card edges themselves.
+type ListItem =
+  | { kind: 'header'; key: string; date: string; nets: DayNet[] }
+  | {
+      kind: 'row';
+      key: string;
+      transaction: TransactionWithRefs;
+      isFirst: boolean;
+      isLast: boolean;
+      /** Position within its day. */
+      index: number;
+      /** One of the first rows on screen, which cascade in on first paint. */
+      intro: boolean;
+    };
 
 // Only the rows visible on first paint cascade in. Rows further down are
-// mounted by virtualization while you scroll, and animating each of those
-// as it appears just costs frames.
+// mounted while you scroll, and animating each of those as it appears just
+// costs frames.
 const STAGGERED_ROWS = 8;
+
+// Separate recycling pools per type: FlashList only hands a recycled cell
+// to an item of the same type, so a header never gets reused as a row, and
+// an intro row (wrapped in `StaggerItem`) never as a plain one.
+const getItemType = (item: ListItem) =>
+  item.kind === 'header' ? 'header' : item.intro ? 'introRow' : 'row';
 
 const TITLE: Record<TransactionType, string> = {
   income: 'Ingresos',
@@ -144,7 +162,31 @@ export default function TransactionsScreen() {
   );
 
   const { data: transactions, isLoading, isRefetching, refetch, error } = useTransactions(filters);
-  const sections = useMemo(() => groupByDay(transactions ?? []), [transactions]);
+  const { items, stickyHeaderIndices } = useMemo(() => {
+    const flat: ListItem[] = [];
+    const stickies: number[] = [];
+    groupByDay(transactions ?? []).forEach((section, sectionIndex) => {
+      stickies.push(flat.length);
+      flat.push({
+        kind: 'header',
+        key: `h-${section.date}`,
+        date: section.date,
+        nets: section.nets,
+      });
+      section.data.forEach((transaction, i) => {
+        flat.push({
+          kind: 'row',
+          key: transaction.id,
+          transaction,
+          isFirst: i === 0,
+          isLast: i === section.data.length - 1,
+          index: i,
+          intro: sectionIndex === 0 && i < STAGGERED_ROWS,
+        });
+      });
+    });
+    return { items: flat, stickyHeaderIndices: stickies };
+  }, [transactions]);
 
   const clearAll = () => {
     setType(null);
@@ -238,7 +280,10 @@ export default function TransactionsScreen() {
               : 'border-line bg-surface dark:border-line-dark dark:bg-surface-dark'
           }`}
         >
-          <ListFilter size={20} color={activeFilterCount > 0 ? ICON_COLORS.ink : ICON_COLORS.ink3} />
+          <ListFilter
+            size={20}
+            color={activeFilterCount > 0 ? ICON_COLORS.ink : ICON_COLORS.ink3}
+          />
           {activeFilterCount > 0 ? (
             <View className="absolute -right-1.5 -top-1.5 h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-canvas bg-ink px-1 dark:border-canvas-dark dark:bg-lime">
               <Text className="text-[10px] font-bold text-lime dark:text-ink">
@@ -250,7 +295,11 @@ export default function TransactionsScreen() {
       </View>
 
       {isLoading ? (
-        <ScrollView className="flex-1" contentContainerClassName="pb-4" showsVerticalScrollIndicator={false}>
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="pb-4"
+          showsVerticalScrollIndicator={false}
+        >
           <TransactionsSkeleton />
         </ScrollView>
       ) : error ? (
@@ -258,85 +307,75 @@ export default function TransactionsScreen() {
           <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar los movimientos')} />
         </View>
       ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(t) => t.id}
-          className="flex-1"
-          contentContainerClassName={sections.length === 0 ? 'grow pb-4' : 'pb-4'}
-          stickySectionHeadersEnabled
-          // Android's view-recycling optimization for offscreen rows has a
-          // well-documented bug where a row can render blank (but still
-          // count toward layout/totals) right after the list's data changes
-          // — exactly what inserting a new transaction does.
-          removeClippedSubviews={false}
-          // `removeClippedSubviews={false}` above keeps every rendered row's
-          // native view fully attached instead of detaching off-screen ones
-          // — fine for a short list, but at real scale (users with
-          // thousands of rows) the default `windowSize` of 21 "screens"
-          // keeps far more of these (gesture handler + several Animated
-          // values each) mounted at once than this row actually needs — and
-          // every mounted row is native views the screen re-attaches each
-          // time you come back to this tab. Tightened (2 screens of rows
-          // above/below the viewport) specifically to bound that,
-          // independent of the clipping workaround above.
-          windowSize={5}
-          initialNumToRender={10}
-          maxToRenderPerBatch={8}
-          updateCellsBatchingPeriod={50}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
-          ItemSeparatorComponent={RowSeparator}
-          renderSectionHeader={({ section }) => (
-            <View className="flex-row items-center justify-between bg-canvas pb-2 pt-4 dark:bg-canvas-dark">
-              <Text className="text-[13px] font-bold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
-                {dayHeaderLabel(section.date)}
-              </Text>
-              <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">
-                {section.nets
-                  .map((n) =>
-                    section.nets.length > 1
-                      ? `${formatCurrency(n.net, n.currency)} ${n.currency}`
-                      : formatCurrency(n.net, n.currency),
-                  )
-                  .join(' · ')}
-              </Text>
-            </View>
-          )}
-          ListEmptyComponent={
-            <EmptyState
-              illustration={<TransactionsEmptyIllustration />}
-              title="Sin movimientos"
-              description={
-                filtered
-                  ? 'No hay movimientos con estos filtros.'
-                  : 'Toca el botón + para registrar el primero.'
-              }
-            />
-          }
-          renderItem={({ item, index, section }) => {
-            const isFirst = index === 0;
-            const isLast = index === section.data.length - 1;
-            const row = (
-              <View
-                className={`overflow-hidden border-x border-line dark:border-line-dark ${
-                  isFirst ? 'rounded-t-2xl border-t' : ''
-                } ${isLast ? 'rounded-b-2xl border-b' : ''}`}
-              >
-                <TransactionListItem
-                  transaction={item}
-                  onPress={goToTransaction}
-                  onEdit={goToEditTransaction}
-                  isOpen={openRowId === item.id}
-                  onReveal={handleRowReveal}
+        <View className="flex-1">
+          <FlashList
+            data={items}
+            keyExtractor={(item) => item.key}
+            getItemType={getItemType}
+            stickyHeaderIndices={stickyHeaderIndices}
+            // Rows read `openRowId` (which row has its swipe actions out).
+            extraData={openRowId}
+            contentContainerStyle={{ paddingBottom: 16 }}
+            showsVerticalScrollIndicator={false}
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
+            ListEmptyComponent={
+              <View className="pt-16">
+                <EmptyState
+                  className=""
+                  illustration={<TransactionsEmptyIllustration />}
+                  title="Sin movimientos"
+                  description={
+                    filtered
+                      ? 'No hay movimientos con estos filtros.'
+                      : 'Toca el botón + para registrar el primero.'
+                  }
                 />
               </View>
-            );
-            return section === sections[0] && index < STAGGERED_ROWS ? (
-              <StaggerItem index={index}>{row}</StaggerItem>
-            ) : (
-              row
-            );
-          }}
-        />
+            }
+            renderItem={({ item }) => {
+              if (item.kind === 'header') {
+                return (
+                  <View className="flex-row items-center justify-between bg-canvas pb-2 pt-4 dark:bg-canvas-dark">
+                    <Text className="text-[13px] font-bold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
+                      {dayHeaderLabel(item.date)}
+                    </Text>
+                    <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">
+                      {item.nets
+                        .map((n) =>
+                          item.nets.length > 1
+                            ? `${formatCurrency(n.net, n.currency)} ${n.currency}`
+                            : formatCurrency(n.net, n.currency),
+                        )
+                        .join(' · ')}
+                    </Text>
+                  </View>
+                );
+              }
+              const row = (
+                <View
+                  className={`overflow-hidden border-x border-line dark:border-line-dark ${
+                    item.isFirst ? 'rounded-t-2xl border-t' : ''
+                  } ${item.isLast ? 'rounded-b-2xl border-b' : ''}`}
+                >
+                  {item.isFirst ? null : (
+                    <View className="px-3">
+                      <View className="h-px bg-line dark:bg-line-dark" />
+                    </View>
+                  )}
+                  <TransactionListItem
+                    transaction={item.transaction}
+                    onPress={goToTransaction}
+                    onEdit={goToEditTransaction}
+                    isOpen={openRowId === item.transaction.id}
+                    onReveal={handleRowReveal}
+                  />
+                </View>
+              );
+              return item.intro ? <StaggerItem index={item.index}>{row}</StaggerItem> : row;
+            }}
+          />
+        </View>
       )}
 
       <FiltersSheet
