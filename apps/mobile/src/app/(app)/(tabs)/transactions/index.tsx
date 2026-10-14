@@ -57,8 +57,18 @@ const STAGGERED_ROWS = 8;
 // Separate recycling pools per type: FlashList only hands a recycled cell
 // to an item of the same type, so a header never gets reused as a row, and
 // an intro row (wrapped in `StaggerItem`) never as a plain one.
-const getItemType = (item: ListItem) =>
-  item.kind === 'header' ? 'header' : item.intro ? 'introRow' : 'row';
+//
+// Rows are also split by SHAPE (rounded top, bottom, both, or none): a row
+// clips its content to its rounded corners (`overflow-hidden`), and on
+// Android, a recycled cell whose border radius changes keeps its old clip —
+// its border drew but everything inside was clipped away, leaving blank
+// rows (mostly each day's first one) while scrolling. Same-shape pools mean
+// a cell's radius never changes.
+const getItemType = (item: ListItem) => {
+  if (item.kind === 'header') return 'header';
+  const shape = `${item.isFirst ? 'top' : ''}${item.isLast ? 'bottom' : ''}` || 'middle';
+  return `${item.intro ? 'introRow' : 'row'}-${shape}`;
+};
 
 const TITLE: Record<TransactionType, string> = {
   income: 'Ingresos',
