@@ -5,7 +5,7 @@ import {
   useFormError,
   useGoals,
   useStableRecord,
-  useTransactions,
+  useGoalTransactions,
   useUpdateGoal,
 } from '@repo/core/hooks';
 import {
@@ -28,7 +28,7 @@ import {
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AddContributionSheet } from '../../../../../../features/goals/add-contribution-sheet';
@@ -48,7 +48,20 @@ export default function GoalDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: goals, isLoading } = useGoals();
-  const { data: transactions } = useTransactions();
+  // Only the movements involving goals (tagged to one, or touching a
+  // goal-linked account) — not the whole history. Same query as the goal
+  // notifications, so it's usually cached already.
+  const linkedAccountIds = useMemo(
+    () =>
+      (goals ?? [])
+        .map((g) => g.account_id)
+        .filter((accountId): accountId is string => accountId != null)
+        .sort(),
+    [goals],
+  );
+  const { data: transactions } = useGoalTransactions(linkedAccountIds, {
+    enabled: goals != null,
+  });
   const { data: accounts } = useAccounts();
   const updateGoal = useUpdateGoal();
   const remove = useDeleteGoal();

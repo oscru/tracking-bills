@@ -1,5 +1,4 @@
-import { useStableRecord, useTags, useTransactions, useUpdateTag } from '@repo/core/hooks';
-import { tagCounts } from '@repo/core/utils';
+import { useStableRecord, useTagTransactionCounts, useTags, useUpdateTag } from '@repo/core/hooks';
 import {
   Button,
   ConfirmSheet,
@@ -21,7 +20,8 @@ export default function TagDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: tags, isLoading: loadingTags } = useTags();
-  const { data: transactions, isLoading: loadingTx } = useTransactions();
+  // How many movements carry this tag, counted by Postgres.
+  const { data: counts, isLoading: loadingTx } = useTagTransactionCounts();
   const updateTag = useUpdateTag();
   const [confirmArchive, setConfirmArchive] = useState(false);
 
@@ -29,9 +29,9 @@ export default function TagDetail() {
 
   const total = useMemo(() => {
     if (!tag) return 0;
-    const { expense, income } = tagCounts(tag.id, transactions ?? []);
-    return expense + income;
-  }, [tag, transactions]);
+    const entry = counts?.get(tag.id);
+    return (entry?.expense ?? 0) + (entry?.income ?? 0);
+  }, [tag, counts]);
 
   useTabBarAction(
     tag

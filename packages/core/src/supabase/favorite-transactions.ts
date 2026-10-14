@@ -36,7 +36,9 @@ export async function listFavoriteTransactions(): Promise<FavoriteTransactionWit
 export async function createFavoriteTransaction(
   input: FavoriteTransactionCreateInput,
 ): Promise<FavoriteTransaction> {
-  const payload = favoriteTransactionCreateSchema.parse(input) as InsertRow<'favorite_transactions'>;
+  const payload = favoriteTransactionCreateSchema.parse(
+    input,
+  ) as InsertRow<'favorite_transactions'>;
   return unwrap(
     await supabase.from('favorite_transactions').insert(payload).select().single(),
   ) as FavoriteTransaction;
@@ -46,7 +48,9 @@ export async function updateFavoriteTransaction(
   id: string,
   patch: FavoriteTransactionUpdateInput,
 ): Promise<FavoriteTransaction> {
-  const payload = favoriteTransactionUpdateSchema.parse(patch) as UpdateRow<'favorite_transactions'>;
+  const payload = favoriteTransactionUpdateSchema.parse(
+    patch,
+  ) as UpdateRow<'favorite_transactions'>;
   return unwrap(
     await supabase.from('favorite_transactions').update(payload).eq('id', id).select().single(),
   ) as FavoriteTransaction;

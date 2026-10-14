@@ -1,4 +1,4 @@
-import { useBudgets, useTransactions } from '@repo/core/hooks';
+import { useBudgetSpendTransactions, useBudgets } from '@repo/core/hooks';
 import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetProgress, formatDate, toFriendlyMessage } from '@repo/core/utils';
 import {
@@ -36,7 +36,9 @@ export default function BudgetsScreen() {
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const { data: budgets, isLoading, error } = useBudgets();
-  const { data: transactions } = useTransactions();
+  // Only the settled expenses in these budgets' current periods (summed
+  // per budget below) — not the whole history.
+  const { data: transactions } = useBudgetSpendTransactions(budgets, { includeArchived: true });
 
   const visible = (budgets ?? []).filter((b) => (status === 'archived' ? b.archived : !b.archived));
 

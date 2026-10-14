@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useAccounts, useGoals, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useGoals, useGoalTransactions } from '@repo/core/hooks';
 import {
   daysUntil,
   formatDate,
@@ -20,7 +20,7 @@ import {
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { GoalProgressBar } from '../../../../../features/goals/goal-progress-bar';
@@ -44,7 +44,20 @@ export default function GoalsScreen() {
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const { data: goals, isLoading, error } = useGoals();
-  const { data: transactions } = useTransactions();
+  // Only the movements involving goals (tagged to one, or touching a
+  // goal-linked account) — not the whole history. Same query as the goal
+  // notifications, so it's usually cached already.
+  const linkedAccountIds = useMemo(
+    () =>
+      (goals ?? [])
+        .map((g) => g.account_id)
+        .filter((accountId): accountId is string => accountId != null)
+        .sort(),
+    [goals],
+  );
+  const { data: transactions } = useGoalTransactions(linkedAccountIds, {
+    enabled: goals != null,
+  });
   const { data: accounts } = useAccounts();
 
   const visible = (goals ?? []).filter((g) => (status === 'archived' ? g.archived : !g.archived));

@@ -46,6 +46,13 @@ export const queryKeys = {
     balanceEffects: () => ['transactions', 'summary', 'balanceEffects'] as const,
     monthlyTotals: () => ['transactions', 'summary', 'monthlyTotals'] as const,
     dailyTotals: () => ['transactions', 'summary', 'dailyTotals'] as const,
+    tagCounts: () => ['transactions', 'summary', 'tagCounts'] as const,
+    netBefore: (accountId: string, date: string | null, createdAt: string | null) =>
+      ['transactions', 'summary', 'netBefore', accountId, date, createdAt] as const,
+    goals: (linkedAccountIds: readonly string[]) =>
+      ['transactions', 'goals', [...linkedAccountIds].sort()] as const,
+    accountCounts: (accountId: string) =>
+      ['transactions', 'summary', 'accountCounts', accountId] as const,
     categoryDailyTotals: (categoryIds: readonly string[]) =>
       ['transactions', 'summary', 'categoryDailyTotals', [...categoryIds].sort()] as const,
   },

@@ -3,7 +3,7 @@ import {
   useDeleteBudget,
   useFormError,
   useStableRecord,
-  useTransactions,
+  useBudgetSpendTransactions,
   useUpdateBudget,
 } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
@@ -21,7 +21,7 @@ import {
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../../../../../../features/budgets/budget-progress-bar';
@@ -39,7 +39,6 @@ export default function BudgetDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: budgets, isLoading } = useBudgets();
-  const { data: transactions } = useTransactions();
   const updateBudget = useUpdateBudget();
   const remove = useDeleteBudget();
   const { error, setError } = useFormError();
@@ -47,6 +46,10 @@ export default function BudgetDetail() {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const budget = useStableRecord((budgets ?? []).find((b) => b.id === id));
+  // Only the settled expenses in this budget's current period — not the
+  // whole history.
+  const onlyThis = useMemo(() => (budget ? [budget] : undefined), [budget]);
+  const { data: transactions } = useBudgetSpendTransactions(onlyThis, { includeArchived: true });
 
   useTabBarAction(
     budget

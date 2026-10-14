@@ -46,6 +46,8 @@ export { useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal } from './use-goa
 export {
   useTransactions,
   useTransactionPages,
+  useGoalTransactions,
+  useBudgetSpendTransactions,
   useTransaction,
   useCreateTransaction,
   useUpdateTransaction,
@@ -53,6 +55,9 @@ export {
 } from './use-transactions';
 export {
   useAccountBalanceEffects,
+  useAccountNetBefore,
+  useTagTransactionCounts,
+  useAccountTransactionCounts,
   useCategoryDailyTotals,
   useDailyTotals,
   useMonthlyCategoryTotals,
@@ -60,6 +65,7 @@ export {
 export { useRunImportPlan } from './use-import-export';
 export {
   useNotifications,
+  useNotificationInput,
   useNotificationReads,
   useMarkNotificationsRead,
   useDismissNotification,

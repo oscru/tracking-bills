@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import { unwrap } from './internal';
+import { SupabaseError, unwrap } from './internal';
 
 /**
  * Server-side aggregates over the ledger (views in
@@ -140,4 +140,57 @@ export async function listCategoryDailyTotals(
     if (page.length < PAGE_SIZE) break;
   }
   return all;
+}
+
+/** How many income and expense movements (any status) an account has — counted by Postgres, no rows sent. */
+export async function countAccountTransactions(
+  accountId: string,
+): Promise<{ income: number; expense: number }> {
+  const count = async (type: 'income' | 'expense') => {
+    const { count: n, error } = await supabase
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('account_id', accountId)
+      .eq('type', type);
+    if (error) throw new SupabaseError(error);
+    return n ?? 0;
+  };
+  const [income, expense] = await Promise.all([count('income'), count('expense')]);
+  return { income, expense };
+}
+
+/** Income/expense movement counts (any status) for every tag, keyed by tag id. */
+export async function listTagTransactionCounts(): Promise<
+  Map<string, { expense: number; income: number }>
+> {
+  const rows = unwrap(await supabase.from('tag_transaction_counts').select('tag_id, type, count'));
+  const counts = new Map<string, { expense: number; income: number }>();
+  for (const r of rows) {
+    if (!r.tag_id || (r.type !== 'income' && r.type !== 'expense')) continue;
+    const entry = counts.get(r.tag_id) ?? { expense: 0, income: 0 };
+    entry[r.type] = r.count ?? 0;
+    counts.set(r.tag_id, entry);
+  }
+  return counts;
+}
+
+/**
+ * An account's net of settled movements strictly before `(date, createdAt)`
+ * in the ledger — or of all of them when `date` is null. Add its
+ * `initial_balance` for the balance at that point. Summed by Postgres.
+ */
+export async function accountNetBefore(
+  accountId: string,
+  date: string | null,
+  createdAt: string | null,
+): Promise<number> {
+  const net = unwrap(
+    await supabase.rpc(
+      'account_net_before',
+      date && createdAt
+        ? { p_account_id: accountId, p_date: date, p_created_at: createdAt }
+        : { p_account_id: accountId },
+    ),
+  );
+  return Number(net ?? 0);
 }

@@ -673,6 +673,14 @@ export type Database = {
         }
         Relationships: []
       }
+      tag_transaction_counts: {
+        Row: {
+          tag_id: string | null
+          type: string | null
+          count: number | null
+        }
+        Relationships: []
+      }
       monthly_category_totals: {
         Row: {
           month: string | null
@@ -686,6 +694,10 @@ export type Database = {
       }
     }
     Functions: {
+      account_net_before: {
+        Args: { p_account_id: string; p_date?: string; p_created_at?: string }
+        Returns: number
+      }
       delete_own_account: { Args: never; Returns: undefined }
       increment_favorite_transaction_use: {
         Args: { favorite_id: string }

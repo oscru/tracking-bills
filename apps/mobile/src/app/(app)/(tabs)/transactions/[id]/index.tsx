@@ -4,7 +4,7 @@ import {
   useCategories,
   useStableRecord,
   useTransaction,
-  useTransactions,
+  useAccountNetBefore,
 } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import {
@@ -46,7 +46,6 @@ export default function TransactionDetail() {
   const { data: categories } = useCategories();
   // Unfiltered — needed to reconstruct each account's balance as of this
   // transaction, not just its current one.
-  const { data: allTransactions } = useTransactions();
   const [activityOpen, setActivityOpen] = useState(false);
   const [markDoneOpen, setMarkDoneOpen] = useState(false);
 
@@ -62,29 +61,28 @@ export default function TransactionDetail() {
   // "after" is that plus its own effect (`projectedAccountBalance`), so the
   // projection always tracks today's real money instead of a snapshot frozen
   // at whatever date the pending movement happens to be filed under.
+  // Postgres sums each account's settled movements up to that point
+  // (`account_net_before`) — no need for the whole history here.
+  const point = tx?.is_completed === false ? null : (tx?.transaction_date ?? null);
+  const pointCreatedAt = point ? (tx?.created_at ?? null) : null;
+  const { data: accountNet } = useAccountNetBefore(account?.id, point, pointCreatedAt);
+  const { data: toAccountNet } = useAccountNetBefore(toAccount?.id, point, pointCreatedAt);
   const balances = useMemo(() => {
-    const empty = {
-      accountBefore: null,
-      accountAfter: null,
-      toAccountBefore: null,
-      toAccountAfter: null,
-    };
-    if (!tx || !allTransactions) return empty;
-    const before =
-      tx.is_completed === false
-        ? allTransactions
-        : allTransactions.filter((t) =>
-            t.transaction_date === tx.transaction_date
-              ? t.created_at < tx.created_at
-              : t.transaction_date < tx.transaction_date,
-          );
+    // The balance at that point, as an account with no movements after it —
+    // so `projectedAccountBalance` just adds this movement's own effect.
+    const at = (a: NonNullable<typeof account>, net: number | undefined) =>
+      net == null
+        ? null
+        : { ...a, initial_balance: Math.round((Number(a.initial_balance) + net) * 100) / 100 };
+    const from = account ? at(account, accountNet) : null;
+    const to = toAccount ? at(toAccount, toAccountNet) : null;
     return {
-      accountBefore: account ? accountBalance(account, before) : null,
-      accountAfter: account ? projectedAccountBalance(account, before, tx) : null,
-      toAccountBefore: toAccount ? accountBalance(toAccount, before) : null,
-      toAccountAfter: toAccount ? projectedAccountBalance(toAccount, before, tx) : null,
+      accountBefore: from ? accountBalance(from, []) : null,
+      accountAfter: from && tx ? projectedAccountBalance(from, [], tx) : null,
+      toAccountBefore: to ? accountBalance(to, []) : null,
+      toAccountAfter: to && tx ? projectedAccountBalance(to, [], tx) : null,
     };
-  }, [tx, allTransactions, account, toAccount]);
+  }, [tx, account, toAccount, accountNet, toAccountNet]);
 
   useTabBarAction(
     tx

@@ -15,9 +15,7 @@ async function currentUserId(): Promise<string> {
 /** The caller's own profile row. */
 export async function getProfile(): Promise<Profile> {
   const userId = await currentUserId();
-  return unwrap(
-    await supabase.from('profiles').select('*').eq('id', userId).single(),
-  ) as Profile;
+  return unwrap(await supabase.from('profiles').select('*').eq('id', userId).single()) as Profile;
 }
 
 /** Updates the caller's own profile. */

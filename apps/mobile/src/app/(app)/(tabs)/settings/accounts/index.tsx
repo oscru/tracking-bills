@@ -1,5 +1,5 @@
-import { useAccounts, useTransactions } from '@repo/core/hooks';
-import { accountBalance, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
+import { useAccountBalanceEffects, useAccounts } from '@repo/core/hooks';
+import { balancesFromEffects, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
 import {
   AccountsEmptyIllustration,
   EmptyState,
@@ -13,7 +13,7 @@ import {
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View, ScrollView } from 'react-native';
 
 import { AccountIcon } from '../../../../../features/accounts/account-icon';
@@ -29,7 +29,13 @@ export default function AccountsScreen() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { data: accounts, isLoading, error } = useAccounts();
-  const { data: transactions } = useTransactions();
+  // Every account's balance from the balance view (summed by Postgres, and
+  // shared with Inicio) — not the whole transaction history.
+  const { data: balanceEffects } = useAccountBalanceEffects();
+  const balances = useMemo(
+    () => balancesFromEffects(accounts ?? [], balanceEffects ?? []),
+    [accounts, balanceEffects],
+  );
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const visible = (accounts ?? []).filter((a) =>
     status === 'archived' ? a.archived : !a.archived,
@@ -78,7 +84,7 @@ export default function AccountsScreen() {
                   leading={<AccountIcon account={a} />}
                   trailing={
                     <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-                      {formatCurrency(accountBalance(a, transactions ?? []), a.currency)}
+                      {formatCurrency(balances.get(a.id) ?? 0, a.currency)}
                     </Text>
                   }
                   showChevron

@@ -1,5 +1,5 @@
-import { useTags, useTransactions } from '@repo/core/hooks';
-import { tagCounts, toFriendlyMessage } from '@repo/core/utils';
+import { useTagTransactionCounts, useTags } from '@repo/core/hooks';
+import { toFriendlyMessage } from '@repo/core/utils';
 import {
   EmptyState,
   ErrorCard,
@@ -23,12 +23,15 @@ const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
   { value: 'archived', label: 'Archivadas' },
 ];
 
+const NO_COUNTS = { expense: 0, income: 0 };
+
 export default function TagsScreen() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const { data: tags, isLoading, error } = useTags();
-  const { data: transactions } = useTransactions();
+  // How many movements carry each tag, counted by Postgres.
+  const { data: counts } = useTagTransactionCounts();
 
   const visible = (tags ?? []).filter((t) => (status === 'archived' ? t.archived : !t.archived));
 
@@ -67,7 +70,7 @@ export default function TagsScreen() {
         >
           <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
             {visible.map((tag, i) => {
-              const { expense, income } = tagCounts(tag.id, transactions ?? []);
+              const { expense, income } = counts?.get(tag.id) ?? NO_COUNTS;
               const total = expense + income;
               return (
                 <StaggerItem key={tag.id} index={i}>

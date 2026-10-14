@@ -12,6 +12,7 @@ import {
   deleteTransaction,
   getTransaction,
   listTransactions,
+  listGoalTransactions,
   listTransactionsPage,
   updateTransaction,
   type TransactionPage,
@@ -20,6 +21,9 @@ import {
 } from '../supabase';
 import type { TransactionUpdateInput } from '../validators';
 import { queryKeys } from './keys';
+import { budgetPeriodRange } from '../utils';
+import type { BudgetWithCategories } from '../supabase';
+import { useMemo } from 'react';
 
 export function useTransactions(
   filters: TransactionFilters = {},
@@ -53,6 +57,52 @@ export function useTransactionPages(filters: TransactionFilters = {}) {
     getNextPageParam: (last) => last.nextBefore,
   });
 }
+
+/** Movements involving savings goals, any status (see `listGoalTransactions`). */
+export function useGoalTransactions(linkedAccountIds: readonly string[], { enabled = true } = {}) {
+  return useQuery({
+    queryKey: queryKeys.transactions.goals(linkedAccountIds),
+    queryFn: () => listGoalTransactions(linkedAccountIds),
+    enabled,
+  });
+}
+
+/**
+ * The settled expenses budgets can count right now: from the start of the
+ * earliest active budget's current period on — all `budgetProgress` ever
+ * reads. Shared by budget progress and budget notifications (same filters,
+ * same cache entry). No active budgets, no fetch.
+ */
+export function useBudgetSpendTransactions(
+  budgets: BudgetWithCategories[] | undefined,
+  {
+    includeArchived = false,
+  }: {
+    /** Also cover archived budgets (screens that show their progress too). */
+    includeArchived?: boolean;
+  } = {},
+) {
+  const from = useMemo(() => {
+    const now = new Date();
+    let earliest: string | null = null;
+    for (const budget of budgets ?? []) {
+      if (budget.archived && !includeArchived) continue;
+      const start = budgetPeriodRange(budget, now).from;
+      if (earliest == null || start < earliest) earliest = start;
+    }
+    return earliest;
+  }, [budgets, includeArchived]);
+  const filters = useMemo(
+    () => ({ from: from ?? undefined, type: 'expense' as const, isCompleted: true }),
+    [from],
+  );
+  const query = useTransactions(filters, { enabled: from != null });
+  // Loaded budgets with nothing active: settled as "no spends".
+  const none = budgets != null && from == null;
+  return { ...query, data: none ? EMPTY : query.data, isLoading: none ? false : query.isLoading };
+}
+
+const EMPTY: TransactionWithRefs[] = [];
 
 export function useTransaction(id: string) {
   const qc = useQueryClient();

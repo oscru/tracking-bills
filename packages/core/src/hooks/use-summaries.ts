@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 
 import {
+  accountNetBefore,
+  countAccountTransactions,
+  listTagTransactionCounts,
   listAccountBalanceEffects,
   listCategoryDailyTotals,
   listDailyTotals,
@@ -38,5 +41,39 @@ export function useCategoryDailyTotals(categoryIds: readonly string[], { enabled
     queryKey: queryKeys.transactions.categoryDailyTotals(categoryIds),
     queryFn: () => listCategoryDailyTotals(categoryIds),
     enabled: enabled && categoryIds.length > 0,
+  });
+}
+
+/** An account's income/expense movement counts, counted by Postgres. */
+export function useAccountTransactionCounts(accountId: string) {
+  return useQuery({
+    queryKey: queryKeys.transactions.accountCounts(accountId),
+    queryFn: () => countAccountTransactions(accountId),
+    enabled: Boolean(accountId),
+  });
+}
+
+/** Income/expense movement counts per tag id, counted by Postgres. */
+export function useTagTransactionCounts() {
+  return useQuery({
+    queryKey: queryKeys.transactions.tagCounts(),
+    queryFn: listTagTransactionCounts,
+  });
+}
+
+/**
+ * An account's net of settled movements before a point in the ledger
+ * (`date` + `createdAt`), or of all of them when `date` is null — see
+ * `accountNetBefore`. Disabled while `accountId` is null.
+ */
+export function useAccountNetBefore(
+  accountId: string | null | undefined,
+  date: string | null,
+  createdAt: string | null,
+) {
+  return useQuery({
+    queryKey: queryKeys.transactions.netBefore(accountId ?? '', date, createdAt),
+    queryFn: () => accountNetBefore(accountId!, date, createdAt),
+    enabled: Boolean(accountId),
   });
 }

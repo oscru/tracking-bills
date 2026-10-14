@@ -1,5 +1,10 @@
 import type { Goal, InsertRow, UpdateRow } from '../types';
-import { goalCreateSchema, goalUpdateSchema, type GoalCreateInput, type GoalUpdateInput } from '../validators';
+import {
+  goalCreateSchema,
+  goalUpdateSchema,
+  type GoalCreateInput,
+  type GoalUpdateInput,
+} from '../validators';
 import { supabase } from './client';
 import { SupabaseError, unwrap } from './internal';
 

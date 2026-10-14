@@ -2,10 +2,11 @@ import {
   useAccounts,
   useGoals,
   useStableRecord,
-  useTransactions,
+  useAccountBalanceEffects,
+  useAccountTransactionCounts,
   useUpdateAccount,
 } from '@repo/core/hooks';
-import { accountBalance, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
+import { balancesFromEffects, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
 import {
   Button,
   ConfirmSheet,
@@ -36,7 +37,11 @@ export default function AccountDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
-  const { data: transactions, isLoading: loadingTx } = useTransactions();
+  // The balance and the movement counts come from Postgres (the balance
+  // view and two COUNTs) — not the whole transaction history. The movements
+  // themselves open in Movimientos, filtered by this account and paged.
+  const { data: balanceEffects, isLoading: loadingBalance } = useAccountBalanceEffects();
+  const { data: counts, isLoading: loadingCounts } = useAccountTransactionCounts(id);
   const { data: goals } = useGoals();
   const updateAccount = useUpdateAccount();
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -46,18 +51,13 @@ export default function AccountDetail() {
   const account = useStableRecord((accounts ?? []).find((a) => a.id === id));
   const linkedGoal = (goals ?? []).find((g) => g.account_id === id) ?? null;
 
-  const { balance, incomeCount, expenseCount } = useMemo(() => {
-    if (!account) return { balance: 0, incomeCount: 0, expenseCount: 0 };
-    const all = transactions ?? [];
-    let income = 0;
-    let expense = 0;
-    for (const t of all) {
-      if (t.account_id !== account.id) continue;
-      if (t.type === 'income') income++;
-      else if (t.type === 'expense') expense++;
-    }
-    return { balance: accountBalance(account, all), incomeCount: income, expenseCount: expense };
-  }, [account, transactions]);
+  const balance = useMemo(
+    () =>
+      account ? (balancesFromEffects([account], balanceEffects ?? []).get(account.id) ?? 0) : 0,
+    [account, balanceEffects],
+  );
+  const incomeCount = counts?.income ?? 0;
+  const expenseCount = counts?.expense ?? 0;
 
   const openMovements = (type: 'income' | 'expense') =>
     router.push({
@@ -79,7 +79,7 @@ export default function AccountDetail() {
       : null,
   );
 
-  if (loadingAccounts || loadingTx) {
+  if (loadingAccounts || loadingBalance || loadingCounts) {
     return (
       <Screen edges={['top']} className="gap-5">
         <PageHeader title="Cuenta" onBack={() => router.back()} />

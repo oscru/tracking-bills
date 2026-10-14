@@ -27,7 +27,8 @@ interface RawBudgetRow extends Budget {
   budget_categories: { amount: number; category: CategoryRef | null }[];
 }
 
-const WITH_CATEGORIES = '*, budget_categories(amount, category:categories(id, slug, name, icon, color))';
+const WITH_CATEGORIES =
+  '*, budget_categories(amount, category:categories(id, slug, name, icon, color))';
 
 function toBudgetWithCategories(row: RawBudgetRow): BudgetWithCategories {
   const { budget_categories, ...budget } = row;
@@ -47,11 +48,16 @@ export async function listBudgets(): Promise<BudgetWithCategories[]> {
   return rows.map(toBudgetWithCategories);
 }
 
-async function linkCategories(budgetId: string, categories: CategoryAllocationInput[]): Promise<void> {
+async function linkCategories(
+  budgetId: string,
+  categories: CategoryAllocationInput[],
+): Promise<void> {
   if (categories.length === 0) return;
-  const { error } = await supabase.from('budget_categories').insert(
-    categories.map(({ category_id, amount }) => ({ budget_id: budgetId, category_id, amount })),
-  );
+  const { error } = await supabase
+    .from('budget_categories')
+    .insert(
+      categories.map(({ category_id, amount }) => ({ budget_id: budgetId, category_id, amount })),
+    );
   if (error) throw new SupabaseError(error);
 }
 

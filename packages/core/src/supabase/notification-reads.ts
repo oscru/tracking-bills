@@ -12,12 +12,10 @@ export async function listNotificationReads(): Promise<NotificationRead[]> {
 /** Marks notifications as read (idempotent — re-marking keeps the first `read_at`). */
 export async function markNotificationsRead(notificationIds: string[]): Promise<void> {
   if (notificationIds.length === 0) return;
-  const { error } = await supabase
-    .from('notification_reads')
-    .upsert(
-      notificationIds.map((notification_id) => ({ notification_id })),
-      { onConflict: 'user_id,notification_id', ignoreDuplicates: true },
-    );
+  const { error } = await supabase.from('notification_reads').upsert(
+    notificationIds.map((notification_id) => ({ notification_id })),
+    { onConflict: 'user_id,notification_id', ignoreDuplicates: true },
+  );
   if (error) throw new SupabaseError(error);
 }
 

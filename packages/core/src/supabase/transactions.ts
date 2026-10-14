@@ -133,6 +133,31 @@ export async function listTransactions(
   return all.map(normalizeTags);
 }
 
+/**
+ * Every movement (any status) a savings goal involves: anything tagged to a
+ * goal (`goal_id`, the virtual model) and everything touching an account
+ * linked to a goal (whose balance IS that goal's savings). Far fewer than
+ * the whole history — what goal progress, a goal's contributions list and
+ * goal notifications need (progress itself only counts settled ones).
+ */
+export async function listGoalTransactions(
+  linkedAccountIds: readonly string[],
+): Promise<TransactionWithRefs[]> {
+  const ids = [...linkedAccountIds].join(',');
+  const touches = ids ? `,account_id.in.(${ids}),to_account_id.in.(${ids})` : '';
+  const all: RawWithRefs[] = [];
+  for (let offset = 0; ; offset += MAX_PAGE_SIZE) {
+    const page = unwrap(
+      await filteredQuery({}, null)
+        .or(`goal_id.not.is.null${touches}`)
+        .range(offset, offset + MAX_PAGE_SIZE - 1),
+    ) as unknown as RawWithRefs[];
+    all.push(...page);
+    if (page.length < MAX_PAGE_SIZE) break;
+  }
+  return all.map(normalizeTags);
+}
+
 export interface TransactionPage {
   rows: TransactionWithRefs[];
   /** Pass as `before` to get the next page; `null` once there's nothing older. */

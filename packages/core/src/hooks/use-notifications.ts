@@ -5,6 +5,7 @@ import {
   buildNotifications,
   parseNotificationPrefs,
   type AppNotification,
+  type NotificationInput,
   type NotificationOptions,
 } from '../notifications';
 import {
@@ -12,6 +13,7 @@ import {
   listNotificationReads,
   markNotificationsRead,
   type NotificationRead,
+  type TransactionWithRefs,
 } from '../supabase';
 import { todayISODate } from '../utils';
 import { queryKeys } from './keys';
@@ -19,7 +21,11 @@ import { useAccounts } from './use-accounts';
 import { useBudgets } from './use-budgets';
 import { useGoals } from './use-goals';
 import { useProfile } from './use-profile';
-import { useTransactions } from './use-transactions';
+import {
+  useBudgetSpendTransactions,
+  useGoalTransactions,
+  useTransactions,
+} from './use-transactions';
 
 export function useNotificationReads() {
   return useQuery({
@@ -89,6 +95,60 @@ export function useDismissNotification() {
   });
 }
 
+// Stable, so its query key (and cache entry, shared with Inicio) is too.
+const PENDING_FILTER = { isCompleted: false } as const;
+
+/**
+ * Everything the notification rules read — but instead of the whole
+ * transaction history, only the three slices they can ever look at:
+ * - pending movements (the pending reminders);
+ * - settled expenses in the budgets' current periods (budget alerts);
+ * - settled movements counting toward goals: `goal_id`-tagged ones and
+ *   everything touching a goal-linked account (goal progress/reminders).
+ * Their union gives `buildNotifications` / `planScheduledNotifications`
+ * exactly what the full history would: every rule filters down to one of
+ * these slices, and rows outside them never match. `undefined` until loaded.
+ */
+export function useNotificationInput(): {
+  input: NotificationInput | undefined;
+  isLoading: boolean;
+} {
+  const { data: budgets, isLoading: loadingBudgets } = useBudgets();
+  const { data: goals, isLoading: loadingGoals } = useGoals();
+  const { data: accounts, isLoading: loadingAccounts } = useAccounts();
+  const { data: pending, isLoading: loadingPending } = useTransactions(PENDING_FILTER);
+  const { data: budgetSpends, isLoading: loadingSpends } = useBudgetSpendTransactions(budgets);
+  const linkedAccountIds = useMemo(
+    () =>
+      (goals ?? [])
+        .map((g) => g.account_id)
+        .filter((id): id is string => id != null)
+        .sort(),
+    [goals],
+  );
+  const { data: goalTx, isLoading: loadingGoalTx } = useGoalTransactions(linkedAccountIds, {
+    enabled: goals != null,
+  });
+
+  const input = useMemo<NotificationInput | undefined>(() => {
+    if (!budgets || !goals || !accounts || !pending || !budgetSpends || !goalTx) return undefined;
+    const byId = new Map<string, TransactionWithRefs>();
+    for (const list of [pending, budgetSpends, goalTx]) for (const t of list) byId.set(t.id, t);
+    return { transactions: [...byId.values()], budgets, goals, accounts };
+  }, [budgets, goals, accounts, pending, budgetSpends, goalTx]);
+
+  return {
+    input,
+    isLoading:
+      loadingBudgets ||
+      loadingGoals ||
+      loadingAccounts ||
+      loadingPending ||
+      loadingSpends ||
+      loadingGoalTx,
+  };
+}
+
 export interface NotificationItem extends AppNotification {
   read: boolean;
 }
@@ -99,10 +159,7 @@ export interface NotificationItem extends AppNotification {
  * read/unread. Built entirely from queries the app already has cached.
  */
 export function useNotifications(options: Omit<NotificationOptions, 'today'> = {}) {
-  const { data: transactions, isLoading: loadingTx } = useTransactions();
-  const { data: budgets, isLoading: loadingBudgets } = useBudgets();
-  const { data: goals, isLoading: loadingGoals } = useGoals();
-  const { data: accounts, isLoading: loadingAccounts } = useAccounts();
+  const { input, isLoading } = useNotificationInput();
   // If read state can't load (e.g. offline), everything just shows as unread.
   const { data: reads } = useNotificationReads();
   const { data: profile } = useProfile();
@@ -113,21 +170,18 @@ export function useNotifications(options: Omit<NotificationOptions, 'today'> = {
   const { overdueRepeatDays } = options;
 
   const items = useMemo<NotificationItem[]>(() => {
-    if (!transactions || !budgets || !goals || !accounts) return [];
+    if (!input) return [];
     const state = new Map((reads ?? []).map((r) => [r.notification_id, r]));
-    return buildNotifications(
-      { transactions, budgets, goals, accounts },
-      { today, budgetThreshold, overdueRepeatDays },
-    )
+    return buildNotifications(input, { today, budgetThreshold, overdueRepeatDays })
       .filter((n) => !state.get(n.id)?.dismissed_at)
       .map((n) => ({ ...n, read: state.has(n.id) }));
-  }, [transactions, budgets, goals, accounts, reads, today, budgetThreshold, overdueRepeatDays]);
+  }, [input, reads, today, budgetThreshold, overdueRepeatDays]);
 
   const unreadCount = useMemo(() => items.filter((n) => !n.read).length, [items]);
 
   return {
     items,
     unreadCount,
-    isLoading: loadingTx || loadingBudgets || loadingGoals || loadingAccounts,
+    isLoading,
   };
 }

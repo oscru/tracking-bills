@@ -1,12 +1,9 @@
 import {
-  useAccounts,
-  useBudgets,
-  useGoals,
   useMarkNotificationsRead,
+  useNotificationInput,
   useNotificationReads,
   useProfile,
   useSession,
-  useTransactions,
 } from '@repo/core/hooks';
 import { parseNotificationPrefs } from '@repo/core/notifications';
 import { useRouter } from 'expo-router';
@@ -41,10 +38,9 @@ function NativeNotificationSync() {
   const { session } = useSession();
   const userId = session?.user.id ?? null;
   const { data: profile } = useProfile();
-  const { data: transactions } = useTransactions();
-  const { data: budgets } = useBudgets();
-  const { data: goals } = useGoals();
-  const { data: accounts } = useAccounts();
+  // Only the slices of the history the rules read (see useNotificationInput)
+  // — this runs on every app start, so it must not pull the whole history.
+  const { input } = useNotificationInput();
   const { data: reads, isSuccess: readsLoaded, isError: readsFailed } = useNotificationReads();
   const permission = useNotificationPermission();
   const markRead = useMarkNotificationsRead();
@@ -58,7 +54,7 @@ function NativeNotificationSync() {
   // --- keep the device in sync -----------------------------------------------
   const running = useRef<Promise<void> | null>(null);
   useEffect(() => {
-    if (!userId || !profile || !transactions || !budgets || !goals || !accounts) return;
+    if (!userId || !profile || !input) return;
     // Wait for read state (or its failure) so already-read items aren't re-sent.
     if (!readsLoaded && !readsFailed) return;
     if (permission.state === 'undetermined') return;
@@ -67,7 +63,7 @@ function NativeNotificationSync() {
       const run = async () => {
         await running.current?.catch(() => {});
         await syncDeviceNotifications({
-          input: { transactions, budgets, goals, accounts },
+          input,
           prefs,
           permitted: permission.state === 'granted',
           readIds,
@@ -77,19 +73,7 @@ function NativeNotificationSync() {
       running.current = run().catch(() => {});
     }, SYNC_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [
-    userId,
-    profile,
-    transactions,
-    budgets,
-    goals,
-    accounts,
-    readsLoaded,
-    readsFailed,
-    readIds,
-    prefs,
-    permission.state,
-  ]);
+  }, [userId, profile, input, readsLoaded, readsFailed, readIds, prefs, permission.state]);
 
   // Signing out unmounts this — don't leave this account's reminders behind.
   useEffect(() => () => void clearDeviceNotifications().catch(() => {}), []);
