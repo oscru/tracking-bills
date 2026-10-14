@@ -24,6 +24,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AccountIcon } from '../../../features/accounts/account-icon';
 import { BudgetsCard } from '../../../features/home/budgets-card';
 import { CategorySpendCard } from '../../../features/home/category-spend-card';
+import { useProgressiveCount, WidgetPlaceholder } from '../../../features/home/deferred-widgets';
 import { HomeSkeleton } from '../../../features/home/home-skeleton';
 import { MonthPickerSheet } from '../../../features/home/month-picker-sheet';
 import { MonthSwiper } from '../../../features/home/month-swiper';
@@ -41,6 +42,10 @@ const BALANCE_TEXT = {
   letterSpacing: -0.9,
 };
 
+// Widgets rendered with the screen's first frame — about what fits on screen
+// under the balance and income/expense cards.
+const INITIAL_WIDGETS = 1;
+
 export default function HomeScreen() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
@@ -57,6 +62,9 @@ export default function HomeScreen() {
     () => visibleHomeLayout(profile?.home_layout, profile?.home_hidden_items),
     [profile],
   );
+  // The widgets below the balance mount progressively: the first ones with
+  // the screen, the rest one per frame right after (see useProgressiveCount).
+  const mountedWidgets = useProgressiveCount(layoutOrder.length, INITIAL_WIDGETS);
 
   const active = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
   const visibleAccounts = useMemo(() => active.filter((a) => a.show_on_home), [active]);
@@ -422,11 +430,17 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          {layoutOrder.map((key, i) => (
-            <StaggerItem key={key} index={i}>
-              {cards[key]}
-            </StaggerItem>
-          ))}
+          {layoutOrder.map((key, i) =>
+            i < mountedWidgets ? (
+              // Widgets mounted after the first frame fade in as they arrive,
+              // without the cascade delay of their position.
+              <StaggerItem key={key} index={i < INITIAL_WIDGETS ? i : 0}>
+                {cards[key]}
+              </StaggerItem>
+            ) : (
+              <WidgetPlaceholder key={key} />
+            ),
+          )}
         </ScrollView>
       )}
     </Screen>
