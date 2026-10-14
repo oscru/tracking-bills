@@ -5,7 +5,7 @@ import {
   useFavoriteTransactions,
   useFormError,
   useStableRecord,
-  useTransactions,
+  useCategoryDailyTotals,
   useUpdateCategory,
 } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
@@ -65,7 +65,6 @@ export default function CategoryDetail() {
   }>();
   const router = useRouter();
   const { data: categories, isLoading } = useCategories();
-  const { data: transactions } = useTransactions();
   const { data: favorites } = useFavoriteTransactions();
   const { data: budgets } = useBudgets();
   const updateCategory = useUpdateCategory();
@@ -76,6 +75,9 @@ export default function CategoryDetail() {
 
   const category = useStableRecord((categories ?? []).find((c) => c.id === id));
   const subcategories = (categories ?? []).filter((c) => c.parent_id === id);
+  // Which of these categories have movements (any status) — one row per day
+  // each was used, from Postgres; the same query the chart below reads.
+  const { data: categoryDays } = useCategoryDailyTotals([id, ...subcategories.map((s) => s.id)]);
   // Archiving the parent cascades to these atomically at the DB level
   // (`categories_cascade_archive_subcategories`) — surfaced here only so the
   // confirm dialog can tell the user it's about to happen.
@@ -126,14 +128,14 @@ export default function CategoryDetail() {
   // letting the user hit that only after confirming.
   const ownBlockReason = categoryBlockReason(
     category,
-    transactions ?? [],
+    categoryDays ?? [],
     favorites ?? [],
     budgets ?? [],
   );
   const blockedSubcategory = subcategories
     .map((s) => ({
       s,
-      reason: categoryBlockReason(s, transactions ?? [], favorites ?? [], budgets ?? []),
+      reason: categoryBlockReason(s, categoryDays ?? [], favorites ?? [], budgets ?? []),
     }))
     .find((x) => x.reason != null);
   const deleteBlockedReason = ownBlockReason

@@ -1,9 +1,5 @@
-import { useTransactions } from '@repo/core/hooks';
-import {
-  formatMonthShort,
-  groupByAccountCurrency,
-  monthlyIncomeExpenseHistory,
-} from '@repo/core/utils';
+import { useMonthlyCategoryTotals } from '@repo/core/hooks';
+import { formatMonthShort, monthlyHistoryFromSummary } from '@repo/core/utils';
 import { useColorScheme } from 'nativewind';
 import { useMemo } from 'react';
 import { Text, View, useWindowDimensions } from 'react-native';
@@ -33,14 +29,13 @@ export function MonthlyTrendChart({
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const { width: windowWidth } = useWindowDimensions();
-  const { data: transactions } = useTransactions();
+  // Pre-summed per month by Postgres — no need for the full history here.
+  const { data: summary } = useMonthlyCategoryTotals();
 
-  const groups = useMemo(() => {
-    return groupByAccountCurrency(transactions ?? []).map((g) => ({
-      currency: g.currency,
-      history: monthlyIncomeExpenseHistory(g.transactions, months, referenceDate),
-    }));
-  }, [transactions, months, referenceDate]);
+  const groups = useMemo(
+    () => monthlyHistoryFromSummary(summary ?? [], months, referenceDate),
+    [summary, months, referenceDate],
+  );
   const hasAnyData = groups.some((g) => g.history.some((h) => h.income > 0 || h.expense > 0));
 
   const axisColor = dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3;

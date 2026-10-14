@@ -48,8 +48,7 @@ export default function CategoryMonthSpendingScreen() {
   const params = useLocalSearchParams<{ categoryId: string; month?: string; label?: string }>();
   const month = params.month ?? todayISODate().slice(0, 7);
 
-  const { data: categories } = useCategories();
-  const { data: transactions, isLoading } = useTransactions();
+  const { data: categories, isLoading: loadingCategories } = useCategories();
 
   const category = (categories ?? []).find((c) => c.id === params.categoryId) ?? null;
 
@@ -61,6 +60,23 @@ export default function CategoryMonthSpendingScreen() {
       .map((c) => c.id);
     return new Set([params.categoryId, ...subIds]);
   }, [categories, params.categoryId]);
+
+  // Only this month's settled expenses in these categories, filtered by the
+  // server — not the whole history.
+  const filters = useMemo(
+    () => ({
+      from: `${month}-01`,
+      to: todayISODate(new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)),
+      type: 'expense' as const,
+      isCompleted: true,
+      categoryIds: [...relevantIds].sort(),
+    }),
+    [month, relevantIds],
+  );
+  const { data: transactions, isLoading: loadingTx } = useTransactions(filters, {
+    enabled: categories != null,
+  });
+  const isLoading = loadingCategories || loadingTx;
 
   const categoryTx = useMemo(
     () =>

@@ -127,9 +127,7 @@ export function MonthPickerSheet({ visible, onClose, year, month, maxDate, onSel
                 >
                   {y}
                 </Text>
-                {y === year ? (
-                  <Check size={18} color={ICON_COLORS.limeInk} />
-                ) : null}
+                {y === year ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
               </Pressable>
             ))}
           </ScrollView>

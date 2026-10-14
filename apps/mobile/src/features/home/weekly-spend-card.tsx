@@ -5,6 +5,7 @@ import {
   groupByAccountCurrency,
   periodInsights,
   periodRange,
+  previousPeriodRange,
   todayISODate,
 } from '@repo/core/utils';
 import { useMemo } from 'react';
@@ -21,8 +22,14 @@ interface Props {
  * and a Mon–Sun mini bar chart. Taps through to the full Análisis tab. One
  * section per currency present, never blended together. */
 export function WeeklySpendCard({ onPress }: Props) {
-  const { data: transactions } = useTransactions();
   const now = useMemo(() => new Date(), []);
+  // Just this week and the one before (what the card compares) — not the
+  // whole history.
+  const filters = useMemo(
+    () => ({ from: previousPeriodRange('week', now).from, isCompleted: true }),
+    [now],
+  );
+  const { data: transactions } = useTransactions(filters);
   const today = todayISODate();
 
   const groups = useMemo(() => {

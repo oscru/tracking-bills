@@ -1,5 +1,5 @@
-import { useTransactions } from '@repo/core/hooks';
-import { categorySpendBreakdown, groupByAccountCurrency, todayISODate } from '@repo/core/utils';
+import { useCategories, useMonthlyCategoryTotals } from '@repo/core/hooks';
+import { categorySpendFromSummary, todayISODate } from '@repo/core/utils';
 import { PageHeader, Screen, ICON_COLORS } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChartPie } from 'lucide-react-native';
@@ -15,17 +15,16 @@ export default function MonthlySpendingScreen() {
   const params = useLocalSearchParams<{ month?: string; label?: string }>();
   const month = params.month ?? todayISODate().slice(0, 7);
 
-  const { data: transactions, isLoading } = useTransactions();
+  // Month totals pre-summed per category by Postgres (the same query Inicio
+  // uses, so coming from there it's already cached).
+  const { data: summary, isLoading } = useMonthlyCategoryTotals();
+  const { data: categories } = useCategories();
 
   // One section per currency present — never blended together.
-  const groups = useMemo(() => {
-    return groupByAccountCurrency(transactions ?? [])
-      .map((g) => ({
-        currency: g.currency,
-        breakdown: categorySpendBreakdown(g.transactions, month),
-      }))
-      .filter((g) => g.breakdown.length > 0);
-  }, [transactions, month]);
+  const groups = useMemo(
+    () => categorySpendFromSummary(summary ?? [], month, categories ?? []),
+    [summary, month, categories],
+  );
   const hasData = groups.length > 0;
 
   const goCategory = (categoryId: string) =>

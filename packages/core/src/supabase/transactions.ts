@@ -76,43 +76,47 @@ function normalizeTags(row: RawWithRefs): TransactionWithRefs {
 // page confirms there's nothing left, instead of trusting one request.
 const MAX_PAGE_SIZE = 1000;
 
+/** The filtered, newest-first base query (without paging). */
+function filteredQuery(filters: TransactionFilters, tagFilteredIds: string[] | null) {
+  let query = supabase
+    .from('transactions')
+    .select(WITH_REFS)
+    .order('transaction_date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (filters.from) query = query.gte('transaction_date', filters.from);
+  if (filters.to) query = query.lte('transaction_date', filters.to);
+  if (filters.accountIds?.length) query = query.in('account_id', filters.accountIds);
+  if (filters.categoryIds?.length) query = query.in('category_id', filters.categoryIds);
+  if (filters.type) query = query.eq('type', filters.type);
+  if (filters.search) query = query.ilike('description', `%${filters.search}%`);
+  if (filters.isCompleted != null) query = query.eq('is_completed', filters.isCompleted);
+  if (tagFilteredIds) query = query.in('id', tagFilteredIds);
+  return query;
+}
+
+/** Ids of the transactions carrying any of `filters.tagIds` — `null` when there's no tag filter. */
+async function tagFilteredTransactionIds(filters: TransactionFilters): Promise<string[] | null> {
+  if (!filters.tagIds?.length) return null;
+  const { data: links, error } = await supabase
+    .from('transaction_tags')
+    .select('transaction_id')
+    .in('tag_id', filters.tagIds);
+  if (error) throw new SupabaseError(error);
+  return [...new Set((links ?? []).map((l) => l.transaction_id))];
+}
+
 export async function listTransactions(
   filters: TransactionFilters = {},
 ): Promise<TransactionWithRefs[]> {
-  const buildQuery = () => {
-    let query = supabase
-      .from('transactions')
-      .select(WITH_REFS)
-      .order('transaction_date', { ascending: false })
-      .order('created_at', { ascending: false });
-
-    if (filters.from) query = query.gte('transaction_date', filters.from);
-    if (filters.to) query = query.lte('transaction_date', filters.to);
-    if (filters.accountIds?.length) query = query.in('account_id', filters.accountIds);
-    if (filters.categoryIds?.length) query = query.in('category_id', filters.categoryIds);
-    if (filters.type) query = query.eq('type', filters.type);
-    if (filters.search) query = query.ilike('description', `%${filters.search}%`);
-    if (filters.isCompleted != null) query = query.eq('is_completed', filters.isCompleted);
-    return query;
-  };
-
-  let tagFilteredIds: string[] | null = null;
-  if (filters.tagIds?.length) {
-    const { data: links, error } = await supabase
-      .from('transaction_tags')
-      .select('transaction_id')
-      .in('tag_id', filters.tagIds);
-    if (error) throw new SupabaseError(error);
-    tagFilteredIds = [...new Set((links ?? []).map((l) => l.transaction_id))];
-    // No matches: short-circuit rather than send an empty `.in()` (which
-    // Postgres/PostgREST would otherwise happily read as "no filter").
-    if (tagFilteredIds.length === 0) return [];
-  }
+  const tagFilteredIds = await tagFilteredTransactionIds(filters);
+  // No matches: short-circuit rather than send an empty `.in()` (which
+  // Postgres/PostgREST would otherwise happily read as "no filter").
+  if (tagFilteredIds?.length === 0) return [];
 
   if (filters.limit != null) {
     const offset = filters.offset ?? 0;
-    let query = buildQuery().range(offset, offset + filters.limit - 1);
-    if (tagFilteredIds) query = query.in('id', tagFilteredIds);
+    const query = filteredQuery(filters, tagFilteredIds).range(offset, offset + filters.limit - 1);
     const rows = unwrap(await query) as unknown as RawWithRefs[];
     return rows.map(normalizeTags);
   }
@@ -120,14 +124,56 @@ export async function listTransactions(
   const all: RawWithRefs[] = [];
   let offset = 0;
   for (;;) {
-    let query = buildQuery().range(offset, offset + MAX_PAGE_SIZE - 1);
-    if (tagFilteredIds) query = query.in('id', tagFilteredIds);
+    const query = filteredQuery(filters, tagFilteredIds).range(offset, offset + MAX_PAGE_SIZE - 1);
     const page = unwrap(await query) as unknown as RawWithRefs[];
     all.push(...page);
     if (page.length < MAX_PAGE_SIZE) break;
     offset += MAX_PAGE_SIZE;
   }
   return all.map(normalizeTags);
+}
+
+export interface TransactionPage {
+  rows: TransactionWithRefs[];
+  /** Pass as `before` to get the next page; `null` once there's nothing older. */
+  nextBefore: string | null;
+}
+
+/**
+ * One page of the filtered list, newest first, for infinite scrolling —
+ * about `size` rows, always made of WHOLE days: the page's oldest day is
+ * completed with a second query, and the next page starts strictly before
+ * it (`before`, exclusive). So a day never straddles two pages, and its
+ * header total is right from the start. Keyset (by date), not offset, so
+ * a movement added meanwhile can't shift or duplicate rows across pages.
+ */
+export async function listTransactionsPage(
+  filters: TransactionFilters = {},
+  { before, size = 150 }: { before?: string | null; size?: number } = {},
+): Promise<TransactionPage> {
+  const tagFilteredIds = await tagFilteredTransactionIds(filters);
+  if (tagFilteredIds?.length === 0) return { rows: [], nextBefore: null };
+
+  let query = filteredQuery(filters, tagFilteredIds);
+  if (before) query = query.lt('transaction_date', before);
+  const rows = (unwrap(await query.range(0, size - 1)) as unknown as RawWithRefs[]).map(
+    normalizeTags,
+  );
+  if (rows.length < size) return { rows, nextBefore: null };
+
+  // Full page: the oldest day may continue past it — fetch that whole day.
+  const lastDate = rows[rows.length - 1]!.transaction_date;
+  const lastDay = (
+    unwrap(
+      await filteredQuery(filters, tagFilteredIds)
+        .eq('transaction_date', lastDate)
+        .range(0, MAX_PAGE_SIZE - 1),
+    ) as unknown as RawWithRefs[]
+  ).map(normalizeTags);
+  return {
+    rows: [...rows.filter((t) => t.transaction_date !== lastDate), ...lastDay],
+    nextBefore: lastDate,
+  };
 }
 
 export async function getTransaction(id: string): Promise<TransactionWithRefs> {
@@ -149,7 +195,9 @@ export async function createTransaction(input: TransactionCreateInput): Promise<
  * come back in the same order as `inputs`. */
 export async function createTransactions(inputs: TransactionCreateInput[]): Promise<Transaction[]> {
   if (inputs.length === 0) return [];
-  const payload = inputs.map((input) => transactionCreateSchema.parse(input)) as InsertRow<'transactions'>[];
+  const payload = inputs.map((input) =>
+    transactionCreateSchema.parse(input),
+  ) as InsertRow<'transactions'>[];
   return unwrap(await supabase.from('transactions').insert(payload).select()) as Transaction[];
 }
 

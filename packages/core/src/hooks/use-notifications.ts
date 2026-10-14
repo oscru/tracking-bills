@@ -76,7 +76,12 @@ export function useDismissNotification() {
         const existing = reads.find((r) => r.notification_id === id);
         return [
           ...rest,
-          { notification_id: id, read_at: existing?.read_at ?? now, dismissed_at: now, user_id: '' },
+          {
+            notification_id: id,
+            read_at: existing?.read_at ?? now,
+            dismissed_at: now,
+            user_id: '',
+          },
         ];
       }),
     onError: (_e, _id, context) => optimistic.rollback(context),

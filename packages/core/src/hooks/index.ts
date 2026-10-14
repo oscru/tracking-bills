@@ -45,11 +45,18 @@ export { useBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget } from '.
 export { useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal } from './use-goals';
 export {
   useTransactions,
+  useTransactionPages,
   useTransaction,
   useCreateTransaction,
   useUpdateTransaction,
   useDeleteTransaction,
 } from './use-transactions';
+export {
+  useAccountBalanceEffects,
+  useCategoryDailyTotals,
+  useDailyTotals,
+  useMonthlyCategoryTotals,
+} from './use-summaries';
 export { useRunImportPlan } from './use-import-export';
 export {
   useNotifications,

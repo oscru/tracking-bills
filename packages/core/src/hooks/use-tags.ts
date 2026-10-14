@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { archiveTag, createTag, deleteTag, listTags, setTransactionTags, updateTag } from '../supabase';
+import {
+  archiveTag,
+  createTag,
+  deleteTag,
+  listTags,
+  setTransactionTags,
+  updateTag,
+} from '../supabase';
 import type { TagUpdateInput } from '../validators';
 import { queryKeys } from './keys';
 

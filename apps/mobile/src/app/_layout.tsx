@@ -4,11 +4,11 @@ import '../web-setup';
 import {
   createQueryClient,
   SessionProvider,
+  useAccountBalanceEffects,
   useAccounts,
-  useBudgets,
+  useMonthlyCategoryTotals,
   useProfile,
   useSession,
-  useTransactions,
 } from '@repo/core/hooks';
 import { SheetPortalHost, ICON_COLORS } from '@repo/ui';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -91,24 +91,22 @@ function AuthRedirect() {
 }
 
 /**
- * Loads what Inicio shows first while the splash is still up, so the app
- * opens mostly loaded instead of on a long skeleton. Rendered only with a
- * session (fetching before sign-in would cache empty, unauthorized results).
- * The queries stay cached after this unmounts — Inicio's own hooks pick
- * them up instantly.
+ * Loads what Inicio needs to paint while the splash is still up, so the app
+ * opens ready instead of on a skeleton. Rendered only with a session
+ * (fetching before sign-in would cache empty, unauthorized results). The
+ * queries stay cached after this unmounts — Inicio's own hooks pick them up
+ * instantly.
+ *
+ * All of it is small now: the balance and month totals come pre-summed from
+ * Postgres (supabase/summaries.ts) instead of the whole transaction history,
+ * so the splash can simply wait for everything (`AppSplash` still caps it).
  */
-const READY_QUERIES = 3;
-
 function WarmUpHome({ onReady }: { onReady: () => void }) {
-  const transactions = useTransactions();
   const accounts = useAccounts();
   const profile = useProfile();
-  const budgets = useBudgets();
-  // Steps aside once MOST of it is in (3 of the 4 — usually all but the
-  // heavy transaction history); Inicio's skeleton covers the rest. Waiting
-  // for everything held the splash up too long.
-  const settled =
-    [transactions, accounts, profile, budgets].filter((q) => !q.isLoading).length >= READY_QUERIES;
+  const balances = useAccountBalanceEffects();
+  const summary = useMonthlyCategoryTotals();
+  const settled = [accounts, profile, balances, summary].every((q) => !q.isLoading);
   useEffect(() => {
     if (settled) onReady();
   }, [settled, onReady]);

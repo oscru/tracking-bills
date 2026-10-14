@@ -1,4 +1,4 @@
-import { useAccounts, useCategoryTree, useTags, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useCategoryTree, useTags, useTransactionPages } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import type { TransactionType } from '@repo/core/types';
@@ -18,7 +18,7 @@ import { ListFilter } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { useColorScheme } from 'nativewind';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountIcon } from '../../../../features/accounts/account-icon';
 import { Glass } from '../../../../features/design/glass';
@@ -178,7 +178,22 @@ export default function TransactionsScreen() {
     pendingOnly,
   );
 
-  const { data: transactions, isLoading, isRefetching, refetch, error } = useTransactions(filters);
+  // Paged by whole days (see `listTransactionsPage`): the first ~150
+  // movements load up front, the next page as you near the end of the list.
+  const {
+    data,
+    isLoading,
+    isRefetching,
+    refetch,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useTransactionPages(filters);
+  const transactions = useMemo(() => data?.pages.flatMap((p) => p.rows), [data]);
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  };
   const { items, stickyHeaderIndices } = useMemo(() => {
     const flat: ListItem[] = [];
     const stickies: number[] = [];
@@ -339,7 +354,17 @@ export default function TransactionsScreen() {
             extraData={openRowId}
             contentContainerStyle={{ paddingBottom: scrollPadding }}
             showsVerticalScrollIndicator={false}
-            refreshing={isRefetching}
+            refreshing={isRefetching && !isFetchingNextPage}
+            onEndReached={loadMore}
+            // Start loading the next page about a screen before the end.
+            onEndReachedThreshold={1}
+            ListFooterComponent={
+              isFetchingNextPage ? (
+                <View className="items-center py-6">
+                  <ActivityIndicator color={ICON_COLORS.ink3} />
+                </View>
+              ) : null
+            }
             onRefresh={() => refetch()}
             ListEmptyComponent={
               <View className="pt-16">

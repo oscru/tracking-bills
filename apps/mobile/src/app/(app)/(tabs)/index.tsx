@@ -1,15 +1,21 @@
-import { useAccounts, useProfile, useTransactions } from '@repo/core/hooks';
 import {
-  accountBalances,
+  useAccountBalanceEffects,
+  useAccounts,
+  useCategories,
+  useMonthlyCategoryTotals,
+  useProfile,
+  useTransactions,
+} from '@repo/core/hooks';
+import {
   addDaysISO,
-  categorySpendBreakdown,
+  balancesFromEffects,
+  categorySpendFromSummary,
   daysUntil,
   formatCurrency,
-  groupByAccountCurrency,
-  monthTotals,
+  monthTotalsFromSummary,
   splitPendingByDate,
   todayISODate,
-  totalBalancesByCurrency,
+  totalsByCurrencyFromBalances,
   visibleHomeLayout,
   type HomeLayoutItem,
   getDateFormat,
@@ -42,6 +48,9 @@ const BALANCE_TEXT = {
   letterSpacing: -0.9,
 };
 
+// Stable, so the pending query's key (and cache entry) doesn't change per render.
+const PENDING_FILTER = { isCompleted: false } as const;
+
 // Widgets rendered with the screen's first frame — about what fits on screen
 // under the balance and income/expense cards.
 const INITIAL_WIDGETS = 1;
@@ -52,7 +61,13 @@ export default function HomeScreen() {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
-  const { data: transactions, isLoading: loadingTx } = useTransactions();
+  // Totals come pre-summed from Postgres (see supabase/summaries.ts) —
+  // Inicio no longer downloads and re-scans the whole transaction history.
+  const { data: balanceEffects, isLoading: loadingBalances } = useAccountBalanceEffects();
+  const { data: summary, isLoading: loadingSummary } = useMonthlyCategoryTotals();
+  const { data: categories } = useCategories();
+  // Only what's still pending, for the two reminder cards.
+  const { data: pending } = useTransactions(PENDING_FILTER);
   const { data: profile } = useProfile();
   const [hidden, setHidden] = useState(false);
   // Bumped each time Inicio comes into view — replays the balance's roll.
@@ -68,28 +83,25 @@ export default function HomeScreen() {
 
   const active = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
   const visibleAccounts = useMemo(() => active.filter((a) => a.show_on_home), [active]);
-  // One pass over `transactions` for every account instead of one pass per
-  // account — matters once either list is large (a full-history import is
-  // thousands of rows).
   const accountBalancesById = useMemo(
-    () => accountBalances(active, transactions ?? []),
-    [active, transactions],
+    () => balancesFromEffects(active, balanceEffects ?? []),
+    [active, balanceEffects],
   );
   // The default currency only seeds the account-creation form now — it's no
   // longer a forced conversion target, so totals below group by each
   // account's own currency instead of blending them into one number.
   const currency = profile?.currency ?? active[0]?.currency ?? 'MXN';
   const balances = useMemo(
-    () => totalBalancesByCurrency(active, transactions ?? []),
-    [active, transactions],
+    () => totalsByCurrencyFromBalances(active, accountBalancesById),
+    [active, accountBalancesById],
   );
   const today = todayISODate();
   // Overdue (should've already happened) and upcoming (still ahead of
   // schedule) mean very different things, so they get two separate cards —
   // one urgent, one just a heads-up.
   const { overdue, upcoming } = useMemo(
-    () => splitPendingByDate(transactions ?? [], today),
-    [transactions, today],
+    () => splitPendingByDate(pending ?? [], today),
+    [pending, today],
   );
   const nearestUpcomingDays = useMemo(
     () =>
@@ -98,7 +110,7 @@ export default function HomeScreen() {
         : null,
     [upcoming, today],
   );
-  const loading = loadingAccounts || loadingTx;
+  const loading = loadingAccounts || loadingBalances || loadingSummary;
 
   // Seeds the initial month only — frozen on purpose, re-reading it on every
   // render would reset `selectedYear`/`selectedMonthIdx` back to "now"
@@ -130,19 +142,15 @@ export default function HomeScreen() {
   };
 
   const month = useMemo(
-    () => monthTotals(transactions ?? [], selectedMonth),
-    [transactions, selectedMonth],
+    () => monthTotalsFromSummary(summary ?? [], selectedMonth),
+    [summary, selectedMonth],
   );
   // One breakdown per currency present in the user's transactions — never
   // blended together (see `groupByAccountCurrency`).
-  const categoryBreakdowns = useMemo(() => {
-    return groupByAccountCurrency(transactions ?? [])
-      .map((g) => ({
-        currency: g.currency,
-        breakdown: categorySpendBreakdown(g.transactions, selectedMonth),
-      }))
-      .filter((g) => g.breakdown.length > 0);
-  }, [transactions, selectedMonth]);
+  const categoryBreakdowns = useMemo(
+    () => categorySpendFromSummary(summary ?? [], selectedMonth, categories ?? []),
+    [summary, selectedMonth, categories],
+  );
 
   const openMonth = (type: 'income' | 'expense') =>
     router.push({

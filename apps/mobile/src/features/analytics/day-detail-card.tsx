@@ -8,14 +8,28 @@ import { Pressable, Text, View } from 'react-native';
 
 interface Props {
   dateISO: string;
+  /** The period's movements (the day's own list comes from here). */
   transactions: TransactionWithRefs[];
+  /** The whole history, at least one row per active day — for the no-spend streaks. */
+  history: {
+    type: string;
+    amount: number | string;
+    transaction_date: string;
+    is_completed: boolean;
+  }[];
   currency: string;
   onPressTransaction: (id: string) => void;
 }
 
 /** The tapped day's own movements (income and expense, not transfers) — what
  * actually happened behind that one heatmap cell. */
-export function DayDetailCard({ dateISO, transactions, currency, onPressTransaction }: Props) {
+export function DayDetailCard({
+  dateISO,
+  transactions,
+  history,
+  currency,
+  onPressTransaction,
+}: Props) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const warningColor = dark ? ICON_COLORS.warningDark : ICON_COLORS.warning;
@@ -26,8 +40,8 @@ export function DayDetailCard({ dateISO, transactions, currency, onPressTransact
     (sum, t) => sum + (t.type === 'expense' ? -Number(t.amount) : Number(t.amount)),
     0,
   );
-  const streak = dayTx.length === 0 ? noSpendStreak(transactions, dateISO) : 0;
-  const bestStreak = dayTx.length === 0 ? longestNoSpendStreak(transactions) : 0;
+  const streak = dayTx.length === 0 ? noSpendStreak(history, dateISO) : 0;
+  const bestStreak = dayTx.length === 0 ? longestNoSpendStreak(history) : 0;
 
   return (
     <View className="gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">

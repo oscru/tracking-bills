@@ -22,7 +22,8 @@ export function useCreateBudget() {
 export function useUpdateBudget() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: BudgetUpdateInput }) => updateBudget(id, patch),
+    mutationFn: ({ id, patch }: { id: string; patch: BudgetUpdateInput }) =>
+      updateBudget(id, patch),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.budgets.all }),
   });
 }

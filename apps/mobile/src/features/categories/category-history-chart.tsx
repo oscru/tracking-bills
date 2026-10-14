@@ -1,4 +1,4 @@
-import { useTransactions } from '@repo/core/hooks';
+import { useCategoryDailyTotals } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { Category } from '@repo/core/types';
 import {
@@ -69,7 +69,30 @@ export function CategoryHistoryChart({ category, subcategories }: Props) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const { width: windowWidth } = useWindowDimensions();
-  const { data: transactions } = useTransactions();
+  // The category and its subcategories' whole history as one row per day
+  // used, pre-summed by Postgres — not every transaction. Fetched for all of
+  // them at once, so switching the subcategory chips doesn't refetch.
+  const allIds = useMemo(
+    () => [category.id, ...subcategories.map((s) => s.id)],
+    [category.id, subcategories],
+  );
+  const { data: days } = useCategoryDailyTotals(allIds);
+  // As synthetic one-per-day "transactions" — exactly what the series and
+  // comparison functions read. Days with only pending movements sum to 0
+  // and are left out (those functions only count settled ones).
+  const transactions = useMemo(
+    () =>
+      (days ?? [])
+        .filter((d) => d.total > 0)
+        .map((d) => ({
+          category_id: d.category_id,
+          amount: d.total,
+          transaction_date: d.date,
+          is_completed: true,
+          account: { currency: d.currency },
+        })),
+    [days],
+  );
   const [kind, setKind] = useState<'bar' | 'line'>('bar');
   const [range, setRange] = useState<CategoryHistoryRange>('half');
   const [selection, setSelection] = useState<Selection>({ kind: 'all' });

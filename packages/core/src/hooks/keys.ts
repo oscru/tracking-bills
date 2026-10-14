@@ -39,5 +39,14 @@ export const queryKeys = {
     all: ['transactions'] as const,
     list: (filters: TransactionFilters = {}) => ['transactions', 'list', filters] as const,
     detail: (id: string) => ['transactions', 'detail', id] as const,
+    pages: (filters: TransactionFilters = {}) => ['transactions', 'pages', filters] as const,
+    // Server-side aggregates (see supabase/summaries.ts). Under the
+    // `transactions` prefix on purpose: every transaction mutation already
+    // invalidates `transactions.all`, which refreshes these too.
+    balanceEffects: () => ['transactions', 'summary', 'balanceEffects'] as const,
+    monthlyTotals: () => ['transactions', 'summary', 'monthlyTotals'] as const,
+    dailyTotals: () => ['transactions', 'summary', 'dailyTotals'] as const,
+    categoryDailyTotals: (categoryIds: readonly string[]) =>
+      ['transactions', 'summary', 'categoryDailyTotals', [...categoryIds].sort()] as const,
   },
 } as const;

@@ -13,5 +13,6 @@ export * from './favorite-transactions';
 export * from './goals';
 export * from './notification-reads';
 export * from './profiles';
+export * from './summaries';
 export * from './tags';
 export * from './transactions';

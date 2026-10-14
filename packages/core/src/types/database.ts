@@ -646,7 +646,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      account_balance_effects: {
+        Row: {
+          account_id: string | null
+          net: number | null
+        }
+        Relationships: []
+      }
+      daily_category_totals: {
+        Row: {
+          date: string | null
+          currency: string | null
+          category_id: string | null
+          total: number | null
+          count: number | null
+        }
+        Relationships: []
+      }
+      daily_totals: {
+        Row: {
+          date: string | null
+          currency: string | null
+          type: string | null
+          total: number | null
+          count: number | null
+        }
+        Relationships: []
+      }
+      monthly_category_totals: {
+        Row: {
+          month: string | null
+          currency: string | null
+          type: string | null
+          category_id: string | null
+          total: number | null
+          count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_own_account: { Args: never; Returns: undefined }

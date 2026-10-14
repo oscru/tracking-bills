@@ -1,13 +1,17 @@
-import { useAccounts, useProfile, useTransactions } from '@repo/core/hooks';
+import { useAccounts, useDailyTotals, useProfile, useTransactions } from '@repo/core/hooks';
 import {
   categoryTrend,
   dailyTransactionTotals,
   formatMonthShort,
+  longestNoSpendStreak,
   monthlyTransactionTotalsForYear,
+  noSpendStreak,
   periodInsights,
   periodLabel,
   periodRange,
+  previousPeriodRange,
   shiftPeriodDate,
+  todayISODate,
   topTransactions,
   type AnalyticsPeriod,
 } from '@repo/core/utils';
@@ -63,26 +67,7 @@ export default function AnalyticsScreen() {
   const router = useRouter();
   const { data: accounts } = useAccounts();
   const { data: profile } = useProfile();
-  const { data: transactions, isLoading } = useTransactions();
   const defaultCurrency = profile?.currency ?? accounts?.[0]?.currency ?? 'MXN';
-
-  // All analytics below are scoped to one currency at a time — there's no
-  // exchange rate in this app to blend them correctly. `selectedCurrency`
-  // stays `null` ("use whichever is first") until the user actually taps a
-  // chip, so it tracks the data instead of freezing a possibly-stale choice.
-  const [selectedCurrency, setSelectedCurrency] = useState<string | null>(null);
-  const currencies = useMemo(() => {
-    const set = new Set((transactions ?? []).map((t) => t.account?.currency ?? defaultCurrency));
-    return [...set].sort();
-  }, [transactions, defaultCurrency]);
-  const currency =
-    selectedCurrency && currencies.includes(selectedCurrency)
-      ? selectedCurrency
-      : (currencies[0] ?? defaultCurrency);
-  const tx = useMemo(
-    () => (transactions ?? []).filter((t) => (t.account?.currency ?? defaultCurrency) === currency),
-    [transactions, currency, defaultCurrency],
-  );
 
   const [period, setPeriod] = useState<AnalyticsPeriod>('month');
   const [referenceDate, setReferenceDate] = useState(() => new Date());
@@ -92,10 +77,60 @@ export default function AnalyticsScreen() {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
 
   const range = useMemo(() => periodRange(period, referenceDate), [period, referenceDate]);
-  const insights = useMemo(
-    () => periodInsights(tx, period, referenceDate, heatmapMetric),
-    [tx, period, referenceDate, heatmapMetric],
+
+  // Only the movements this screen actually shows: the period on screen and
+  // the one before it (what every "vs. anterior" compares against) — not the
+  // whole history. Paging to another period keeps the current one on
+  // screen while the next loads.
+  const rangeFilters = useMemo(
+    () => ({ from: previousPeriodRange(period, referenceDate).from, to: range.to }),
+    [period, referenceDate, range],
   );
+  const { data: transactions, isLoading } = useTransactions(rangeFilters, { keepPrevious: true });
+  // The no-spend streaks are the one thing that needs the whole history —
+  // but only which days had spending: per-day totals summed by Postgres.
+  const { data: dailyTotals, isLoading: loadingDays } = useDailyTotals();
+
+  // All analytics below are scoped to one currency at a time — there's no
+  // exchange rate in this app to blend them correctly. `selectedCurrency`
+  // stays `null` ("use whichever is first") until the user actually taps a
+  // chip, so it tracks the data instead of freezing a possibly-stale choice.
+  const [selectedCurrency, setSelectedCurrency] = useState<string | null>(null);
+  const currencies = useMemo(() => {
+    const set = new Set((dailyTotals ?? []).map((d) => d.currency));
+    return [...set].sort();
+  }, [dailyTotals]);
+  const currency =
+    selectedCurrency && currencies.includes(selectedCurrency)
+      ? selectedCurrency
+      : (currencies[0] ?? defaultCurrency);
+  const tx = useMemo(
+    () => (transactions ?? []).filter((t) => (t.account?.currency ?? defaultCurrency) === currency),
+    [transactions, currency, defaultCurrency],
+  );
+  // The history as one synthetic row per day and type — exactly what the
+  // streak functions read (settled expense days, and the earliest active day).
+  const history = useMemo(
+    () =>
+      (dailyTotals ?? [])
+        .filter((d) => d.currency === currency)
+        .map((d) => ({
+          type: d.type,
+          amount: d.total,
+          transaction_date: d.date,
+          is_completed: true,
+        })),
+    [dailyTotals, currency],
+  );
+
+  const insights = useMemo(() => {
+    const today = todayISODate();
+    return {
+      ...periodInsights(tx, period, referenceDate, heatmapMetric, today),
+      noSpendStreakDays: noSpendStreak(history, today),
+      bestNoSpendStreakDays: longestNoSpendStreak(history, today),
+    };
+  }, [tx, history, period, referenceDate, heatmapMetric]);
   const trend = useMemo(
     () => categoryTrend(tx, period, referenceDate, heatmapMetric),
     [tx, period, referenceDate, heatmapMetric],
@@ -253,7 +288,7 @@ export default function AnalyticsScreen() {
         />
       ) : null}
 
-      {isLoading ? (
+      {isLoading || loadingDays ? (
         <ScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
@@ -301,6 +336,7 @@ export default function AnalyticsScreen() {
             <DayDetailCard
               dateISO={selectedDate}
               transactions={tx}
+              history={history}
               currency={currency}
               onPressTransaction={openTransaction}
             />

@@ -1,5 +1,5 @@
 import { useBudgets, useTransactions } from '@repo/core/hooks';
-import { budgetProgress } from '@repo/core/utils';
+import { budgetPeriodRange, budgetProgress } from '@repo/core/utils';
 import { useMemo } from 'react';
 
 /**
@@ -14,7 +14,24 @@ import { useMemo } from 'react';
  */
 export function useBudgetProgressRows(currency?: string) {
   const { data: budgets } = useBudgets();
-  const { data: transactions } = useTransactions();
+  // Only the settled expenses from the earliest current budget period on —
+  // all `budgetProgress` ever counts — instead of the whole history. No
+  // budgets, no fetch.
+  const from = useMemo(() => {
+    const now = new Date();
+    let earliest: string | null = null;
+    for (const budget of budgets ?? []) {
+      if (budget.archived) continue;
+      const start = budgetPeriodRange(budget, now).from;
+      if (earliest == null || start < earliest) earliest = start;
+    }
+    return earliest;
+  }, [budgets]);
+  const filters = useMemo(
+    () => ({ from: from ?? undefined, type: 'expense' as const, isCompleted: true }),
+    [from],
+  );
+  const { data: transactions } = useTransactions(filters, { enabled: from != null });
 
   return useMemo(() => {
     return (budgets ?? [])

@@ -6,6 +6,7 @@ import type { BudgetPeriodType, Category, CategoryNode } from '../types';
 
 export * from './errors';
 export * from './currencies';
+export * from './summaries';
 export { HOME_LAYOUT_ITEMS, type HomeLayoutItem };
 
 /**
