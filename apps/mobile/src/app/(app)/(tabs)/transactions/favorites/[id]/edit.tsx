@@ -81,6 +81,7 @@ export default function EditFavorite() {
                 <View className="flex-1">
                   <Button
                     label="Eliminar"
+                    variant="danger"
                     loading={remove.isPending}
                     onPress={() =>
                       remove.mutate(id, {

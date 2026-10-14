@@ -14,7 +14,7 @@ import {
   type HomeLayoutItem,
   getDateFormat,
 } from '@repo/core/utils';
-import { Screen, StaggerItem, ICON_COLORS, useTabBarScrollPadding } from '@repo/ui';
+import { HeroCard, Screen, StaggerItem, ICON_COLORS, useTabBarScrollPadding } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Calendar, ChevronLeft, ChevronRight, Clock, Eye, EyeOff } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';

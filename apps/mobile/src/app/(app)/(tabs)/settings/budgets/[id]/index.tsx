@@ -17,6 +17,7 @@ import {
   PageHeader,
   Screen,
   useTabBarScrollPadding,
+  HeroCard,
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
@@ -115,11 +116,11 @@ export default function BudgetDetail() {
             </View>
           ) : null}
 
-          <View className="gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">
-            <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-              {periodLabel}
-            </Text>
+          {/* This period's spend vs. the limit — the screen's headline. */}
+          <HeroCard contentStyle={{ gap: 12 }}>
+            <Text className="text-sm font-semibold text-white/70">{periodLabel}</Text>
             <BudgetProgressBar
+              tone="onDark"
               spent={progress.spent}
               amount={Number(budget.amount)}
               pct={progress.pct}
@@ -127,7 +128,7 @@ export default function BudgetDetail() {
               currency={budget.currency}
               hasCategories={progress.hasCategories}
             />
-          </View>
+          </HeroCard>
 
           <View className="gap-2">
             <Text className="px-1 text-sm font-semibold text-ink-2 dark:text-ink-2-dark">

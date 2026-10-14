@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>A · Gradiente lima</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#4D7C0F}a:hover{color:#3F6212}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #F6F7F9; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #1A1D21">
+  <div style="padding: 56px 20px 0; display: flex; flex-direction: column; gap: 18px">
+    <div style="position: relative; display: flex; align-items: center; justify-content: center; gap: 18px; height: 44px">
+      <button type="button" aria-label="Mes anterior" style="border: 0; background: none; padding: 0; color: #9CA3AF; display: flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div style="display: flex; flex-direction: column; align-items: center; min-width: 100px">
+        <span style="font-size: 12px; color: #9CA3AF; font-weight: 500">2026</span>
+        <span style="font-size: 16px; font-weight: 700">Octubre</span>
+      </div>
+      <button type="button" aria-label="Mes siguiente" style="border: 0; background: none; padding: 0; color: #D1D5DB; display: flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+      <button type="button" aria-label="Notificaciones" style="position: absolute; right: 0; top: 3px; width: 38px; height: 38px; border-radius: 19px; border: 0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #1A1D21"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg><span style="position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; border-radius: 9px; border: 2px solid #F6F7F9; box-sizing: border-box; background: #1A1D21; color: #B9F227; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center">3</span></button>
+    </div>
+
+    <div style="border-radius: 24px; padding: 22px; color: #FFFFFF; background: radial-gradient(120% 95% at 100% 0%, rgba(185,242,39,0.42) 0%, rgba(185,242,39,0) 55%), radial-gradient(90% 90% at 0% 100%, rgba(52,211,153,0.22) 0%, rgba(52,211,153,0) 60%), #15181C; box-shadow: 0 18px 40px rgba(21,24,28,0.25); display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <span style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7)">Balance total</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <span style="font-size: 38px; font-weight: 800; letter-spacing: -1px">$48,250.00</span>
+      <span style="align-self: flex-start; font-size: 12px; font-weight: 700; color: #15181C; background: linear-gradient(135deg, #DDFF5C 0%, #B9F227 55%, #8BE05A 100%); padding: 5px 10px; border-radius: 999px">+12% vs. septiembre</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <div style="background: #FFFFFF; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; color: #6B7280">Ingresos</span>
+        <span style="font-size: 20px; font-weight: 700; color: #16A34A">$32,400</span>
+      </div>
+      <div style="background: #FFFFFF; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; color: #6B7280">Gastos</span>
+        <span style="font-size: 20px; font-weight: 700; color: #E5484D">$18,150</span>
+      </div>
+    </div>
+
+    <div style="background: #FFFFFF; border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <span style="font-size: 14px; font-weight: 600; color: #6B7280">Gastos por categoría</span>
+        <a href="#" style="font-size: 13px; font-weight: 600; text-decoration: none">Ver todas ›</a>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 6px"><div style="display: flex; justify-content: space-between; font-size: 14px"><span style="font-weight: 500">Comida</span><span style="font-weight: 700">$6,420</span></div><div style="height: 6px; border-radius: 3px; background: #EDEFF2"><div style="width: 72%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #B9F227, #6CD06A)"></div></div></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><div style="display: flex; justify-content: space-between; font-size: 14px"><span style="font-weight: 500">Transporte</span><span style="font-weight: 700">$3,180</span></div><div style="height: 6px; border-radius: 3px; background: #EDEFF2"><div style="width: 38%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #B9F227, #6CD06A)"></div></div></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><div style="display: flex; justify-content: space-between; font-size: 14px"><span style="font-weight: 500">Salidas</span><span style="font-weight: 700">$2,050</span></div><div style="height: 6px; border-radius: 3px; background: #EDEFF2"><div style="width: 24%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #B9F227, #6CD06A)"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <nav aria-label="Navegación principal" style="position: absolute; left: 16px; right: 16px; bottom: 30px; display: flex; align-items: center; gap: 10px">
+    <div style="flex: 1; height: 60px; border-radius: 30px; padding: 6px; box-sizing: border-box; background: #1A1D21; box-shadow: 0 12px 30px rgba(0,0,0,0.28); display: flex; align-items: center; justify-content: space-between">
+      <a href="#" aria-current="page" style="height: 48px; border-radius: 24px; padding: 0 16px; display: flex; align-items: center; gap: 8px; text-decoration: none; color: #1A1D21; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 50%, #7FDB5C 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 4px 14px rgba(185,242,39,0.35)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Inicio</a>
+      <a href="#" aria-label="Movimientos" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: #9BA1A8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg></a>
+      <a href="#" aria-label="Análisis" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: #9BA1A8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21v-6"/><path d="M12 21V3"/><path d="M19 21V9"/></svg></a>
+      <a href="#" aria-label="Opciones" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: #9BA1A8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></a>
+    </div>
+    <button type="button" aria-label="Nuevo movimiento" style="width: 60px; height: 60px; border-radius: 30px; border: 0; display: flex; align-items: center; justify-content: center; color: #1A1D21; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 50%, #7FDB5C 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 12px 28px rgba(140,210,40,0.5)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

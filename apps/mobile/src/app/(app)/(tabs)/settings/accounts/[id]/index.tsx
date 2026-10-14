@@ -15,6 +15,7 @@ import {
   SwitchRow,
   ICON_COLORS,
   useTabBarScrollPadding,
+  HeroCard,
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowDown, CircleArrowUp, Pencil } from 'lucide-react-native';
@@ -23,6 +24,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountDetailSkeleton } from '../../../../../../features/accounts/account-detail-skeleton';
 import { AdjustBalanceSheet } from '../../../../../../features/accounts/adjust-balance-sheet';
+import { AccountIcon } from '../../../../../../features/accounts/account-icon';
 import { ACCOUNT_TYPE_LABEL } from '../../../../../../features/accounts/account-types';
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
@@ -119,17 +121,26 @@ export default function AccountDetail() {
           contentContainerClassName="gap-5"
           contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
-          <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
-            <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-              {ACCOUNT_TYPE_LABEL[account.type]}
-              {account.archived ? ' · archivada' : ''}
-            </Text>
-            <Text className="mt-1 text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
+          {/* The account's balance is this screen's headline — glowing in the
+          account's own color, so each account feels like itself. */}
+          <HeroCard tint={account.color}>
+            <View className="flex-row items-center gap-3">
+              <AccountIcon account={account} size={42} />
+              <View>
+                <Text className="text-[13px] text-white/60">
+                  {ACCOUNT_TYPE_LABEL[account.type]} · {account.currency}
+                  {account.archived ? ' · archivada' : ''}
+                </Text>
+                <Text className="text-sm font-semibold text-white">Saldo actual</Text>
+              </View>
+            </View>
+            <Text className="mt-4 text-4xl font-extrabold tracking-tight text-white">
               {formatCurrency(balance, account.currency)}
             </Text>
-          </View>
+          </HeroCard>
 
-          <Button label="Ajustar saldo" onPress={() => setAdjustOpen(true)} />
+          {/* Secondary on purpose: the navbar's lime "editar" is this screen's action. */}
+          <Button label="Ajustar saldo" variant="secondary" onPress={() => setAdjustOpen(true)} />
 
           <View className="flex-row gap-3">
             <Pressable

@@ -43,12 +43,25 @@ export function useCreateCategory() {
   });
 }
 
+/**
+ * Transactions, budgets and favorites each embed a copy of their category
+ * (name, color, icon) in their own cached queries — refreshing only the
+ * category list left the old color on the Home donut, the movement list,
+ * etc. until the app restarted.
+ */
+function invalidateCategoryCopies(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: queryKeys.categories.all });
+  qc.invalidateQueries({ queryKey: queryKeys.transactions.all });
+  qc.invalidateQueries({ queryKey: queryKeys.budgets.all });
+  qc.invalidateQueries({ queryKey: queryKeys.favoriteTransactions.all });
+}
+
 export function useUpdateCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: CategoryUpdateInput }) =>
       updateCategory(id, patch),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.categories.all }),
+    onSuccess: () => invalidateCategoryCopies(qc),
   });
 }
 
@@ -56,6 +69,6 @@ export function useDeleteCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteCategory(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.categories.all }),
+    onSuccess: () => invalidateCategoryCopies(qc),
   });
 }

@@ -107,6 +107,13 @@ export default function SettingsScreen() {
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
+              title="Seguridad"
+              subtitle="Desbloqueo con huella o Face ID"
+              showChevron
+              onPress={() => router.push('/(app)/settings/security')}
+            />
+            <View className="h-px bg-line dark:bg-line-dark" />
+            <ListRow
               title="Notificaciones"
               subtitle="Recordatorios de pagos, presupuestos y metas"
               showChevron

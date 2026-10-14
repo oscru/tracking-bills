@@ -31,7 +31,14 @@ import {
   TextField,
   type KeypadKey,
 } from '@repo/ui';
-import { ArrowLeftRight, CircleArrowDown, CircleArrowUp, Heart, Minus, X } from 'lucide-react-native';
+import {
+  ArrowLeftRight,
+  CircleArrowDown,
+  CircleArrowUp,
+  Heart,
+  Minus,
+  X,
+} from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -614,7 +621,7 @@ export function MovementForm({
                 />
               </View>
               <View className="flex-1">
-                <Button label="Eliminar" onPress={onDelete} />
+                <Button label="Eliminar" variant="danger" onPress={onDelete} />
               </View>
             </View>
           ) : (

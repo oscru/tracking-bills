@@ -23,7 +23,11 @@ export function useUpdateTag() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: TagUpdateInput }) => updateTag(id, patch),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.tags.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.tags.all });
+      // Transactions embed their tags (name, color) — same staleness as categories.
+      qc.invalidateQueries({ queryKey: queryKeys.transactions.all });
+    },
   });
 }
 

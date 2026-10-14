@@ -11,7 +11,7 @@ interface Props {
   metric?: 'expense' | 'income';
 }
 
-function TrendBadge({ pct, metric }: { pct: number | null; metric: 'expense' | 'income' }) {
+export function TrendBadge({ pct, metric }: { pct: number | null; metric: 'expense' | 'income' }) {
   if (pct == null) {
     return <Text className="text-[13px] font-semibold text-ink-3 dark:text-ink-3-dark">Nuevo</Text>;
   }

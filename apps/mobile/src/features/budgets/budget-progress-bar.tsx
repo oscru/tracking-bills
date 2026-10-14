@@ -14,6 +14,8 @@ interface Props {
    * that otherwise computes as "0% spent", indistinguishable from actually
    * being on track. Shown as an explicit warning instead of a healthy bar. */
   hasCategories: boolean;
+  /** `onDark`: drawn on a `HeroCard` — light text, translucent track, bright status colors. */
+  tone?: 'default' | 'onDark';
 }
 
 /** A thin progress bar for one budget's current-period status — green under
@@ -28,9 +30,12 @@ export function BudgetProgressBar({
   isOverBudget,
   currency,
   hasCategories,
+  tone = 'default',
 }: Props) {
   const { colorScheme } = useColorScheme();
-  const dark = colorScheme === 'dark';
+  const onDark = tone === 'onDark';
+  // On the hero surface the background is always dark, whatever the theme.
+  const dark = onDark || colorScheme === 'dark';
   const posColor = dark ? ICON_COLORS.posDark : ICON_COLORS.pos;
   const warningColor = dark ? ICON_COLORS.warningDark : ICON_COLORS.warning;
   const dangerColor = dark ? ICON_COLORS.dangerDark : ICON_COLORS.danger;
@@ -50,9 +55,9 @@ export function BudgetProgressBar({
   return (
     <View className="gap-1.5">
       <View className="flex-row items-center justify-between">
-        <Text className="text-sm text-ink dark:text-ink-dark">
+        <Text className={`text-sm ${onDark ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>
           {formatCurrency(spent, currency)}{' '}
-          <Text className="text-ink-3 dark:text-ink-3-dark">
+          <Text className={onDark ? 'text-white/50' : 'text-ink-3 dark:text-ink-3-dark'}>
             de {formatCurrency(amount, currency)}
           </Text>
         </Text>
@@ -60,7 +65,9 @@ export function BudgetProgressBar({
           {Math.round(pct)}%
         </Text>
       </View>
-      <View className="h-2 overflow-hidden rounded-full bg-line dark:bg-line-dark">
+      <View
+        className={`h-2 overflow-hidden rounded-full ${onDark ? 'bg-white/10' : 'bg-line dark:bg-line-dark'}`}
+      >
         <View
           className="h-full rounded-full"
           style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }}

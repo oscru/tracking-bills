@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Componentes clave</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#4D7C0F}a:hover{color:#3F6212}
+</style>
+</helmet>
+<div style="width: 1330px; height: 900px; box-sizing: border-box; padding: 40px; background: #FFFFFF; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #1A1D21; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px">
+
+  <section style="border-radius: 28px; background: #F6F7F9; padding: 28px; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 800">A · Gradiente lima</h2><span style="font-size: 13px; color: #6B7280">Degradado lima→verde en lo activo y lo principal</span></div>
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #9CA3AF">NAVBAR</span>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <div style="flex: 1; height: 60px; border-radius: 30px; padding: 6px; box-sizing: border-box; background: #1A1D21; display: flex; align-items: center; justify-content: space-between">
+        <span style="height: 48px; border-radius: 24px; padding: 0 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 50%, #7FDB5C 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.55)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Inicio</span>
+        <span style="width: 40px; height: 4px; border-radius: 2px; background: #3A3F46"></span>
+        <span style="width: 40px; height: 4px; border-radius: 2px; background: #3A3F46"></span>
+      </div>
+      <button type="button" aria-label="Nuevo movimiento" style="width: 60px; height: 60px; border-radius: 30px; border: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 50%, #7FDB5C 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 12px 28px rgba(140,210,40,0.5)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1D21" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    </div>
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #9CA3AF">BOTÓN PRINCIPAL</span>
+    <button type="button" style="height: 54px; border-radius: 16px; border: 0; font-size: 16px; font-weight: 700; color: #1A1D21; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 50%, #7FDB5C 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 10px 22px rgba(140,210,40,0.35)">Guardar movimiento</button>
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #9CA3AF">CHIPS Y PROGRESO</span>
+    <div style="display: flex; gap: 8px"><span style="height: 38px; padding: 0 14px; border-radius: 19px; display: flex; align-items: center; font-size: 14px; font-weight: 600; background: linear-gradient(135deg, #E3FF6B, #9BE35E)">Hoy</span><span style="height: 38px; padding: 0 14px; border-radius: 19px; display: flex; align-items: center; font-size: 14px; color: #6B7280; background: #FFFFFF; border: 1px solid #EDEFF2">Ayer</span></div>
+    <div style="height: 8px; border-radius: 4px; background: #E3E5E8"><div style="width: 68%; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #B9F227, #6CD06A)"></div></div>
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #9CA3AF">MODO OSCURO</span>
+    <div style="border-radius: 22px; background: #0B0D0F; padding: 14px; display: flex; gap: 10px; align-items: center">
+      <div style="flex: 1; height: 56px; border-radius: 28px; padding: 5px; box-sizing: border-box; background: #1E2227; border: 1px solid #2A2F35; display: flex; align-items: center"><span style="height: 46px; border-radius: 23px; padding: 0 16px; display: flex; align-items: center; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 50%, #7FDB5C 100%)">Inicio</span></div>
+      <span style="width: 56px; height: 56px; border-radius: 28px; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 50%, #7FDB5C 100%); box-shadow: 0 0 24px rgba(185,242,39,0.45)"></span>
+    </div>
+  </section>
+
+  <section style="position: relative; overflow: hidden; border-radius: 28px; background: #EEF1F4; padding: 28px; display: flex; flex-direction: column; gap: 22px">
+    <div aria-hidden="true" style="position: absolute; width: 300px; height: 300px; right: -80px; top: -40px; border-radius: 50%; background: #C8F55A; filter: blur(70px); opacity: 0.7"></div>
+    <div aria-hidden="true" style="position: absolute; width: 280px; height: 280px; left: -100px; top: 380px; border-radius: 50%; background: #7DE3C3; filter: blur(80px); opacity: 0.55"></div>
+    <div style="position: relative; display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 800">B · Vidrio líquido</h2><span style="font-size: 13px; color: #4B5563">Superficies translúcidas que dejan ver lo de atrás</span></div>
+    <span style="position: relative; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #6B7280">NAVBAR</span>
+    <div style="position: relative; display: flex; align-items: center; gap: 10px">
+      <div style="flex: 1; height: 62px; border-radius: 31px; padding: 6px; box-sizing: border-box; background: rgba(255,255,255,0.42); backdrop-filter: blur(30px) saturate(190%); border: 1px solid rgba(255,255,255,0.85); box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 14px 34px rgba(20,30,10,0.14); display: flex; align-items: center; justify-content: space-between">
+        <span style="height: 48px; border-radius: 24px; padding: 0 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: #B9F227; background: #1A1D21"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Inicio</span>
+        <span style="width: 40px; height: 4px; border-radius: 2px; background: rgba(26,29,33,0.25)"></span>
+        <span style="width: 40px; height: 4px; border-radius: 2px; background: rgba(26,29,33,0.25)"></span>
+      </div>
+      <button type="button" aria-label="Nuevo movimiento" style="width: 62px; height: 62px; border-radius: 31px; display: flex; align-items: center; justify-content: center; background: rgba(185,242,39,0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 12px 28px rgba(140,210,40,0.4)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1D21" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    </div>
+    <span style="position: relative; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #6B7280">BOTÓN PRINCIPAL</span>
+    <button type="button" style="position: relative; height: 54px; border-radius: 16px; font-size: 16px; font-weight: 700; color: #FFFFFF; background: rgba(26,29,33,0.88); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.18); box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 22px rgba(0,0,0,0.18)">Guardar movimiento</button>
+    <span style="position: relative; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #6B7280">CHIPS Y PROGRESO</span>
+    <div style="position: relative; display: flex; gap: 8px"><span style="height: 38px; padding: 0 14px; border-radius: 19px; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: #B9F227; background: #1A1D21">Hoy</span><span style="height: 38px; padding: 0 14px; border-radius: 19px; display: flex; align-items: center; font-size: 14px; color: #374151; background: rgba(255,255,255,0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.8)">Ayer</span></div>
+    <div style="position: relative; height: 8px; border-radius: 4px; background: rgba(26,29,33,0.08)"><div style="width: 68%; height: 8px; border-radius: 4px; background: #1A1D21"></div></div>
+    <span style="position: relative; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #6B7280">MODO OSCURO</span>
+    <div style="position: relative; overflow: hidden; border-radius: 22px; background: #0B0D0F; padding: 14px; display: flex; gap: 10px; align-items: center">
+      <div aria-hidden="true" style="position: absolute; width: 160px; height: 160px; left: 40px; top: -60px; border-radius: 50%; background: #5B7A12; filter: blur(50px); opacity: 0.8"></div>
+      <div style="position: relative; flex: 1; height: 56px; border-radius: 28px; padding: 5px; box-sizing: border-box; background: rgba(40,44,50,0.45); backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.14); display: flex; align-items: center"><span style="height: 46px; border-radius: 23px; padding: 0 16px; display: flex; align-items: center; font-size: 14px; font-weight: 700; background: #B9F227">Inicio</span></div>
+      <span style="position: relative; width: 56px; height: 56px; border-radius: 28px; background: rgba(185,242,39,0.85); border: 1px solid rgba(255,255,255,0.4)"></span>
+    </div>
+  </section>
+
+  <section style="border-radius: 28px; background: #F6F7F9; padding: 28px; display: flex; flex-direction: column; gap: 22px; outline: 2px solid #B9F227; outline-offset: -2px">
+    <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 22px; font-weight: 800">C · Mezcla recomendada</h2><span style="font-size: 13px; color: #6B7280">Vidrio solo en el navbar, degradado solo en lo principal</span></div>
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #9CA3AF">NAVBAR</span>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <div style="flex: 1; height: 62px; border-radius: 31px; padding: 6px; box-sizing: border-box; background: rgba(22,25,29,0.78); backdrop-filter: blur(26px) saturate(180%); border: 1px solid rgba(255,255,255,0.12); box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 14px 32px rgba(0,0,0,0.28); display: flex; align-items: center; justify-content: space-between">
+        <span style="height: 48px; border-radius: 24px; padding: 0 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 55%, #8EE05A 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.55)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Inicio</span>
+        <span style="width: 40px; height: 4px; border-radius: 2px; background: #4A4F56"></span>
+        <span style="width: 40px; height: 4px; border-radius: 2px; background: #4A4F56"></span>
+      </div>
+      <button type="button" aria-label="Nuevo movimiento" style="width: 62px; height: 62px; border-radius: 31px; border: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 55%, #8EE05A 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 0 0 4px rgba(185,242,39,0.18), 0 12px 28px rgba(140,210,40,0.45)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1A1D21" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    </div>
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #9CA3AF">BOTÓN PRINCIPAL</span>
+    <button type="button" style="height: 54px; border-radius: 16px; border: 0; font-size: 16px; font-weight: 700; color: #FFFFFF; background: linear-gradient(160deg, #2A2F36 0%, #15181C 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 10px 22px rgba(21,24,28,0.22)">Guardar movimiento</button>
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #9CA3AF">CHIPS Y PROGRESO</span>
+    <div style="display: flex; gap: 8px"><span style="height: 38px; padding: 0 14px; border-radius: 19px; display: flex; align-items: center; font-size: 14px; font-weight: 600; background: #B9F227">Hoy</span><span style="height: 38px; padding: 0 14px; border-radius: 19px; display: flex; align-items: center; font-size: 14px; color: #6B7280; background: #FFFFFF; border: 1px solid #EDEFF2">Ayer</span></div>
+    <div style="height: 8px; border-radius: 4px; background: #E3E5E8"><div style="width: 68%; height: 8px; border-radius: 4px; background: #F97316"></div></div>
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #9CA3AF">MODO OSCURO</span>
+    <div style="border-radius: 22px; background: #0B0D0F; padding: 14px; display: flex; gap: 10px; align-items: center">
+      <div style="flex: 1; height: 56px; border-radius: 28px; padding: 5px; box-sizing: border-box; background: rgba(32,36,41,0.7); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center"><span style="height: 46px; border-radius: 23px; padding: 0 16px; display: flex; align-items: center; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 55%, #8EE05A 100%)">Inicio</span></div>
+      <span style="width: 56px; height: 56px; border-radius: 28px; background: linear-gradient(135deg, #E3FF6B 0%, #B9F227 55%, #8EE05A 100%); box-shadow: 0 0 0 4px rgba(185,242,39,0.15), 0 0 24px rgba(185,242,39,0.35)"></span>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1330,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,10 +1,11 @@
 import { useSignIn } from '@repo/core/hooks';
 import { toFriendlyMessage } from '@repo/core/utils';
 import { signInSchema } from '@repo/core/validators';
-import { Button, ErrorCard, Screen, TextField } from '@repo/ui';
+import { Button, ErrorCard, ICON_COLORS, Screen, TextField } from '@repo/ui';
 import { Link } from 'expo-router';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { SsoButtons } from '../../features/auth/sso-buttons';
 
@@ -12,6 +13,7 @@ export default function SignIn() {
   const signIn = useSignIn();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
 
   const onSubmit = () => {
@@ -46,6 +48,7 @@ export default function SignIn() {
 
         <TextField
           label="Correo"
+          placeholder="tucorreo@ejemplo.com"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -57,12 +60,27 @@ export default function SignIn() {
         />
         <TextField
           label="Contraseña"
+          placeholder="Tu contraseña"
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
+          secureTextEntry={!showPassword}
           autoComplete="current-password"
           textContentType="password"
           error={errors.password}
+          rightElement={
+            <Pressable
+              onPress={() => setShowPassword((v) => !v)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            >
+              {showPassword ? (
+                <EyeOff size={20} color={ICON_COLORS.ink3} />
+              ) : (
+                <Eye size={20} color={ICON_COLORS.ink3} />
+              )}
+            </Pressable>
+          }
         />
 
         <ErrorCard message={errors.form} />

@@ -1,16 +1,15 @@
-import { ICON_COLORS } from '@repo/ui';
+import { GradientFill, ICON_COLORS, LIME_GLOW } from '@repo/ui';
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect, useRouter, type Tabs } from 'expo-router';
 import { Plus, type LucideIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import type { ComponentProps, ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   Extrapolation,
   interpolate,
-  interpolateColor,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -19,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Glass } from '../design/glass';
 import { ActionIcon } from './action-icon';
 
 type FloatingTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
@@ -110,18 +110,19 @@ const BAR_HEIGHT = 60;
 const BAR_PADDING = 6;
 const ITEM_HEIGHT = BAR_HEIGHT - BAR_PADDING * 2;
 // Width of a collapsed (icon-only) tab.
-const ICON_SLOT = 48;
+const ICON_SLOT = 44;
 const ICON_SIZE = 22;
 // Inside the expanded lime capsule: side padding and the icon-to-label gap.
-const CAPSULE_PADDING_X = 16;
-const LABEL_GAP = 8;
+const CAPSULE_PADDING_X = 12;
+const LABEL_GAP = 6;
+// The bar's glass hairline — it takes room from the content box too.
+const BAR_BORDER = 1;
 const BAR_TOP_GAP = 6;
 const BAR_BOTTOM_GAP = 20;
 const ACTION_GAP = 10;
+// Width of the lime ring around the action button.
+const HALO = 4;
 
-// Lime with zero alpha — the capsule's color when collapsed, so
-// `interpolateColor` fades the same hue in instead of passing through gray.
-const LIME_CLEAR = 'rgba(185, 242, 39, 0)';
 const INACTIVE_ICON = ICON_COLORS.ink2Dark;
 
 // Form screens nested inside a tab (crear/editar, the budget wizard, the
@@ -145,7 +146,7 @@ function isFormRoute(route: NavRoute): boolean {
 const SHADOW = Platform.select({
   ios: {
     shadowColor: '#000',
-    shadowOpacity: 0.28,
+    shadowOpacity: 0.2,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
   },
@@ -206,12 +207,28 @@ function TabBarActionButton() {
             borderRadius: BAR_HEIGHT / 2,
             alignItems: 'center',
             justifyContent: 'center',
+            // Solid lime under the gradient — gives the glow shadow a shape to follow.
             backgroundColor: ICON_COLORS.lime,
           },
-          SHADOW,
+          LIME_GLOW,
           style,
         ]}
       >
+        {/* Halo: a faint lime ring just outside — marks THE action of the app. */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: -HALO,
+            left: -HALO,
+            right: -HALO,
+            bottom: -HALO,
+            borderRadius: BAR_HEIGHT / 2 + HALO,
+            borderWidth: HALO,
+            borderColor: 'rgba(185, 242, 39, 0.2)',
+          }}
+        />
+        <GradientFill radius={BAR_HEIGHT / 2} />
         <ActionIcon icon={Icon} color={ICON_COLORS.ink} size={24} strokeWidth={2.5} />
       </Animated.View>
     </Pressable>
@@ -257,18 +274,27 @@ function TabItem({
     progress.value = withTiming(focused ? 1 : 0, TAB_TIMING);
   }, [focused, progress]);
 
-  const expandedWidth = CAPSULE_PADDING_X * 2 + ICON_SIZE + LABEL_GAP + labelWidth;
+  // The label widths arrive after the first render (they're measured
+  // offscreen), so they go through shared values: an animated style that
+  // just captured the `labelWidth` prop kept the value from when it was
+  // created — 0 — and the capsule never opened to fit the name.
+  const labelWidthSV = useSharedValue(labelWidth);
+  useEffect(() => {
+    labelWidthSV.value = labelWidth;
+  }, [labelWidth, labelWidthSV]);
 
-  const capsuleStyle = useAnimatedStyle(() => ({
-    width: ICON_SLOT + (expandedWidth - ICON_SLOT) * progress.value,
-    backgroundColor: interpolateColor(progress.value, [0, 1], [LIME_CLEAR, ICON_COLORS.lime]),
-  }));
+  const capsuleStyle = useAnimatedStyle(() => {
+    const expandedWidth = CAPSULE_PADDING_X * 2 + ICON_SIZE + LABEL_GAP + labelWidthSV.value;
+    return { width: ICON_SLOT + (expandedWidth - ICON_SLOT) * progress.value };
+  });
+  // The lime gradient fades in as the capsule opens.
+  const fillStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
 
   // The label only shows once the capsule has opened most of the way, so it
   // never reads as clipped mid-word while the width is still small.
   const labelStyle = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0.55, 1], [0, 1], Extrapolation.CLAMP),
-    width: labelWidth * progress.value,
+    width: labelWidthSV.value * progress.value,
     marginLeft: LABEL_GAP * progress.value,
   }));
 
@@ -300,6 +326,9 @@ function TabItem({
           capsuleStyle,
         ]}
       >
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, fillStyle]}>
+          <GradientFill radius={ITEM_HEIGHT / 2} />
+        </Animated.View>
         <View style={{ width: ICON_SIZE, height: ICON_SIZE }}>
           <Animated.View style={[{ position: 'absolute' }, inactiveIconStyle]}>
             {renderIcon(INACTIVE_ICON, false)}
@@ -328,9 +357,9 @@ function TabItem({
  * `AppLayout` provides `useFloatingTabBarHeight()` through
  * `FloatingTabBarInsetContext` so `Screen` can pad content to match.
  *
- * An ink pill of icons where the selected tab opens into a lime capsule
- * with its name, plus the lime action circle floating on its own to the
- * right.
+ * An ink glass pill of icons where the selected tab opens into a lime
+ * gradient capsule with its name, plus the lime gradient action circle
+ * floating on its own to the right.
  */
 export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBarProps) {
   const { colorScheme } = useColorScheme();
@@ -405,7 +434,9 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
           <Text
             key={route.key}
             onLayout={(e) => {
-              const width = Math.ceil(e.nativeEvent.layout.width);
+              // +1: a label laid out at exactly its measured width can still
+              // ellipsize from sub-pixel rounding.
+              const width = Math.ceil(e.nativeEvent.layout.width) + 1;
               setLabelWidths((prev) =>
                 prev[route.key] === width ? prev : { ...prev, [route.key]: width },
               );
@@ -418,7 +449,9 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
       </View>
 
       <View
-        onLayout={(e) => setBarInnerWidth(e.nativeEvent.layout.width - BAR_PADDING * 2)}
+        onLayout={(e) => {
+          setBarInnerWidth(e.nativeEvent.layout.width - (BAR_PADDING + BAR_BORDER) * 2);
+        }}
         style={[
           {
             flex: 1,
@@ -428,13 +461,15 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            backgroundColor: ICON_COLORS.ink,
-            borderWidth: dark ? 1 : 0,
-            borderColor: ICON_COLORS.lineDark,
+            // A hairline catches the light along the glass edge.
+            borderWidth: BAR_BORDER,
+            borderColor: dark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(255, 255, 255, 0.14)',
           },
           SHADOW,
         ]}
       >
+        {/* "It floats": ink glass — content scrolling underneath shows through. */}
+        <Glass tone="dark" radius={BAR_HEIGHT / 2} style={StyleSheet.absoluteFill} />
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const focused = displayIndex === index;

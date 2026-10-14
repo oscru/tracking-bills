@@ -72,6 +72,7 @@ export default function EditTag() {
                 <View className="flex-1">
                   <Button
                     label="Eliminar"
+                    variant="danger"
                     loading={remove.isPending}
                     onPress={() =>
                       remove.mutate(id, {

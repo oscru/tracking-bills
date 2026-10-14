@@ -24,6 +24,7 @@ import {
   Screen,
   ICON_COLORS,
   useTabBarScrollPadding,
+  HeroCard,
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
@@ -118,14 +119,15 @@ export default function GoalDetail() {
   const markCompleted = (v: boolean) =>
     updateGoal.mutate({ id: goal.id, patch: { is_completed: v } });
 
+  // Readable on the always-dark hero card the pace line sits on.
   const paceColor =
     pace == null
       ? undefined
       : pace.status === 'ahead'
-        ? 'text-pos dark:text-pos-dark'
+        ? 'text-pos-dark'
         : pace.status === 'behind'
-          ? 'text-warning dark:text-warning-dark'
-          : 'text-ink-2 dark:text-ink-2-dark';
+          ? 'text-warning-dark'
+          : 'text-white/70';
   const paceText =
     pace == null
       ? null
@@ -162,17 +164,18 @@ export default function GoalDetail() {
             </View>
           ) : null}
 
-          <View className="gap-4 rounded-card bg-surface p-5 dark:bg-surface-dark">
+          {/* Saved vs. target — the screen's headline, on the hero surface. */}
+          <HeroCard contentStyle={{ gap: 16 }}>
             <View className="flex-row items-center gap-3">
-              <View className="h-11 w-11 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
+              <View className="h-11 w-11 items-center justify-center rounded-full bg-lime/15">
                 <Ionicons
                   name={(goal.icon as keyof typeof Ionicons.glyphMap) ?? 'flag-outline'}
                   size={20}
-                  color={ICON_COLORS.limeInk}
+                  color={ICON_COLORS.lime}
                 />
               </View>
               <View className="flex-1">
-                <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+                <Text className="text-sm font-semibold text-white">
                   {goal.is_completed
                     ? '¡Meta completada!'
                     : progress.isComplete
@@ -181,12 +184,12 @@ export default function GoalDetail() {
                   · {goal.currency}
                 </Text>
                 {goal.deadline ? (
-                  <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
+                  <Text className="text-xs text-white/55">
                     Fecha límite: {formatDate(goal.deadline)}
                   </Text>
                 ) : null}
                 {linkedAccount ? (
-                  <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
+                  <Text className="text-xs text-white/55">
                     Cuenta de ahorro: {linkedAccount.name}
                   </Text>
                 ) : null}
@@ -199,18 +202,19 @@ export default function GoalDetail() {
               pct={progress.pct}
               isComplete={progress.isComplete}
               currency={goal.currency}
+              tone="onDark"
             />
 
             {pace ? (
-              <View className="gap-0.5 border-t border-line pt-3 dark:border-line-dark">
-                <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
+              <View className="gap-0.5 border-t border-white/10 pt-3">
+                <Text className="text-xs text-white/55">
                   Ritmo planeado: {formatCurrency(Number(goal.contribution_amount), goal.currency)}{' '}
                   cada {goal.contribution_interval_days} días
                 </Text>
                 <Text className={`text-xs font-semibold ${paceColor}`}>{paceText}</Text>
               </View>
             ) : null}
-          </View>
+          </HeroCard>
 
           {progress.isComplete && !goal.is_completed && !goal.archived ? (
             <Button

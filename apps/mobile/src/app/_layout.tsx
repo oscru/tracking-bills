@@ -14,6 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableFreeze } from 'react-native-screens';
 import * as WebBrowser from 'expo-web-browser';
 
+import { AppLock } from '../features/security/app-lock';
 import { FloatingDraftBubble } from '../features/transactions/floating-draft-bubble';
 
 const queryClient = createQueryClient();
@@ -111,6 +112,8 @@ export default function RootLayout() {
               <SheetPortalHost>
                 <AuthGate />
               </SheetPortalHost>
+              {/* After the sheet portal, so a locked app covers open sheets too. */}
+              <AppLock />
             </NavigationTheme>
           </SafeAreaProvider>
         </SessionProvider>

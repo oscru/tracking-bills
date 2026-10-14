@@ -1,6 +1,8 @@
 import { ActivityIndicator, Pressable, Text, type PressableProps } from 'react-native';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'ghost-danger';
+import { GradientFill } from './gradient';
+
+type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'ghost-danger';
 
 export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
@@ -8,23 +10,31 @@ export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> 
   loading?: boolean;
 }
 
+// Matches the `rounded-ctl` radius in the preset — the gradient is drawn,
+// not a background color, so it needs the number.
+const CONTROL_RADIUS = 14;
+
 const container: Record<Variant, string> = {
-  primary: 'bg-ink dark:bg-ink-dark',
+  // Drawn by `GradientFill` (the lime "action" gradient) — no flat background.
+  primary: 'bg-transparent',
   secondary: 'bg-[#F1F2F4] dark:bg-line-dark',
+  danger: 'bg-danger dark:bg-danger-dark',
   ghost: 'bg-transparent',
   'ghost-danger': 'bg-transparent',
 };
 
 const text: Record<Variant, string> = {
-  primary: 'text-surface dark:text-surface-dark',
+  primary: 'text-ink',
   secondary: 'text-ink dark:text-ink-dark',
+  danger: 'text-white',
   ghost: 'text-lime-ink dark:text-lime-ink-dark',
   'ghost-danger': 'text-danger dark:text-danger-dark',
 };
 
 const spinner: Record<Variant, string> = {
-  primary: '#fff',
+  primary: '#1A1D21',
   secondary: '#1A1D21',
+  danger: '#fff',
   ghost: '#4D7C0F',
   'ghost-danger': '#E5484D',
 };
@@ -51,10 +61,15 @@ export function Button({
       className={`h-[52px] flex-row items-center justify-center rounded-ctl px-4 active:opacity-80 ${container[variant]}`}
       {...props}
     >
+      {variant === 'primary' ? <GradientFill radius={CONTROL_RADIUS} /> : null}
       {loading ? (
         <ActivityIndicator color={spinner[variant]} />
       ) : (
-        <Text className={`text-base font-semibold ${text[variant]}`}>{label}</Text>
+        <Text
+          className={`text-base ${variant === 'primary' ? 'font-bold' : 'font-semibold'} ${text[variant]}`}
+        >
+          {label}
+        </Text>
       )}
     </Pressable>
   );

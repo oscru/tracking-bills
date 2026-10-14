@@ -1,5 +1,5 @@
 import { addDaysISO, formatDate, getDateFormat, todayISODate } from '@repo/core/utils';
-import { BottomSheet, Chip, ICON_COLORS } from '@repo/ui';
+import { BottomSheet, Chip, GradientFill, ICON_COLORS } from '@repo/ui';
 import * as Haptics from 'expo-haptics';
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
@@ -346,10 +346,9 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
                               onPress={() => pick(iso)}
                               accessibilityLabel={longLabel(date)}
                               accessibilityState={{ selected }}
-                              className={`h-10 w-10 items-center justify-center rounded-full active:opacity-60 ${
-                                selected ? 'bg-lime' : ''
-                              }`}
+                              className="h-10 w-10 items-center justify-center rounded-full active:opacity-60"
                             >
+                              {selected ? <GradientFill radius={20} /> : null}
                               <Text
                                 className={`text-[15px] ${
                                   selected

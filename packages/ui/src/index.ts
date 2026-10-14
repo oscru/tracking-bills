@@ -24,6 +24,14 @@ export {
   type EmptyIllustrationProps,
 } from './empty-state-illustrations';
 export { ErrorCard, type ErrorCardProps } from './error-card';
+export {
+  GradientFill,
+  HeroCard,
+  LIME_GLOW,
+  LIME_GRADIENT,
+  type GradientFillProps,
+  type HeroCardProps,
+} from './gradient';
 export { Fab, type FabProps } from './fab';
 export {
   FloatingTabBarInsetContext,

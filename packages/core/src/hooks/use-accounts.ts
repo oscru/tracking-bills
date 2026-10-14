@@ -26,6 +26,10 @@ export function useUpdateAccount() {
       updateAccount(id, patch),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      // Transactions and favorites embed a copy of their account (name,
+      // currency) — a rename wouldn't show in their lists until refetched.
+      qc.invalidateQueries({ queryKey: queryKeys.transactions.all });
+      qc.invalidateQueries({ queryKey: queryKeys.favoriteTransactions.all });
       // Archiving an account server-side unlinks any goal pointed at it
       // (`accounts_unlink_goal_on_archive` trigger) — refetch goals too so a
       // cached goal doesn't keep showing a dead `account_id`.

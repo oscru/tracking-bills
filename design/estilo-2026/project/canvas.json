@@ -1,0 +1,89 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-12T20:00:00Z"
+  },
+  "title": "Estilo 2026 — propuestas",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "A · Gradiente lima"
+    },
+    "Glass.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "B · Vidrio líquido"
+    },
+    "Hybrid.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "C · Mezcla recomendada"
+    },
+    "Components.dc.html": {
+      "x": 0,
+      "y": 964,
+      "w": 1330,
+      "h": 900,
+      "title": "Componentes clave, lado a lado"
+    },
+    "NewTx.dc.html": {
+      "x": 0,
+      "y": 2207,
+      "w": 390,
+      "h": 844,
+      "title": "C · Nuevo movimiento"
+    },
+    "Movements.dc.html": {
+      "x": 470,
+      "y": 2207,
+      "w": 390,
+      "h": 844,
+      "title": "C · Movimientos"
+    },
+    "AccountDetail.dc.html": {
+      "x": 940,
+      "y": 2207,
+      "w": 390,
+      "h": 844,
+      "title": "C · Detalle de cuenta"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Glass.dc.html",
+    "Hybrid.dc.html",
+    "Components.dc.html",
+    "NewTx.dc.html",
+    "Movements.dc.html",
+    "AccountDetail.dc.html"
+  ],
+  "notes": {
+    "rowTitle": {
+      "x": 0,
+      "y": -260,
+      "text": "Inicio con tres direcciones",
+      "kind": "title1",
+      "maxW": 1330
+    },
+    "row3Title": {
+      "x": 0,
+      "y": 1947,
+      "text": "La mezcla C en el resto de la app",
+      "kind": "title1",
+      "maxW": 1330
+    }
+  },
+  "designSystems": []
+}

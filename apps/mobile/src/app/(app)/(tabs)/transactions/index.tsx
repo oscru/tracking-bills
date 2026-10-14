@@ -17,9 +17,11 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ListFilter } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlashList } from '@shopify/flash-list';
+import { useColorScheme } from 'nativewind';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountIcon } from '../../../../features/accounts/account-icon';
+import { Glass } from '../../../../features/design/glass';
 import { FavoritesRow } from '../../../../features/favorites/favorites-row';
 import {
   dayHeaderLabel,
@@ -67,6 +69,8 @@ const TITLE: Record<TransactionType, string> = {
 export default function TransactionsScreen() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const params = useLocalSearchParams<{
     type?: TransactionType;
     from?: string;
@@ -344,7 +348,18 @@ export default function TransactionsScreen() {
             renderItem={({ item }) => {
               if (item.kind === 'header') {
                 return (
-                  <View className="flex-row items-center justify-between bg-canvas pb-2 pt-4 dark:bg-canvas-dark">
+                  // "It floats": once pinned, the rows scroll under it frosted.
+                  <Glass
+                    tone="light"
+                    darkScheme={dark}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingTop: 16,
+                      paddingBottom: 8,
+                    }}
+                  >
                     <Text className="text-[13px] font-bold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
                       {dayHeaderLabel(item.date)}
                     </Text>
@@ -357,7 +372,7 @@ export default function TransactionsScreen() {
                         )
                         .join(' · ')}
                     </Text>
-                  </View>
+                  </Glass>
                 );
               }
               const row = (

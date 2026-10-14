@@ -632,6 +632,174 @@ export function categoryMonthlyHistory(
   return keys.map((month) => ({ month, total: fromCents(totalCents.get(month) ?? 0) }));
 }
 
+/** How far back a category's detail charts look. */
+export type CategoryHistoryRange = 'all' | 'year' | 'half' | 'month';
+
+export interface SpendSeriesPoint {
+  /** `YYYY-MM-DD` (day), `YYYY-MM` (month) or `YYYY` (year). */
+  key: string;
+  /** Short axis label; empty for days that aren't labelled, to keep the axis readable. */
+  label: string;
+  total: number;
+}
+
+export interface SpendSeries {
+  granularity: 'day' | 'month' | 'year';
+  points: SpendSeriesPoint[];
+  /** Inclusive `YYYY-MM-DD` bounds the series covers. */
+  from: string;
+  to: string;
+}
+
+/** Months covered by a range ending in `referenceDate`'s month (`all` isn't fixed-size). */
+const RANGE_MONTHS: Record<Exclude<CategoryHistoryRange, 'all' | 'month'>, number> = {
+  year: 12,
+  half: 6,
+};
+const MONTH_RANGE_DAYS = 30;
+// "Todo el tiempo" switches from monthly to yearly bars past this many months.
+const ALL_TIME_MONTHLY_LIMIT = 24;
+
+function monthKeyOf(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Settled spend (cents) per `category_id` in `ids`, bucketed by `bucketOf(date)`. */
+function bucketCategorySpend(
+  transactions: CategoryHistoryTx[],
+  ids: ReadonlySet<string>,
+  from: string,
+  to: string,
+  bucketOf: (isoDate: string) => string,
+): Map<string, number> {
+  const totals = new Map<string, number>();
+  for (const t of transactions) {
+    if (!t.is_completed || t.category_id == null || !ids.has(t.category_id)) continue;
+    if (t.transaction_date < from || t.transaction_date > to) continue;
+    const key = bucketOf(t.transaction_date);
+    totals.set(key, (totals.get(key) ?? 0) + toCents(t.amount));
+  }
+  return totals;
+}
+
+/** The inclusive date bounds of `range` ending today, and of the equal-length period right before it. */
+export function categoryRangeBounds(
+  range: Exclude<CategoryHistoryRange, 'all'>,
+  referenceDate: Date = new Date(),
+): { from: string; to: string; previousFrom: string; previousTo: string } {
+  const to = todayISODate(referenceDate);
+  if (range === 'month') {
+    const from = addDaysISO(to, -(MONTH_RANGE_DAYS - 1));
+    return {
+      from,
+      to,
+      previousFrom: addDaysISO(from, -MONTH_RANGE_DAYS),
+      previousTo: addDaysISO(from, -1),
+    };
+  }
+  const months = RANGE_MONTHS[range];
+  const y = referenceDate.getFullYear();
+  const m = referenceDate.getMonth();
+  const from = todayISODate(new Date(y, m - (months - 1), 1));
+  const previousFrom = todayISODate(new Date(y, m - (2 * months - 1), 1));
+  return { from, to, previousFrom, previousTo: addDaysISO(from, -1) };
+}
+
+/**
+ * Settled spend over time for a SET of categories (a parent plus its
+ * subcategories, or just one), oldest → newest:
+ * - `month`: one point per day, last 30 days;
+ * - `half` / `year`: one point per calendar month (6 / 12, current included);
+ * - `all`: per month since the first matching transaction — per year once
+ *   that's more than two years of months.
+ * Pass transactions already narrowed to one currency (`groupByAccountCurrency`).
+ */
+export function categorySpendSeries(
+  transactions: CategoryHistoryTx[],
+  categoryIds: readonly string[],
+  range: CategoryHistoryRange,
+  referenceDate: Date = new Date(),
+): SpendSeries {
+  const ids = new Set(categoryIds);
+  const today = todayISODate(referenceDate);
+
+  if (range === 'month') {
+    const { from, to } = categoryRangeBounds('month', referenceDate);
+    const totals = bucketCategorySpend(transactions, ids, from, to, (d) => d);
+    const points: SpendSeriesPoint[] = [];
+    for (let i = 0; i < MONTH_RANGE_DAYS; i++) {
+      const key = addDaysISO(from, i);
+      // Label about once a week (and the last day), so 30 bars stay legible.
+      const label = i % 7 === 0 || i === MONTH_RANGE_DAYS - 1 ? String(Number(key.slice(8, 10))) : '';
+      points.push({ key, label, total: fromCents(totals.get(key) ?? 0) });
+    }
+    return { granularity: 'day', points, from, to };
+  }
+
+  let firstMonth: Date;
+  if (range === 'all') {
+    let earliest: string | null = null;
+    for (const t of transactions) {
+      if (!t.is_completed || t.category_id == null || !ids.has(t.category_id)) continue;
+      if (earliest == null || t.transaction_date < earliest) earliest = t.transaction_date;
+    }
+    const [ey, em] = (earliest ?? today).split('-').map(Number);
+    firstMonth = new Date(ey ?? referenceDate.getFullYear(), (em ?? 1) - 1, 1);
+  } else {
+    const months = RANGE_MONTHS[range];
+    firstMonth = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - (months - 1), 1);
+  }
+  const from = todayISODate(firstMonth);
+  const spanMonths =
+    (referenceDate.getFullYear() - firstMonth.getFullYear()) * 12 +
+    (referenceDate.getMonth() - firstMonth.getMonth()) +
+    1;
+
+  if (range === 'all' && spanMonths > ALL_TIME_MONTHLY_LIMIT) {
+    const totals = bucketCategorySpend(transactions, ids, from, today, (d) => d.slice(0, 4));
+    const points: SpendSeriesPoint[] = [];
+    for (let y = firstMonth.getFullYear(); y <= referenceDate.getFullYear(); y++) {
+      points.push({ key: String(y), label: String(y), total: fromCents(totals.get(String(y)) ?? 0) });
+    }
+    return { granularity: 'year', points, from, to: today };
+  }
+
+  const totals = bucketCategorySpend(transactions, ids, from, today, (d) => d.slice(0, 7));
+  const points: SpendSeriesPoint[] = [];
+  for (let i = 0; i < spanMonths; i++) {
+    const key = monthKeyOf(new Date(firstMonth.getFullYear(), firstMonth.getMonth() + i, 1));
+    points.push({ key, label: formatMonthShort(key), total: fromCents(totals.get(key) ?? 0) });
+  }
+  return { granularity: 'month', points, from, to: today };
+}
+
+export interface CategoryRangeComparison {
+  current: number;
+  previous: number;
+  /** % change vs. the previous equal-length period; `null` when nothing was spent then. */
+  pctChange: number | null;
+}
+
+/** Settled spend of a set of categories in `range` vs. the equal-length period before it. */
+export function categoryRangeComparison(
+  transactions: CategoryHistoryTx[],
+  categoryIds: readonly string[],
+  range: Exclude<CategoryHistoryRange, 'all'>,
+  referenceDate: Date = new Date(),
+): CategoryRangeComparison {
+  const ids = new Set(categoryIds);
+  const b = categoryRangeBounds(range, referenceDate);
+  const sum = (from: string, to: string) =>
+    [...bucketCategorySpend(transactions, ids, from, to, () => 'x').values()].reduce((a, c) => a + c, 0);
+  const current = fromCents(sum(b.from, b.to));
+  const previous = fromCents(sum(b.previousFrom, b.previousTo));
+  return {
+    current,
+    previous,
+    pctChange: previous > 0 ? ((current - previous) / previous) * 100 : null,
+  };
+}
+
 interface MonthlyTrendTx {
   type: string;
   amount: number | string;

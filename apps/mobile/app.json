@@ -38,7 +38,14 @@
       ],
       "expo-sharing",
       "expo-web-browser",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Usa Face ID para desbloquear tu app y proteger tu información financiera."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

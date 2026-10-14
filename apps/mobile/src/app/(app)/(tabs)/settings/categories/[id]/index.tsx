@@ -161,7 +161,7 @@ export default function CategoryDetail() {
             </Text>
           </View>
 
-          <CategoryHistoryChart categoryId={category.id} color={category.color} />
+          <CategoryHistoryChart category={category} subcategories={subcategories} />
 
           {subcategories.length > 0 ? (
             <View className="gap-2">
