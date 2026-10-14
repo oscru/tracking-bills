@@ -9,10 +9,12 @@ interface Props {
   onClose: () => void;
   /** Called with the new tag's id right after it's created. */
   onCreated: (id: string) => void;
+  /** Prefills the name — e.g. what the user had typed in the tag search. */
+  initialName?: string;
 }
 
 /** Lets the user create a tag inline (e.g. from the transaction form) without navigating away. */
-export function TagQuickCreateSheet({ visible, onClose, onCreated }: Props) {
+export function TagQuickCreateSheet({ visible, onClose, onCreated, initialName }: Props) {
   const create = useCreateTag();
   const { error, setError, clearError } = useFormError();
 
@@ -20,7 +22,8 @@ export function TagQuickCreateSheet({ visible, onClose, onCreated }: Props) {
     <BottomSheet visible={visible} onClose={onClose} title="Nueva tag">
       <View className="px-5 pt-1">
         <TagForm
-          key={visible ? 'open' : 'closed'}
+          key={visible ? `open-${initialName ?? ''}` : 'closed'}
+          initial={initialName ? { name: initialName } : undefined}
           submitLabel="Crear"
           submitting={create.isPending}
           error={error}

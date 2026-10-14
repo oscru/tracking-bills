@@ -14,11 +14,11 @@ import {
   type HomeLayoutItem,
   getDateFormat,
 } from '@repo/core/utils';
-import { HeroCard, Screen, StaggerItem, ICON_COLORS, useTabBarScrollPadding } from '@repo/ui';
-import { useRouter } from 'expo-router';
-import { Calendar, ChevronLeft, ChevronRight, Clock, Eye, EyeOff } from 'lucide-react-native';
+import { Screen, StaggerItem, ICON_COLORS, useTabBarScrollPadding } from '@repo/ui';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Calendar, ChevronRight, Clock, Eye, EyeOff } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountIcon } from '../../../features/accounts/account-icon';
@@ -26,9 +26,20 @@ import { BudgetsCard } from '../../../features/home/budgets-card';
 import { CategorySpendCard } from '../../../features/home/category-spend-card';
 import { HomeSkeleton } from '../../../features/home/home-skeleton';
 import { MonthPickerSheet } from '../../../features/home/month-picker-sheet';
+import { MonthSwiper } from '../../../features/home/month-swiper';
+import { RollingNumber } from '../../../features/home/rolling-number';
 import { MonthlyTrendChart } from '../../../features/home/monthly-trend-chart';
 import { NotificationBell } from '../../../features/notifications/notification-bell';
 import { WeeklySpendCard } from '../../../features/home/weekly-spend-card';
+
+// The balance's type, spelled out — the rolling digits need the exact line
+// height (it's each wheel's window). Matches text-4xl font-bold tracking-tight.
+const BALANCE_TEXT = {
+  fontSize: 36,
+  lineHeight: 42,
+  fontWeight: '700' as const,
+  letterSpacing: -0.9,
+};
 
 export default function HomeScreen() {
   const scrollPadding = useTabBarScrollPadding();
@@ -39,6 +50,9 @@ export default function HomeScreen() {
   const { data: transactions, isLoading: loadingTx } = useTransactions();
   const { data: profile } = useProfile();
   const [hidden, setHidden] = useState(false);
+  // Bumped each time Inicio comes into view — replays the balance's roll.
+  const [rollKey, setRollKey] = useState(0);
+  useFocusEffect(useCallback(() => setRollKey((k) => k + 1), []));
   const layoutOrder = useMemo(
     () => visibleHomeLayout(profile?.home_layout, profile?.home_hidden_items),
     [profile],
@@ -272,28 +286,15 @@ export default function HomeScreen() {
 
   return (
     <Screen edges={['top']} className="gap-5">
-      <View className="flex-row items-center justify-center gap-4">
-        <Pressable onPress={() => shiftMonth(-1)} hitSlop={10} accessibilityLabel="Mes anterior">
-          <ChevronLeft size={22} color={ICON_COLORS.ink3} />
-        </Pressable>
-        <Pressable
-          onPress={() => setMonthPickerOpen(true)}
-          hitSlop={8}
-          className="min-w-[100px] items-center active:opacity-60"
-        >
-          <Text className="text-xs font-medium text-ink-3 dark:text-ink-3-dark">{yearLabel}</Text>
-          <Text className="text-base font-bold capitalize text-ink dark:text-ink-dark">
-            {monthLabel}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => shiftMonth(1)}
-          hitSlop={10}
-          disabled={isCurrentMonth}
-          accessibilityLabel="Mes siguiente"
-        >
-          <ChevronRight size={22} color={isCurrentMonth ? '#D1D5DB' : ICON_COLORS.ink3} />
-        </Pressable>
+      <View className="relative">
+        <MonthSwiper
+          yearLabel={yearLabel}
+          monthLabel={monthLabel}
+          isCurrentMonth={isCurrentMonth}
+          monthKey={selectedMonth}
+          onShift={shiftMonth}
+          onOpenPicker={() => setMonthPickerOpen(true)}
+        />
         {/* Pinned to the row's right edge so the month selector stays centered. */}
         <View className="absolute bottom-0 right-0 top-0 justify-center">
           <NotificationBell />
@@ -348,11 +349,20 @@ export default function HomeScreen() {
                 {balances.map((b) => (
                   <View
                     key={b.currency}
-                    className={balances.length > 1 ? 'flex-row items-baseline gap-1.5' : undefined}
+                    className={balances.length > 1 ? 'flex-row items-end gap-1.5' : undefined}
                   >
-                    <Text className="text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
-                      {hidden ? '• • • •' : formatCurrency(b.total, b.currency)}
-                    </Text>
+                    {hidden ? (
+                      <Text className="text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
+                        • • • •
+                      </Text>
+                    ) : (
+                      <RollingNumber
+                        value={formatCurrency(b.total, b.currency)}
+                        textStyle={BALANCE_TEXT}
+                        className="text-ink dark:text-ink-dark"
+                        trigger={rollKey}
+                      />
+                    )}
                     {balances.length > 1 ? (
                       <Text className="text-sm font-semibold text-ink-3 dark:text-ink-3-dark">
                         {b.currency}

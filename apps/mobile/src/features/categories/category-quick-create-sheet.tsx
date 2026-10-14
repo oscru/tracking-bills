@@ -11,20 +11,32 @@ interface Props {
   type: CategoryType;
   /** Called with the new category's id right after it's created. */
   onCreated: (id: string) => void;
+  /** Prefills the name — e.g. what the user had typed in the picker's search. */
+  initialName?: string;
 }
 
 /** Lets the user create a category inline (e.g. from the transaction form) without navigating away. */
-export function CategoryQuickCreateSheet({ visible, onClose, type, onCreated }: Props) {
+export function CategoryQuickCreateSheet({
+  visible,
+  onClose,
+  type,
+  onCreated,
+  initialName,
+}: Props) {
   const { height: windowHeight } = useWindowDimensions();
   const create = useCreateCategory();
   const { error, setError, clearError } = useFormError();
 
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Nueva categoría">
-      <View style={{ maxHeight: windowHeight * 0.7 }} className="px-5 pt-1">
+      {/* A fixed height, not just a max: the form is a flex-1 ScrollView, which
+      collapsed to nothing inside a container with no height of its own —
+      the sheet opened showing only its title. */}
+      <View style={{ height: windowHeight * 0.7 }} className="px-5 pt-1">
         <CategoryForm
-          key={visible ? 'open' : 'closed'}
-          initial={{ type }}
+          // Remounts per open (and per prefilled name) so it starts fresh.
+          key={visible ? `open-${initialName ?? ''}` : 'closed'}
+          initial={{ type, name: initialName }}
           submitLabel="Crear"
           submitting={create.isPending}
           error={error}

@@ -1,7 +1,7 @@
 import { BottomSheet, CategoryDot, ICON_COLORS } from '@repo/ui';
-import { Check } from 'lucide-react-native';
-import type { ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Check, Plus } from 'lucide-react-native';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 export interface MultiSelectOption {
   value: string;
@@ -19,7 +19,13 @@ interface Props {
   options: MultiSelectOption[];
   values: string[];
   onChange: (values: string[]) => void;
-  onCreateNew?: () => void;
+  /** Shows a create row in the list; called with the searched text when it
+   * matched no option exactly, to prefill the new item's name. */
+  onCreateNew?: (name?: string) => void;
+  /** The create row's label when nothing is typed, e.g. "Nueva tag". */
+  createLabel?: string;
+  /** Adds a search field with this placeholder. */
+  searchPlaceholder?: string;
 }
 
 function Checkbox({ checked }: { checked: boolean }) {
@@ -43,8 +49,23 @@ export function MultiSelectSheet({
   values,
   onChange,
   onCreateNew,
+  createLabel = 'Crear nueva',
+  searchPlaceholder,
 }: Props) {
+  const [q, setQ] = useState('');
+  const typed = q.trim();
+  const needle = typed.toLowerCase();
+  const visibleOptions = useMemo(
+    () => (needle ? options.filter((o) => o.label.toLowerCase().includes(needle)) : options),
+    [options, needle],
+  );
+  const exactMatch = needle !== '' && options.some((o) => o.label.toLowerCase() === needle);
   const allSelected = options.length > 0 && values.length === options.length;
+
+  const createNew = () => {
+    setQ('');
+    onCreateNew?.(typed || undefined);
+  };
 
   const toggleAll = () => {
     onChange(allSelected ? [] : options.map((o) => o.value));
@@ -59,34 +80,63 @@ export function MultiSelectSheet({
       onClose={onClose}
       title={title}
       headerAction={
-        <View className="flex-row items-center gap-4">
-          {onCreateNew ? (
-            <Pressable onPress={onCreateNew} hitSlop={8}>
-              <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                + Nueva
-              </Text>
-            </Pressable>
-          ) : null}
-          <Pressable onPress={onClose} hitSlop={8}>
-            <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Listo
-            </Text>
-          </Pressable>
-        </View>
-      }
-    >
-      <ScrollView className="max-h-[480px]" contentContainerClassName="pb-4">
-        <Pressable
-          onPress={toggleAll}
-          className="min-h-[56px] flex-row items-center gap-3 border-t border-line px-5 dark:border-line-dark"
-        >
-          <Checkbox checked={allSelected} />
-          <Text className="flex-1 text-[15px] font-bold text-ink dark:text-ink-dark">
-            Seleccionar todo
+        <Pressable onPress={onClose} hitSlop={8}>
+          <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+            Listo
           </Text>
         </Pressable>
+      }
+    >
+      {searchPlaceholder ? (
+        <View className="px-5 pb-3">
+          <TextInput
+            value={q}
+            onChangeText={setQ}
+            placeholder={searchPlaceholder}
+            placeholderTextColor={ICON_COLORS.ink3}
+            autoCorrect={false}
+            className="h-11 rounded-ctl border border-line bg-surface px-3 text-[15px] text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark"
+          />
+        </View>
+      ) : null}
 
-        {options.map((opt) => {
+      <ScrollView
+        className="max-h-[480px]"
+        contentContainerClassName="pb-4"
+        keyboardShouldPersistTaps="handled"
+      >
+        {onCreateNew && !exactMatch ? (
+          <Pressable
+            onPress={createNew}
+            accessibilityRole="button"
+            className="min-h-[56px] flex-row items-center gap-3 border-t border-line px-5 active:opacity-70 dark:border-line-dark"
+          >
+            <View className="h-7 w-7 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
+              <Plus size={16} color={ICON_COLORS.limeInk} strokeWidth={2.5} />
+            </View>
+            <Text
+              className="flex-1 text-[15px] font-semibold text-lime-ink dark:text-lime-ink-dark"
+              numberOfLines={1}
+            >
+              {typed ? `Crear «${typed}»` : createLabel}
+            </Text>
+          </Pressable>
+        ) : null}
+
+        {/* Hidden while searching — "todo" would mean only the filtered few. */}
+        {typed ? null : (
+          <Pressable
+            onPress={toggleAll}
+            className="min-h-[56px] flex-row items-center gap-3 border-t border-line px-5 dark:border-line-dark"
+          >
+            <Checkbox checked={allSelected} />
+            <Text className="flex-1 text-[15px] font-bold text-ink dark:text-ink-dark">
+              Seleccionar todo
+            </Text>
+          </Pressable>
+        )}
+
+        {visibleOptions.map((opt) => {
           const checked = values.includes(opt.value);
           return (
             <Pressable
@@ -104,9 +154,9 @@ export function MultiSelectSheet({
           );
         })}
 
-        {options.length === 0 ? (
+        {visibleOptions.length === 0 && !onCreateNew ? (
           <Text className="px-5 py-4 text-sm text-ink-2 dark:text-ink-2-dark">
-            No hay opciones todavía.
+            {typed ? 'Sin resultados.' : 'No hay opciones todavía.'}
           </Text>
         ) : null}
       </ScrollView>

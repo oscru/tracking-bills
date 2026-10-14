@@ -1,20 +1,29 @@
 import '../global.css';
 import '../web-setup';
 
-import { createQueryClient, SessionProvider, useSession } from '@repo/core/hooks';
+import {
+  createQueryClient,
+  SessionProvider,
+  useAccounts,
+  useBudgets,
+  useProfile,
+  useSession,
+  useTransactions,
+} from '@repo/core/hooks';
 import { SheetPortalHost, ICON_COLORS } from '@repo/ui';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
-import { useEffect, useMemo, type ReactNode } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableFreeze } from 'react-native-screens';
 import * as WebBrowser from 'expo-web-browser';
 
 import { AppLock } from '../features/security/app-lock';
+import { AppSplash } from '../features/splash/app-splash';
 import { FloatingDraftBubble } from '../features/transactions/floating-draft-bubble';
 
 const queryClient = createQueryClient();
@@ -81,16 +90,49 @@ function AuthRedirect() {
   return null;
 }
 
+/**
+ * Loads what Inicio shows first while the splash is still up, so the app
+ * opens mostly loaded instead of on a long skeleton. Rendered only with a
+ * session (fetching before sign-in would cache empty, unauthorized results).
+ * The queries stay cached after this unmounts — Inicio's own hooks pick
+ * them up instantly.
+ */
+const READY_QUERIES = 3;
+
+function WarmUpHome({ onReady }: { onReady: () => void }) {
+  const transactions = useTransactions();
+  const accounts = useAccounts();
+  const profile = useProfile();
+  const budgets = useBudgets();
+  // Steps aside once MOST of it is in (3 of the 4 — usually all but the
+  // heavy transaction history); Inicio's skeleton covers the rest. Waiting
+  // for everything held the splash up too long.
+  const settled =
+    [transactions, accounts, profile, budgets].filter((q) => !q.isLoading).length >= READY_QUERIES;
+  useEffect(() => {
+    if (settled) onReady();
+  }, [settled, onReady]);
+  return null;
+}
+
+/** The launch screen: until the session is read and, when signed in, Inicio's data has loaded. */
+function LaunchSplash() {
+  const { session, loading } = useSession();
+  const [homeReady, setHomeReady] = useState(false);
+  const markHomeReady = useCallback(() => setHomeReady(true), []);
+  return (
+    <>
+      {session && !homeReady ? <WarmUpHome onReady={markHomeReady} /> : null}
+      <AppSplash ready={!loading && (!session || homeReady)} />
+    </>
+  );
+}
+
 function AuthGate() {
   const { session, loading } = useSession();
 
-  if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-canvas dark:bg-canvas-dark">
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  // The branded splash (`AppSplash`) covers this while the session loads.
+  if (loading) return <View className="flex-1 bg-canvas-dark" />;
 
   return (
     <>
@@ -114,6 +156,8 @@ export default function RootLayout() {
               </SheetPortalHost>
               {/* After the sheet portal, so a locked app covers open sheets too. */}
               <AppLock />
+              {/* Last, so it covers everything — including the lock screen. */}
+              <LaunchSplash />
             </NavigationTheme>
           </SafeAreaProvider>
         </SessionProvider>

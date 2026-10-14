@@ -177,6 +177,9 @@ export function MovementForm({
   const [toAccountPickerOpen, setToAccountPickerOpen] = useState(false);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [categoryQuickCreateOpen, setCategoryQuickCreateOpen] = useState(false);
+  // What was typed in the picker's search when "Crear «…»" was tapped.
+  const [categoryCreateName, setCategoryCreateName] = useState<string | undefined>(undefined);
+  const [tagCreateName, setTagCreateName] = useState<string | undefined>(undefined);
   const [tagQuickCreateOpen, setTagQuickCreateOpen] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -648,7 +651,10 @@ export function MovementForm({
         type={type === 'income' ? 'income' : 'expense'}
         selectedId={categoryId}
         onSelect={setCategoryId}
-        onCreateNew={() => setCategoryQuickCreateOpen(true)}
+        onCreateNew={(name) => {
+          setCategoryCreateName(name);
+          setCategoryQuickCreateOpen(true);
+        }}
         allowNone={false}
       />
       <AccountPicker
@@ -677,12 +683,18 @@ export function MovementForm({
         options={tagOptions}
         values={tagIds}
         onChange={setTagIds}
-        onCreateNew={() => setTagQuickCreateOpen(true)}
+        searchPlaceholder="Buscar tag…"
+        createLabel="Nueva tag"
+        onCreateNew={(name) => {
+          setTagCreateName(name);
+          setTagQuickCreateOpen(true);
+        }}
       />
       <CategoryQuickCreateSheet
         visible={categoryQuickCreateOpen}
         onClose={() => setCategoryQuickCreateOpen(false)}
         type={type === 'income' ? 'income' : 'expense'}
+        initialName={categoryCreateName}
         onCreated={(id) => {
           setCategoryId(id);
           setCategoryQuickCreateOpen(false);
@@ -692,6 +704,7 @@ export function MovementForm({
       <TagQuickCreateSheet
         visible={tagQuickCreateOpen}
         onClose={() => setTagQuickCreateOpen(false)}
+        initialName={tagCreateName}
         onCreated={(id) => {
           setTagIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
           setTagQuickCreateOpen(false);

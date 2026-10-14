@@ -17,6 +17,7 @@ import {
 } from '@repo/core/utils';
 import {
   BottomSheet,
+  Button,
   Chip,
   IconButton,
   ListRow,
@@ -32,6 +33,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { ACCOUNT_TYPE_ICON } from '../../../../../features/accounts/account-types';
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
+import { MarkDoneSheet } from '../../../../../features/transactions/mark-done-sheet';
 import { TransactionDetailSkeleton } from '../../../../../features/transactions/transaction-detail-skeleton';
 
 export default function TransactionDetail() {
@@ -46,6 +48,7 @@ export default function TransactionDetail() {
   // transaction, not just its current one.
   const { data: allTransactions } = useTransactions();
   const [activityOpen, setActivityOpen] = useState(false);
+  const [markDoneOpen, setMarkDoneOpen] = useState(false);
 
   const account = (accounts ?? []).find((a) => a.id === tx?.account_id) ?? null;
   const toAccount = (accounts ?? []).find((a) => a.id === tx?.to_account_id) ?? null;
@@ -209,6 +212,10 @@ export default function TransactionDetail() {
             </Pressable>
           </View>
 
+          {tx.is_completed === false ? (
+            <Button label="Marcar como realizado" onPress={() => setMarkDoneOpen(true)} />
+          ) : null}
+
           <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
             {isTransfer ? (
               <>
@@ -312,6 +319,13 @@ export default function TransactionDetail() {
           ) : null}
         </ScrollView>
       </View>
+
+      <MarkDoneSheet
+        visible={markDoneOpen}
+        onClose={() => setMarkDoneOpen(false)}
+        transactionId={tx.id}
+        type={tx.type}
+      />
 
       <BottomSheet visible={activityOpen} onClose={() => setActivityOpen(false)} title="Actividad">
         <View className="gap-4 px-5 pb-8 pt-1">

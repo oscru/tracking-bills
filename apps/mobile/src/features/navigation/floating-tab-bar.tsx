@@ -1,9 +1,9 @@
 import { GradientFill, ICON_COLORS, LIME_GLOW } from '@repo/ui';
 import * as Haptics from 'expo-haptics';
-import { useFocusEffect, useRouter, type Tabs } from 'expo-router';
+import { useFocusEffect, useRouter, useSegments, type Href } from 'expo-router';
 import { Plus, type LucideIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import type { ComponentProps, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -21,7 +21,35 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '../design/glass';
 import { ActionIcon } from './action-icon';
 
-type FloatingTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
+/** One tab as the bar sees it — `state` is its nested navigator, when it has one. */
+interface BarRoute {
+  key: string;
+  name: string;
+  state?: { index?: number; routes: NavRoute[] };
+}
+
+interface FloatingTabBarProps {
+  state: { index: number; routes: BarRoute[] };
+  descriptors: Record<
+    string,
+    {
+      options: {
+        title?: string;
+        tabBarIcon?: (props: { focused: boolean; color: string; size: number }) => ReactNode;
+      };
+    }
+  >;
+  navigation: {
+    emit: (event: { type: 'tabPress'; target: string; canPreventDefault?: boolean }) => {
+      defaultPrevented: boolean;
+    };
+    navigate: (name: string) => void;
+  };
+  /** Something is open over the tabs (the "nuevo movimiento" screen, the profile…). */
+  covered?: boolean;
+  /** A form is open inside the current tab — overrides the route-name check. */
+  formOpen?: boolean;
+}
 
 export interface TabBarAction {
   icon: LucideIcon;
@@ -104,6 +132,9 @@ export function useTabBarAction(action: TabBarAction | null) {
 // dip below its collapsed width and back, and since the bar spreads its
 // tabs with `space-between`, every icon jittered along with it.
 const TAB_TIMING = { duration: 260, easing: Easing.out(Easing.cubic) };
+// Sliding away under an opening modal / back up after it closes — a touch
+// slower and softer than a tab switch, so it reads as making room.
+const COVER_TIMING = { duration: 320, easing: Easing.inOut(Easing.cubic) };
 const PRESS_SPRING = { damping: 14, stiffness: 300, mass: 0.6 };
 
 const BAR_HEIGHT = 60;
@@ -361,7 +392,13 @@ function TabItem({
  * gradient capsule with its name, plus the lime gradient action circle
  * floating on its own to the right.
  */
-export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBarProps) {
+export function FloatingTabBar({
+  state,
+  descriptors,
+  navigation,
+  covered = false,
+  formOpen,
+}: FloatingTabBarProps) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
@@ -393,21 +430,29 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
   // not whatever the switch has changed it to since.
   const pressStart = useRef<{ index: number; wasFocused: boolean } | null>(null);
 
-  const hidden = isFormRoute(state.routes[state.index] as NavRoute);
+  const hidden = formOpen ?? isFormRoute(state.routes[state.index] as NavRoute);
   const hideOffset = BAR_HEIGHT + BAR_TOP_GAP + BAR_BOTTOM_GAP + insets.bottom;
   const hideProgress = useSharedValue(hidden ? 1 : 0);
   useEffect(() => {
     hideProgress.value = withTiming(hidden ? 1 : 0, TAB_TIMING);
   }, [hidden, hideProgress]);
+  // Something opened OVER the tabs: the bar slides down out of the way —
+  // drawn above that screen (see `AppTabBar`), so the motion is visible —
+  // and back up once it closes.
+  const coverProgress = useSharedValue(covered ? 1 : 0);
+  useEffect(() => {
+    coverProgress.value = withTiming(covered ? 1 : 0, COVER_TIMING);
+  }, [covered, coverProgress]);
+
   const hideStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: hideOffset * hideProgress.value }],
+    transform: [{ translateY: hideOffset * Math.max(hideProgress.value, coverProgress.value) }],
   }));
 
   return (
     <Animated.View
-      pointerEvents={hidden ? 'none' : 'box-none'}
-      accessibilityElementsHidden={hidden}
-      importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
+      pointerEvents={hidden || covered ? 'none' : 'box-none'}
+      accessibilityElementsHidden={hidden || covered}
+      importantForAccessibility={hidden || covered ? 'no-hide-descendants' : 'auto'}
       style={[
         {
           position: 'absolute',
@@ -535,5 +580,94 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
 
       <TabBarActionButton />
     </Animated.View>
+  );
+}
+
+// --- mounted above the app's screens ------------------------------------------
+
+export interface AppTab {
+  /** The route name inside the (tabs) navigator. */
+  name: string;
+  title: string;
+  icon: LucideIcon;
+  href: Href;
+}
+
+const FORM_SEGMENT = /^(new|edit|import)$/;
+
+/**
+ * The floating tab bar, rendered by the app's root layout AFTER its screen
+ * stack — so it sits above everything, including the "nuevo movimiento"
+ * screen sliding up from the bottom (navbar › that screen › the tabs). It
+ * reads where the user is from the route segments (e.g. `(app) › (tabs) ›
+ * settings › accounts`), which update on every navigation — not from
+ * `useRootNavigationState`, a one-off snapshot that never re-rendered the bar
+ * (it stayed empty, so the bar didn't show at all).
+ */
+export function AppTabBar({ tabs }: { tabs: AppTab[] }) {
+  const router = useRouter();
+  const segments = useSegments() as string[];
+
+  // `(app) › (tabs) › <tab> › …` while on the tabs; `(app) › <screen>` when
+  // something is open over them. Inicio's own route is the tabs' index, so
+  // it has no segment of its own.
+  const onTabs = segments[1] === '(tabs)';
+  const activeName = onTabs ? (segments[2] ?? 'index') : null;
+  const inside = onTabs ? segments.slice(3) : [];
+  const [lastTab, setLastTab] = useState(activeName ?? tabs[0]?.name ?? 'index');
+  // Keep showing the tab you came from while something covers the tabs.
+  if (activeName && activeName !== lastTab) setLastTab(activeName);
+  const shownTab = activeName ?? lastTab;
+
+  const routes: BarRoute[] = tabs.map((t) => ({ key: t.name, name: t.name }));
+  const state = {
+    index: Math.max(
+      0,
+      tabs.findIndex((t) => t.name === shownTab),
+    ),
+    routes,
+  };
+
+  const descriptors = Object.fromEntries(
+    tabs.map((t) => [
+      t.name,
+      {
+        options: {
+          title: t.title,
+          // Lucide is single-weight; the lime capsule carries the selected
+          // state, a bolder stroke is just a light extra touch.
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
+            <t.icon color={color} size={22} strokeWidth={focused ? 2.25 : 1.75} />
+          ),
+        },
+      },
+    ]),
+  );
+
+  const hrefOf = (name: string) => tabs.find((t) => t.name === name)?.href;
+  const navigation: FloatingTabBarProps['navigation'] = {
+    emit: ({ target }) => {
+      // Re-tapping the current tab with something pushed inside it goes back
+      // to that tab's first screen (the tab navigator's usual tabPress).
+      if (target === activeName && inside.length > 0) {
+        const href = hrefOf(target);
+        if (href) router.navigate(href);
+      }
+      return { defaultPrevented: false };
+    },
+    navigate: (name) => {
+      const href = hrefOf(name);
+      if (href) router.navigate(href);
+    },
+  };
+
+  return (
+    <FloatingTabBar
+      state={state}
+      descriptors={descriptors}
+      navigation={navigation}
+      covered={!onTabs}
+      formOpen={inside.some((segment) => FORM_SEGMENT.test(segment))}
+    />
   );
 }

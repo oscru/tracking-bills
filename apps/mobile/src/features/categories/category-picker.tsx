@@ -2,7 +2,7 @@ import { useCategories, useCategoryTree, useTransactions } from '@repo/core/hook
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { Category, CategoryType } from '@repo/core/types';
 import { BottomSheet, CategoryDot, Chip, ICON_COLORS } from '@repo/ui';
-import { Check } from 'lucide-react-native';
+import { Check, Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
@@ -12,7 +12,9 @@ interface Props {
   type: CategoryType;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
-  onCreateNew?: () => void;
+  /** Shows "Nueva categoría" rows in the list; called with the searched name
+   * when the search matched no existing category, to prefill the form. */
+  onCreateNew?: (name?: string) => void;
   /** Pick a PARENT: flat list of top-level categories only, plus "Ninguna". */
   parentOnly?: boolean;
   /** Hide this id (a category can't be its own parent). */
@@ -83,6 +85,22 @@ export function CategoryPicker({
       );
   }, [tree, q, parentOnly, excludeId, excludeIds, selectedId]);
 
+  // The search as typed, when no existing category is named exactly that —
+  // offered as "Crear «…»" so it doesn't have to be typed again.
+  const typedName = q.trim();
+  const exactMatch = useMemo(() => {
+    const needle = typedName.toLowerCase();
+    if (!needle) return true;
+    return (allCategories ?? []).some(
+      (c) => c.type === type && resolveCategoryLabel(c).toLowerCase() === needle,
+    );
+  }, [allCategories, typedName, type]);
+
+  const createNew = (name?: string) => {
+    setQ('');
+    onCreateNew?.(name);
+  };
+
   const pick = (id: string | null) => {
     onSelect(id);
     setQ('');
@@ -94,15 +112,6 @@ export function CategoryPicker({
       visible={visible}
       onClose={onClose}
       title={parentOnly ? 'Categoría superior' : 'Categoría'}
-      headerAction={
-        onCreateNew ? (
-          <Pressable onPress={onCreateNew} hitSlop={8}>
-            <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              + Crear
-            </Text>
-          </Pressable>
-        ) : undefined
-      }
     >
       <View className="px-5 pb-3">
         <TextInput
@@ -139,6 +148,24 @@ export function CategoryPicker({
         contentContainerClassName="pb-4"
         keyboardShouldPersistTaps="handled"
       >
+        {onCreateNew && (!typedName || !exactMatch) ? (
+          <Pressable
+            onPress={() => createNew(typedName || undefined)}
+            accessibilityRole="button"
+            className="flex-row items-center gap-3 border-t border-line px-5 py-4 active:opacity-70 dark:border-line-dark"
+          >
+            <View className="h-7 w-7 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
+              <Plus size={16} color={ICON_COLORS.limeInk} strokeWidth={2.5} />
+            </View>
+            <Text
+              className="flex-1 text-[15px] font-semibold text-lime-ink dark:text-lime-ink-dark"
+              numberOfLines={1}
+            >
+              {typedName ? `Crear «${typedName}»` : 'Nueva categoría'}
+            </Text>
+          </Pressable>
+        ) : null}
+
         {parentOnly || allowNone ? (
           <Pressable
             onPress={() => pick(null)}
@@ -160,9 +187,7 @@ export function CategoryPicker({
               <Text className="flex-1 text-[15px] font-bold text-ink dark:text-ink-dark">
                 {resolveCategoryLabel(p)}
               </Text>
-              {selectedId === p.id ? (
-                <Check size={18} color={ICON_COLORS.limeInk} />
-              ) : null}
+              {selectedId === p.id ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
             </Pressable>
             {p.children.map((c) => (
               <Pressable
@@ -174,9 +199,7 @@ export function CategoryPicker({
                 <Text className="flex-1 text-[14px] text-ink-2 dark:text-ink-2-dark">
                   {resolveCategoryLabel(c)}
                 </Text>
-                {selectedId === c.id ? (
-                  <Check size={16} color={ICON_COLORS.limeInk} />
-                ) : null}
+                {selectedId === c.id ? <Check size={16} color={ICON_COLORS.limeInk} /> : null}
               </Pressable>
             ))}
           </View>

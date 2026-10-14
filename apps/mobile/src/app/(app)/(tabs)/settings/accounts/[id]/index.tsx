@@ -14,11 +14,12 @@ import {
   Screen,
   SwitchRow,
   ICON_COLORS,
-  useTabBarScrollPadding,
+  useFloatingTabBarInset,
   HeroCard,
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowDown, CircleArrowUp, Pencil } from 'lucide-react-native';
+import { useColorScheme } from 'nativewind';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -29,7 +30,9 @@ import { ACCOUNT_TYPE_LABEL } from '../../../../../../features/accounts/account-
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 export default function AccountDetail() {
-  const scrollPadding = useTabBarScrollPadding();
+  const tabBarInset = useFloatingTabBarInset();
+  const { colorScheme } = useColorScheme();
+  const dark = colorScheme === 'dark';
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
@@ -119,7 +122,7 @@ export default function AccountDetail() {
         <ScrollView
           className="flex-1"
           contentContainerClassName="gap-5"
-          contentContainerStyle={{ paddingBottom: scrollPadding }}
+          contentContainerStyle={{ paddingBottom: 16 }}
         >
           {/* The account's balance is this screen's headline — glowing in the
           account's own color, so each account feels like itself. */}
@@ -165,7 +168,7 @@ export default function AccountDetail() {
               className="flex-1 rounded-2xl border border-line bg-[#F1F2F4] p-4 active:opacity-70 dark:border-line-dark dark:bg-line-dark"
             >
               <View className="flex-row items-center gap-1.5">
-                <CircleArrowUp size={16} color={ICON_COLORS.ink} />
+                <CircleArrowUp size={16} color={dark ? ICON_COLORS.inkDark : ICON_COLORS.ink} />
                 <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
                   Gastos
                 </Text>
@@ -196,31 +199,35 @@ export default function AccountDetail() {
               updateAccount.mutate({ id: account.id, patch: { include_in_total: v } })
             }
           />
-
-          <View className="gap-3 border-t border-line pt-5 dark:border-line-dark">
-            <Button
-              label={account.archived ? 'Desarchivar' : 'Archivar'}
-              variant={account.archived ? 'secondary' : 'ghost-danger'}
-              loading={updateAccount.isPending}
-              onPress={() => {
-                if (account.archived) return toggleArchive();
-                // A balance left in an archived account is real money that's
-                // easy to forget about — archiving only hides it from
-                // pickers (see `accountBalance`, which ignores `archived`),
-                // it doesn't zero it out. Require settling it first.
-                if (Math.round(balance * 100) !== 0) {
-                  setArchiveBlockedMessage(
-                    'No puedes archivar una cuenta con saldo distinto de cero. Transfiere el saldo a otra cuenta o ajústalo a 0 primero.',
-                  );
-                  return;
-                }
-                setArchiveBlockedMessage(null);
-                setConfirmArchive(true);
-              }}
-            />
-            <ErrorCard message={archiveBlockedMessage} />
-          </View>
         </ScrollView>
+        {/* Pinned to the bottom, clear of the floating tab bar — not the last
+        thing in the scroll, where it floated mid-screen on a short page. */}
+        <View
+          className="gap-3 border-t border-line pt-3 dark:border-line-dark"
+          style={{ paddingBottom: tabBarInset + 4 }}
+        >
+          <Button
+            label={account.archived ? 'Desarchivar' : 'Archivar'}
+            variant={account.archived ? 'secondary' : 'ghost-danger'}
+            loading={updateAccount.isPending}
+            onPress={() => {
+              if (account.archived) return toggleArchive();
+              // A balance left in an archived account is real money that's
+              // easy to forget about — archiving only hides it from
+              // pickers (see `accountBalance`, which ignores `archived`),
+              // it doesn't zero it out. Require settling it first.
+              if (Math.round(balance * 100) !== 0) {
+                setArchiveBlockedMessage(
+                  'No puedes archivar una cuenta con saldo distinto de cero. Transfiere el saldo a otra cuenta o ajústalo a 0 primero.',
+                );
+                return;
+              }
+              setArchiveBlockedMessage(null);
+              setConfirmArchive(true);
+            }}
+          />
+          <ErrorCard message={archiveBlockedMessage} />
+        </View>
       </View>
 
       <AdjustBalanceSheet

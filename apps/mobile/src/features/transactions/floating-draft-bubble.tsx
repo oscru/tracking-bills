@@ -1,6 +1,6 @@
 import { useAccounts } from '@repo/core/hooks';
 import { evalAmount, formatCurrency } from '@repo/core/utils';
-import { ICON_COLORS } from '@repo/ui';
+import { GradientFill, ICON_COLORS, LIME_GLOW } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import {
   ArrowLeftRight,
@@ -10,20 +10,68 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Dimensions, PanResponder, Pressable, Text, View } from 'react-native';
+import Reanimated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { draftTransactionStore, useDraftTransaction } from './draft-transaction-store';
 import { DiscardConfirmSheet } from './discard-confirm-sheet';
 
-const WIDTH = 72;
-const HEIGHT = 42;
+// Wide enough for the type icon next to the amount.
+const WIDTH = 104;
+const HEIGHT = 44;
 const EDGE_MARGIN = 10;
 const TAP_SLOP = 6;
 const TAB_BAR_CLEARANCE = 96;
-const BUBBLE_BG = ICON_COLORS.ink;
-const BUBBLE_FG = ICON_COLORS.lime;
+// The bubble wears the "action" treatment (lime gradient + glow, ink content):
+// in ink it disappeared against the dark canvas, and tapping it is an action —
+// it reopens the draft.
+const BUBBLE_FG = ICON_COLORS.ink;
+const PULSE_MS = 1800;
+
+/**
+ * A lime ring that keeps swelling out of the bubble and fading — a quiet
+ * "you left something here". Reanimated, transform + opacity only.
+ */
+function PulseRing() {
+  const t = useSharedValue(0);
+  useEffect(() => {
+    t.value = withRepeat(
+      withTiming(1, { duration: PULSE_MS, easing: Easing.out(Easing.quad) }),
+      -1,
+      false,
+    );
+  }, [t]);
+  const style = useAnimatedStyle(() => ({
+    opacity: 0.55 * (1 - t.value),
+    transform: [{ scaleX: 1 + 0.25 * t.value }, { scaleY: 1 + 0.6 * t.value }],
+  }));
+  return (
+    <Reanimated.View
+      pointerEvents="none"
+      style={[
+        {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: HEIGHT / 2,
+          borderWidth: 2,
+          borderColor: ICON_COLORS.lime,
+        },
+        style,
+      ]}
+    />
+  );
+}
 
 const TYPE_ICON: Record<string, LucideIcon> = {
   income: CircleArrowDown,
@@ -92,27 +140,28 @@ export function FloatingDraftBubble() {
     <Animated.View
       style={{ position: 'absolute', left: pos.x, top: pos.y, width: WIDTH, height: HEIGHT }}
     >
+      <PulseRing />
       <View
         {...panResponder.panHandlers}
-        style={{ backgroundColor: BUBBLE_BG }}
-        className="h-full w-full items-center justify-center rounded-full px-2 shadow-lg"
+        style={[{ borderRadius: HEIGHT / 2, backgroundColor: ICON_COLORS.lime }, LIME_GLOW]}
+        className="h-full w-full flex-row items-center justify-center gap-1.5 px-3"
       >
+        <GradientFill radius={HEIGHT / 2} />
+        {(() => {
+          const TypeIcon = TYPE_ICON[snapshot.type] ?? Receipt;
+          return <TypeIcon size={amountLabel ? 16 : 20} color={BUBBLE_FG} strokeWidth={2.4} />;
+        })()}
         {amountLabel ? (
           <Text
-            style={{ color: BUBBLE_FG }}
-            className="text-[12px] font-bold"
+            style={{ color: BUBBLE_FG, flexShrink: 1 }}
+            className="text-[13px] font-extrabold"
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.7}
           >
             {amountLabel}
           </Text>
-        ) : (
-          (() => {
-            const TypeIcon = TYPE_ICON[snapshot.type] ?? Receipt;
-            return <TypeIcon size={20} color={BUBBLE_FG} />;
-          })()
-        )}
+        ) : null}
       </View>
 
       <Pressable
