@@ -15,7 +15,7 @@ import {
   type NotificationRead,
   type TransactionWithRefs,
 } from '../supabase';
-import { todayISODate } from '../utils';
+import { addDaysISO, todayISODate } from '../utils';
 import { queryKeys } from './keys';
 import { useAccounts } from './use-accounts';
 import { useBudgets } from './use-budgets';
@@ -24,6 +24,7 @@ import { useProfile } from './use-profile';
 import {
   useBudgetSpendTransactions,
   useGoalTransactions,
+  useReceivedPeerTransfers,
   useTransactions,
 } from './use-transactions';
 
@@ -130,12 +131,15 @@ export function useNotificationInput(): {
     enabled: goals != null,
   });
 
+  // Transfers linked people sent in the last week ("Ana te envió…").
+  const { data: received } = useReceivedPeerTransfers(addDaysISO(todayISODate(), -7));
+
   const input = useMemo<NotificationInput | undefined>(() => {
     if (!budgets || !goals || !accounts || !pending || !budgetSpends || !goalTx) return undefined;
     const byId = new Map<string, TransactionWithRefs>();
     for (const list of [pending, budgetSpends, goalTx]) for (const t of list) byId.set(t.id, t);
-    return { transactions: [...byId.values()], budgets, goals, accounts };
-  }, [budgets, goals, accounts, pending, budgetSpends, goalTx]);
+    return { transactions: [...byId.values()], received: received ?? [], budgets, goals, accounts };
+  }, [budgets, goals, accounts, pending, budgetSpends, goalTx, received]);
 
   return {
     input,

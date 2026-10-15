@@ -30,7 +30,11 @@ export type AccountType =
   | 'savings'
   | 'loan'
   | 'cash'
-  | 'credit_card';
+  | 'credit_card'
+  /** A linked person, in your ledger: transfers sent to them / received from them (see peer transfers). Managed by the database, never created by hand. */
+  | 'contact';
+/** The types a user can create an account as — everything but `contact`. */
+export type OwnAccountType = Exclude<AccountType, 'contact'>;
 
 /** A movement (transaction) is income, expense, or a transfer between accounts. */
 export type TransactionType = 'income' | 'expense' | 'transfer';

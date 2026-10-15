@@ -39,7 +39,10 @@ function fromSupabaseError(error: SupabaseError): string | null {
   const constraint = constraintNameFrom(error.message);
   switch (error.code) {
     case '23505': // unique_violation
-      return (constraint && UNIQUE_CONSTRAINT_MESSAGES[constraint]) || 'Ya existe un registro con esos datos.';
+      return (
+        (constraint && UNIQUE_CONSTRAINT_MESSAGES[constraint]) ||
+        'Ya existe un registro con esos datos.'
+      );
     case '23503': // foreign_key_violation
       return (
         (constraint && FK_CONSTRAINT_MESSAGES[constraint]) ||
@@ -48,6 +51,31 @@ function fromSupabaseError(error: SupabaseError): string | null {
     case '23502': // not_null_violation
       return 'Falta completar un campo requerido.';
     case '23514': // check_violation
+      {
+        const noReceive = /peer_no_receive_account:([A-Z]{3}):(.*)$/.exec(error.message);
+        if (noReceive) {
+          const who = noReceive[2]?.trim() || 'Esa persona';
+          return `${who} no tiene una cuenta en ${noReceive[1]} para recibir. Pídele que elija una en Opciones › Personas.`;
+        }
+      }
+      if (/peer_invite_invalid/.test(error.message)) {
+        return 'Ese código no es válido o ya expiró. Pide uno nuevo.';
+      }
+      if (/peer_invite_own/.test(error.message)) {
+        return 'Ese código es tuyo — compártelo con la otra persona para que lo use ella.';
+      }
+      if (/peer_already_linked/.test(error.message)) {
+        return 'Ya estás vinculado con esa persona.';
+      }
+      if (/no longer linked with this person|not linked with this person/.test(error.message)) {
+        return 'Ya no estás vinculado con esa persona.';
+      }
+      if (/received transfer can only be (changed|removed)/.test(error.message)) {
+        return 'Esta transferencia la registró quien te la envió: solo esa persona puede cambiarla o eliminarla.';
+      }
+      if (/arrives on its own/.test(error.message)) {
+        return 'El dinero que te envía una persona vinculada llega solo; no se registra a mano.';
+      }
       if (/non-zero balance/.test(error.message)) {
         return 'No puedes archivar una cuenta con saldo distinto de cero. Ajusta el saldo a 0 antes de archivarla.';
       }

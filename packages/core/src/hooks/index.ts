@@ -45,6 +45,7 @@ export { useBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget } from '.
 export { useGoals, useCreateGoal, useUpdateGoal, useDeleteGoal } from './use-goals';
 export {
   useTransactions,
+  useReceivedPeerTransfers,
   useTransactionPages,
   useGoalTransactions,
   useBudgetSpendTransactions,
@@ -71,3 +72,13 @@ export {
   useDismissNotification,
   type NotificationItem,
 } from './use-notifications';
+export {
+  useLinkedPeers,
+  usePeerAccounts,
+  useCreatePeerInvite,
+  useAcceptPeerInvite,
+  useSetPeerReceiveAccount,
+  usePeerContactAccount,
+  useUnlinkPeer,
+} from './use-peers';
+export { useLedgerRealtime } from './use-ledger-realtime';

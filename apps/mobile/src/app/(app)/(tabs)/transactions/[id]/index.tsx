@@ -5,6 +5,7 @@ import {
   useStableRecord,
   useTransaction,
   useAccountNetBefore,
+  useUpdateTransaction,
 } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import {
@@ -31,6 +32,7 @@ import { ArrowRight, Heart, Info, Pencil } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { AccountPicker } from '../../../../../features/accounts/account-picker';
 import { ACCOUNT_TYPE_ICON } from '../../../../../features/accounts/account-types';
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 import { MarkDoneSheet } from '../../../../../features/transactions/mark-done-sheet';
@@ -48,6 +50,8 @@ export default function TransactionDetail() {
   // transaction, not just its current one.
   const [activityOpen, setActivityOpen] = useState(false);
   const [markDoneOpen, setMarkDoneOpen] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
+  const updateTransaction = useUpdateTransaction();
 
   const account = (accounts ?? []).find((a) => a.id === tx?.account_id) ?? null;
   const toAccount = (accounts ?? []).find((a) => a.id === tx?.to_account_id) ?? null;
@@ -84,8 +88,10 @@ export default function TransactionDetail() {
     };
   }, [tx, account, toAccount, accountNet, toAccountNet]);
 
+  // A transfer someone linked sent you: they own its amount, date and
+  // status, so there's nothing to edit here but where it landed (below).
   useTabBarAction(
-    tx
+    tx && !tx.is_peer_mirror
       ? {
           icon: Pencil,
           accessibilityLabel: 'Editar movimiento',
@@ -126,7 +132,18 @@ export default function TransactionDetail() {
       : resolveCategoryLabel(tx.category)
     : 'Sin categoría';
   const description = tx.description?.trim();
-  const title = isTransfer ? 'Transferencia' : description || categoryLabel;
+  // Transfers between linked people (see peer transfers): the "account" on
+  // the other side is a contact account standing for that person.
+  const fromPerson = tx.account?.type === 'contact' ? tx.account : null;
+  const toPerson = tx.to_account?.type === 'contact' ? tx.to_account : null;
+  const title = isTransfer
+    ? fromPerson
+      ? `Recibida de ${fromPerson.name}`
+      : toPerson
+        ? `Enviada a ${toPerson.name}`
+        : 'Transferencia'
+    : description || categoryLabel;
+  const goPeople = () => router.push('/(app)/settings/peers');
 
   const goAccount = (accountId: string | null) => {
     if (!accountId) return;
@@ -210,21 +227,39 @@ export default function TransactionDetail() {
             </Pressable>
           </View>
 
-          {tx.is_completed === false ? (
+          {tx.is_peer_mirror ? (
+            <Text className="px-1 text-xs text-ink-2 dark:text-ink-2-dark">
+              {tx.is_completed === false
+                ? `${fromPerson?.name ?? 'Esa persona'} te la enviará el ${formatDate(tx.transaction_date)}: aún no llega a tu cuenta, y se reflejará sola cuando la realice.`
+                : `${fromPerson?.name ?? 'Esa persona'} te la envió: no cuenta como ingreso.`}{' '}
+              Solo quien la envió puede cambiar el monto, la fecha o eliminarla; tú puedes elegir a
+              qué cuenta llegó.
+            </Text>
+          ) : tx.is_completed === false ? (
             <Button label="Marcar como realizado" onPress={() => setMarkDoneOpen(true)} />
           ) : null}
 
           <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
             {isTransfer ? (
               <>
-                <ListRow
-                  title="De"
-                  subtitle={account?.name}
-                  dotColor={account?.color}
-                  icon={account ? ACCOUNT_TYPE_ICON[account.type] : undefined}
-                  showChevron
-                  onPress={() => goAccount(tx.account_id)}
-                />
+                {fromPerson ? (
+                  <ListRow
+                    title="De"
+                    subtitle={fromPerson.name}
+                    icon={ACCOUNT_TYPE_ICON.contact}
+                    showChevron
+                    onPress={goPeople}
+                  />
+                ) : (
+                  <ListRow
+                    title="De"
+                    subtitle={account?.name}
+                    dotColor={account?.color}
+                    icon={account ? ACCOUNT_TYPE_ICON[account.type] : undefined}
+                    showChevron
+                    onPress={() => goAccount(tx.account_id)}
+                  />
+                )}
                 <View className="h-px bg-line dark:bg-line-dark" />
                 {tx.goal ? (
                   <ListRow
@@ -234,14 +269,28 @@ export default function TransactionDetail() {
                     showChevron
                     onPress={() => goGoal(tx.goal_id)}
                   />
-                ) : (
+                ) : toPerson ? (
                   <ListRow
                     title="A"
+                    subtitle={toPerson.name}
+                    icon={ACCOUNT_TYPE_ICON.contact}
+                    showChevron
+                    onPress={goPeople}
+                  />
+                ) : (
+                  <ListRow
+                    title={tx.is_peer_mirror ? 'Llegó a' : 'A'}
                     subtitle={toAccount?.name}
                     dotColor={toAccount?.color}
                     icon={toAccount ? ACCOUNT_TYPE_ICON[toAccount.type] : undefined}
                     showChevron
-                    onPress={() => goAccount(tx.to_account_id)}
+                    // A received transfer can be moved to another of your
+                    // accounts — the only thing about it you can change.
+                    onPress={
+                      tx.is_peer_mirror
+                        ? () => setMoveOpen(true)
+                        : () => goAccount(tx.to_account_id)
+                    }
                   />
                 )}
               </>
@@ -317,6 +366,19 @@ export default function TransactionDetail() {
           ) : null}
         </ScrollView>
       </View>
+
+      {tx.is_peer_mirror ? (
+        <AccountPicker
+          visible={moveOpen}
+          onClose={() => setMoveOpen(false)}
+          title="¿A qué cuenta llegó?"
+          selectedId={tx.to_account_id}
+          currencyFilter={currency}
+          onSelect={(accountId) =>
+            updateTransaction.mutate({ id: tx.id, patch: { to_account_id: accountId } })
+          }
+        />
+      ) : null}
 
       <MarkDoneSheet
         visible={markDoneOpen}

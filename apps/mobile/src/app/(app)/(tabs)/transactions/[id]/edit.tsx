@@ -7,7 +7,7 @@ import {
   useUpdateTransaction,
 } from '@repo/core/hooks';
 import { Screen } from '@repo/ui';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, Text } from 'react-native';
 
 import { MovementForm } from '../../../../../features/transactions/movement-form';
@@ -35,6 +35,12 @@ export default function EditTransaction() {
         <Text className="text-base text-ink-2 dark:text-ink-2-dark">Movimiento no encontrado.</Text>
       </Screen>
     );
+  }
+
+  // A transfer a linked person sent you belongs to them — only where it
+  // landed can change, and that's done from its detail screen.
+  if (tx.is_peer_mirror) {
+    return <Redirect href={{ pathname: '/(app)/transactions/[id]', params: { id: tx.id } }} />;
   }
 
   return (

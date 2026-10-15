@@ -7,6 +7,7 @@ import {
   Clock,
   PiggyBank,
   Trophy,
+  UserRound,
   Wallet,
   X,
   type LucideIcon,
@@ -18,6 +19,7 @@ const CATEGORY_ICON: Record<NotificationCategory, LucideIcon> = {
   pending: Clock,
   budget: Wallet,
   goal: PiggyBank,
+  peer: UserRound,
 };
 
 /** Tile background class + icon color per severity — same tints the app uses for its alert cards. */

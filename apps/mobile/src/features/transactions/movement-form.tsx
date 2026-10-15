@@ -2,6 +2,8 @@ import {
   useAccounts,
   useCategories,
   useFavoriteTransactions,
+  usePeerAccounts,
+  usePeerContactAccount,
   useProfile,
   useRecordFavoriteTransactionUse,
   useTags,
@@ -14,6 +16,7 @@ import {
   evalAmount,
   formatCurrency,
   todayISODate,
+  toFriendlyMessage,
   topFavorites,
 } from '@repo/core/utils';
 import { transactionCreateSchema, type TransactionCreateInput } from '@repo/core/validators';
@@ -128,6 +131,10 @@ export function MovementForm({
   const { data: favorites } = useFavoriteTransactions();
   const recordFavoriteUse = useRecordFavoriteTransactionUse();
   const activeAccounts = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
+  // Linked people, as transfer destinations: each is a contact account (one
+  // per currency) — the database mirrors the transfer into their ledger.
+  const { data: peerAccounts } = usePeerAccounts();
+  const resolvePeerAccount = usePeerContactAccount();
   // The calculator's quick-fill pills, in place of the plain account chips,
   // for the type they're actually saved under (favorites don't apply to the
   // other types the way a source account always does).
@@ -216,6 +223,7 @@ export function MovementForm({
   const selectedCategory = (categories ?? []).find((c) => c.id === categoryId) ?? null;
   const selectedFromAccount = activeAccounts.find((a) => a.id === fromId) ?? null;
   const selectedToAccount = activeAccounts.find((a) => a.id === toId) ?? null;
+  const selectedToPeer = (peerAccounts ?? []).find((a) => a.id === toId) ?? null;
   const amountInvalid = formError === AMOUNT_ERROR;
 
   // What "Guardar como favorito" prefills — everything a favorite needs
@@ -279,6 +287,7 @@ export function MovementForm({
     setFrom(id);
     const nextCurrency = activeAccounts.find((a) => a.id === id)?.currency;
     if (selectedToAccount && selectedToAccount.currency !== nextCurrency) setTo(null);
+    if (selectedToPeer && selectedToPeer.currency !== nextCurrency) setTo(null);
     if (goalId) setGoalId(null);
   };
 
@@ -496,16 +505,18 @@ export function MovementForm({
               >
                 <Text
                   className={
-                    selectedToAccount || goalId
+                    selectedToAccount || selectedToPeer || goalId
                       ? 'text-base text-ink dark:text-ink-dark'
                       : 'text-base text-ink-3 dark:text-ink-3-dark'
                   }
                 >
                   {selectedToAccount
                     ? selectedToAccount.name
-                    : goalId
-                      ? `Aportación a “${goalName ?? 'tu meta'}”`
-                      : 'Elige una cuenta'}
+                    : selectedToPeer
+                      ? selectedToPeer.name
+                      : goalId
+                        ? `Aportación a “${goalName ?? 'tu meta'}”`
+                        : 'Elige una cuenta'}
                 </Text>
                 <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
                   Ver todas ›
@@ -513,11 +524,13 @@ export function MovementForm({
               </Pressable>
             </Field>
             <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-              {goalId && !selectedToAccount
-                ? 'Esta transferencia va hacia una meta de ahorro, no a otra cuenta — elige una cuenta aquí si quieres redirigirla.'
-                : selectedFromAccount
-                  ? `No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas en ${selectedFromAccount.currency} (esta app no convierte divisas).`
-                  : 'No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas.'}
+              {selectedToPeer
+                ? `No cuenta como gasto para ti ni como ingreso para ${selectedToPeer.name}: le llega directo a su cuenta.`
+                : goalId && !selectedToAccount
+                  ? 'Esta transferencia va hacia una meta de ahorro, no a otra cuenta — elige una cuenta aquí si quieres redirigirla.'
+                  : selectedFromAccount
+                    ? `No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas en ${selectedFromAccount.currency} (esta app no convierte divisas).`
+                    : 'No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas.'}
             </Text>
           </>
         ) : (
@@ -675,6 +688,20 @@ export function MovementForm({
         }}
         excludeId={fromId}
         currencyFilter={selectedFromAccount?.currency ?? null}
+        selectedPeerId={selectedToPeer?.peer_user_id ?? null}
+        onSelectPeer={(peerId) => {
+          if (!selectedFromAccount) return setFormError('Elige primero la cuenta origen');
+          resolvePeerAccount.mutate(
+            { peerId, currency: selectedFromAccount.currency },
+            {
+              onSuccess: (id) => {
+                setTo(id);
+                setGoalId(null);
+              },
+              onError: (e) => setFormError(toFriendlyMessage(e, 'No se pudo elegir a esa persona')),
+            },
+          );
+        }}
       />
       <MultiSelectSheet
         visible={tagPickerOpen}

@@ -31,7 +31,7 @@ import {
   todayISODate,
 } from '../utils';
 
-export type NotificationCategory = 'pending' | 'budget' | 'goal';
+export type NotificationCategory = 'pending' | 'budget' | 'goal' | 'peer';
 
 export type NotificationKind =
   | 'pending-today'
@@ -42,7 +42,8 @@ export type NotificationKind =
   | 'goal-contribution-due'
   | 'goal-behind'
   | 'goal-milestone'
-  | 'goal-completed';
+  | 'goal-completed'
+  | 'peer-received';
 
 export type NotificationSeverity = 'info' | 'warning' | 'critical' | 'success';
 
@@ -67,6 +68,8 @@ export interface AppNotification {
 
 export interface NotificationInput {
   transactions: TransactionWithRefs[];
+  /** Recent transfers linked people sent you (mirrors in your ledger). Optional — omit for no "te envió" notifications. */
+  received?: TransactionWithRefs[];
   budgets: BudgetWithCategories[];
   goals: Goal[];
   accounts: Account[];
@@ -118,6 +121,9 @@ function pendingNotifications(
 
   for (const t of transactions) {
     if (t.is_completed) continue;
+    // A pending transfer a linked person sent you is theirs to carry out —
+    // nothing for you to do, so no reminders.
+    if (t.is_peer_mirror) continue;
     const label = pendingLabel(t);
     const target: NotificationTarget = { type: 'transaction', id: t.id };
 
@@ -161,6 +167,36 @@ function pendingNotifications(
         target,
       });
     }
+  }
+  return out;
+}
+
+// --- linked people --------------------------------------------------------------
+
+/** How long a received transfer stays in the notification center. */
+const RECEIVED_WINDOW_DAYS = 7;
+
+/** "Ana te envió $5,000" — for each settled transfer a linked person sent you recently. */
+function peerNotifications(received: TransactionWithRefs[], today: string): AppNotification[] {
+  const since = addDaysISO(today, -RECEIVED_WINDOW_DAYS);
+  const out: AppNotification[] = [];
+  for (const t of received) {
+    if (!t.is_peer_mirror || !t.is_completed) continue;
+    if (t.transaction_date > today || t.transaction_date < since) continue;
+    const who = t.account?.name ?? 'Alguien';
+    const amount = formatCurrency(Number(t.amount), t.account?.currency ?? 'MXN');
+    out.push({
+      id: `peer-received:${t.id}`,
+      kind: 'peer-received',
+      category: 'peer',
+      severity: 'success',
+      title: `${who} te envió ${amount}`,
+      body: t.to_account?.name
+        ? `Llegó a ${t.to_account.name}. No cuenta como ingreso.`
+        : 'No cuenta como ingreso.',
+      date: t.transaction_date,
+      target: { type: 'transaction', id: t.id },
+    });
   }
   return out;
 }
@@ -367,7 +403,9 @@ function goalNotifications(
       const month = today.slice(0, 7);
       let behind = false;
       if (contribution && interval && interval > 0) {
-        behind = goalPace(progress.saved, contribution, interval, goal.created_at, today).status === 'behind';
+        behind =
+          goalPace(progress.saved, contribution, interval, goal.created_at, today).status ===
+          'behind';
       } else {
         const total = daysUntil(goal.deadline, createdOn);
         const elapsed = daysUntil(today, createdOn);
@@ -436,6 +474,7 @@ export function buildNotifications(
       referenceDate,
     ),
     ...goalNotifications(input.goals, input.accounts, input.transactions, today),
+    ...peerNotifications(input.received ?? [], today),
   ];
 
   return all.sort((a, b) =>
@@ -466,6 +505,7 @@ export const EVENT_KINDS: ReadonlySet<NotificationKind> = new Set<NotificationKi
   'budget-exceeded',
   'goal-milestone',
   'goal-completed',
+  'peer-received',
 ]);
 
 // The in-app center keeps an overdue movement visible until it's resolved,
@@ -516,7 +556,8 @@ export function planScheduledNotifications(
   const plannedGoals = input.goals.filter(
     (g) =>
       !g.archived &&
-      (g.deadline != null || (g.contribution_amount != null && g.contribution_interval_days != null)),
+      (g.deadline != null ||
+        (g.contribution_amount != null && g.contribution_interval_days != null)),
   );
 
   const planned = new Map<string, ScheduledNotification>();

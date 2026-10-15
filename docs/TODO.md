@@ -51,3 +51,53 @@ Lo que la fase 2 no cubre, porque todo se calcula y programa en el propio teléf
 
 Sugerencia de orden: empezar por Android (FCM) y dejar iOS para cuando exista la cuenta de Apple
 Developer.
+
+## Personas — Dividir gastos (pospuesto)
+
+Pospuesto el 2026-10-14. Se apoya en las transferencias entre personas ya hechas
+(`20261014160000_peer_transfers.sql`): cada persona vinculada es una cuenta oculta `contact`
+cuyo saldo es el neto entre ustedes.
+
+### Diseño acordado
+
+Ejemplo: Oscar paga $1,000 del súper con su tarjeta, a medias con Ana.
+
+| Ledger | Movimiento | Efecto |
+|---|---|---|
+| Oscar | Gasto $500 desde la tarjeta (Súper) | Su parte: cuenta como su gasto |
+| Oscar | Transferencia $500 tarjeta → contacto "Ana" | Lo que pagó por ella: es lo que Ana le debe, no un gasto |
+| Ana (lo crea la BD) | Gasto $500 desde su contacto "Oscar" | Su parte: cuenta como su gasto y deja "le debo $500" sin tocar sus cuentas reales |
+
+- La tarjeta de Oscar baja $1,000. El Análisis de cada uno cuenta $500. Saldos, vistas de
+  resúmenes y Análisis **no cambian**: todo son gastos y transferencias normales.
+- Saldar = la transferencia entre personas que ya existe, que deja el contacto en $0.
+- No hay barrera de divisa: la parte de Ana va a su contacto, así que no necesita cuenta para recibir.
+
+### Trabajo
+
+1. [ ] Tabla `splits` (`payer_id`, `peer_id`, `total`, `payer_share`, `currency`) y columna
+       `split_id` en `transactions`. RPCs `record_split_expense`, `update_split_expense` y
+       `delete_split_expense`, que crean y sincronizan las tres filas.
+2. [ ] `sync_peer_transaction` debe **ignorar** las transferencias con `split_id`, porque la
+       RPC crea el espejo como gasto, no como transferencia.
+3. [ ] Categoría del espejo: la misma por `slug` si es del sistema; si no, `null`. Ana puede
+       cambiar categoría y descripción de su copia; monto, fecha y estado vienen de quien pagó
+       (ajustar `check_peer_transaction`).
+4. [ ] Formulario de gasto: fila "Dividir con…" (persona y parte: a medias, monto o %).
+5. [ ] Movimientos: **una sola fila** ("Súper · −$500 · pagaste $1,000, dividido con Ana") y la
+       transferencia interna oculta en las listas, pero contando en los saldos. Desglose en el detalle.
+6. [ ] Personas: "Ana te debe $X" / "Le debes $X" y botón "Saldar" que abre la transferencia
+       ya llenada.
+7. [ ] Notificación para la otra persona: "Oscar dividió Súper contigo: te toca $500".
+8. [ ] Primera versión: una persona por gasto (parejas). Dividir entre 3 o más, después.
+
+## Personas — cabos sueltos menores
+
+- [ ] El nombre de la cuenta de contacto se toma al vincularse; no se actualiza si la otra
+      persona cambia su nombre.
+- [ ] Favoritos con una persona como destino: no se pueden crear desde la pantalla de
+      Favoritos, y quedan rotos sin aviso si se desvinculan.
+- [ ] Importar/exportar: los envíos se exportan como transferencias a una cuenta "Ana" y al
+      importarse se crea una cuenta normal (se pierde el vínculo).
+- [ ] No se puede rechazar una transferencia recibida (solo devolverla).
+- [ ] Límite de intentos al canjear códigos de invitación (`accept_peer_invite`).

@@ -24,6 +24,8 @@ export const notificationPrefsSchema = z.object({
   goalReminders: z.boolean().default(true).catch(true),
   /** Goal milestones (25/50/75%) and completion. */
   goalAchievements: z.boolean().default(true).catch(true),
+  /** A linked person sent you a transfer. */
+  peerTransfers: z.boolean().default(true).catch(true),
   /** Local hour (0-23) date-based reminders go out at. */
   reminderHour: z.number().int().min(0).max(23).default(9).catch(9),
   /** Budget % that triggers the "casi llegas" warning. */
@@ -53,6 +55,7 @@ const KIND_TOGGLE: Record<NotificationKind, keyof NotificationPrefs> = {
   'goal-behind': 'goalReminders',
   'goal-milestone': 'goalAchievements',
   'goal-completed': 'goalAchievements',
+  'peer-received': 'peerTransfers',
 };
 
 /** Whether a kind should reach the device (master switch + its own toggle). */

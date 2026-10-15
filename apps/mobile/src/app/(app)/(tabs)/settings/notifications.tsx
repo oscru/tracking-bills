@@ -198,6 +198,16 @@ export default function NotificationSettingsScreen() {
             />
           </Section>
 
+          <Section title="Personas">
+            <SwitchRow
+              label="Transferencias recibidas"
+              description="Cuando una persona vinculada te envía dinero."
+              value={prefs.peerTransfers}
+              onValueChange={(v) => set('peerTransfers', v)}
+              disabled={off}
+            />
+          </Section>
+
           <Section title="Hora de los recordatorios">
             <View
               className="flex-row flex-wrap gap-2 px-1"

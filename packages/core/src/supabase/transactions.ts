@@ -22,7 +22,7 @@ export interface TransactionFilters {
   from?: string;
   /** Inclusive upper bound, YYYY-MM-DD. */
   to?: string;
-  /** Match any of these accounts (OR). Omit/empty = no filter. */
+  /** Match any of these accounts (OR) — as the source, or a transfer's destination. Omit/empty = no filter. */
   accountIds?: string[];
   /** Match any of these categories (OR). Omit/empty = no filter. */
   categoryIds?: string[];
@@ -86,7 +86,12 @@ function filteredQuery(filters: TransactionFilters, tagFilteredIds: string[] | n
 
   if (filters.from) query = query.gte('transaction_date', filters.from);
   if (filters.to) query = query.lte('transaction_date', filters.to);
-  if (filters.accountIds?.length) query = query.in('account_id', filters.accountIds);
+  // An account's movements include transfers INTO it (received from
+  // another account or a linked person), not only the ones it's the source of.
+  if (filters.accountIds?.length) {
+    const ids = filters.accountIds.join(',');
+    query = query.or(`account_id.in.(${ids}),to_account_id.in.(${ids})`);
+  }
   if (filters.categoryIds?.length) query = query.in('category_id', filters.categoryIds);
   if (filters.type) query = query.eq('type', filters.type);
   if (filters.search) query = query.ilike('description', `%${filters.search}%`);
@@ -156,6 +161,16 @@ export async function listGoalTransactions(
     if (page.length < MAX_PAGE_SIZE) break;
   }
   return all.map(normalizeTags);
+}
+
+/** Transfers linked people sent you on or after `since` (mirrors in your ledger), newest first. */
+export async function listReceivedPeerTransfers(since: string): Promise<TransactionWithRefs[]> {
+  const rows = unwrap(
+    await filteredQuery({ from: since }, null)
+      .eq('is_peer_mirror', true)
+      .range(0, MAX_PAGE_SIZE - 1),
+  ) as unknown as RawWithRefs[];
+  return rows.map(normalizeTags);
 }
 
 export interface TransactionPage {

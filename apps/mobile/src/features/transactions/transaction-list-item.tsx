@@ -35,6 +35,9 @@ interface SwipeMeta {
 
 const EDIT_META: SwipeMeta = { side: 'left', tone: 'ink', icon: Pencil, label: 'Editar' };
 const VIEW_META: SwipeMeta = { side: 'right', tone: 'muted', icon: Eye, label: 'Ver' };
+// A transfer a linked person sent you can't be edited (it's theirs) — the
+// "Editar" side opens its detail instead, where you can pick where it landed.
+const MIRROR_META: SwipeMeta = { side: 'left', tone: 'ink', icon: Eye, label: 'Ver' };
 
 /** Tailwind bg + raw icon/text colors for one action's tone, light/dark aware. */
 function swipeColors(tone: SwipeMeta['tone'], dark: boolean) {
@@ -196,7 +199,12 @@ export const TransactionListItem = memo(function TransactionListItem({
   // `onReveal` props + this row's own id — these are what the gesture logic
   // below uses.
   const handleView = useCallback(() => onPress(transaction.id), [onPress, transaction.id]);
-  const handleEdit = useCallback(() => onEdit(transaction.id), [onEdit, transaction.id]);
+  const isMirror = transaction.is_peer_mirror;
+  const editMeta = isMirror ? MIRROR_META : EDIT_META;
+  const handleEdit = useCallback(
+    () => (isMirror ? onPress(transaction.id) : onEdit(transaction.id)),
+    [isMirror, onPress, onEdit, transaction.id],
+  );
   const reveal = useCallback(() => onReveal(transaction.id), [onReveal, transaction.id]);
 
   // `dragX` is the raw, per-gesture native translation (native-driven — smooth,
@@ -355,10 +363,10 @@ export const TransactionListItem = memo(function TransactionListItem({
       }
       if (triggered.current) return;
       const total = gestureStartOffset.current + e.nativeEvent.translationX;
-      if (total > HARD_THRESHOLD) fire(handleEdit, EDIT_META, total);
+      if (total > HARD_THRESHOLD) fire(handleEdit, editMeta, total);
       else if (total < -HARD_THRESHOLD) fire(handleView, VIEW_META, total);
     },
-    [fire, handleEdit, handleView, dragX],
+    [fire, handleEdit, handleView, dragX, editMeta],
   );
 
   // The `listener` here runs on the JS thread on every native gesture update
@@ -406,14 +414,14 @@ export const TransactionListItem = memo(function TransactionListItem({
         // before the `Animated.event` listener (which syncs back from the
         // native driver, not perfectly real-time) catches up — fall back to
         // checking it here too, against the release event's own exact data.
-        if (total > HARD_THRESHOLD) fire(handleEdit, EDIT_META, total);
+        if (total > HARD_THRESHOLD) fire(handleEdit, editMeta, total);
         else if (total < -HARD_THRESHOLD) fire(handleView, VIEW_META, total);
         else if (total > SOFT_THRESHOLD) snapTo(ACTION_WIDTH, 'left', total);
         else if (total < -SOFT_THRESHOLD) snapTo(-ACTION_WIDTH, 'right', total);
         else snapTo(0, 'closed', total);
       }
     },
-    [snapTo, fire, handleEdit, handleView, dragX],
+    [snapTo, fire, handleEdit, handleView, dragX, editMeta],
   );
 
   let title: string;
@@ -423,7 +431,14 @@ export const TransactionListItem = memo(function TransactionListItem({
   let color: string;
 
   if (type === 'transfer') {
-    title = 'Transferencia';
+    // Between linked people: who sent it / who it went to, instead of a
+    // generic "Transferencia".
+    title =
+      account?.type === 'contact'
+        ? `Recibida de ${account.name}`
+        : to_account?.type === 'contact'
+          ? `Enviada a ${to_account.name}`
+          : 'Transferencia';
     subtitle = `${account?.name ?? '—'} → ${goal?.name ?? to_account?.name ?? '—'}`;
     sign = '';
     amountClass = 'text-ink-2 dark:text-ink-2-dark';
@@ -447,8 +462,8 @@ export const TransactionListItem = memo(function TransactionListItem({
         <>
           <SwipeAction
             translateX={translateX}
-            meta={EDIT_META}
-            onPress={() => fire(handleEdit, EDIT_META, ACTION_WIDTH)}
+            meta={editMeta}
+            onPress={() => fire(handleEdit, editMeta, ACTION_WIDTH)}
           />
           <SwipeAction
             translateX={translateX}

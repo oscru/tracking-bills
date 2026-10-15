@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { AccountType } from '@repo/core/types';
+import type { AccountType, OwnAccountType } from '@repo/core/types';
 
+/** The types a user can pick when creating an account. */
 export const ACCOUNT_TYPES: {
-  value: AccountType;
+  value: OwnAccountType;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
 }[] = [
@@ -15,10 +16,13 @@ export const ACCOUNT_TYPES: {
   { value: 'loan', label: 'Préstamos', icon: 'business-outline' },
 ];
 
+// Plus `contact` — a linked person in your ledger (never created by hand).
+const CONTACT = { value: 'contact' as const, label: 'Persona', icon: 'person-outline' as const };
+
 export const ACCOUNT_TYPE_LABEL = Object.fromEntries(
-  ACCOUNT_TYPES.map((t) => [t.value, t.label]),
+  [...ACCOUNT_TYPES, CONTACT].map((t) => [t.value, t.label]),
 ) as Record<AccountType, string>;
 
 export const ACCOUNT_TYPE_ICON = Object.fromEntries(
-  ACCOUNT_TYPES.map((t) => [t.value, t.icon]),
+  [...ACCOUNT_TYPES, CONTACT].map((t) => [t.value, t.icon]),
 ) as Record<AccountType, keyof typeof Ionicons.glyphMap>;

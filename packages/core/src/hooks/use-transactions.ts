@@ -13,6 +13,7 @@ import {
   getTransaction,
   listTransactions,
   listGoalTransactions,
+  listReceivedPeerTransfers,
   listTransactionsPage,
   updateTransaction,
   type TransactionPage,
@@ -55,6 +56,14 @@ export function useTransactionPages(filters: TransactionFilters = {}) {
     queryFn: ({ pageParam }) => listTransactionsPage(filters, { before: pageParam }),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextBefore,
+  });
+}
+
+/** Transfers linked people sent you since `since` (YYYY-MM-DD). */
+export function useReceivedPeerTransfers(since: string) {
+  return useQuery({
+    queryKey: queryKeys.transactions.received(since),
+    queryFn: () => listReceivedPeerTransfers(since),
   });
 }
 

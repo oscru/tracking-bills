@@ -100,7 +100,12 @@ export default function HomeScreen() {
   // schedule) mean very different things, so they get two separate cards —
   // one urgent, one just a heads-up.
   const { overdue, upcoming } = useMemo(
-    () => splitPendingByDate(pending ?? [], today),
+    // Pending transfers a linked person will send you aren't yours to do.
+    () =>
+      splitPendingByDate(
+        (pending ?? []).filter((t) => !t.is_peer_mirror),
+        today,
+      ),
     [pending, today],
   );
   const nearestUpcomingDays = useMemo(

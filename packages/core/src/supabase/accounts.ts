@@ -8,12 +8,14 @@ import {
 import { supabase } from './client';
 import { SupabaseError, unwrap } from './internal';
 
-/** Active accounts first, then by creation order. */
+/** Active accounts first, then by creation order. Contact accounts (linked
+ * people — see `listPeerAccounts`) aren't the user's own money and are left out. */
 export async function listAccounts(): Promise<Account[]> {
   return unwrap(
     await supabase
       .from('accounts')
       .select('*')
+      .neq('type', 'contact')
       .order('archived', { ascending: true })
       .order('created_at', { ascending: true }),
   ) as Account[];
@@ -39,4 +41,15 @@ export function archiveAccount(id: string): Promise<Account> {
 export async function deleteAccount(id: string): Promise<void> {
   const { error } = await supabase.from('accounts').delete().eq('id', id);
   if (error) throw new SupabaseError(error);
+}
+
+/** The contact accounts standing for linked people (one per person and currency). */
+export async function listPeerAccounts(): Promise<Account[]> {
+  return unwrap(
+    await supabase
+      .from('accounts')
+      .select('*')
+      .eq('type', 'contact')
+      .order('name', { ascending: true }),
+  ) as Account[];
 }

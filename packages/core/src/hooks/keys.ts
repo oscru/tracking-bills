@@ -10,6 +10,11 @@ export const queryKeys = {
   accounts: {
     all: ['accounts'] as const,
     list: () => ['accounts', 'list'] as const,
+    peers: () => ['accounts', 'peers'] as const,
+  },
+  peers: {
+    all: ['peers'] as const,
+    list: () => ['peers', 'list'] as const,
   },
   categories: {
     all: ['categories'] as const,
@@ -39,6 +44,7 @@ export const queryKeys = {
     all: ['transactions'] as const,
     list: (filters: TransactionFilters = {}) => ['transactions', 'list', filters] as const,
     detail: (id: string) => ['transactions', 'detail', id] as const,
+    received: (since: string) => ['transactions', 'received', since] as const,
     pages: (filters: TransactionFilters = {}) => ['transactions', 'pages', filters] as const,
     // Server-side aggregates (see supabase/summaries.ts). Under the
     // `transactions` prefix on purpose: every transaction mutation already

@@ -96,6 +96,13 @@ export default function SettingsScreen() {
               showChevron
               onPress={() => router.push('/(app)/settings/goals')}
             />
+            <View className="h-px bg-line dark:bg-line-dark" />
+            <ListRow
+              title="Personas"
+              subtitle="Pásale dinero a tu pareja sin que cuente como gasto"
+              showChevron
+              onPress={() => router.push('/(app)/settings/peers')}
+            />
           </View>
 
           <View className="rounded-2xl border border-line px-4 dark:border-line-dark">

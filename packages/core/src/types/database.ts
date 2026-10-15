@@ -44,6 +44,8 @@ export type Database = {
           include_in_total: boolean
           initial_balance: number
           name: string
+          peer_user_id: string | null
+          receive_into_account_id: string | null
           show_on_home: boolean
           type: string
           updated_at: string
@@ -58,6 +60,8 @@ export type Database = {
           include_in_total?: boolean
           initial_balance?: number
           name: string
+          peer_user_id?: string | null
+          receive_into_account_id?: string | null
           show_on_home?: boolean
           type: string
           updated_at?: string
@@ -72,6 +76,8 @@ export type Database = {
           include_in_total?: boolean
           initial_balance?: number
           name?: string
+          peer_user_id?: string | null
+          receive_into_account_id?: string | null
           show_on_home?: boolean
           type?: string
           updated_at?: string
@@ -411,6 +417,39 @@ export type Database = {
           },
         ]
       }
+      peer_links: {
+        Row: {
+          accepted_at: string | null
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          invitee_id: string | null
+          inviter_id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invitee_id?: string | null
+          inviter_id: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invitee_id?: string | null
+          inviter_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           birth_date: string | null
@@ -570,6 +609,8 @@ export type Database = {
           goal_id: string | null
           id: string
           is_completed: boolean
+          is_peer_mirror: boolean
+          peer_transaction_id: string | null
           to_account_id: string | null
           transaction_date: string
           type: string
@@ -585,6 +626,8 @@ export type Database = {
           goal_id?: string | null
           id?: string
           is_completed?: boolean
+          is_peer_mirror?: boolean
+          peer_transaction_id?: string | null
           to_account_id?: string | null
           transaction_date?: string
           type: string
@@ -600,6 +643,8 @@ export type Database = {
           goal_id?: string | null
           id?: string
           is_completed?: boolean
+          is_peer_mirror?: boolean
+          peer_transaction_id?: string | null
           to_account_id?: string | null
           transaction_date?: string
           type?: string
@@ -694,6 +739,33 @@ export type Database = {
       }
     }
     Functions: {
+      accept_peer_invite: {
+        Args: { p_code: string; p_receive_account_id: string }
+        Returns: string
+      }
+      create_peer_invite: { Args: never; Returns: string }
+      linked_peers: {
+        Args: never
+        Returns: {
+          link_id: string
+          peer_id: string | null
+          peer_name: string | null
+          status: string
+          code: string | null
+          expires_at: string
+          is_inviter: boolean
+          receive_currencies: string[]
+        }[]
+      }
+      peer_contact_account: {
+        Args: { p_peer: string; p_currency: string }
+        Returns: string
+      }
+      set_peer_receive_account: {
+        Args: { p_peer: string; p_account_id: string }
+        Returns: undefined
+      }
+      unlink_peer: { Args: { p_link_id: string }; Returns: undefined }
       account_net_before: {
         Args: { p_account_id: string; p_date?: string; p_created_at?: string }
         Returns: number

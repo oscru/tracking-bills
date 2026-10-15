@@ -1,7 +1,7 @@
-import { useAccounts } from '@repo/core/hooks';
+import { useAccounts, useLinkedPeers } from '@repo/core/hooks';
 import type { Account } from '@repo/core/types';
 import { BottomSheet, ICON_COLORS } from '@repo/ui';
-import { Check } from 'lucide-react-native';
+import { Check, UserRound } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
@@ -20,6 +20,10 @@ interface Props {
   excludeIds?: string[];
   /** Only show accounts in this currency — a transfer/contribution can't cross currencies without a conversion step this app doesn't have. */
   currencyFilter?: string | null;
+  /** Also offer linked people (a transfer's destination) — called with the person's id. */
+  onSelectPeer?: (peerId: string, peerName: string) => void;
+  /** The person currently selected, if the destination is one. */
+  selectedPeerId?: string | null;
 }
 
 /** Searchable flat list of active accounts — avoids an unbounded row of pills. */
@@ -32,9 +36,22 @@ export function AccountPicker({
   excludeId,
   excludeIds,
   currencyFilter,
+  onSelectPeer,
+  selectedPeerId,
 }: Props) {
   const [q, setQ] = useState('');
   const { data: accounts } = useAccounts();
+  const { data: peers } = useLinkedPeers();
+  const people = useMemo(() => {
+    if (!onSelectPeer) return [];
+    const needle = q.trim().toLowerCase();
+    return (peers ?? []).filter(
+      (p) =>
+        p.status === 'accepted' &&
+        p.peerId != null &&
+        (!needle || (p.peerName ?? '').toLowerCase().includes(needle)),
+    );
+  }, [peers, onSelectPeer, q]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -68,6 +85,52 @@ export function AccountPicker({
       </View>
 
       <ScrollView className="max-h-[420px]" contentContainerClassName="pb-4">
+        {people.length > 0 ? (
+          <>
+            <Text className="px-5 pb-1.5 pt-1 text-xs font-semibold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
+              Personas
+            </Text>
+            {people.map((p) => {
+              // Known up front instead of failing on save: they need an
+              // active account set to receive in this currency.
+              const canReceive = !currencyFilter || p.receiveCurrencies.includes(currencyFilter);
+              return (
+                <Pressable
+                  key={p.linkId}
+                  disabled={!canReceive}
+                  onPress={() => {
+                    onSelectPeer?.(p.peerId!, p.peerName ?? 'Persona');
+                    setQ('');
+                    onClose();
+                  }}
+                  className={`flex-row items-center gap-3 border-t border-line px-5 py-3 dark:border-line-dark ${
+                    canReceive ? '' : 'opacity-50'
+                  }`}
+                >
+                  <View className="h-9 w-9 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
+                    <UserRound size={18} color={ICON_COLORS.limeInk} />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
+                      {p.peerName ?? 'Persona'}
+                    </Text>
+                    <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+                      {canReceive
+                        ? 'Le llega directo a su cuenta'
+                        : `Aún no puede recibir ${currencyFilter} — debe elegir dónde en Personas`}
+                    </Text>
+                  </View>
+                  {selectedPeerId === p.peerId ? (
+                    <Check size={18} color={ICON_COLORS.limeInk} />
+                  ) : null}
+                </Pressable>
+              );
+            })}
+            <Text className="px-5 pb-1.5 pt-4 text-xs font-semibold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
+              Tus cuentas
+            </Text>
+          </>
+        ) : null}
         {filtered.map((a) => (
           <Pressable
             key={a.id}
@@ -81,9 +144,7 @@ export function AccountPicker({
                 {ACCOUNT_TYPE_LABEL[a.type]} · {a.currency}
               </Text>
             </View>
-            {selectedId === a.id ? (
-              <Check size={18} color={ICON_COLORS.limeInk} />
-            ) : null}
+            {selectedId === a.id ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
           </Pressable>
         ))}
 
