@@ -4,10 +4,7 @@ import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg';
 
 import { ICON_COLORS } from './icon-colors';
 
-// Motion goes through the SVG `transform` attribute (an interpolated string,
-// e.g. "translate(0 -5)"), not react-native-svg's `translateY`/`rotation`
-// props: on web those reached the DOM as unknown attributes — a React
-// warning, and no movement at all.
+// Motion differs by platform — see `move`/`spin` below.
 //
 // Web: `Animated` also hands its components `collapsable={false}` (a native
 // layout hint), which react-native-svg's web elements pass on to the DOM —
@@ -27,6 +24,45 @@ function withoutCollapsable<P extends object>(Component: ComponentType<P>): Comp
 const AnimatedG = Animated.createAnimatedComponent(withoutCollapsable(G));
 const AnimatedPath = Animated.createAnimatedComponent(withoutCollapsable(Path));
 const AnimatedCircle = Animated.createAnimatedComponent(withoutCollapsable(Circle));
+
+const WEB = Platform.OS === 'web';
+type Clock = Animated.Value;
+
+/**
+ * Animated props moving a group through `xs`/`ys` (in viewBox units) over
+ * `inputRange` of the clock. Web: the SVG `transform` attribute, as an
+ * interpolated string — react-native-svg's `translateX`/`translateY` props
+ * reach the DOM there as unknown attributes (a warning, and no movement).
+ * Native: those numeric props — `Animated` hands values straight to the
+ * native view, and a transform STRING crashes it ("String cannot be cast").
+ */
+function move(clock: Clock, inputRange: number[], xs: number[], ys: number[]) {
+  if (WEB) {
+    return {
+      transform: clock.interpolate({
+        inputRange,
+        outputRange: xs.map((x, i) => `translate(${x} ${ys[i]})`),
+      }),
+    };
+  }
+  return {
+    translateX: clock.interpolate({ inputRange, outputRange: xs }),
+    translateY: clock.interpolate({ inputRange, outputRange: ys }),
+  };
+}
+
+/** Like `move`, rotating by `degs` around (`ox`, `oy`). */
+function spin(clock: Clock, inputRange: number[], degs: number[], ox: number, oy: number) {
+  if (WEB) {
+    return {
+      transform: clock.interpolate({
+        inputRange,
+        outputRange: degs.map((d) => `rotate(${d} ${ox} ${oy})`),
+      }),
+    };
+  }
+  return { origin: `${ox},${oy}`, rotation: clock.interpolate({ inputRange, outputRange: degs }) };
+}
 
 export interface EmptyIllustrationProps {
   /** Width/height in px — the illustration is always drawn square. */
@@ -78,17 +114,14 @@ export function TagsEmptyIllustration({ size = 112 }: EmptyIllustrationProps) {
     inputRange: [0, 0.12, 0.3, 1],
     outputRange: [0.3, 1, 0.3, 0.3],
   });
-  const sparkleRotation = clock.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: ['rotate(-10 100 19)', 'rotate(10 100 19)', 'rotate(-10 100 19)'],
-  });
+  const sparkleRotation = spin(clock, [0, 0.5, 1], [-10, 10, -10], 100, 19);
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
       <Circle cx={60} cy={60} r={52} fill={badge} />
       <Rect x={28} y={28} width={56} height={56} rx={18} transform="rotate(45 56 56)" fill={ink} />
       <Circle cx={56} cy={34} r={6} fill={canvas} />
       <Circle cx={56} cy={34} r={3} fill={lime} />
-      <AnimatedG transform={sparkleRotation} opacity={sparkleOpacity}>
+      <AnimatedG {...sparkleRotation} opacity={sparkleOpacity}>
         <Path d="M100 14 V24 M95 19 H105" stroke={lime} strokeWidth={2.5} strokeLinecap="round" />
       </AnimatedG>
     </Svg>
@@ -99,10 +132,7 @@ export function AccountsEmptyIllustration({ size = 112 }: EmptyIllustrationProps
   const { badge, ink, canvas, lime } = useIllustrationColors();
   const clock = useLoopClock(1800);
   // Float: gently bobs up and settles back down.
-  const translateY = clock.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: ['translate(0 0)', 'translate(0 -5)', 'translate(0 0)'],
-  });
+  const bob = move(clock, [0, 0.5, 1], [0, 0, 0], [0, -5, 0]);
   const opacity = clock.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.65, 1, 0.65] });
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
@@ -110,7 +140,7 @@ export function AccountsEmptyIllustration({ size = 112 }: EmptyIllustrationProps
       <Rect x={18} y={38} width={84} height={56} rx={16} fill={ink} />
       <Rect x={30} y={54} width={22} height={16} rx={4} fill={lime} />
       <Line x1={18} y1={60} x2={102} y2={60} stroke={canvas} strokeWidth={3} />
-      <AnimatedG transform={translateY} opacity={opacity}>
+      <AnimatedG {...bob} opacity={opacity}>
         <Path d="M100 16 V26 M95 21 H105" stroke={lime} strokeWidth={2.5} strokeLinecap="round" />
       </AnimatedG>
     </Svg>
@@ -121,10 +151,7 @@ export function BudgetsEmptyIllustration({ size = 112 }: EmptyIllustrationProps)
   const { badge, ink, canvas, lime } = useIllustrationColors();
   const clock = useLoopClock(1400);
   // Rising bubble: drifts up while fading in and back out, then resets.
-  const translateY = clock.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['translate(0 0)', 'translate(0 -14)'],
-  });
+  const rise = move(clock, [0, 1], [0, 0], [0, -14]);
   const opacity = clock.interpolate({ inputRange: [0, 0.1, 0.8, 1], outputRange: [0, 1, 1, 0] });
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
@@ -139,7 +166,7 @@ export function BudgetsEmptyIllustration({ size = 112 }: EmptyIllustrationProps)
         strokeLinecap="round"
       />
       <Rect x={34} y={78} width={52} height={8} rx={4} fill={lime} />
-      <AnimatedG transform={translateY} opacity={opacity}>
+      <AnimatedG {...rise} opacity={opacity}>
         <Path d="M14 84 V94 M9 89 H19" stroke={lime} strokeWidth={2.5} strokeLinecap="round" />
       </AnimatedG>
     </Svg>
@@ -190,16 +217,7 @@ export function CategoriesEmptyIllustration({ size = 112 }: EmptyIllustrationPro
   const { badge, ink, lime } = useIllustrationColors();
   const clock = useLoopClock(2400);
   // Orbit: drifts around its resting point in a small diamond loop.
-  const orbit = clock.interpolate({
-    inputRange: [0, 0.25, 0.5, 0.75, 1],
-    outputRange: [
-      'translate(0 -3)',
-      'translate(3 0)',
-      'translate(0 3)',
-      'translate(-3 0)',
-      'translate(0 -3)',
-    ],
-  });
+  const orbit = move(clock, [0, 0.25, 0.5, 0.75, 1], [0, 3, 0, -3, 0], [-3, 0, 3, 0, -3]);
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
       <Circle cx={60} cy={60} r={52} fill={badge} />
@@ -207,7 +225,7 @@ export function CategoriesEmptyIllustration({ size = 112 }: EmptyIllustrationPro
       <Rect x={64} y={22} width={34} height={34} rx={12} fill={ink} opacity={0.55} />
       <Rect x={22} y={64} width={34} height={34} rx={12} fill={ink} opacity={0.3} />
       <Rect x={64} y={64} width={34} height={34} rx={12} fill={lime} />
-      <AnimatedG transform={orbit}>
+      <AnimatedG {...orbit}>
         <Path d="M12 14 V22 M8 18 H16" stroke={lime} strokeWidth={2} strokeLinecap="round" />
       </AnimatedG>
     </Svg>
@@ -220,8 +238,15 @@ export function TransactionsEmptyIllustration({ size = 112 }: EmptyIllustrationP
   // Flowing trail (dash pattern "2 6" — length 8, so a full -8 shift loops
   // seamlessly) plus a pinging dot at the plane's nose.
   const dashOffset = clock.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
-  // The ping grows by its radius (×1.5), not a `scale` prop — see `AnimatedG`.
-  const pingRadius = clock.interpolate({ inputRange: [0, 0.6, 1], outputRange: [7, 10.5, 7] });
+  // The ping grows ×1.5 — by its radius on web, where a `scale` prop isn't
+  // an SVG attribute; by `scale` natively, where the radius isn't animatable.
+  const pingGrow = WEB
+    ? { r: clock.interpolate({ inputRange: [0, 0.6, 1], outputRange: [7, 10.5, 7] }) }
+    : {
+        r: 7,
+        origin: '94,78',
+        scale: clock.interpolate({ inputRange: [0, 0.6, 1], outputRange: [1, 1.5, 1] }),
+      };
   const pingOpacity = clock.interpolate({ inputRange: [0, 0.6, 1], outputRange: [1, 0.35, 1] });
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
@@ -241,7 +266,7 @@ export function TransactionsEmptyIllustration({ size = 112 }: EmptyIllustrationP
         <Path d="M58 54 L96 36 L48 84" fill="none" stroke={canvas} strokeWidth={2} />
         <Path d="M58 54 L40 62" fill="none" stroke={canvas} strokeWidth={2} />
       </G>
-      <AnimatedCircle cx={94} cy={78} r={pingRadius} fill={lime} opacity={pingOpacity} />
+      <AnimatedCircle cx={94} cy={78} {...pingGrow} fill={lime} opacity={pingOpacity} />
       <Path d="M22 20 V30 M17 25 H27" stroke={lime} strokeWidth={2.5} strokeLinecap="round" />
     </Svg>
   );
@@ -253,14 +278,19 @@ export function NotificationsEmptyIllustration({ size = 112 }: EmptyIllustration
   // Ring: a short, damped swing about the hanging point at the start of each
   // cycle, then the bell rests for the remainder — a "ding", not a constant
   // wobble. The clapper lags behind, swinging the other way.
-  const bellRotation = clock.interpolate({
-    inputRange: [0, 0.06, 0.14, 0.22, 0.3, 0.38, 1],
-    outputRange: [0, 14, -11, 7, -3, 0, 0].map((deg) => `rotate(${deg} 60 26)`),
-  });
-  const clapperX = clock.interpolate({
-    inputRange: [0, 0.08, 0.16, 0.24, 0.32, 0.4, 1],
-    outputRange: [0, -4, 4, -2.5, 1, 0, 0].map((x) => `translate(${x} 0)`),
-  });
+  const bellRotation = spin(
+    clock,
+    [0, 0.06, 0.14, 0.22, 0.3, 0.38, 1],
+    [0, 14, -11, 7, -3, 0, 0],
+    60,
+    26,
+  );
+  const clapperX = move(
+    clock,
+    [0, 0.08, 0.16, 0.24, 0.32, 0.4, 1],
+    [0, -4, 4, -2.5, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0],
+  );
   // The sparkle flashes while the bell is ringing, then dims.
   const sparkleOpacity = clock.interpolate({
     inputRange: [0, 0.1, 0.4, 1],
@@ -269,8 +299,8 @@ export function NotificationsEmptyIllustration({ size = 112 }: EmptyIllustration
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
       <Circle cx={60} cy={60} r={52} fill={badge} />
-      <AnimatedG transform={bellRotation}>
-        <AnimatedG transform={clapperX}>
+      <AnimatedG {...bellRotation}>
+        <AnimatedG {...clapperX}>
           <Circle cx={60} cy={86} r={7} fill={lime} />
         </AnimatedG>
         <Circle cx={60} cy={25} r={5} fill={ink} />
@@ -291,28 +321,13 @@ export function PeersEmptyIllustration({ size = 112 }: EmptyIllustrationProps) {
   const { badge, ink, canvas, lime } = useIllustrationColors();
   const clock = useLoopClock(2800);
   // A transfer: the coin arcs from one person to the other and back.
-  const coin = clock.interpolate({
-    inputRange: [0, 0.4, 0.5, 0.9, 1],
-    outputRange: [
-      'translate(0 0)',
-      'translate(32 0)',
-      'translate(32 0)',
-      'translate(0 0)',
-      'translate(0 0)',
-    ],
-  });
-  const lift = clock.interpolate({
-    inputRange: [0, 0.2, 0.4, 0.5, 0.7, 0.9, 1],
-    outputRange: [
-      'translate(0 0)',
-      'translate(0 -9)',
-      'translate(0 0)',
-      'translate(0 0)',
-      'translate(0 -9)',
-      'translate(0 0)',
-      'translate(0 0)',
-    ],
-  });
+  const coin = move(clock, [0, 0.4, 0.5, 0.9, 1], [0, 32, 32, 0, 0], [0, 0, 0, 0, 0]);
+  const lift = move(
+    clock,
+    [0, 0.2, 0.4, 0.5, 0.7, 0.9, 1],
+    [0, 0, 0, 0, 0, 0, 0],
+    [0, -9, 0, 0, -9, 0, 0],
+  );
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
       <Circle cx={60} cy={60} r={52} fill={badge} />
@@ -320,8 +335,8 @@ export function PeersEmptyIllustration({ size = 112 }: EmptyIllustrationProps) {
       <Path d="M22 92 Q22 72 40 72 Q58 72 58 92 Z" fill={ink} />
       <Circle cx={80} cy={56} r={11} fill={ink} opacity={0.55} />
       <Path d="M62 92 Q62 72 80 72 Q98 72 98 92 Z" fill={ink} opacity={0.55} />
-      <AnimatedG transform={coin}>
-        <AnimatedG transform={lift}>
+      <AnimatedG {...coin}>
+        <AnimatedG {...lift}>
           <Circle cx={44} cy={32} r={8} fill={lime} />
           <Line
             x1={44}
