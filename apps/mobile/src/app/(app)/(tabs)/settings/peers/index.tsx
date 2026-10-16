@@ -1,73 +1,142 @@
-import {
-  useAcceptPeerInvite,
-  useAccountBalanceEffects,
-  useAccounts,
-  useCreatePeerInvite,
-  useLinkedPeers,
-  usePeerAccounts,
-  useSetPeerReceiveAccount,
-  useUnlinkPeer,
-} from '@repo/core/hooks';
-import type { LinkedPeer } from '@repo/core/supabase';
-import { balancesFromEffects, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
+import { useAcceptPeerInvite, useAccounts, useCreatePeerInvite } from '@repo/core/hooks';
+import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
 import {
   BottomSheet,
   Button,
-  ConfirmSheet,
+  EmptyState,
   ErrorCard,
   ICON_COLORS,
   PageHeader,
+  PeersEmptyIllustration,
   Screen,
+  SegmentedControl,
+  StaggerItem,
   TextField,
+  useIsDesktop,
   useTabBarScrollPadding,
 } from '@repo/ui';
-import { useRouter } from 'expo-router';
-import { Share2, UserRound } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Share, Text, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { useGlobalSearchParams, useRouter, type Href } from 'expo-router';
+import { Check, Copy, Share2 } from 'lucide-react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, Share, Text, View } from 'react-native';
 
 import { AccountPicker } from '../../../../../features/accounts/account-picker';
+import { PersonAvatar, netLabel } from '../../../../../features/peers/person-ui';
+import { usePeople, type Person } from '../../../../../features/peers/use-people';
+import { MasterDetailEmpty, useInListPane } from '../../../../../features/settings/master-detail';
+
+type Tab = 'people' | 'link';
+const TABS: { value: Tab; label: string }[] = [
+  { value: 'people', label: 'Tus personas' },
+  { value: 'link', label: 'Vincular' },
+];
+
+const STEPS = [
+  'Crea un código y compártelo con la otra persona.',
+  'Ella lo escribe en «Tengo un código» y elige en qué cuenta recibe.',
+  'Listo: pásense dinero sin que cuente como gasto ni como ingreso.',
+];
+
+/** One person, all their currencies on one card — tap for the detail. */
+function PersonCard({
+  person,
+  selected,
+  onPress,
+}: {
+  person: Person;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const nets = [...person.net.entries()];
+  const shown = nets.slice(0, 2);
+  return (
+    <Pressable
+      onPress={onPress}
+      className={`flex-row items-center gap-3 rounded-card p-4 active:opacity-70 ${
+        selected ? 'bg-lime-tint dark:bg-lime-tint-dark' : 'bg-surface dark:bg-surface-dark'
+      }`}
+    >
+      <PersonAvatar name={person.name} muted={!person.link} />
+      <View className="flex-1 gap-0.5">
+        <Text className="text-base font-bold text-ink dark:text-ink-dark" numberOfLines={1}>
+          {person.name}
+        </Text>
+        <Text className="text-xs text-ink-2 dark:text-ink-2-dark" numberOfLines={1}>
+          {person.accounts.length === 0
+            ? 'Sin transferencias todavía'
+            : person.accounts.map((a) => a.currency).join(' · ')}
+        </Text>
+      </View>
+      <View className="items-end gap-0.5">
+        {shown.map(([currency, net]) => (
+          <Text
+            key={currency}
+            className="text-[13px] font-semibold text-ink dark:text-ink-dark"
+            numberOfLines={1}
+          >
+            {Math.round(net * 100) === 0 ? 'Parejos' : formatCurrency(Math.abs(net), currency)}
+          </Text>
+        ))}
+        {shown.length > 0 ? (
+          <Text className="text-[11px] text-ink-3 dark:text-ink-3-dark">
+            {nets.length > 2 ? `+${nets.length - 2} más` : netLabel(shown[0]![1])}
+          </Text>
+        ) : null}
+      </View>
+      <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text>
+    </Pressable>
+  );
+}
 
 /**
- * Opciones › Personas: link with someone (a partner, a roommate) to send
- * each other transfers. A transfer sent to a linked person leaves your
- * account without counting as an expense, and lands in theirs — on its own,
- * without counting as income. Each person keeps their own accounts.
+ * Opciones › Personas: the people you're linked with (a partner, a
+ * roommate) to send each other transfers — a transfer sent to a linked
+ * person leaves your account without counting as an expense, and lands in
+ * theirs on its own, without counting as income. Two tabs: your people
+ * (each grouping all their accounts) and linking someone new. On desktop,
+ * also the list beside the open person (see `_layout`).
  */
-export default function PeersScreen() {
+export function PeersList() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
-  const { data: peers } = useLinkedPeers();
-  const { data: peerAccounts } = usePeerAccounts();
+  const inPane = useInListPane();
+  const { peerId: selectedId } = useGlobalSearchParams<{ peerId?: string }>();
+  const { people, myInvite, isLoading } = usePeople();
   const { data: accounts } = useAccounts();
-  const { data: effects } = useAccountBalanceEffects();
   const createInvite = useCreatePeerInvite();
   const acceptInvite = useAcceptPeerInvite();
-  const setReceive = useSetPeerReceiveAccount();
-  const unlink = useUnlinkPeer();
 
+  const [tab, setTab] = useState<Tab>('people');
   const [error, setError] = useState<string | null>(null);
   const [joinOpen, setJoinOpen] = useState(false);
   const [code, setCode] = useState('');
   const [joinAccountId, setJoinAccountId] = useState<string | null>(null);
   const [joinPickerOpen, setJoinPickerOpen] = useState(false);
-  // Which person's receiving account is being picked.
-  const [receiveFor, setReceiveFor] = useState<string | null>(null);
-  const [unlinkTarget, setUnlinkTarget] = useState<LinkedPeer | null>(null);
 
-  const linked = (peers ?? []).filter((p) => p.status === 'accepted' && p.peerId);
-  const myInvite = (peers ?? []).find((p) => p.status === 'pending' && p.isInviter) ?? null;
+  const linked = people.filter((p) => p.link);
+  const unlinked = people.filter((p) => !p.link);
   const accountName = (id: string | null) =>
     (accounts ?? []).find((a) => a.id === id)?.name ?? null;
-  const contactBalances = useMemo(
-    () => balancesFromEffects(peerAccounts ?? [], effects ?? []),
-    [peerAccounts, effects],
-  );
 
   const share = (inviteCode: string) =>
     Share.share({
-      message: `Vinculémonos en Genobills para pasarnos dinero sin que cuente como gasto ni ingreso. Abre Opciones › Personas › "Tengo un código" y escribe: ${inviteCode}`,
+      message: `Vinculémonos en Genobills para pasarnos dinero sin que cuente como gasto ni ingreso. Abre Opciones › Personas › Vincular › "Tengo un código" y escribe: ${inviteCode}`,
     }).catch(() => {});
+
+  // "Copiado" for a moment after copying the code, then back to "Copiar".
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => clearTimeout(copyTimer.current ?? undefined), []);
+  const copy = (inviteCode: string) => {
+    Clipboard.setStringAsync(inviteCode)
+      .then(() => {
+        setCopied(true);
+        clearTimeout(copyTimer.current ?? undefined);
+        copyTimer.current = setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => setError('No se pudo copiar el código.'));
+  };
 
   const invite = () => {
     setError(null);
@@ -88,102 +157,100 @@ export default function PeersScreen() {
           setJoinOpen(false);
           setCode('');
           setJoinAccountId(null);
+          setTab('people');
         },
         onError: (e) => setError(toFriendlyMessage(e, 'No se pudo usar el código')),
       },
     );
   };
 
-  return (
-    <Screen edges={['top']} className="gap-4">
-      <PageHeader title="Personas" onBack={() => router.back()} />
+  const openPerson = (peerId: string) =>
+    router.push({ pathname: '/(app)/settings/peers/[peerId]', params: { peerId } } as Href);
 
-      <ScrollView
-        className="flex-1"
-        contentContainerClassName="gap-5"
-        contentContainerStyle={{ paddingBottom: scrollPadding }}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-          Vincúlate con tu pareja o con quien compartas gastos para pasarse dinero. Lo que le envías
-          sale de tu cuenta sin contar como gasto, y le llega a su cuenta sola, sin contar como
-          ingreso. Cada quien sigue llevando sus propias cuentas.
+  const section = (title: string, list: Person[], offset: number) =>
+    list.length > 0 ? (
+      <View className="gap-2">
+        <Text className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
+          {title}
         </Text>
+        {list.map((person, i) => (
+          <StaggerItem key={person.peerId} index={offset + i}>
+            <PersonCard
+              person={person}
+              selected={inPane && selectedId === person.peerId}
+              onPress={() => openPerson(person.peerId)}
+            />
+          </StaggerItem>
+        ))}
+      </View>
+    ) : null;
 
-        <ErrorCard message={error} />
+  const peopleTab = isLoading ? (
+    <ActivityIndicator className="mt-8" />
+  ) : people.length === 0 ? (
+    <View className="flex-1 justify-center gap-5">
+      <EmptyState
+        className="flex-none"
+        illustration={<PeersEmptyIllustration />}
+        title="Aún no tienes personas vinculadas"
+        description="Vincúlate con tu pareja o con quien compartas gastos para pasarse dinero sin que cuente como gasto ni ingreso."
+      />
+      <View className="self-center">
+        <Button label="Vincular a alguien" onPress={() => setTab('link')} />
+      </View>
+    </View>
+  ) : (
+    <>
+      {section('Vinculadas', linked, 0)}
+      {section('Ya no vinculadas', unlinked, linked.length)}
+    </>
+  );
 
-        {linked.map((p) => {
-          const contacts = (peerAccounts ?? []).filter((a) => a.peer_user_id === p.peerId);
-          return (
-            <View key={p.linkId} className="gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">
-              <View className="flex-row items-center gap-3">
-                <View className="h-10 w-10 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
-                  <UserRound size={20} color={ICON_COLORS.limeInk} />
-                </View>
-                <Text className="flex-1 text-base font-bold text-ink dark:text-ink-dark">
-                  {p.peerName ?? 'Persona'}
-                </Text>
-              </View>
-
-              <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-                {p.receiveCurrencies.length > 0
-                  ? `Puede recibir en ${p.receiveCurrencies.join(', ')}`
-                  : 'Aún no eligió dónde recibir: no le puedes enviar todavía'}
-              </Text>
-
-              {/* The contact account's balance is the net sent between you. */}
-              {contacts.map((a) => {
-                const net = contactBalances.get(a.id) ?? 0;
-                if (Math.round(net * 100) === 0) return null;
-                return (
-                  <Text key={a.id} className="text-sm text-ink-2 dark:text-ink-2-dark">
-                    {net > 0
-                      ? `Le has enviado ${formatCurrency(net, a.currency)} más de lo que te ha enviado`
-                      : `Te ha enviado ${formatCurrency(-net, a.currency)} más de lo que le has enviado`}
-                  </Text>
-                );
-              })}
-
-              <View className="gap-1">
-                <Text className="text-xs font-semibold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
-                  Recibes en
-                </Text>
-                {contacts
-                  .filter((a) => a.receive_into_account_id)
-                  .map((a) => (
-                    <Text key={a.id} className="text-sm text-ink dark:text-ink-dark">
-                      {accountName(a.receive_into_account_id) ?? 'Cuenta archivada'} · {a.currency}
-                    </Text>
-                  ))}
-                <Pressable onPress={() => setReceiveFor(p.peerId)} hitSlop={6}>
-                  <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                    {contacts.some((a) => a.receive_into_account_id)
-                      ? 'Cambiar o agregar otra divisa ›'
-                      : 'Elige dónde recibir ›'}
-                  </Text>
-                </Pressable>
-              </View>
-
-              <Pressable onPress={() => setUnlinkTarget(p)} hitSlop={6} className="self-start">
-                <Text className="text-[13px] font-semibold text-danger dark:text-danger-dark">
-                  Desvincular
-                </Text>
-              </Pressable>
+  const linkTab = (
+    <>
+      <View className="gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">
+        <Text className="text-base font-bold text-ink dark:text-ink-dark">Cómo funciona</Text>
+        {STEPS.map((step, i) => (
+          <View key={step} className="flex-row items-start gap-3">
+            <View className="h-6 w-6 items-center justify-center rounded-full bg-lime">
+              <Text className="text-xs font-bold text-ink">{i + 1}</Text>
             </View>
-          );
-        })}
+            <Text className="flex-1 text-sm text-ink-2 dark:text-ink-2-dark">{step}</Text>
+          </View>
+        ))}
+        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
+          Cada quien sigue llevando sus propias cuentas: nada se comparte ni se mezcla.
+        </Text>
+      </View>
 
-        {myInvite?.code ? (
-          <View className="gap-2 rounded-card border border-dashed border-line p-5 dark:border-line-dark">
-            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-              Tu código de invitación (vence en 7 días)
-            </Text>
-            <Text className="text-3xl font-bold tracking-[6px] text-ink dark:text-ink-dark">
-              {myInvite.code}
-            </Text>
+      {myInvite?.code ? (
+        <View className="gap-2 rounded-card border border-dashed border-line p-5 dark:border-line-dark">
+          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
+            Tu código de invitación (vence en 7 días)
+          </Text>
+          <Text className="text-3xl font-bold tracking-[6px] text-ink dark:text-ink-dark">
+            {myInvite.code}
+          </Text>
+          <View className="flex-row items-center gap-5">
+            <Pressable
+              onPress={() => copy(myInvite.code!)}
+              accessibilityRole="button"
+              accessibilityLabel={copied ? 'Código copiado' : 'Copiar código'}
+              className="flex-row items-center gap-1.5"
+              hitSlop={6}
+            >
+              {copied ? (
+                <Check size={14} color={ICON_COLORS.limeInk} />
+              ) : (
+                <Copy size={14} color={ICON_COLORS.limeInk} />
+              )}
+              <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+                {copied ? 'Copiado' : 'Copiar'}
+              </Text>
+            </Pressable>
             <Pressable
               onPress={() => share(myInvite.code!)}
-              className="flex-row items-center gap-1.5 self-start"
+              className="flex-row items-center gap-1.5"
               hitSlop={6}
             >
               <Share2 size={14} color={ICON_COLORS.limeInk} />
@@ -192,16 +259,33 @@ export default function PeersScreen() {
               </Text>
             </Pressable>
           </View>
-        ) : null}
-
-        <View className="gap-3">
-          <Button
-            label={myInvite ? 'Crear otro código' : 'Invitar a alguien'}
-            onPress={invite}
-            loading={createInvite.isPending}
-          />
-          <Button label="Tengo un código" variant="secondary" onPress={() => setJoinOpen(true)} />
         </View>
+      ) : null}
+
+      <View className="gap-3">
+        <Button
+          label={myInvite ? 'Crear otro código' : 'Invitar a alguien'}
+          onPress={invite}
+          loading={createInvite.isPending}
+        />
+        <Button label="Tengo un código" variant="secondary" onPress={() => setJoinOpen(true)} />
+      </View>
+    </>
+  );
+
+  return (
+    <Screen edges={['top']} className="gap-4">
+      <PageHeader title="Personas" onBack={() => router.back()} />
+      <SegmentedControl options={TABS} value={tab} onChange={setTab} />
+
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="grow gap-5"
+        contentContainerStyle={{ paddingBottom: scrollPadding }}
+        showsVerticalScrollIndicator={false}
+      >
+        <ErrorCard message={joinOpen ? null : error} />
+        {tab === 'people' ? peopleTab : linkTab}
       </ScrollView>
 
       <BottomSheet visible={joinOpen} onClose={() => setJoinOpen(false)} title="Usar un código">
@@ -244,34 +328,23 @@ export default function PeersScreen() {
         selectedId={joinAccountId}
         onSelect={setJoinAccountId}
       />
-
-      <AccountPicker
-        visible={receiveFor != null}
-        onClose={() => setReceiveFor(null)}
-        title="¿En qué cuenta recibes?"
-        selectedId={null}
-        onSelect={(accountId) => {
-          if (!receiveFor) return;
-          setError(null);
-          setReceive.mutate(
-            { peerId: receiveFor, accountId },
-            { onError: (e) => setError(toFriendlyMessage(e, 'No se pudo guardar')) },
-          );
-        }}
-      />
-
-      <ConfirmSheet
-        visible={unlinkTarget != null}
-        title={`¿Desvincularte de ${unlinkTarget?.peerName ?? 'esta persona'}?`}
-        description="Ya no podrán enviarse transferencias. Las que ya se hicieron se conservan en las cuentas de los dos."
-        confirmLabel="Desvincular"
-        destructive
-        onCancel={() => setUnlinkTarget(null)}
-        onConfirm={() => {
-          if (unlinkTarget) unlink.mutate(unlinkTarget.linkId);
-          setUnlinkTarget(null);
-        }}
-      />
     </Screen>
+  );
+}
+
+/**
+ * The section's index route. Desktop: the list lives in the layout's left
+ * pane, so this is the right pane's "nothing open yet" state. Phones: the
+ * list itself.
+ */
+export default function PeersScreen() {
+  const desktop = useIsDesktop();
+  if (!desktop) return <PeersList />;
+  return (
+    <MasterDetailEmpty
+      illustration={<PeersEmptyIllustration />}
+      title="Elige a una persona"
+      description="Su balance, sus cuentas y el historial de lo que se han enviado aparecen aquí, junto a la lista."
+    />
   );
 }

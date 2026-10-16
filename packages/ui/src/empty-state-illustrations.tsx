@@ -286,3 +286,54 @@ export function NotificationsEmptyIllustration({ size = 112 }: EmptyIllustration
     </Svg>
   );
 }
+
+export function PeersEmptyIllustration({ size = 112 }: EmptyIllustrationProps) {
+  const { badge, ink, canvas, lime } = useIllustrationColors();
+  const clock = useLoopClock(2800);
+  // A transfer: the coin arcs from one person to the other and back.
+  const coin = clock.interpolate({
+    inputRange: [0, 0.4, 0.5, 0.9, 1],
+    outputRange: [
+      'translate(0 0)',
+      'translate(32 0)',
+      'translate(32 0)',
+      'translate(0 0)',
+      'translate(0 0)',
+    ],
+  });
+  const lift = clock.interpolate({
+    inputRange: [0, 0.2, 0.4, 0.5, 0.7, 0.9, 1],
+    outputRange: [
+      'translate(0 0)',
+      'translate(0 -9)',
+      'translate(0 0)',
+      'translate(0 0)',
+      'translate(0 -9)',
+      'translate(0 0)',
+      'translate(0 0)',
+    ],
+  });
+  return (
+    <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
+      <Circle cx={60} cy={60} r={52} fill={badge} />
+      <Circle cx={40} cy={56} r={11} fill={ink} />
+      <Path d="M22 92 Q22 72 40 72 Q58 72 58 92 Z" fill={ink} />
+      <Circle cx={80} cy={56} r={11} fill={ink} opacity={0.55} />
+      <Path d="M62 92 Q62 72 80 72 Q98 72 98 92 Z" fill={ink} opacity={0.55} />
+      <AnimatedG transform={coin}>
+        <AnimatedG transform={lift}>
+          <Circle cx={44} cy={32} r={8} fill={lime} />
+          <Line
+            x1={44}
+            y1={28}
+            x2={44}
+            y2={36}
+            stroke={canvas}
+            strokeWidth={2}
+            strokeLinecap="round"
+          />
+        </AnimatedG>
+      </AnimatedG>
+    </Svg>
+  );
+}

@@ -67,9 +67,10 @@ export function MasterDetailEmpty({
   illustration: ReactNode;
   title: string;
   description: string;
-  action: TabBarAction;
+  /** The sidebar's primary action meanwhile; omitted = the app's default. */
+  action?: TabBarAction;
 }) {
-  useTabBarAction(action);
+  useTabBarAction(action ?? null);
   return (
     <Screen width="wide">
       <EmptyState illustration={illustration} title={title} description={description} />

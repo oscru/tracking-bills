@@ -21,6 +21,7 @@ export {
   CategoriesEmptyIllustration,
   TransactionsEmptyIllustration,
   NotificationsEmptyIllustration,
+  PeersEmptyIllustration,
   type EmptyIllustrationProps,
 } from './empty-state-illustrations';
 export { ErrorCard, type ErrorCardProps } from './error-card';

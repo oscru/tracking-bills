@@ -42,12 +42,13 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 
 /**
  * Dev-only: silence React DOM's "Unknown event handler property
- * `onStartShouldSetResponder`" warning. `react-native-gifted-charts` puts RN
- * touch-responder props (for its interactive pointer, which the app doesn't
- * use) on Views that react-native-web hands straight to a <div>. Harmless —
+ * `onStartShouldSetResponder`" (and `onPressIn`/`onPressOut`/`onLongPress`)
+ * warning. `react-native-gifted-charts` puts RN touch-responder and press
+ * props (for its interactive pointer, which the app doesn't use) on Views
+ * that react-native-web hands straight to a <div>. Harmless —
  * the chart renders fine and React never logs this in production builds —
  * but it popped the dev error overlay on every screen with a line chart.
- * Only that exact warning for `on…Responder` props is dropped.
+ * Only that exact warning, for those props, is dropped.
  */
 if (Platform.OS === 'web' && __DEV__) {
   const consoleError = console.error.bind(console);
@@ -56,7 +57,7 @@ if (Platform.OS === 'web' && __DEV__) {
       typeof args[0] === 'string' &&
       args[0].includes('Unknown event handler property') &&
       typeof args[1] === 'string' &&
-      /^on\w*Responder\w*$/.test(args[1])
+      /^on(\w*Responder\w*|PressIn|PressOut|LongPress)$/.test(args[1])
     ) {
       return;
     }
