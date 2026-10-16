@@ -41,8 +41,14 @@ export {
 export { IconButton, type IconButtonProps } from './icon-button';
 export { ListRow, type ListRowProps } from './list-row';
 export { NumericKeypad, type NumericKeypadProps, type KeypadKey } from './numeric-keypad';
-export { PageHeader, type PageHeaderProps } from './page-header';
+export { PageHeader, PageHeaderBackContext, type PageHeaderProps } from './page-header';
 export { Screen, type ScreenProps } from './screen';
+export {
+  DESKTOP_CONTENT_WIDTH,
+  DESKTOP_MIN_WIDTH,
+  useIsDesktop,
+  type ScreenWidth,
+} from './layout-mode';
 export { Skeleton, type SkeletonProps } from './skeleton';
 export { StaggerItem, type StaggerItemProps } from './stagger-item';
 export {

@@ -8,10 +8,10 @@ import {
   groupByAccountCurrency,
   todayISODate,
 } from '@repo/core/utils';
-import { CategoryDot, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
+import { CategoryDot, PageHeader, Screen, ICON_COLORS, useIsDesktop } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChartPie } from 'lucide-react-native';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CategorySpendDonut } from '../../features/home/category-spend-donut';
@@ -45,6 +45,7 @@ function ExpenseRow({ tx, onPress }: { tx: TransactionWithRefs; onPress: () => v
 
 export default function CategoryMonthSpendingScreen() {
   const router = useRouter();
+  const desktop = useIsDesktop();
   const params = useLocalSearchParams<{ categoryId: string; month?: string; label?: string }>();
   const month = params.month ?? todayISODate().slice(0, 7);
 
@@ -125,8 +126,72 @@ export default function CategoryMonthSpendingScreen() {
 
   const title = category ? resolveCategoryLabel(category) : 'Categoría';
 
+  // Desktop: the donut as big as its column allows, within reason.
+  const [chartWidth, setChartWidth] = useState<number | null>(null);
+  const chartRadius = chartWidth
+    ? Math.round(Math.max(110, Math.min(220, (chartWidth - 48) / 2)))
+    : 165;
+
+  const charts = (
+    <>
+      {groups.map((g) => (
+        <View key={g.currency} className="gap-5">
+          {groups.length > 1 ? (
+            <Text className="px-1 text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+              {g.currency}
+            </Text>
+          ) : null}
+
+          <View className="items-center rounded-card bg-surface p-6 dark:bg-surface-dark">
+            <CategorySpendDonut
+              breakdown={g.breakdown}
+              total={g.breakdown.reduce((sum, c) => sum + c.total, 0)}
+              currency={g.currency}
+              radius={desktop ? chartRadius : 100}
+            />
+          </View>
+
+          {g.breakdown.length > 1 ? (
+            <View className="gap-1">
+              <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+                Por subcategoría
+              </Text>
+              <View className="rounded-card border border-line px-4 dark:border-line-dark">
+                {g.breakdown.map((c, i) => (
+                  <View key={c.categoryId ?? 'none'}>
+                    {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
+                    <CategorySpendRow
+                      entry={c}
+                      total={g.breakdown.reduce((sum, x) => sum + x.total, 0)}
+                      currency={g.currency}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+        </View>
+      ))}
+    </>
+  );
+  const movements = (
+    <View className="gap-1">
+      <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+        Movimientos · {categoryTx.length}
+      </Text>
+      <View className="rounded-card border border-line px-4 dark:border-line-dark">
+        {categoryTx.map((tx, i) => (
+          <View key={tx.id}>
+            {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
+            <ExpenseRow tx={tx} onPress={() => goTransaction(tx.id)} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+
   return (
-    <Screen className="gap-5">
+    <Screen className="gap-5" width={desktop ? 'wide' : undefined}>
       <PageHeader
         title={params.label ? `${title} · ${params.label}` : title}
         onBack={goBackToMonth}
@@ -140,64 +205,33 @@ export default function CategoryMonthSpendingScreen() {
           ]}
         />
       ) : total > 0 ? (
-        <ScrollView
-          className="flex-1"
-          contentContainerClassName="gap-5 pb-8"
-          showsVerticalScrollIndicator={false}
-        >
-          {groups.map((g) => (
-            <View key={g.currency} className="gap-5">
-              {groups.length > 1 ? (
-                <Text className="px-1 text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                  {g.currency}
-                </Text>
-              ) : null}
-
-              <View className="items-center rounded-card bg-surface p-6 dark:bg-surface-dark">
-                <CategorySpendDonut
-                  breakdown={g.breakdown}
-                  total={g.breakdown.reduce((sum, c) => sum + c.total, 0)}
-                  currency={g.currency}
-                  radius={100}
-                />
-              </View>
-
-              {g.breakdown.length > 1 ? (
-                <View className="gap-1">
-                  <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                    Por subcategoría
-                  </Text>
-                  <View className="rounded-card border border-line px-4 dark:border-line-dark">
-                    {g.breakdown.map((c, i) => (
-                      <View key={c.categoryId ?? 'none'}>
-                        {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
-                        <CategorySpendRow
-                          entry={c}
-                          total={g.breakdown.reduce((sum, x) => sum + x.total, 0)}
-                          currency={g.currency}
-                        />
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              ) : null}
+        desktop ? (
+          // Desktop: charts (~60%, the donut growing with the window) and
+          // the expenses (~30%), each column scrolling on its own.
+          <View className="flex-1 flex-row gap-6 pb-6">
+            <View style={{ flex: 2 }} onLayout={(e) => setChartWidth(e.nativeEvent.layout.width)}>
+              <ScrollView
+                className="flex-1"
+                contentContainerClassName="gap-5"
+                showsVerticalScrollIndicator={false}
+              >
+                {charts}
+              </ScrollView>
             </View>
-          ))}
-
-          <View className="gap-1">
-            <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-              Movimientos · {categoryTx.length}
-            </Text>
-            <View className="rounded-card border border-line px-4 dark:border-line-dark">
-              {categoryTx.map((tx, i) => (
-                <View key={tx.id}>
-                  {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
-                  <ExpenseRow tx={tx} onPress={() => goTransaction(tx.id)} />
-                </View>
-              ))}
-            </View>
+            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+              {movements}
+            </ScrollView>
           </View>
-        </ScrollView>
+        ) : (
+          <ScrollView
+            className="flex-1"
+            contentContainerClassName="gap-5 pb-8"
+            showsVerticalScrollIndicator={false}
+          >
+            {charts}
+            {movements}
+          </ScrollView>
+        )
       ) : (
         <View className="mt-16 items-center gap-2">
           <ChartPie size={28} color={ICON_COLORS.ink3} />

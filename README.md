@@ -1,4 +1,4 @@
-# Finance Tracker
+# Genobills
 
 Universal (web + iOS + Android) personal finance app. See
 [`docs/CLAUDE.md`](docs/CLAUDE.md) for the architecture plan and phased roadmap.

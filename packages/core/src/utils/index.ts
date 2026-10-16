@@ -37,7 +37,10 @@ const numberFormatCache = new Map<string, Intl.NumberFormat>();
 const dateFormatCache = new Map<string, Intl.DateTimeFormat>();
 
 /** A cached `Intl.NumberFormat` — same arguments, same instance. */
-export function getNumberFormat(locale: string, options: Intl.NumberFormatOptions): Intl.NumberFormat {
+export function getNumberFormat(
+  locale: string,
+  options: Intl.NumberFormatOptions,
+): Intl.NumberFormat {
   const key = `${locale}|${JSON.stringify(options)}`;
   let format = numberFormatCache.get(key);
   if (!format) {
@@ -48,7 +51,10 @@ export function getNumberFormat(locale: string, options: Intl.NumberFormatOption
 }
 
 /** A cached `Intl.DateTimeFormat` — use `.format(date)` instead of `date.toLocaleDateString(locale, options)`. */
-export function getDateFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+export function getDateFormat(
+  locale: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
   const key = `${locale}|${JSON.stringify(options)}`;
   let format = dateFormatCache.get(key);
   if (!format) {
@@ -63,12 +69,29 @@ export function formatCurrency(amount: number, currency = 'MXN', locale = 'es-MX
   return getNumberFormat(locale, { style: 'currency', currency }).format(amount);
 }
 
+/**
+ * `formatCurrency`, labeled with its currency code — for places that show
+ * several currencies side by side. The code is only appended when the
+ * formatted amount doesn't already carry it: es-MX writes MXN as "$1,000.00"
+ * (needs " MXN") but USD as "USD 1,000.00" (already labeled).
+ */
+export function formatCurrencyLabeled(amount: number, currency = 'MXN', locale = 'es-MX'): string {
+  const formatted = formatCurrency(amount, currency, locale);
+  return formatted.includes(currency) ? formatted : `${formatted} ${currency}`;
+}
+
+/** Whether `formatCurrency` already shows the currency code (e.g. "USD 1,000.00"), not just a symbol. */
+export function currencyCodeShown(currency = 'MXN', locale = 'es-MX'): boolean {
+  return formatCurrency(0, currency, locale).includes(currency);
+}
+
 /** A short "$1.8k" / "$450" form of an amount — for tight spaces (e.g. a calendar-heatmap cell) where a full `formatCurrency` string wouldn't fit. */
 export function formatCompactAmount(amount: number): string {
   const abs = Math.abs(amount);
   if (abs >= 1000) {
     const thousands = abs / 1000;
-    const rounded = thousands >= 10 ? String(Math.round(thousands)) : thousands.toFixed(1).replace(/\.0$/, '');
+    const rounded =
+      thousands >= 10 ? String(Math.round(thousands)) : thousands.toFixed(1).replace(/\.0$/, '');
     return `$${rounded}k`;
   }
   return `$${Math.round(abs)}`;
@@ -305,7 +328,9 @@ export function projectedAccountBalance(
   transactions: BalanceTx[],
   pending: BalanceTx,
 ): number {
-  return fromCents(toCents(accountBalance(account, transactions)) + transactionEffectCents(pending, account.id));
+  return fromCents(
+    toCents(accountBalance(account, transactions)) + transactionEffectCents(pending, account.id),
+  );
 }
 
 export interface CurrencyTotal {
@@ -335,7 +360,11 @@ export function totalBalancesByCurrency(
     totalCentsByCurrency.set(a.currency, entry);
   }
   return [...totalCentsByCurrency.entries()]
-    .map(([currency, { totalCents, accountCount }]) => ({ currency, total: fromCents(totalCents), accountCount }))
+    .map(([currency, { totalCents, accountCount }]) => ({
+      currency,
+      total: fromCents(totalCents),
+      accountCount,
+    }))
     .sort((a, b) => b.total - a.total);
 }
 
@@ -425,7 +454,10 @@ interface TagCountTx {
 }
 
 /** How many expense/income transactions carry this tag (transfers aren't counted). */
-export function tagCounts(tagId: string, transactions: TagCountTx[]): { expense: number; income: number } {
+export function tagCounts(
+  tagId: string,
+  transactions: TagCountTx[],
+): { expense: number; income: number } {
   let expense = 0;
   let income = 0;
   for (const t of transactions) {
@@ -468,7 +500,11 @@ export function monthTotals(transactions: MonthTotalsTx[], month: string): Month
     byCurrency.set(currency, entry);
   }
   return [...byCurrency.entries()]
-    .map(([currency, { income, expense }]) => ({ currency, income: fromCents(income), expense: fromCents(expense) }))
+    .map(([currency, { income, expense }]) => ({
+      currency,
+      income: fromCents(income),
+      expense: fromCents(expense),
+    }))
     .sort((a, b) => b.income + b.expense - (a.income + a.expense));
 }
 
@@ -583,7 +619,11 @@ export function formatActivityMoment(iso: string, verb: string, locale = 'es-MX'
   if (days === 2) return `${cap} antier`;
   if (days >= 3 && days <= 6) return `${cap} hace ${days} días`;
 
-  const dateLabel = getDateFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+  const dateLabel = getDateFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
   return `${cap} el ${dateLabel}`;
 }
 
@@ -731,7 +771,8 @@ export function categorySpendSeries(
     for (let i = 0; i < MONTH_RANGE_DAYS; i++) {
       const key = addDaysISO(from, i);
       // Label about once a week (and the last day), so 30 bars stay legible.
-      const label = i % 7 === 0 || i === MONTH_RANGE_DAYS - 1 ? String(Number(key.slice(8, 10))) : '';
+      const label =
+        i % 7 === 0 || i === MONTH_RANGE_DAYS - 1 ? String(Number(key.slice(8, 10))) : '';
       points.push({ key, label, total: fromCents(totals.get(key) ?? 0) });
     }
     return { granularity: 'day', points, from, to };
@@ -760,7 +801,11 @@ export function categorySpendSeries(
     const totals = bucketCategorySpend(transactions, ids, from, today, (d) => d.slice(0, 4));
     const points: SpendSeriesPoint[] = [];
     for (let y = firstMonth.getFullYear(); y <= referenceDate.getFullYear(); y++) {
-      points.push({ key: String(y), label: String(y), total: fromCents(totals.get(String(y)) ?? 0) });
+      points.push({
+        key: String(y),
+        label: String(y),
+        total: fromCents(totals.get(String(y)) ?? 0),
+      });
     }
     return { granularity: 'year', points, from, to: today };
   }
@@ -791,7 +836,10 @@ export function categoryRangeComparison(
   const ids = new Set(categoryIds);
   const b = categoryRangeBounds(range, referenceDate);
   const sum = (from: string, to: string) =>
-    [...bucketCategorySpend(transactions, ids, from, to, () => 'x').values()].reduce((a, c) => a + c, 0);
+    [...bucketCategorySpend(transactions, ids, from, to, () => 'x').values()].reduce(
+      (a, c) => a + c,
+      0,
+    );
   const current = fromCents(sum(b.from, b.to));
   const previous = fromCents(sum(b.previousFrom, b.previousTo));
   return {
@@ -852,7 +900,10 @@ function startOfWeek(date: Date): Date {
 }
 
 /** The `{ from, to }` (inclusive, `YYYY-MM-DD`) bounds of the week/month/year containing `referenceDate`. */
-export function periodRange(period: AnalyticsPeriod, referenceDate: Date): { from: string; to: string } {
+export function periodRange(
+  period: AnalyticsPeriod,
+  referenceDate: Date,
+): { from: string; to: string } {
   if (period === 'week') {
     const start = startOfWeek(referenceDate);
     const end = new Date(start);
@@ -865,7 +916,10 @@ export function periodRange(period: AnalyticsPeriod, referenceDate: Date): { fro
   }
   const y = referenceDate.getFullYear();
   const m = referenceDate.getMonth();
-  return { from: `${y}-${String(m + 1).padStart(2, '0')}-01`, to: todayISODate(new Date(y, m + 1, 0)) };
+  return {
+    from: `${y}-${String(m + 1).padStart(2, '0')}-01`,
+    to: todayISODate(new Date(y, m + 1, 0)),
+  };
 }
 
 /** A new reference date `delta` whole periods away (negative = back). */
@@ -875,17 +929,25 @@ export function shiftPeriodDate(period: AnalyticsPeriod, referenceDate: Date, de
     d.setDate(d.getDate() + delta * 7);
     return d;
   }
-  if (period === 'year') return new Date(referenceDate.getFullYear() + delta, referenceDate.getMonth(), 1);
+  if (period === 'year')
+    return new Date(referenceDate.getFullYear() + delta, referenceDate.getMonth(), 1);
   return new Date(referenceDate.getFullYear(), referenceDate.getMonth() + delta, 1);
 }
 
 /** `periodRange` for the period immediately before `referenceDate`'s — what "vs. anterior" compares against. */
-export function previousPeriodRange(period: AnalyticsPeriod, referenceDate: Date): { from: string; to: string } {
+export function previousPeriodRange(
+  period: AnalyticsPeriod,
+  referenceDate: Date,
+): { from: string; to: string } {
   return periodRange(period, shiftPeriodDate(period, referenceDate, -1));
 }
 
 /** A human label for the period containing `referenceDate`, e.g. "Septiembre 2026", "8 – 14 sep", "2026". */
-export function periodLabel(period: AnalyticsPeriod, referenceDate: Date, locale = 'es-MX'): string {
+export function periodLabel(
+  period: AnalyticsPeriod,
+  referenceDate: Date,
+  locale = 'es-MX',
+): string {
   if (period === 'year') return String(referenceDate.getFullYear());
   if (period === 'month') {
     const label = getDateFormat(locale, { month: 'long', year: 'numeric' }).format(referenceDate);
@@ -915,7 +977,11 @@ interface RangeTx {
 }
 
 /** Income / expense totals within an inclusive `[fromISO, toISO]` range, excluding transfers. Only settled transactions count. */
-function rangeTotals(transactions: RangeTx[], fromISO: string, toISO: string): { income: number; expense: number } {
+function rangeTotals(
+  transactions: RangeTx[],
+  fromISO: string,
+  toISO: string,
+): { income: number; expense: number } {
   let incomeCents = 0;
   let expenseCents = 0;
   for (const t of transactions) {
@@ -944,7 +1010,10 @@ export function dailyTransactionTotals(
     if (!t.is_completed) continue;
     if (t.type !== type) continue;
     if (t.transaction_date < fromISO || t.transaction_date > toISO) continue;
-    totalCents.set(t.transaction_date, (totalCents.get(t.transaction_date) ?? 0) + toCents(t.amount));
+    totalCents.set(
+      t.transaction_date,
+      (totalCents.get(t.transaction_date) ?? 0) + toCents(t.amount),
+    );
   }
   const days: { date: string; total: number }[] = [];
   for (let cursor = fromISO; cursor <= toISO; cursor = addDaysISO(cursor, 1)) {
@@ -988,7 +1057,10 @@ export function noSpendStreak(transactions: RangeTx[], today: string): number {
       .filter((t) => t.is_completed && t.type === 'expense' && Number(t.amount) > 0)
       .map((t) => t.transaction_date),
   );
-  const earliest = transactions.reduce((min, t) => (t.transaction_date < min ? t.transaction_date : min), today);
+  const earliest = transactions.reduce(
+    (min, t) => (t.transaction_date < min ? t.transaction_date : min),
+    today,
+  );
   let streak = 0;
   for (let cursor = today; cursor >= earliest; cursor = addDaysISO(cursor, -1)) {
     if (expenseDates.has(cursor)) break;
@@ -1002,14 +1074,20 @@ export function noSpendStreak(transactions: RangeTx[], today: string): number {
  * history, up to and including `today` — the "mejor racha" a given streak
  * gets compared against. Only settled expenses count.
  */
-export function longestNoSpendStreak(transactions: RangeTx[], today: string = todayISODate()): number {
+export function longestNoSpendStreak(
+  transactions: RangeTx[],
+  today: string = todayISODate(),
+): number {
   if (transactions.length === 0) return 0;
   const expenseDates = new Set(
     transactions
       .filter((t) => t.is_completed && t.type === 'expense' && Number(t.amount) > 0)
       .map((t) => t.transaction_date),
   );
-  const earliest = transactions.reduce((min, t) => (t.transaction_date < min ? t.transaction_date : min), today);
+  const earliest = transactions.reduce(
+    (min, t) => (t.transaction_date < min ? t.transaction_date : min),
+    today,
+  );
   let longest = 0;
   let current = 0;
   for (let cursor = earliest; cursor <= today; cursor = addDaysISO(cursor, 1)) {
@@ -1069,8 +1147,10 @@ export function periodInsights(
   return {
     currentAmount,
     previousAmount,
-    pctChangeVsPrevious: previousAmount > 0 ? ((currentAmount - previousAmount) / previousAmount) * 100 : null,
-    savingsRatePct: current.income > 0 ? ((current.income - current.expense) / current.income) * 100 : null,
+    pctChangeVsPrevious:
+      previousAmount > 0 ? ((currentAmount - previousAmount) / previousAmount) * 100 : null,
+    savingsRatePct:
+      current.income > 0 ? ((current.income - current.expense) / current.income) * 100 : null,
     projectedAmount,
     noSpendStreakDays: noSpendStreak(transactions, today),
     bestNoSpendStreakDays: longestNoSpendStreak(transactions, today),
@@ -1127,7 +1207,8 @@ export function categoryTrend(
     if (!t.is_completed) continue;
     if (t.type !== type) continue;
     if (t.transaction_date >= from && t.transaction_date <= to) touch(t, 'currentCents');
-    else if (t.transaction_date >= prev.from && t.transaction_date <= prev.to) touch(t, 'previousCents');
+    else if (t.transaction_date >= prev.from && t.transaction_date <= prev.to)
+      touch(t, 'previousCents');
   }
 
   return [...byCategory.values()]
@@ -1138,7 +1219,8 @@ export function categoryTrend(
         ...rest,
         currentTotal,
         previousTotal,
-        pctChange: previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal) * 100 : null,
+        pctChange:
+          previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal) * 100 : null,
       };
     })
     .filter((c) => c.currentTotal > 0 || c.previousTotal > 0)
@@ -1147,8 +1229,19 @@ export function categoryTrend(
 
 /** The `limit` largest expenses or income entries within an inclusive `[fromISO, toISO]` range, biggest first. */
 export function topTransactions<
-  T extends { type: string; amount: number | string; transaction_date: string; is_completed: boolean },
->(transactions: T[], fromISO: string, toISO: string, type: 'expense' | 'income' = 'expense', limit = 3): T[] {
+  T extends {
+    type: string;
+    amount: number | string;
+    transaction_date: string;
+    is_completed: boolean;
+  },
+>(
+  transactions: T[],
+  fromISO: string,
+  toISO: string,
+  type: 'expense' | 'income' = 'expense',
+  limit = 3,
+): T[] {
   return transactions
     .filter(
       (t) =>
@@ -1177,8 +1270,10 @@ export interface BudgetSpan {
 function periodSpanEnd(startISO: string, periodType: Exclude<BudgetPeriodType, 'custom'>): string {
   const [y, m, d] = startISO.split('-').map(Number);
   const start = new Date(y ?? 2000, (m ?? 1) - 1, d ?? 1);
-  if (periodType === 'weekly') return todayISODate(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6));
-  if (periodType === 'biweekly') return todayISODate(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 14));
+  if (periodType === 'weekly')
+    return todayISODate(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6));
+  if (periodType === 'biweekly')
+    return todayISODate(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 14));
   // monthly: one calendar month later, minus a day. A plain `getDate() - 1` on
   // the target month overflows for a 29th-31st start once the target month is
   // shorter (e.g. 31-Jan naively lands on 2-Mar instead of 28-Feb), so clamp
@@ -1252,11 +1347,13 @@ export interface BudgetProgress {
  * same currency) live here; each caller's own `predicate` carries whatever
  * else distinguishes it (category, date range, `goal_id`, transaction type).
  */
-function sumSettledAmount<T extends { amount: number | string; is_completed: boolean; account: { currency: string } | null }>(
-  transactions: T[],
-  currency: string,
-  predicate: (t: T) => boolean,
-): number {
+function sumSettledAmount<
+  T extends {
+    amount: number | string;
+    is_completed: boolean;
+    account: { currency: string } | null;
+  },
+>(transactions: T[], currency: string, predicate: (t: T) => boolean): number {
   let totalCents = 0;
   for (const t of transactions) {
     if (!t.is_completed) continue;
@@ -1317,7 +1414,11 @@ export function categorySpentInRange(
   return sumSettledAmount(
     transactions,
     currency,
-    (t) => t.type === 'expense' && t.category?.id === categoryId && t.transaction_date >= fromISO && t.transaction_date <= toISO,
+    (t) =>
+      t.type === 'expense' &&
+      t.category?.id === categoryId &&
+      t.transaction_date >= fromISO &&
+      t.transaction_date <= toISO,
   );
 }
 

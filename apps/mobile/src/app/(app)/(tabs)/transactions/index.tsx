@@ -2,7 +2,7 @@ import { useAccounts, useCategoryTree, useTags, useTransactionPages } from '@rep
 import { resolveCategoryLabel } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import type { TransactionType } from '@repo/core/types';
-import { formatCurrency, toFriendlyMessage } from '@repo/core/utils';
+import { formatCurrency, formatCurrencyLabeled, toFriendlyMessage } from '@repo/core/utils';
 import {
   EmptyState,
   ErrorCard,
@@ -11,10 +11,11 @@ import {
   TextField,
   TransactionsEmptyIllustration,
   ICON_COLORS,
+  useIsDesktop,
   useTabBarScrollPadding,
 } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { ListFilter } from 'lucide-react-native';
+import { ListFilter, MousePointerClick } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { useColorScheme } from 'nativewind';
@@ -29,6 +30,7 @@ import {
   type DayNet,
 } from '../../../../features/transactions/day-groups';
 import { FiltersSheet } from '../../../../features/transactions/filters-sheet';
+import { TransactionDetailView } from '../../../../features/transactions/transaction-detail-view';
 import { TransactionListItem } from '../../../../features/transactions/transaction-list-item';
 import { TransactionsSkeleton } from '../../../../features/transactions/transactions-skeleton';
 
@@ -140,9 +142,15 @@ export default function TransactionsScreen() {
   // rebuilding its native gesture event binding on every re-render (search
   // typing, a refetch on focus, etc. — see its own comments for the chain
   // this feeds into).
+  // Desktop opens the movement in the side pane instead of a new screen.
+  const desktop = useIsDesktop();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const goToTransaction = useCallback(
-    (id: string) => router.push({ pathname: '/(app)/transactions/[id]', params: { id } }),
-    [router],
+    (id: string) =>
+      desktop
+        ? setSelectedId(id)
+        : router.push({ pathname: '/(app)/transactions/[id]', params: { id } }),
+    [router, desktop],
   );
   const goToEditTransaction = useCallback(
     (id: string) => router.push({ pathname: '/(app)/transactions/[id]/edit', params: { id } }),
@@ -270,8 +278,115 @@ export default function TransactionsScreen() {
     pendingOnly,
   ].filter(Boolean).length;
 
+  const listArea = isLoading ? (
+    <ScrollView
+      className="flex-1"
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: scrollPadding }}
+    >
+      <TransactionsSkeleton />
+    </ScrollView>
+  ) : error ? (
+    <View className="mt-8">
+      <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar los movimientos')} />
+    </View>
+  ) : (
+    <View className="flex-1">
+      <FlashList
+        data={items}
+        keyExtractor={(item) => item.key}
+        getItemType={getItemType}
+        stickyHeaderIndices={stickyHeaderIndices}
+        // Rows read `openRowId` (which row has its swipe actions out).
+        // Rows also read `selectedId` (desktop: the one shown in the side pane).
+        extraData={`${openRowId ?? ''}|${selectedId ?? ''}`}
+        contentContainerStyle={{ paddingBottom: scrollPadding }}
+        showsVerticalScrollIndicator={false}
+        refreshing={isRefetching && !isFetchingNextPage}
+        onEndReached={loadMore}
+        // Start loading the next page about a screen before the end.
+        onEndReachedThreshold={1}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <View className="items-center py-6">
+              <ActivityIndicator color={ICON_COLORS.ink3} />
+            </View>
+          ) : null
+        }
+        onRefresh={() => refetch()}
+        ListEmptyComponent={
+          <View className="pt-16">
+            <EmptyState
+              className=""
+              illustration={<TransactionsEmptyIllustration />}
+              title="Sin movimientos"
+              description={
+                filtered
+                  ? 'No hay movimientos con estos filtros.'
+                  : 'Toca el botón + para registrar el primero.'
+              }
+            />
+          </View>
+        }
+        renderItem={({ item }) => {
+          if (item.kind === 'header') {
+            return (
+              // "It floats": once pinned, the rows scroll under it frosted.
+              <Glass
+                tone="light"
+                darkScheme={dark}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: 16,
+                  paddingBottom: 8,
+                }}
+              >
+                <Text className="text-[13px] font-bold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
+                  {dayHeaderLabel(item.date)}
+                </Text>
+                <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">
+                  {item.nets
+                    .map((n) =>
+                      item.nets.length > 1
+                        ? formatCurrencyLabeled(n.net, n.currency)
+                        : formatCurrency(n.net, n.currency),
+                    )
+                    .join(' · ')}
+                </Text>
+              </Glass>
+            );
+          }
+          const row = (
+            <View
+              className={`overflow-hidden border-x border-line dark:border-line-dark ${
+                item.isFirst ? 'rounded-t-2xl border-t' : ''
+              } ${item.isLast ? 'rounded-b-2xl border-b' : ''}`}
+            >
+              {item.isFirst ? null : (
+                <View className="px-3">
+                  <View className="h-px bg-line dark:bg-line-dark" />
+                </View>
+              )}
+              <TransactionListItem
+                transaction={item.transaction}
+                onPress={goToTransaction}
+                onEdit={goToEditTransaction}
+                isOpen={openRowId === item.transaction.id}
+                onReveal={handleRowReveal}
+                selected={selectedId === item.transaction.id}
+              />
+            </View>
+          );
+          return item.intro ? <StaggerItem index={item.index}>{row}</StaggerItem> : row;
+        }}
+      />
+    </View>
+  );
+
   return (
-    <Screen edges={['top']} className="gap-3">
+    <Screen edges={['top']} className="gap-3" width="wide">
       <View className="gap-1">
         <View className="flex-row items-center justify-between">
           <Text className="text-2xl font-bold text-ink dark:text-ink-dark">
@@ -331,109 +446,38 @@ export default function TransactionsScreen() {
         </Pressable>
       </View>
 
-      {isLoading ? (
-        <ScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: scrollPadding }}
-        >
-          <TransactionsSkeleton />
-        </ScrollView>
-      ) : error ? (
-        <View className="mt-8">
-          <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar los movimientos')} />
+      {desktop ? (
+        // Desktop: master-detail — the list, and the selected movement beside it.
+        <View className="flex-1 flex-row gap-6">
+          <View className="flex-1">{listArea}</View>
+          <View
+            style={{ width: 440 }}
+            className="mb-6 overflow-hidden rounded-card border border-line bg-canvas dark:border-line-dark dark:bg-canvas-dark"
+          >
+            {selectedId ? (
+              <TransactionDetailView
+                key={selectedId}
+                id={selectedId}
+                embedded
+                onClose={() => setSelectedId(null)}
+              />
+            ) : (
+              <View className="flex-1 items-center justify-center gap-3 px-10">
+                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-lime-tint dark:bg-lime-tint-dark">
+                  <MousePointerClick size={22} color={ICON_COLORS.limeInk} />
+                </View>
+                <Text className="text-center text-base font-semibold text-ink dark:text-ink-dark">
+                  Selecciona un movimiento
+                </Text>
+                <Text className="text-center text-sm text-ink-2 dark:text-ink-2-dark">
+                  Su detalle aparece aquí, sin salir de la lista.
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       ) : (
-        <View className="flex-1">
-          <FlashList
-            data={items}
-            keyExtractor={(item) => item.key}
-            getItemType={getItemType}
-            stickyHeaderIndices={stickyHeaderIndices}
-            // Rows read `openRowId` (which row has its swipe actions out).
-            extraData={openRowId}
-            contentContainerStyle={{ paddingBottom: scrollPadding }}
-            showsVerticalScrollIndicator={false}
-            refreshing={isRefetching && !isFetchingNextPage}
-            onEndReached={loadMore}
-            // Start loading the next page about a screen before the end.
-            onEndReachedThreshold={1}
-            ListFooterComponent={
-              isFetchingNextPage ? (
-                <View className="items-center py-6">
-                  <ActivityIndicator color={ICON_COLORS.ink3} />
-                </View>
-              ) : null
-            }
-            onRefresh={() => refetch()}
-            ListEmptyComponent={
-              <View className="pt-16">
-                <EmptyState
-                  className=""
-                  illustration={<TransactionsEmptyIllustration />}
-                  title="Sin movimientos"
-                  description={
-                    filtered
-                      ? 'No hay movimientos con estos filtros.'
-                      : 'Toca el botón + para registrar el primero.'
-                  }
-                />
-              </View>
-            }
-            renderItem={({ item }) => {
-              if (item.kind === 'header') {
-                return (
-                  // "It floats": once pinned, the rows scroll under it frosted.
-                  <Glass
-                    tone="light"
-                    darkScheme={dark}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingTop: 16,
-                      paddingBottom: 8,
-                    }}
-                  >
-                    <Text className="text-[13px] font-bold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
-                      {dayHeaderLabel(item.date)}
-                    </Text>
-                    <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">
-                      {item.nets
-                        .map((n) =>
-                          item.nets.length > 1
-                            ? `${formatCurrency(n.net, n.currency)} ${n.currency}`
-                            : formatCurrency(n.net, n.currency),
-                        )
-                        .join(' · ')}
-                    </Text>
-                  </Glass>
-                );
-              }
-              const row = (
-                <View
-                  className={`overflow-hidden border-x border-line dark:border-line-dark ${
-                    item.isFirst ? 'rounded-t-2xl border-t' : ''
-                  } ${item.isLast ? 'rounded-b-2xl border-b' : ''}`}
-                >
-                  {item.isFirst ? null : (
-                    <View className="px-3">
-                      <View className="h-px bg-line dark:bg-line-dark" />
-                    </View>
-                  )}
-                  <TransactionListItem
-                    transaction={item.transaction}
-                    onPress={goToTransaction}
-                    onEdit={goToEditTransaction}
-                    isOpen={openRowId === item.transaction.id}
-                    onReveal={handleRowReveal}
-                  />
-                </View>
-              );
-              return item.intro ? <StaggerItem index={item.index}>{row}</StaggerItem> : row;
-            }}
-          />
-        </View>
+        listArea
       )}
 
       <FiltersSheet

@@ -2,7 +2,7 @@ import { useSignIn } from '@repo/core/hooks';
 import { toFriendlyMessage } from '@repo/core/utils';
 import { signInSchema } from '@repo/core/validators';
 import { Button, ErrorCard, ICON_COLORS, Screen, TextField } from '@repo/ui';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -11,6 +11,7 @@ import { SsoButtons } from '../../features/auth/sso-buttons';
 
 export default function SignIn() {
   const signIn = useSignIn();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -34,9 +35,9 @@ export default function SignIn() {
       <View className="gap-5">
         <View className="mb-2 items-center gap-3">
           <View className="h-14 w-14 items-center justify-center rounded-2xl bg-lime">
-            <Text className="text-2xl font-black text-ink">$</Text>
+            <Text className="text-2xl">💸</Text>
           </View>
-          <Text className="text-sm text-ink-3 dark:text-ink-3-dark">[nombre de la app]</Text>
+          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Genobills</Text>
         </View>
 
         <View className="gap-1">
@@ -82,6 +83,18 @@ export default function SignIn() {
             </Pressable>
           }
         />
+
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: '/(auth)/forgot-password', params: { email: email.trim() } })
+          }
+          hitSlop={8}
+          className="-mt-2 self-end"
+        >
+          <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
+            ¿Olvidaste tu contraseña?
+          </Text>
+        </Pressable>
 
         <ErrorCard message={errors.form} />
 

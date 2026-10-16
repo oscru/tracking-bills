@@ -1,4 +1,4 @@
-# Architecture Plan — Finance Tracker App
+# Architecture Plan — Genobills (Finance Tracker App)
 
 > This document is meant to be consumed by an AI agent (Claude Code, Cursor, etc.) as a kickoff guide for the project. It contains decisions that have already been made, so the agent doesn't need to re-ask, and it explicitly lists the open points.
 

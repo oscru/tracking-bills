@@ -59,7 +59,7 @@ export default function ImportScreen() {
         throw new Error('Aún se están cargando tus datos, intenta de nuevo.');
       }
       const base64 = await readPickedFileAsBase64(asset);
-      const sheets = readWorkbookFromBase64(base64);
+      const sheets = await readWorkbookFromBase64(base64);
       const parsed = parseWorkbook(sheets);
       const plan = buildImportPlan(parsed, { accounts, categories, tags }, profile.currency);
       setStep({ name: 'preview', fileName: asset.name, plan });

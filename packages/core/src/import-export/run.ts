@@ -1,4 +1,10 @@
-import { attachTagsBulk, createAccount, createCategory, createTag, createTransactions } from '../supabase';
+import {
+  attachTagsBulk,
+  createAccount,
+  createCategory,
+  createTag,
+  createTransactions,
+} from '../supabase';
 import type { TransactionCreateInput } from '../validators';
 import { AUTO_CATEGORY_COLOR } from './constants';
 import { guessAccountType } from './guess-account-type';
@@ -51,7 +57,11 @@ export async function runImportPlan(plan: ImportPlan): Promise<ImportRunResult> 
   // namespaces don't collide (subcategory keys are prefixed `sub:`).
   const categoryIdByKey = new Map<string, string>();
   for (const c of plan.newCategories) {
-    const created = await createCategory({ name: c.name, type: c.type, color: AUTO_CATEGORY_COLOR });
+    const created = await createCategory({
+      name: c.name,
+      type: c.type,
+      color: AUTO_CATEGORY_COLOR,
+    });
     categoryIdByKey.set(c.key, created.id);
   }
   for (const s of plan.newSubcategories) {

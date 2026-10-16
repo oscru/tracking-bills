@@ -11,7 +11,8 @@
     "web": "expo start --web",
     "build": "expo export --platform web",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "web:local": "EXPO_NO_DOTENV=1 EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH expo export --platform web --output-dir dist-local && npx --yes serve -s dist-local -l 8098"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",

@@ -2,6 +2,10 @@ import { ScrollViewStyleReset } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
 
 /**
+ * NOTE: only used with static/server rendering. The web build is a SPA
+ * (`web.output: "single"` in app.json), whose HTML comes from
+ * `public/index.html` instead — change that one for production.
+ *
  * Root HTML for the web build. Key bit: `interactive-widget=resizes-content`
  * so the mobile browser shrinks the layout viewport when the on-screen
  * keyboard opens (instead of the keyboard covering inputs / buttons).

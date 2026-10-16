@@ -10,13 +10,15 @@ import {
   StaggerItem,
   TagsEmptyIllustration,
   useTabBarScrollPadding,
+  useIsDesktop,
 } from '@repo/ui';
-import { useRouter } from 'expo-router';
+import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, View, ScrollView } from 'react-native';
 
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
+import { MasterDetailEmpty, useInListPane } from '../../../../../features/settings/master-detail';
 
 const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
   { value: 'active', label: 'Activas' },
@@ -25,9 +27,13 @@ const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
 
 const NO_COUNTS = { expense: 0, income: 0 };
 
-export default function TagsScreen() {
+/** The section's list — on desktop, also drawn beside the open record (see `_layout`). */
+export function TagsList() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
+  // Desktop: the record open in the pane beside this list.
+  const { id: selectedId } = useGlobalSearchParams<{ id?: string }>();
+  const inPane = useInListPane();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
   const { data: tags, isLoading, error } = useTags();
   // How many movements carry each tag, counted by Postgres.
@@ -35,11 +41,15 @@ export default function TagsScreen() {
 
   const visible = (tags ?? []).filter((t) => (status === 'archived' ? t.archived : !t.archived));
 
-  useTabBarAction({
-    icon: Plus,
-    accessibilityLabel: 'Nueva tag',
-    onPress: () => router.push('/(app)/settings/tags/new'),
-  });
+  useTabBarAction(
+    inPane
+      ? false
+      : {
+          icon: Plus,
+          accessibilityLabel: 'Nueva tag',
+          onPress: () => router.push('/(app)/settings/tags/new'),
+        },
+  );
 
   return (
     <Screen edges={['top']} className="gap-4">
@@ -80,6 +90,7 @@ export default function TagsScreen() {
                     subtitle={`${total} transacci${total === 1 ? 'ón' : 'ones'}`}
                     dotColor={tag.color}
                     showChevron
+                    selected={inPane && selectedId === tag.id}
                     onPress={() =>
                       router.push({ pathname: '/(app)/settings/tags/[id]', params: { id: tag.id } })
                     }
@@ -91,5 +102,28 @@ export default function TagsScreen() {
         </ScrollView>
       )}
     </Screen>
+  );
+}
+
+/**
+ * The section's index route. Desktop: the list lives in the layout's left
+ * pane, so this is the right pane's "nothing open yet" state. Phones: the
+ * list itself.
+ */
+export default function TagsScreen() {
+  const desktop = useIsDesktop();
+  const router = useRouter();
+  if (!desktop) return <TagsList />;
+  return (
+    <MasterDetailEmpty
+      illustration={<TagsEmptyIllustration />}
+      title="Elige una tag"
+      description="Sus movimientos aparecen aquí, junto a la lista."
+      action={{
+        icon: Plus,
+        accessibilityLabel: 'Nueva tag',
+        onPress: () => router.push('/(app)/settings/tags/new'),
+      }}
+    />
   );
 }

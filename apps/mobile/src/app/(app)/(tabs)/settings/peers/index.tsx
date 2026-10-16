@@ -66,7 +66,7 @@ export default function PeersScreen() {
 
   const share = (inviteCode: string) =>
     Share.share({
-      message: `Vinculémonos en Finance Tracker para pasarnos dinero sin que cuente como gasto ni ingreso. Abre Opciones › Personas › "Tengo un código" y escribe: ${inviteCode}`,
+      message: `Vinculémonos en Genobills para pasarnos dinero sin que cuente como gasto ni ingreso. Abre Opciones › Personas › "Tengo un código" y escribe: ${inviteCode}`,
     }).catch(() => {});
 
   const invite = () => {

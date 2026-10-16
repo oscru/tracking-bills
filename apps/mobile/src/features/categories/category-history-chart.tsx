@@ -127,14 +127,21 @@ export function CategoryHistoryChart({ category, subcategories }: Props) {
   const accent = focus.color ?? category.color ?? ICON_COLORS.limeInk;
   const axisColor = dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3;
   const gridColor = dark ? ICON_COLORS.lineDark : ICON_COLORS.line;
+  // Sized from the card itself once measured — the window's width only
+  // matched it on phones; on desktop (a column, a side pane) the chart
+  // overflowed its card. The window estimate covers the first frame.
+  const [cardWidth, setCardWidth] = useState<number | null>(null);
   const chartWidth = Math.max(
-    windowWidth - SCREEN_PADDING * 2 - CARD_PADDING * 2 - Y_AXIS_GUTTER,
+    (cardWidth ?? windowWidth - SCREEN_PADDING * 2) - CARD_PADDING * 2 - Y_AXIS_GUTTER,
     160,
   );
 
   return (
     <View className="gap-4">
-      <View className="gap-4 rounded-2xl border border-line bg-surface p-4 dark:border-line-dark dark:bg-surface-dark">
+      <View
+        onLayout={(e) => setCardWidth(Math.round(e.nativeEvent.layout.width))}
+        className="gap-4 rounded-2xl border border-line bg-surface p-4 dark:border-line-dark dark:bg-surface-dark"
+      >
         <View className="flex-row items-center justify-between">
           <Text className="flex-1 pr-2 text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
             Historial

@@ -6,6 +6,25 @@ type Register = (id: string, node: ReactNode | null) => void;
 const SheetPortalContext = createContext<Register | null>(null);
 
 /**
+ * How many sheets are open below this one (0 = the first). Sheets stacked on
+ * top of another (a picker opened from the filters) read it to look raised
+ * above it — a lighter surface in dark mode, a stronger backdrop — instead of
+ * blending into the sheet behind.
+ */
+const SheetLevelContext = createContext(0);
+
+export function useSheetLevel(): number {
+  return useContext(SheetLevelContext);
+}
+
+const SheetCountContext = createContext(0);
+
+/** Whether this sheet is the top one (the one Escape should close). */
+export function useIsTopSheet(): boolean {
+  return useContext(SheetLevelContext) === useContext(SheetCountContext) - 1;
+}
+
+/**
  * Mount once, at the app root — above any tab/stack navigator. `BottomSheet`
  * portals its content here instead of using RN's `Modal`, so it renders in
  * the same view tree as the app's own tab bar. The explicit `elevation` below
@@ -34,23 +53,26 @@ export function SheetPortalHost({ children }: { children: ReactNode }) {
 
   return (
     <SheetPortalContext.Provider value={register}>
-      {children}
-      {Object.entries(sheets).map(([id, node]) => (
-        <View
-          key={id}
-          pointerEvents="box-none"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            elevation: 9999,
-          }}
-        >
-          {node}
-        </View>
-      ))}
+      <SheetCountContext.Provider value={Object.keys(sheets).length}>
+        {children}
+        {Object.entries(sheets).map(([id, node], level) => (
+          <SheetLevelContext.Provider key={id} value={level}>
+            <View
+              pointerEvents="box-none"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                elevation: 9999,
+              }}
+            >
+              {node}
+            </View>
+          </SheetLevelContext.Provider>
+        ))}
+      </SheetCountContext.Provider>
     </SheetPortalContext.Provider>
   );
 }

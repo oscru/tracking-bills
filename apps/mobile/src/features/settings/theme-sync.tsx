@@ -28,6 +28,19 @@ export function ThemeSync() {
     if (preference) colorScheme.set(preference);
   }, [preference]);
 
+  // Web: NativeWind's dark mode is class-based (`darkMode: 'class'` in the
+  // preset), so the `dark:` styles only apply with a `dark` class on <html>
+  // — which nothing set. With the OS in dark mode the CSS stayed light while
+  // every color picked in JS (chart fills, icons…) went dark: a dark donut
+  // on a white card, dark text on a dark circle. Keep the class (and the
+  // browser's own color-scheme) in step with the resolved scheme.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const dark = resolved === 'dark';
+    document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+  }, [resolved]);
+
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     const dark = resolved === 'dark';

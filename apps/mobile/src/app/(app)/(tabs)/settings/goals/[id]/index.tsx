@@ -25,6 +25,7 @@ import {
   ICON_COLORS,
   useTabBarScrollPadding,
   HeroCard,
+  useIsDesktop,
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
@@ -33,6 +34,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 
 import { AddContributionSheet } from '../../../../../../features/goals/add-contribution-sheet';
 import { GoalProgressBar } from '../../../../../../features/goals/goal-progress-bar';
+import { SplitColumns } from '../../../../../../features/design/split-columns';
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 function deadlineLabel(deadline: string | null): string {
@@ -47,6 +49,7 @@ export default function GoalDetail() {
   const scrollPadding = useTabBarScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const desktop = useIsDesktop();
   const { data: goals, isLoading } = useGoals();
   // Only the movements involving goals (tagged to one, or touching a
   // goal-linked account) — not the whole history. Same query as the goal
@@ -149,7 +152,7 @@ export default function GoalDetail() {
         : `Vas ${formatCurrency(Math.abs(pace.difference), goal.currency)} ${pace.status === 'ahead' ? 'adelantado' : 'atrasado'} de tu ritmo planeado`;
 
   return (
-    <Screen edges={['top']} className="gap-5">
+    <Screen edges={['top']} className="gap-5" width={desktop ? 'wide' : undefined}>
       <PageHeader title={goal.name} onBack={() => router.back()} />
 
       <View className="flex-1">
@@ -158,150 +161,163 @@ export default function GoalDetail() {
           contentContainerClassName="gap-5"
           contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
-          {goal.archived || goal.is_completed ? (
-            <View className="flex-row gap-2">
-              {goal.is_completed ? (
-                <View className="self-start rounded-full bg-lime-tint px-3 py-1 dark:bg-lime-tint-dark">
-                  <Text className="text-xs font-semibold text-lime-ink dark:text-lime-ink-dark">
-                    Completada
-                  </Text>
-                </View>
-              ) : null}
-              {goal.archived ? (
-                <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
-                  <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-                    Archivado
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          ) : null}
-
-          {/* Saved vs. target — the screen's headline, on the hero surface. */}
-          <HeroCard contentStyle={{ gap: 16 }}>
-            <View className="flex-row items-center gap-3">
-              <View className="h-11 w-11 items-center justify-center rounded-full bg-lime/15">
-                <Ionicons
-                  name={(goal.icon as keyof typeof Ionicons.glyphMap) ?? 'flag-outline'}
-                  size={20}
-                  color={ICON_COLORS.lime}
-                />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-semibold text-white">
-                  {goal.is_completed
-                    ? '¡Meta completada!'
-                    : progress.isComplete
-                      ? '¡Monto alcanzado! Márcala como completada'
-                      : deadlineLabel(goal.deadline)}{' '}
-                  · {goal.currency}
-                </Text>
-                {goal.deadline ? (
-                  <Text className="text-xs text-white/55">
-                    Fecha límite: {formatDate(goal.deadline)}
-                  </Text>
-                ) : null}
-                {linkedAccount ? (
-                  <Text className="text-xs text-white/55">
-                    Cuenta de ahorro: {linkedAccount.name}
-                  </Text>
-                ) : null}
-              </View>
-            </View>
-
-            <GoalProgressBar
-              saved={progress.saved}
-              target={targetAmount}
-              pct={progress.pct}
-              isComplete={progress.isComplete}
-              currency={goal.currency}
-              tone="onDark"
-            />
-
-            {pace ? (
-              <View className="gap-0.5 border-t border-white/10 pt-3">
-                <Text className="text-xs text-white/55">
-                  Ritmo planeado: {formatCurrency(Number(goal.contribution_amount), goal.currency)}{' '}
-                  cada {goal.contribution_interval_days} días
-                </Text>
-                <Text className={`text-xs font-semibold ${paceColor}`}>{paceText}</Text>
-              </View>
-            ) : null}
-          </HeroCard>
-
-          {progress.isComplete && !goal.is_completed && !goal.archived ? (
-            <Button
-              label="Marcar como completada"
-              loading={updateGoal.isPending}
-              onPress={() => markCompleted(true)}
-            />
-          ) : null}
-
-          {goal.is_completed && !goal.archived ? (
-            <Pressable
-              onPress={() => markCompleted(false)}
-              className="items-center py-1"
-              hitSlop={8}
-            >
-              <Text className="text-xs font-medium text-ink-2 dark:text-ink-2-dark">
-                Marcar como no completada
-              </Text>
-            </Pressable>
-          ) : null}
-
-          <Button label="Agregar aportación" onPress={() => setContributeOpen(true)} />
-
-          <View className="gap-2">
-            <Text className="px-1 text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-              Aportaciones ({contributions.length})
-            </Text>
-            {contributions.length === 0 ? (
-              <Text className="px-1 text-sm text-ink-2 dark:text-ink-2-dark">
-                Sin aportaciones todavía.
-              </Text>
-            ) : (
-              <View className="rounded-2xl border border-line dark:border-line-dark">
-                {contributions.map((t, i) => (
-                  <View
-                    key={t.id}
-                    className={`flex-row items-center gap-3 px-4 py-3.5 ${
-                      i > 0 ? 'border-t border-line dark:border-line-dark' : ''
-                    }`}
-                  >
-                    <View className="flex-1">
-                      <Text className="text-[15px] text-ink dark:text-ink-dark" numberOfLines={1}>
-                        {t.account?.name ?? 'Cuenta'}
-                      </Text>
-                      <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                        {formatDate(t.transaction_date)}
-                      </Text>
-                    </View>
-                    <Text className="text-[15px] font-semibold text-pos dark:text-pos-dark">
-                      +{formatCurrency(t.amount, goal.currency)}
-                    </Text>
+          <SplitColumns
+            left={
+              <>
+                {goal.archived || goal.is_completed ? (
+                  <View className="flex-row gap-2">
+                    {goal.is_completed ? (
+                      <View className="self-start rounded-full bg-lime-tint px-3 py-1 dark:bg-lime-tint-dark">
+                        <Text className="text-xs font-semibold text-lime-ink dark:text-lime-ink-dark">
+                          Completada
+                        </Text>
+                      </View>
+                    ) : null}
+                    {goal.archived ? (
+                      <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
+                        <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
+                          Archivado
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
-                ))}
-              </View>
-            )}
-          </View>
+                ) : null}
 
-          <View className="gap-2 border-t border-line pt-5 dark:border-line-dark">
-            <Button
-              label={goal.archived ? 'Desarchivar' : 'Archivar objetivo'}
-              variant={goal.archived ? 'secondary' : 'ghost-danger'}
-              loading={updateGoal.isPending}
-              onPress={() => (goal.archived ? toggleArchive() : setConfirmArchive(true))}
-            />
-            {goal.archived ? (
-              <Pressable onPress={() => setConfirmDelete(true)} className="items-center py-2">
-                <Text className="text-sm font-medium text-danger dark:text-danger-dark">
-                  Eliminar definitivamente
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
+                {/* Saved vs. target — the screen's headline, on the hero surface. */}
+                <HeroCard contentStyle={{ gap: 16 }}>
+                  <View className="flex-row items-center gap-3">
+                    <View className="h-11 w-11 items-center justify-center rounded-full bg-lime/15">
+                      <Ionicons
+                        name={(goal.icon as keyof typeof Ionicons.glyphMap) ?? 'flag-outline'}
+                        size={20}
+                        color={ICON_COLORS.lime}
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-sm font-semibold text-white">
+                        {goal.is_completed
+                          ? '¡Meta completada!'
+                          : progress.isComplete
+                            ? '¡Monto alcanzado! Márcala como completada'
+                            : deadlineLabel(goal.deadline)}{' '}
+                        · {goal.currency}
+                      </Text>
+                      {goal.deadline ? (
+                        <Text className="text-xs text-white/55">
+                          Fecha límite: {formatDate(goal.deadline)}
+                        </Text>
+                      ) : null}
+                      {linkedAccount ? (
+                        <Text className="text-xs text-white/55">
+                          Cuenta de ahorro: {linkedAccount.name}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
 
-          <ErrorCard message={error} />
+                  <GoalProgressBar
+                    saved={progress.saved}
+                    target={targetAmount}
+                    pct={progress.pct}
+                    isComplete={progress.isComplete}
+                    currency={goal.currency}
+                    tone="onDark"
+                  />
+
+                  {pace ? (
+                    <View className="gap-0.5 border-t border-white/10 pt-3">
+                      <Text className="text-xs text-white/55">
+                        Ritmo planeado:{' '}
+                        {formatCurrency(Number(goal.contribution_amount), goal.currency)} cada{' '}
+                        {goal.contribution_interval_days} días
+                      </Text>
+                      <Text className={`text-xs font-semibold ${paceColor}`}>{paceText}</Text>
+                    </View>
+                  ) : null}
+                </HeroCard>
+
+                {progress.isComplete && !goal.is_completed && !goal.archived ? (
+                  <Button
+                    label="Marcar como completada"
+                    loading={updateGoal.isPending}
+                    onPress={() => markCompleted(true)}
+                  />
+                ) : null}
+
+                {goal.is_completed && !goal.archived ? (
+                  <Pressable
+                    onPress={() => markCompleted(false)}
+                    className="items-center py-1"
+                    hitSlop={8}
+                  >
+                    <Text className="text-xs font-medium text-ink-2 dark:text-ink-2-dark">
+                      Marcar como no completada
+                    </Text>
+                  </Pressable>
+                ) : null}
+
+                <Button label="Agregar aportación" onPress={() => setContributeOpen(true)} />
+              </>
+            }
+            right={
+              <>
+                <View className="gap-2">
+                  <Text className="px-1 text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+                    Aportaciones ({contributions.length})
+                  </Text>
+                  {contributions.length === 0 ? (
+                    <Text className="px-1 text-sm text-ink-2 dark:text-ink-2-dark">
+                      Sin aportaciones todavía.
+                    </Text>
+                  ) : (
+                    <View className="rounded-2xl border border-line dark:border-line-dark">
+                      {contributions.map((t, i) => (
+                        <View
+                          key={t.id}
+                          className={`flex-row items-center gap-3 px-4 py-3.5 ${
+                            i > 0 ? 'border-t border-line dark:border-line-dark' : ''
+                          }`}
+                        >
+                          <View className="flex-1">
+                            <Text
+                              className="text-[15px] text-ink dark:text-ink-dark"
+                              numberOfLines={1}
+                            >
+                              {t.account?.name ?? 'Cuenta'}
+                            </Text>
+                            <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
+                              {formatDate(t.transaction_date)}
+                            </Text>
+                          </View>
+                          <Text className="text-[15px] font-semibold text-pos dark:text-pos-dark">
+                            +{formatCurrency(t.amount, goal.currency)}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <View className="gap-2 border-t border-line pt-5 dark:border-line-dark">
+                  <Button
+                    label={goal.archived ? 'Desarchivar' : 'Archivar objetivo'}
+                    variant={goal.archived ? 'secondary' : 'ghost-danger'}
+                    loading={updateGoal.isPending}
+                    onPress={() => (goal.archived ? toggleArchive() : setConfirmArchive(true))}
+                  />
+                  {goal.archived ? (
+                    <Pressable onPress={() => setConfirmDelete(true)} className="items-center py-2">
+                      <Text className="text-sm font-medium text-danger dark:text-danger-dark">
+                        Eliminar definitivamente
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+
+                <ErrorCard message={error} />
+              </>
+            }
+          />
         </ScrollView>
       </View>
 

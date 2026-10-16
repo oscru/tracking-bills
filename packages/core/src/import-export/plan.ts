@@ -68,7 +68,8 @@ export interface ImportCatalogs {
 }
 
 const keyName = (name: string) => name.trim().toLowerCase();
-const refKey = (ref: EntityRef) => ('existingId' in ref ? `existing:${ref.existingId}` : `new:${ref.newKey}`);
+const refKey = (ref: EntityRef) =>
+  'existingId' in ref ? `existing:${ref.existingId}` : `new:${ref.newKey}`;
 
 class CatalogResolver {
   private accountIndex = new Map<string, Account>();
@@ -116,7 +117,11 @@ class CatalogResolver {
    * none ever does. `currencyOf` resolves either case back to a plain string
    * for the mismatch check in `buildImportPlan`.
    */
-  account(name: string, currencyHint: string | null, context: { sheet: string; row: number }): EntityRef {
+  account(
+    name: string,
+    currencyHint: string | null,
+    context: { sheet: string; row: number },
+  ): EntityRef {
     const k = keyName(name);
     const existing = this.accountIndex.get(k);
     if (existing) {
@@ -132,7 +137,11 @@ class CatalogResolver {
     }
     const plan = this.newAccounts.get(k);
     if (!plan) {
-      this.newAccounts.set(k, { key: k, name: name.trim(), currency: currencyHint ?? this.defaultCurrency });
+      this.newAccounts.set(k, {
+        key: k,
+        name: name.trim(),
+        currency: currencyHint ?? this.defaultCurrency,
+      });
     } else if (currencyHint && currencyHint !== plan.currency) {
       this.issues.push({
         sheet: context.sheet,
@@ -145,7 +154,8 @@ class CatalogResolver {
   }
 
   currencyOf(ref: EntityRef): string {
-    if ('existingId' in ref) return this.accountById.get(ref.existingId)?.currency ?? this.defaultCurrency;
+    if ('existingId' in ref)
+      return this.accountById.get(ref.existingId)?.currency ?? this.defaultCurrency;
     return this.newAccounts.get(ref.newKey)?.currency ?? this.defaultCurrency;
   }
 
@@ -157,7 +167,12 @@ class CatalogResolver {
     return { newKey: k };
   }
 
-  subCategory(name: string, type: 'income' | 'expense', parentName: string, parentRef: EntityRef): EntityRef {
+  subCategory(
+    name: string,
+    type: 'income' | 'expense',
+    parentName: string,
+    parentRef: EntityRef,
+  ): EntityRef {
     // An existing subcategory can only match when its parent already exists
     // for real — a brand-new parent can't have pre-existing children.
     if ('existingId' in parentRef) {

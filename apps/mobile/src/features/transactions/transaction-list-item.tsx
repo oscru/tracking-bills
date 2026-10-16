@@ -152,8 +152,11 @@ export const TransactionListItem = memo(function TransactionListItem({
   onEdit,
   isOpen,
   onReveal,
+  selected = false,
 }: {
   transaction: TransactionWithRefs;
+  /** Desktop master-detail: this is the movement shown in the side pane. */
+  selected?: boolean;
   /** Row tap, and the "Ver" swipe action. Pass a stable (`useCallback`) function —
    * it feeds the gesture handling below, which rebuilds its native event
    * binding whenever this identity changes, causing real glitches if it's a
@@ -482,7 +485,9 @@ export const TransactionListItem = memo(function TransactionListItem({
         <Animated.View style={{ transform: [{ translateX }] }}>
           <Pressable
             onPress={handleView}
-            className="flex-row items-center gap-3 bg-canvas px-3 py-3 active:opacity-60 dark:bg-canvas-dark"
+            className={`flex-row items-center gap-3 px-3 py-3 active:opacity-60 ${
+              selected ? 'bg-lime-tint dark:bg-lime-tint-dark' : 'bg-canvas dark:bg-canvas-dark'
+            }`}
           >
             <View
               className="h-[38px] w-[38px] items-center justify-center rounded-full"

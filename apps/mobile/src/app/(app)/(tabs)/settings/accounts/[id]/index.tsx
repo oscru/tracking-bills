@@ -6,7 +6,12 @@ import {
   useAccountTransactionCounts,
   useUpdateAccount,
 } from '@repo/core/hooks';
-import { balancesFromEffects, formatCurrency, toFriendlyMessage } from '@repo/core/utils';
+import {
+  balancesFromEffects,
+  formatCurrency,
+  formatDateTime,
+  toFriendlyMessage,
+} from '@repo/core/utils';
 import {
   Button,
   ConfirmSheet,
@@ -17,6 +22,7 @@ import {
   ICON_COLORS,
   useFloatingTabBarInset,
   HeroCard,
+  useIsDesktop,
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowDown, CircleArrowUp, Pencil } from 'lucide-react-native';
@@ -28,10 +34,13 @@ import { AccountDetailSkeleton } from '../../../../../../features/accounts/accou
 import { AdjustBalanceSheet } from '../../../../../../features/accounts/adjust-balance-sheet';
 import { AccountIcon } from '../../../../../../features/accounts/account-icon';
 import { ACCOUNT_TYPE_LABEL } from '../../../../../../features/accounts/account-types';
+import { RecordInfoButton } from '../../../../../../features/design/record-info';
+import { SplitColumns } from '../../../../../../features/design/split-columns';
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 export default function AccountDetail() {
   const tabBarInset = useFloatingTabBarInset();
+  const desktop = useIsDesktop();
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -81,7 +90,7 @@ export default function AccountDetail() {
 
   if (loadingAccounts || loadingBalance || loadingCounts) {
     return (
-      <Screen edges={['top']} className="gap-5">
+      <Screen edges={['top']} className="gap-5" width={desktop ? 'wide' : undefined}>
         <PageHeader title="Cuenta" onBack={() => router.back()} />
         <AccountDetailSkeleton />
       </Screen>
@@ -115,8 +124,31 @@ export default function AccountDetail() {
   };
 
   return (
-    <Screen edges={['top']} className="gap-5">
-      <PageHeader title={account.name} onBack={() => router.back()} />
+    <Screen edges={['top']} className="gap-5" width={desktop ? 'wide' : undefined}>
+      <PageHeader
+        title={account.name}
+        onBack={() => router.back()}
+        action={
+          <RecordInfoButton
+            title="Información de la cuenta"
+            rows={[
+              { label: 'Tipo', value: ACCOUNT_TYPE_LABEL[account.type] },
+              { label: 'Moneda', value: account.currency },
+              {
+                label: 'Saldo inicial',
+                value: formatCurrency(Number(account.initial_balance), account.currency),
+              },
+              { label: 'Movimientos', value: String(incomeCount + expenseCount) },
+              { label: 'Creada', value: formatDateTime(account.created_at) },
+              { label: 'Última modificación', value: formatDateTime(account.updated_at) },
+              {
+                label: 'Archivada',
+                value: account.archived_at ? formatDateTime(account.archived_at) : '',
+              },
+            ]}
+          />
+        }
+      />
 
       <View className="flex-1">
         <ScrollView
@@ -124,79 +156,95 @@ export default function AccountDetail() {
           contentContainerClassName="gap-5"
           contentContainerStyle={{ paddingBottom: 16 }}
         >
-          {/* The account's balance is this screen's headline — glowing in the
+          <SplitColumns
+            left={
+              <>
+                {/* The account's balance is this screen's headline — glowing in the
           account's own color, so each account feels like itself. */}
-          <HeroCard tint={account.color}>
-            <View className="flex-row items-center gap-3">
-              <AccountIcon account={account} size={42} />
-              <View>
-                <Text className="text-[13px] text-white/60">
-                  {ACCOUNT_TYPE_LABEL[account.type]} · {account.currency}
-                  {account.archived ? ' · archivada' : ''}
-                </Text>
-                <Text className="text-sm font-semibold text-white">Saldo actual</Text>
-              </View>
-            </View>
-            <Text className="mt-4 text-4xl font-extrabold tracking-tight text-white">
-              {formatCurrency(balance, account.currency)}
-            </Text>
-          </HeroCard>
+                <HeroCard tint={account.color}>
+                  <View className="flex-row items-center gap-3">
+                    <AccountIcon account={account} size={42} />
+                    <View>
+                      <Text className="text-[13px] text-white/60">
+                        {ACCOUNT_TYPE_LABEL[account.type]} · {account.currency}
+                        {account.archived ? ' · archivada' : ''}
+                      </Text>
+                      <Text className="text-sm font-semibold text-white">Saldo actual</Text>
+                    </View>
+                  </View>
+                  <Text className="mt-4 text-4xl font-extrabold tracking-tight text-white">
+                    {formatCurrency(balance, account.currency)}
+                  </Text>
+                </HeroCard>
 
-          {/* Secondary on purpose: the navbar's lime "editar" is this screen's action. */}
-          <Button label="Ajustar saldo" variant="secondary" onPress={() => setAdjustOpen(true)} />
-
-          <View className="flex-row gap-3">
-            <Pressable
-              onPress={() => openMovements('income')}
-              className="flex-1 rounded-2xl border border-pos/30 bg-lime-tint p-4 active:opacity-70 dark:border-pos-dark/30 dark:bg-lime-tint-dark"
-            >
-              <View className="flex-row items-center gap-1.5">
-                <CircleArrowDown size={16} color={ICON_COLORS.pos} />
-                <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-                  Ingresos
-                </Text>
-              </View>
-              <Text className="mt-1 text-2xl font-bold text-pos dark:text-pos-dark">
-                {incomeCount}
-              </Text>
-              <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-                {incomeCount === 1 ? 'movimiento' : 'movimientos'}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => openMovements('expense')}
-              className="flex-1 rounded-2xl border border-line bg-[#F1F2F4] p-4 active:opacity-70 dark:border-line-dark dark:bg-line-dark"
-            >
-              <View className="flex-row items-center gap-1.5">
-                <CircleArrowUp size={16} color={dark ? ICON_COLORS.inkDark : ICON_COLORS.ink} />
-                <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-                  Gastos
-                </Text>
-              </View>
-              <Text className="mt-1 text-2xl font-bold text-ink dark:text-ink-dark">
-                {expenseCount}
-              </Text>
-              <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-                {expenseCount === 1 ? 'movimiento' : 'movimientos'}
-              </Text>
-            </Pressable>
-          </View>
-
-          <SwitchRow
-            label="Mostrar en Inicio"
-            description="Aparece en la lista de cuentas de la pantalla principal"
-            value={account.show_on_home}
-            onValueChange={(v) =>
-              updateAccount.mutate({ id: account.id, patch: { show_on_home: v } })
+                {/* Secondary on purpose: the navbar's lime "editar" is this screen's action. */}
+                <Button
+                  label="Ajustar saldo"
+                  variant="secondary"
+                  onPress={() => setAdjustOpen(true)}
+                />
+              </>
             }
-          />
+            right={
+              <>
+                <View className="flex-row gap-3">
+                  <Pressable
+                    onPress={() => openMovements('income')}
+                    className="flex-1 rounded-2xl border border-pos/30 bg-lime-tint p-4 active:opacity-70 dark:border-pos-dark/30 dark:bg-lime-tint-dark"
+                  >
+                    <View className="flex-row items-center gap-1.5">
+                      <CircleArrowDown size={16} color={ICON_COLORS.pos} />
+                      <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
+                        Ingresos
+                      </Text>
+                    </View>
+                    <Text className="mt-1 text-2xl font-bold text-pos dark:text-pos-dark">
+                      {incomeCount}
+                    </Text>
+                    <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+                      {incomeCount === 1 ? 'movimiento' : 'movimientos'}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => openMovements('expense')}
+                    className="flex-1 rounded-2xl border border-line bg-[#F1F2F4] p-4 active:opacity-70 dark:border-line-dark dark:bg-line-dark"
+                  >
+                    <View className="flex-row items-center gap-1.5">
+                      <CircleArrowUp
+                        size={16}
+                        color={dark ? ICON_COLORS.inkDark : ICON_COLORS.ink}
+                      />
+                      <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
+                        Gastos
+                      </Text>
+                    </View>
+                    <Text className="mt-1 text-2xl font-bold text-ink dark:text-ink-dark">
+                      {expenseCount}
+                    </Text>
+                    <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+                      {expenseCount === 1 ? 'movimiento' : 'movimientos'}
+                    </Text>
+                  </Pressable>
+                </View>
 
-          <SwitchRow
-            label="Incluir en balance total"
-            description="Se suma al «Balance total» de la pantalla principal"
-            value={account.include_in_total}
-            onValueChange={(v) =>
-              updateAccount.mutate({ id: account.id, patch: { include_in_total: v } })
+                <SwitchRow
+                  label="Mostrar en Inicio"
+                  description="Aparece en la lista de cuentas de la pantalla principal"
+                  value={account.show_on_home}
+                  onValueChange={(v) =>
+                    updateAccount.mutate({ id: account.id, patch: { show_on_home: v } })
+                  }
+                />
+
+                <SwitchRow
+                  label="Incluir en balance total"
+                  description="Se suma al «Balance total» de la pantalla principal"
+                  value={account.include_in_total}
+                  onValueChange={(v) =>
+                    updateAccount.mutate({ id: account.id, patch: { include_in_total: v } })
+                  }
+                />
+              </>
             }
           />
         </ScrollView>

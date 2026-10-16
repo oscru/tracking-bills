@@ -14,10 +14,7 @@ const PATTERNS: { type: OwnAccountType; test: RegExp }[] = [
 
 /** Strips accents so "Crédito"/"credito" match the same (unaccented) pattern. */
 function normalize(name: string): string {
-  return name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase();
+  return name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
 /**

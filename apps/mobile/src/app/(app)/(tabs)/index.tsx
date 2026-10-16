@@ -11,7 +11,9 @@ import {
   balancesFromEffects,
   categorySpendFromSummary,
   daysUntil,
+  currencyCodeShown,
   formatCurrency,
+  formatCurrencyLabeled,
   monthTotalsFromSummary,
   splitPendingByDate,
   todayISODate,
@@ -20,12 +22,12 @@ import {
   type HomeLayoutItem,
   getDateFormat,
 } from '@repo/core/utils';
-import { Screen, StaggerItem, ICON_COLORS, useTabBarScrollPadding } from '@repo/ui';
+import { Screen, StaggerItem, ICON_COLORS, useIsDesktop, useTabBarScrollPadding } from '@repo/ui';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Calendar, ChevronRight, Clock, Eye, EyeOff } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 
 import { AccountIcon } from '../../../features/accounts/account-icon';
 import { BudgetsCard } from '../../../features/home/budgets-card';
@@ -57,6 +59,11 @@ const INITIAL_WIDGETS = 1;
 
 export default function HomeScreen() {
   const scrollPadding = useTabBarScrollPadding();
+  const desktop = useIsDesktop();
+  // The three headline numbers fit side by side only on a roomy window;
+  // on a small desktop the balance gets its own row.
+  const { width: windowWidth } = useWindowDimensions();
+  const kpisInline = desktop && windowWidth >= 1280;
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
@@ -91,6 +98,9 @@ export default function HomeScreen() {
   // longer a forced conversion target, so totals below group by each
   // account's own currency instead of blending them into one number.
   const currency = profile?.currency ?? active[0]?.currency ?? 'MXN';
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? null;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
   const balances = useMemo(
     () => totalsByCurrencyFromBalances(active, accountBalancesById),
     [active, accountBalancesById],
@@ -305,22 +315,164 @@ export default function HomeScreen() {
     ),
   };
 
-  return (
-    <Screen edges={['top']} className="gap-5">
-      <View className="relative">
-        <MonthSwiper
-          yearLabel={yearLabel}
-          monthLabel={monthLabel}
-          isCurrentMonth={isCurrentMonth}
-          monthKey={selectedMonth}
-          onShift={shiftMonth}
-          onOpenPicker={() => setMonthPickerOpen(true)}
-        />
-        {/* Pinned to the row's right edge so the month selector stays centered. */}
-        <View className="absolute bottom-0 right-0 top-0 justify-center">
-          <NotificationBell />
-        </View>
+  const balanceCard = (
+    <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
+      <View className="flex-row items-center justify-between">
+        <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Balance total</Text>
+        <Pressable onPress={() => setHidden((h) => !h)} hitSlop={10}>
+          {hidden ? (
+            <Eye size={20} color={ICON_COLORS.ink3} />
+          ) : (
+            <EyeOff size={20} color={ICON_COLORS.ink3} />
+          )}
+        </Pressable>
       </View>
+      {balances.length === 0 ? (
+        <Text className="mt-1 text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
+          {hidden ? '• • • •' : formatCurrency(0, currency)}
+        </Text>
+      ) : (
+        <View className={balances.length > 1 ? 'mt-1 gap-1' : undefined}>
+          {balances.map((b) => (
+            <View
+              key={b.currency}
+              className={balances.length > 1 ? 'flex-row items-end gap-1.5' : undefined}
+            >
+              {hidden ? (
+                <Text className="text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
+                  • • • •
+                </Text>
+              ) : (
+                <RollingNumber
+                  value={formatCurrency(b.total, b.currency)}
+                  textStyle={BALANCE_TEXT}
+                  className="text-ink dark:text-ink-dark"
+                  trigger={rollKey}
+                />
+              )}
+              {balances.length > 1 && !currencyCodeShown(b.currency) ? (
+                <Text className="text-sm font-semibold text-ink-3 dark:text-ink-3-dark">
+                  {b.currency}
+                </Text>
+              ) : null}
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
+  // Fixed, like the balance card above — not user-reorderable/hideable. One
+  // row per currency that actually moved money this month; "sin movimientos"
+  // when none did.
+  const monthCards = (
+    <View className={desktop ? 'flex-1 flex-row gap-3' : 'flex-row gap-3'}>
+      <Pressable
+        onPress={() => openMonth('income')}
+        className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
+      >
+        <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Ingresos</Text>
+        {month.length === 0 ? (
+          <Text className="mt-1 text-xl font-bold text-pos dark:text-pos-dark">
+            {hidden ? '•••' : formatCurrency(0, currency)}
+          </Text>
+        ) : (
+          month.map((m) => (
+            <Text key={m.currency} className="mt-1 text-xl font-bold text-pos dark:text-pos-dark">
+              {hidden
+                ? '•••'
+                : month.length > 1
+                  ? formatCurrencyLabeled(m.income, m.currency)
+                  : formatCurrency(m.income, m.currency)}
+            </Text>
+          ))
+        )}
+      </Pressable>
+      <Pressable
+        onPress={() => openMonth('expense')}
+        className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
+      >
+        <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Gastos</Text>
+        {month.length === 0 ? (
+          <Text className="mt-1 text-xl font-bold text-danger dark:text-danger-dark">
+            {hidden ? '•••' : formatCurrency(0, currency)}
+          </Text>
+        ) : (
+          month.map((m) => (
+            <Text
+              key={m.currency}
+              className="mt-1 text-xl font-bold text-danger dark:text-danger-dark"
+            >
+              {hidden
+                ? '•••'
+                : month.length > 1
+                  ? formatCurrencyLabeled(m.expense, m.currency)
+                  : formatCurrency(m.expense, m.currency)}
+            </Text>
+          ))
+        )}
+      </Pressable>
+    </View>
+  );
+
+  // Widgets mounted after the first frame fade in as they arrive, without
+  // the cascade delay of their position.
+  const renderWidget = (key: HomeLayoutItem, i: number) =>
+    i < mountedWidgets ? (
+      <StaggerItem key={key} index={i < INITIAL_WIDGETS ? i : 0}>
+        {cards[key]}
+      </StaggerItem>
+    ) : (
+      <WidgetPlaceholder key={key} />
+    );
+  const REMINDERS: HomeLayoutItem[] = ['pending', 'upcoming'];
+  const reminderKeys = layoutOrder.filter((k) => REMINDERS.includes(k) && cards[k] != null);
+  const gridKeys = layoutOrder.filter((k) => !REMINDERS.includes(k));
+
+  return (
+    <Screen edges={['top']} className="gap-5" width="wide">
+      {desktop ? (
+        // Desktop: a page header — greeting on the left, month on the right —
+        // ruled off from the widgets, which scroll under it on the same
+        // background.
+        <View className="flex-row items-end justify-between border-b border-line pb-5 dark:border-line-dark">
+          <View className="gap-1">
+            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
+              {greeting}
+              {firstName ? `, ${firstName}` : ''}
+            </Text>
+            <Text className="text-3xl font-extrabold tracking-tight text-ink dark:text-ink-dark">
+              Tu resumen
+            </Text>
+          </View>
+          <MonthSwiper
+            yearLabel={yearLabel}
+            monthLabel={monthLabel}
+            isCurrentMonth={isCurrentMonth}
+            monthKey={selectedMonth}
+            onShift={shiftMonth}
+            onOpenPicker={() => setMonthPickerOpen(true)}
+          />
+        </View>
+      ) : (
+        <View className="relative">
+          <MonthSwiper
+            yearLabel={yearLabel}
+            monthLabel={monthLabel}
+            isCurrentMonth={isCurrentMonth}
+            monthKey={selectedMonth}
+            onShift={shiftMonth}
+            onOpenPicker={() => setMonthPickerOpen(true)}
+          />
+          {/* Pinned to the row's right edge so the month selector stays centered.
+        Desktop has the notifications in the sidebar. */}
+          {desktop ? null : (
+            <View className="absolute bottom-0 right-0 top-0 justify-center">
+              <NotificationBell />
+            </View>
+          )}
+        </View>
+      )}
 
       <MonthPickerSheet
         visible={monthPickerOpen}
@@ -348,111 +500,35 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
-          <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                Balance total
-              </Text>
-              <Pressable onPress={() => setHidden((h) => !h)} hitSlop={10}>
-                {hidden ? (
-                  <Eye size={20} color={ICON_COLORS.ink3} />
-                ) : (
-                  <EyeOff size={20} color={ICON_COLORS.ink3} />
-                )}
-              </Pressable>
+          {kpisInline ? (
+            // Desktop: the three headline numbers side by side.
+            <View className="flex-row gap-5">
+              <View style={{ flex: 1.3 }}>{balanceCard}</View>
+              <View className="flex-1">{monthCards}</View>
             </View>
-            {balances.length === 0 ? (
-              <Text className="mt-1 text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
-                {hidden ? '• • • •' : formatCurrency(0, currency)}
-              </Text>
-            ) : (
-              <View className={balances.length > 1 ? 'mt-1 gap-1' : undefined}>
-                {balances.map((b) => (
-                  <View
-                    key={b.currency}
-                    className={balances.length > 1 ? 'flex-row items-end gap-1.5' : undefined}
-                  >
-                    {hidden ? (
-                      <Text className="text-4xl font-bold tracking-tight text-ink dark:text-ink-dark">
-                        • • • •
-                      </Text>
-                    ) : (
-                      <RollingNumber
-                        value={formatCurrency(b.total, b.currency)}
-                        textStyle={BALANCE_TEXT}
-                        className="text-ink dark:text-ink-dark"
-                        trigger={rollKey}
-                      />
-                    )}
-                    {balances.length > 1 ? (
-                      <Text className="text-sm font-semibold text-ink-3 dark:text-ink-3-dark">
-                        {b.currency}
-                      </Text>
-                    ) : null}
+          ) : (
+            <>
+              {balanceCard}
+              {monthCards}
+            </>
+          )}
+
+          {desktop ? (
+            <>
+              {/* Reminders span the full width; the rest flow into two columns. */}
+              {reminderKeys.map((key) => renderWidget(key, layoutOrder.indexOf(key)))}
+              <View className="flex-row items-start gap-5">
+                {[0, 1].map((col) => (
+                  <View key={col} className="flex-1 gap-5">
+                    {gridKeys
+                      .filter((_, i) => i % 2 === col)
+                      .map((key) => renderWidget(key, layoutOrder.indexOf(key)))}
                   </View>
                 ))}
               </View>
-            )}
-          </View>
-
-          {/* Fixed, like the balance card above — not user-reorderable/hideable. One
-          row per currency that actually moved money this month; "sin movimientos"
-          when none did. */}
-          <View className="flex-row gap-3">
-            <Pressable
-              onPress={() => openMonth('income')}
-              className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
-            >
-              <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Ingresos</Text>
-              {month.length === 0 ? (
-                <Text className="mt-1 text-xl font-bold text-pos dark:text-pos-dark">
-                  {hidden ? '•••' : formatCurrency(0, currency)}
-                </Text>
-              ) : (
-                month.map((m) => (
-                  <Text
-                    key={m.currency}
-                    className="mt-1 text-xl font-bold text-pos dark:text-pos-dark"
-                  >
-                    {hidden ? '•••' : formatCurrency(m.income, m.currency)}
-                    {month.length > 1 ? ` ${m.currency}` : ''}
-                  </Text>
-                ))
-              )}
-            </Pressable>
-            <Pressable
-              onPress={() => openMonth('expense')}
-              className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
-            >
-              <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Gastos</Text>
-              {month.length === 0 ? (
-                <Text className="mt-1 text-xl font-bold text-danger dark:text-danger-dark">
-                  {hidden ? '•••' : formatCurrency(0, currency)}
-                </Text>
-              ) : (
-                month.map((m) => (
-                  <Text
-                    key={m.currency}
-                    className="mt-1 text-xl font-bold text-danger dark:text-danger-dark"
-                  >
-                    {hidden ? '•••' : formatCurrency(m.expense, m.currency)}
-                    {month.length > 1 ? ` ${m.currency}` : ''}
-                  </Text>
-                ))
-              )}
-            </Pressable>
-          </View>
-
-          {layoutOrder.map((key, i) =>
-            i < mountedWidgets ? (
-              // Widgets mounted after the first frame fade in as they arrive,
-              // without the cascade delay of their position.
-              <StaggerItem key={key} index={i < INITIAL_WIDGETS ? i : 0}>
-                {cards[key]}
-              </StaggerItem>
-            ) : (
-              <WidgetPlaceholder key={key} />
-            ),
+            </>
+          ) : (
+            layoutOrder.map((key, i) => renderWidget(key, i))
           )}
         </ScrollView>
       )}

@@ -4,7 +4,8 @@ Mapa de todos los correos que va a mandar la app: qué los dispara, quién los e
 variables necesitan y en qué estado están. Se actualiza conforme aparezcan flujos nuevos.
 
 Hoy **no se manda ningún correo propio**: la confirmación de correo está apagada
-(`enable_confirmations = false` en `supabase/config.toml`) y no hay plantillas personalizadas.
+(`enable_confirmations = false` en `supabase/config.toml`). Las plantillas ya están diseñadas
+en `emails/` (A1, A2, A3, A5, P1 y P4); falta conectarlas a sus flujos.
 
 ## Infraestructura (antes de cualquier plantilla)
 
@@ -12,9 +13,10 @@ Hoy **no se manda ningún correo propio**: la confirmación de correo está apag
       solo para pruebas. Configurar un proveedor (p. ej. Resend o Postmark) en
       `[auth.email.smtp]` (local) y en el dashboard (producción), con un dominio propio
       verificado (SPF, DKIM, DMARC).
-- [ ] **Remitente:** nombre "Finance Tracker" y una dirección `no-reply@` del dominio, con
+- [ ] **Remitente:** nombre "Genobills" y una dirección `no-reply@` del dominio, con
       `reply-to` a un correo de soporte.
-- [ ] **Layout base compartido** (un solo HTML que heredan todas las plantillas):
+- [x] **Layout base compartido** — hecho en `emails/` (ver `emails/README.md`; vista previa con
+      `pnpm emails:preview`):
   - estilo "Lima + tinta": fondo `#F6F7F9`, tarjeta blanca, texto `#1A1D21`, botón lima
     `#B9F227` con texto tinta;
   - logo (de momento el emoji 💸, igual que la pantalla de carga);
@@ -26,7 +28,7 @@ Hoy **no se manda ningún correo propio**: la confirmación de correo está apag
   - **Edge Function `send-email`**: correos propios de la app (personas, cuenta). La disparan
     RPCs o Database Webhooks y llama al API del proveedor. Las plantillas viven en el código de
     la función y reutilizan el layout base.
-- [ ] **Deep links:** los botones abren la app con el esquema `financetracker://…` y tienen un
+- [ ] **Deep links:** los botones abren la app con el esquema `genobills://…` y tienen un
       enlace web de respaldo para quien aún no la tenga instalada.
 - [ ] **Idioma:** todo en español (es-MX), con montos formateados con `formatCurrency` y fechas
       con `formatDate`.
@@ -36,7 +38,7 @@ Hoy **no se manda ningún correo propio**: la confirmación de correo está apag
 | # | Plantilla | Dispara | Variables | Estado |
 |---|---|---|---|---|
 | A1 | **Confirmar registro** | `signUp` cuando se active `enable_confirmations` | `{{ .ConfirmationURL }}`, `{{ .Token }}` (código de 6 dígitos) | Pendiente: hoy la confirmación está apagada |
-| A2 | **Restablecer contraseña** | `sendPasswordReset` (`packages/core/src/supabase/auth.ts`) | `{{ .ConfirmationURL }}` o `{{ .Token }}` | Pendiente: la función existe pero **no hay pantalla** de "Olvidé mi contraseña" ni de nueva contraseña |
+| A2 | **Restablecer contraseña** | `sendPasswordReset` (`packages/core/src/supabase/auth.ts`) | `{{ .ConfirmationURL }}` o `{{ .Token }}` | Hecho: flujo con código (`{{ .Token }}`) en `(auth)/forgot-password.tsx` |
 | A3 | **Cambio de correo** | Editar correo en el perfil (`double_confirm_changes = true`, así que va al correo viejo y al nuevo) | `{{ .ConfirmationURL }}`, `{{ .NewEmail }}` | Pendiente: no hay flujo de cambio de correo en la app |
 | A4 | **Reautenticación** | Cambiar contraseña si se activa `secure_password_change` | `{{ .Token }}` | Opcional |
 | A5 | **Aviso: contraseña cambiada** | `[auth.email.notification.password_changed]` | correo, fecha | Pendiente (seguridad) |
@@ -58,14 +60,14 @@ Base: migración `20261014160000_peer_transfers.sql` y la pantalla Opciones › 
 
 | # | Plantilla | Dispara | Variables | Estado |
 |---|---|---|---|---|
-| P1 | **Invitación con código** | Nuevo: "Invitar por correo" en Personas (hoy el código solo se comparte con el menú del sistema, p. ej. WhatsApp) | `inviter_name`, `code` (6 caracteres), `expires_at` (7 días), deep link `financetracker://settings/peers?code=XXXXXX`, enlace de descarga | **Siguiente** |
+| P1 | **Invitación con código** | Nuevo: "Invitar por correo" en Personas (hoy el código solo se comparte con el menú del sistema, p. ej. WhatsApp) | `inviter_name`, `code` (6 caracteres), `expires_at` (7 días), deep link `genobills://settings/peers?code=XXXXXX`, enlace de descarga | **Siguiente** |
 | P2 | **Invitación aceptada** (para quien invitó) | `accept_peer_invite` | `inviter_name`, `invitee_name` | Pendiente |
 | P3 | **Desvinculación** (para la otra persona) | `unlink_peer` | `peer_name`, quién desvinculó | Pendiente |
 | P4 | **Transferencia recibida** | Se crea el espejo (`sync_peer_transaction`) | `sender_name`, monto y divisa, fecha, cuenta donde llegó | Opcional y **apagada por defecto**: ya existe la notificación en la app. Requiere un interruptor propio en Opciones › Notificaciones |
 
 ### P1 — detalle de la invitación con código
 
-- **Asunto:** "{inviter_name} te invitó a vincularse en Finance Tracker"
+- **Asunto:** "{inviter_name} te invitó a vincularse en Genobills"
 - **Cuerpo:**
   - qué significa vincularse (pasarse dinero sin que cuente como gasto ni ingreso, y que cada
     quien conserve sus cuentas);

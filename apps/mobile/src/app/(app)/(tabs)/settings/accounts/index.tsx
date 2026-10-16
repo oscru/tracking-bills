@@ -10,8 +10,9 @@ import {
   SegmentedControl,
   StaggerItem,
   useTabBarScrollPadding,
+  useIsDesktop,
 } from '@repo/ui';
-import { useRouter } from 'expo-router';
+import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View, ScrollView } from 'react-native';
@@ -19,15 +20,20 @@ import { ActivityIndicator, Text, View, ScrollView } from 'react-native';
 import { AccountIcon } from '../../../../../features/accounts/account-icon';
 import { ACCOUNT_TYPE_LABEL } from '../../../../../features/accounts/account-types';
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
+import { MasterDetailEmpty, useInListPane } from '../../../../../features/settings/master-detail';
 
 const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
   { value: 'active', label: 'Activas' },
   { value: 'archived', label: 'Archivadas' },
 ];
 
-export default function AccountsScreen() {
+/** The section's list — on desktop, also drawn beside the open record (see `_layout`). */
+export function AccountsList() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
+  // Desktop: the record open in the pane beside this list.
+  const { id: selectedId } = useGlobalSearchParams<{ id?: string }>();
+  const inPane = useInListPane();
   const { data: accounts, isLoading, error } = useAccounts();
   // Every account's balance from the balance view (summed by Postgres, and
   // shared with Inicio) — not the whole transaction history.
@@ -41,11 +47,15 @@ export default function AccountsScreen() {
     status === 'archived' ? a.archived : !a.archived,
   );
 
-  useTabBarAction({
-    icon: Plus,
-    accessibilityLabel: 'Nueva cuenta',
-    onPress: () => router.push('/(app)/settings/accounts/new'),
-  });
+  useTabBarAction(
+    inPane
+      ? false
+      : {
+          icon: Plus,
+          accessibilityLabel: 'Nueva cuenta',
+          onPress: () => router.push('/(app)/settings/accounts/new'),
+        },
+  );
 
   return (
     <Screen edges={['top']} className="gap-4">
@@ -88,6 +98,7 @@ export default function AccountsScreen() {
                     </Text>
                   }
                   showChevron
+                  selected={inPane && selectedId === a.id}
                   onPress={() =>
                     router.push({
                       pathname: '/(app)/settings/accounts/[id]',
@@ -101,5 +112,28 @@ export default function AccountsScreen() {
         </ScrollView>
       )}
     </Screen>
+  );
+}
+
+/**
+ * The section's index route. Desktop: the list lives in the layout's left
+ * pane, so this is the right pane's "nothing open yet" state. Phones: the
+ * list itself.
+ */
+export default function AccountsScreen() {
+  const desktop = useIsDesktop();
+  const router = useRouter();
+  if (!desktop) return <AccountsList />;
+  return (
+    <MasterDetailEmpty
+      illustration={<AccountsEmptyIllustration />}
+      title="Elige una cuenta"
+      description="Su saldo, sus movimientos y sus ajustes aparecen aquí, junto a la lista."
+      action={{
+        icon: Plus,
+        accessibilityLabel: 'Nueva cuenta',
+        onPress: () => router.push('/(app)/settings/accounts/new'),
+      }}
+    />
   );
 }

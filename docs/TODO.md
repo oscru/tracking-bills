@@ -1,5 +1,64 @@
 # TODO
 
+# Imprescindibles (antes de salir a producción)
+
+## Correos — siguientes pasos
+
+El diseño ya está hecho (MJML en `emails/`, ver `emails/README.md`; vista previa con
+`pnpm -w emails:preview`). El mapa completo de plantillas está en `docs/todo-mail-templates.md`.
+Pendiente, en orden:
+
+1. [ ] **SMTP propio y dominio** (bloquea todo lo demás). Lo hace el dueño, es configuración:
+   - [ ] Elegir proveedor (Resend o Postmark) y configurarlo en `[auth.email.smtp]` (local) y en
+         el dashboard de Supabase (producción).
+   - [ ] Dominio verificado (p. ej. `genobills.app`) con SPF, DKIM y DMARC.
+   - [ ] Remitente `no-reply@` y correo de soporte reales. Hoy `soporte@genobills.app` es
+         provisional: cambiar `SUPPORT_EMAIL` en `emails/components.mjs`.
+2. [ ] **Plantillas de Auth en producción:** `db push` solo sube migraciones; las plantillas de
+       `config.toml` aplican solo en local. Pegar el HTML generado en el dashboard
+       (Authentication › Email Templates) o usar `supabase config push` (sube todo el
+       `config.toml` local: revisarlo antes).
+3. [ ] **Flujos que faltan en la app:**
+   - [x] "Olvidé mi contraseña" (2026-10-14): con **código** en vez de enlace,
+         `(auth)/forgot-password.tsx` + `resetPasswordWithCode`. Probado de punta a punta en local
+         (Mailpit). En producción depende del SMTP (paso 1) y de subir la plantilla (paso 2).
+   - [ ] Confirmar registro: encender `enable_confirmations` cuando el SMTP funcione, y manejar
+         en la app el caso "revisa tu correo".
+   - [ ] Cambio de correo desde el perfil.
+4. [ ] **Edge Function `send-email`** para los correos propios de la app: invitación con código
+       (P1) y transferencia recibida (P4).
+5. [ ] **Prueba en clientes reales:** Gmail (web y app), Outlook (Windows y web) y Apple Mail,
+       en claro y oscuro.
+
+Nota: en `config.toml`, el CLI resuelve `content_path` distinto por sección: las plantillas desde
+la raíz (`./supabase/templates/…`) y las notificaciones desde `supabase/` (`./templates/…`).
+
+## Inicio de sesión con Google y Apple (OAuth)
+
+Los botones ya existen (`apps/mobile/src/features/auth/sso-buttons.tsx`) y el código del flujo
+también (`use-oauth-sign-in.ts` + `startOAuthSignIn`/`completeOAuthSignIn` en
+`packages/core/src/supabase/auth.ts`, PKCE con `expo-web-browser`), pero **ningún proveedor está
+configurado**: Google no aparece en `supabase/config.toml` y Apple está en `enabled = false`.
+Hoy tocar cualquiera de los dos falla.
+
+1. [ ] **Google:** crear el cliente OAuth en Google Cloud (pantalla de consentimiento con la
+       marca Genobills) y activarlo en Supabase (`[auth.external.google]` en local y en el
+       dashboard en producción).
+2. [ ] **Apple:** requiere cuenta de Apple Developer (Services ID, llave y Team ID). En iOS, Apple
+       **exige** ofrecer "Iniciar sesión con Apple" si hay otro inicio social; conviene la versión
+       nativa (`expo-apple-authentication` + `signInWithIdToken`) en lugar del navegador.
+3. [ ] **URLs de redirección:** agregar `genobills://` (y `exp://…` para desarrollo) a
+       `additional_redirect_urls`; hoy solo están las de `127.0.0.1:3000`. Revisar también
+       `site_url` para producción.
+4. [ ] **Perfil incompleto:** quien entra con Google o Apple no pasa por el registro, así que no
+       tiene fecha de nacimiento ni género (y Apple a veces tampoco manda el nombre). Pedirlos en
+       una pantalla de "completa tu perfil" al primer ingreso.
+5. [ ] **Cuentas con el mismo correo:** decidir qué pasa si alguien se registró con contraseña y
+       luego entra con Google con el mismo correo (Supabase las vincula si el correo está
+       verificado; revisar con la confirmación de correo apagada).
+6. [ ] **Probar** en Android, iOS y web (el flujo web usa redirección de página, no
+       `openAuthSessionAsync`).
+
 ## Notificaciones — Fase 3: push desde servidor
 
 Pospuesto el 2026-10-12. Las fases 1 (centro de notificaciones en la app) y 2
@@ -51,6 +110,24 @@ Lo que la fase 2 no cubre, porque todo se calcula y programa en el propio teléf
 
 Sugerencia de orden: empezar por Android (FCM) y dejar iOS para cuando exista la cuenta de Apple
 Developer.
+
+## Despliegue de la app web (Vercel)
+
+El código ya está listo: `apps/mobile/vercel.json` (build, reescritura SPA, caché e
+encabezados), `apps/mobile/public/` (plantilla `index.html`, manifiesto e íconos). Falta la
+configuración, que hace el dueño:
+
+1. [ ] Crear el proyecto en Vercel desde el repo con **Root Directory = `apps/mobile`** (Vercel
+       detecta pnpm; `vercel.json` ya trae install y build).
+2. [ ] Variables de entorno de producción en Vercel: `EXPO_PUBLIC_SUPABASE_URL` y
+       `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+3. [ ] Dominio (p. ej. `app.genobills.app`).
+4. [ ] Supabase › Authentication › URL Configuration: poner el dominio web como **Site URL** y
+       agregarlo a **Redirect URLs** (lo necesita el OAuth en web).
+5. [ ] Aplicar las migraciones pendientes en producción (`pnpm supabase db push`) **antes** del
+       primer despliegue: la web ya usa las vistas y funciones nuevas.
+
+# Mejoras (se pueden lanzar como features después)
 
 ## Personas — Dividir gastos (pospuesto)
 

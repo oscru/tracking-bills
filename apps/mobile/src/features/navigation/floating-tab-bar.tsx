@@ -79,6 +79,11 @@ export function TabBarActionProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** The primary action the focused screen registered (null = the default "nuevo movimiento"). Read by the desktop sidebar. */
+export function useCurrentTabBarAction(): TabBarAction | null {
+  return useContext(TabBarActionContext);
+}
+
 /**
  * Registers this screen's primary action in the navbar while it's focused.
  * Pass `null` (e.g. while the record is still loading or wasn't found) to
@@ -100,7 +105,7 @@ export function TabBarActionProvider({ children }: { children: ReactNode }) {
  * only depends on `icon`/`accessibilityLabel`, which are stable for a
  * given screen, so it only (re)runs on actual focus changes.
  */
-export function useTabBarAction(action: TabBarAction | null) {
+export function useTabBarAction(action: TabBarAction | null | false) {
   const setAction = useContext(SetTabBarActionContext);
   const actionRef = useRef(action);
   // Keeping this ref fresh is a side effect (even though it's cheap), not
@@ -112,19 +117,27 @@ export function useTabBarAction(action: TabBarAction | null) {
     actionRef.current = action;
   });
 
-  const icon = action?.icon;
-  const accessibilityLabel = action?.accessibilityLabel;
+  const icon = action ? action.icon : undefined;
+  const accessibilityLabel = action ? action.accessibilityLabel : undefined;
+  // `false`: leave the action alone — for a screen drawn beside another one
+  // that owns it (a list next to its open detail on desktop).
+  const skip = action === false;
 
   useFocusEffect(
     useCallback(() => {
+      if (skip) return;
       if (!icon || !accessibilityLabel) {
         setAction(null);
         return;
       }
-      setAction({ icon, accessibilityLabel, onPress: () => actionRef.current?.onPress() });
+      setAction({
+        icon,
+        accessibilityLabel,
+        onPress: () => (actionRef.current ? actionRef.current.onPress() : undefined),
+      });
       return () => setAction(null);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [icon, accessibilityLabel]),
+    }, [skip, icon, accessibilityLabel]),
   );
 }
 
@@ -173,6 +186,11 @@ function isFormRoute(route: NavRoute): boolean {
   }
   return false;
 }
+
+// On wide web the screens are a centered 480px column (see `Screen`) — the
+// bar matches it instead of stretching across the whole window.
+const WEB_COLUMN =
+  Platform.OS === 'web' ? ({ maxWidth: 480, marginHorizontal: 'auto' } as const) : null;
 
 const SHADOW = Platform.select({
   ios: {
@@ -467,6 +485,7 @@ export function FloatingTabBar({
           paddingTop: BAR_TOP_GAP,
           paddingBottom: insets.bottom + BAR_BOTTOM_GAP,
         },
+        WEB_COLUMN,
         hideStyle,
       ]}
     >

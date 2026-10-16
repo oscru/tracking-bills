@@ -14,6 +14,8 @@ export {
   useSignUp,
   useSignOut,
   useOAuthCallback,
+  useSendPasswordReset,
+  useResetPasswordWithCode,
   useDeleteOwnAccount,
 } from './use-auth';
 export { useProfile, useUpdateProfile } from './use-profile';

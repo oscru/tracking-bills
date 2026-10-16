@@ -37,6 +37,7 @@ export type Database = {
       accounts: {
         Row: {
           archived: boolean
+          archived_at: string | null
           color: string | null
           created_at: string
           currency: string
@@ -53,6 +54,7 @@ export type Database = {
         }
         Insert: {
           archived?: boolean
+          archived_at?: string | null
           color?: string | null
           created_at?: string
           currency?: string
@@ -69,6 +71,7 @@ export type Database = {
         }
         Update: {
           archived?: boolean
+          archived_at?: string | null
           color?: string | null
           created_at?: string
           currency?: string
@@ -188,6 +191,7 @@ export type Database = {
       categories: {
         Row: {
           archived: boolean
+          archived_at: string | null
           color: string | null
           created_at: string
           icon: string | null
@@ -202,6 +206,7 @@ export type Database = {
         }
         Insert: {
           archived?: boolean
+          archived_at?: string | null
           color?: string | null
           created_at?: string
           icon?: string | null
@@ -216,6 +221,7 @@ export type Database = {
         }
         Update: {
           archived?: boolean
+          archived_at?: string | null
           color?: string | null
           created_at?: string
           icon?: string | null
@@ -521,6 +527,7 @@ export type Database = {
       tags: {
         Row: {
           archived: boolean
+          archived_at: string | null
           color: string | null
           created_at: string
           id: string
@@ -530,6 +537,7 @@ export type Database = {
         }
         Insert: {
           archived?: boolean
+          archived_at?: string | null
           color?: string | null
           created_at?: string
           id?: string
@@ -539,6 +547,7 @@ export type Database = {
         }
         Update: {
           archived?: boolean
+          archived_at?: string | null
           color?: string | null
           created_at?: string
           id?: string

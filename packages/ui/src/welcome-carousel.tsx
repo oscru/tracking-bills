@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   Dimensions,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -27,6 +28,10 @@ export interface WelcomeCarouselProps {
 }
 
 const { width: WINDOW_WIDTH } = Dimensions.get('window');
+// On wide web the app is a centered 480px column (see `Screen`) — the
+// carousel's pages and buttons match it instead of spanning the window.
+const WEB = Platform.OS === 'web';
+const PAGE_WIDTH = WEB ? Math.min(WINDOW_WIDTH, 480) : WINDOW_WIDTH;
 
 function Dots({
   count,
@@ -49,11 +54,7 @@ function Dots({
           extrapolate: 'clamp',
         });
         return (
-          <Animated.View
-            key={i}
-            className="h-2 rounded-full bg-lime"
-            style={{ width, opacity }}
-          />
+          <Animated.View key={i} className="h-2 rounded-full bg-lime" style={{ width, opacity }} />
         );
       })}
     </View>
@@ -67,13 +68,12 @@ function CarouselBody({ slides, onDone }: Omit<WelcomeCarouselProps, 'visible'>)
   const scrollRef = useRef<ScrollView>(null);
   const isLast = index === slides.length - 1;
 
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-    { useNativeDriver: false },
-  );
+  const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+    useNativeDriver: false,
+  });
 
   const handleMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setIndex(Math.round(e.nativeEvent.contentOffset.x / WINDOW_WIDTH));
+    setIndex(Math.round(e.nativeEvent.contentOffset.x / PAGE_WIDTH));
   };
 
   const goNext = () => {
@@ -81,51 +81,60 @@ function CarouselBody({ slides, onDone }: Omit<WelcomeCarouselProps, 'visible'>)
       onDone();
       return;
     }
-    scrollRef.current?.scrollTo({ x: (index + 1) * WINDOW_WIDTH, animated: true });
+    scrollRef.current?.scrollTo({ x: (index + 1) * PAGE_WIDTH, animated: true });
   };
 
   return (
     <View className="flex-1 bg-canvas dark:bg-canvas-dark" style={{ paddingTop: insets.top }}>
-      <Pressable
-        onPress={onDone}
-        accessibilityRole="button"
-        accessibilityLabel="Omitir"
-        className="absolute right-5 z-10 px-3 py-2"
-        style={{ top: insets.top + 8 }}
-      >
-        <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Omitir</Text>
-      </Pressable>
+      <View className={`flex-1 ${WEB ? 'mx-auto w-full max-w-[480px]' : ''}`}>
+        <Pressable
+          onPress={onDone}
+          accessibilityRole="button"
+          accessibilityLabel="Omitir"
+          className="absolute right-5 z-10 px-3 py-2"
+          style={{ top: insets.top + 8 }}
+        >
+          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Omitir</Text>
+        </Pressable>
 
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        onMomentumScrollEnd={handleMomentumEnd}
-        scrollEventThrottle={16}
-      >
-        {slides.map((slide, i) => (
-          <View key={i} style={{ width: WINDOW_WIDTH }} className="flex-1 items-center justify-center gap-6 px-8">
-            {slide.illustration}
-            <View className="items-center gap-2">
-              <Text className="text-center text-2xl font-extrabold text-ink dark:text-ink-dark">
-                {slide.title}
-              </Text>
-              <Text className="max-w-[280px] text-center text-base text-ink-2 dark:text-ink-2-dark">
-                {slide.description}
-              </Text>
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={handleScroll}
+          onMomentumScrollEnd={handleMomentumEnd}
+          scrollEventThrottle={16}
+        >
+          {slides.map((slide, i) => (
+            <View
+              key={i}
+              style={{ width: PAGE_WIDTH }}
+              className="flex-1 items-center justify-center gap-6 px-8"
+            >
+              {slide.illustration}
+              <View className="items-center gap-2">
+                <Text className="text-center text-2xl font-extrabold text-ink dark:text-ink-dark">
+                  {slide.title}
+                </Text>
+                <Text className="max-w-[280px] text-center text-base text-ink-2 dark:text-ink-2-dark">
+                  {slide.description}
+                </Text>
+              </View>
             </View>
-          </View>
-        ))}
-      </ScrollView>
+          ))}
+        </ScrollView>
 
-      <View className="gap-5 px-8" style={{ paddingBottom: insets.bottom + 16 }}>
-        <Dots count={slides.length} index={scrollX.interpolate({
-          inputRange: [0, WINDOW_WIDTH],
-          outputRange: [0, 1],
-        })} />
-        <Button label={isLast ? 'Comenzar' : 'Siguiente'} onPress={goNext} />
+        <View className="gap-5 px-8" style={{ paddingBottom: insets.bottom + 16 }}>
+          <Dots
+            count={slides.length}
+            index={scrollX.interpolate({
+              inputRange: [0, PAGE_WIDTH],
+              outputRange: [0, 1],
+            })}
+          />
+          <Button label={isLast ? 'Comenzar' : 'Siguiente'} onPress={goNext} />
+        </View>
       </View>
     </View>
   );

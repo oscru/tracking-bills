@@ -18,7 +18,7 @@ export default function ImportExportScreen() {
     if (!transactions || !categories) return;
     setExporting(true);
     try {
-      const base64 = buildExportWorkbookBase64({ transactions, categories });
+      const base64 = await buildExportWorkbookBase64({ transactions, categories });
       await saveAndShareXlsx(base64, `movimientos-${new Date().toISOString().slice(0, 10)}.xlsx`);
     } catch (err) {
       Alert.alert('No se pudo exportar', err instanceof Error ? err.message : String(err));

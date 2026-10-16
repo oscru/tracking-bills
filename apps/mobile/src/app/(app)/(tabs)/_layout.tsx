@@ -1,4 +1,4 @@
-import { FloatingTabBarInsetContext } from '@repo/ui';
+import { FloatingTabBarInsetContext, useIsDesktop } from '@repo/ui';
 import { Tabs, useRouter, type Href } from 'expo-router';
 import { useEffect } from 'react';
 
@@ -29,10 +29,12 @@ function usePreloadTabs() {
 
 export default function AppLayout() {
   const floatingInset = useFloatingTabBarHeight();
+  // Desktop web has a sidebar, not a bar floating over the content.
+  const desktop = useIsDesktop();
   usePreloadTabs();
 
   return (
-    <FloatingTabBarInsetContext.Provider value={floatingInset}>
+    <FloatingTabBarInsetContext.Provider value={desktop ? 0 : floatingInset}>
       <Tabs
         screenOptions={{
           headerShown: false,

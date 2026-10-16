@@ -7,11 +7,13 @@ import {
   ICON_COLORS,
   useTabBarScrollPadding,
 } from '@repo/ui';
+import { formatDateTime } from '@repo/core/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowUpDown, Pencil } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { RecordInfoButton } from '../../../../../../features/design/record-info';
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 import { TagDetailSkeleton } from '../../../../../../features/tags/tag-detail-skeleton';
 
@@ -67,7 +69,21 @@ export default function TagDetail() {
 
   return (
     <Screen edges={['top']} className="gap-5">
-      <PageHeader title={tag.name} onBack={() => router.back()} />
+      <PageHeader
+        title={tag.name}
+        onBack={() => router.back()}
+        action={
+          <RecordInfoButton
+            title="Información de la tag"
+            rows={[
+              { label: 'Movimientos', value: String(total) },
+              { label: 'Creada', value: formatDateTime(tag.created_at) },
+              { label: 'Última modificación', value: formatDateTime(tag.updated_at) },
+              { label: 'Archivada', value: tag.archived_at ? formatDateTime(tag.archived_at) : '' },
+            ]}
+          />
+        }
+      />
 
       <View className="flex-1">
         <ScrollView

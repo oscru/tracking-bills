@@ -15,13 +15,7 @@ export const HEADER_ALIASES = {
   status: ['status', 'estado'],
   category: ['category', 'categoría', 'categoria'],
   currency: ['currency', 'moneda', 'divisa'],
-  subcategory: [
-    'subcategory',
-    'sub-category',
-    'sub category',
-    'subcategoría',
-    'subcategoria',
-  ],
+  subcategory: ['subcategory', 'sub-category', 'sub category', 'subcategoría', 'subcategoria'],
   tags: ['tags', 'tag', 'etiquetas'],
   fromAccount: [
     'conta origem',
@@ -44,7 +38,13 @@ export type HeaderKey = keyof typeof HEADER_ALIASES;
 /** Values in the Status column that mean "settled" — anything else (including blank) is treated per `DEFAULT_IS_COMPLETED`. */
 export const PAID_STATUS_VALUES = ['paid', 'pagado', 'completado', 'completo', 'liquidado'];
 /** Values that explicitly mean "not settled yet". */
-export const PENDING_STATUS_VALUES = ['pending', 'pendiente', 'scheduled', 'programado', 'agendado'];
+export const PENDING_STATUS_VALUES = [
+  'pending',
+  'pendiente',
+  'scheduled',
+  'programado',
+  'agendado',
+];
 
 export const DEFAULT_IS_COMPLETED = true;
 

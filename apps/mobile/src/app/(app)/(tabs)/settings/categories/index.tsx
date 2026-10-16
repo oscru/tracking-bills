@@ -13,13 +13,15 @@ import {
   StaggerItem,
   TextField,
   useTabBarScrollPadding,
+  useIsDesktop,
 } from '@repo/ui';
-import { useRouter } from 'expo-router';
+import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
+import { MasterDetailEmpty, useInListPane } from '../../../../../features/settings/master-detail';
 
 // Booked automatically by the "Ajustar saldo" flow — not a category a user
 // should see or pick from here.
@@ -34,10 +36,12 @@ function Group({
   type,
   search,
   onEdit,
+  selectedId,
 }: {
   type: CategoryType;
   search: string;
   onEdit: (id: string) => void;
+  selectedId?: string;
 }) {
   const { data: nodes } = useCategoryTree(type);
   const visible = (nodes ?? []).filter((n) => !HIDDEN_SLUGS.has(n.slug ?? ''));
@@ -82,7 +86,9 @@ function Group({
           {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
           <Pressable
             onPress={() => onEdit(p.id)}
-            className="flex-row items-center gap-3 py-3.5 active:opacity-60"
+            className={`flex-row items-center gap-3 py-3.5 active:opacity-60 ${
+              selectedId === p.id ? SELECTED_ROW : ''
+            }`}
           >
             <CategoryDot color={p.color} icon={p.icon} size={16} />
             <View className="flex-1">
@@ -102,7 +108,9 @@ function Group({
             <Pressable
               key={c.id}
               onPress={() => onEdit(c.id)}
-              className="flex-row items-center gap-2.5 py-2.5 pl-6 active:opacity-60"
+              className={`flex-row items-center gap-2.5 py-2.5 pl-6 active:opacity-60 ${
+                selectedId === c.id ? SELECTED_ROW : ''
+              }`}
             >
               <CategoryDot color={c.color ?? p.color} icon={c.icon} size={13} />
               <Text className="flex-1 text-sm text-ink-2 dark:text-ink-2-dark">
@@ -118,9 +126,16 @@ function Group({
   );
 }
 
-export default function CategoriesScreen() {
+// Same highlight as `ListRow`'s `selected`.
+const SELECTED_ROW = '-mx-2 rounded-xl bg-lime-tint px-2 dark:bg-lime-tint-dark';
+
+/** The section's list — on desktop, also drawn beside the open record (see `_layout`). */
+export function CategoriesList() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
+  // Desktop: the record open in the pane beside this list.
+  const { id: selectedId } = useGlobalSearchParams<{ id?: string }>();
+  const inPane = useInListPane();
   const [type, setType] = useState<CategoryType>('expense');
   const [search, setSearch] = useState('');
   const { isLoading, error } = useCategoryTree();
@@ -128,11 +143,15 @@ export default function CategoriesScreen() {
   const goEdit = (id: string) =>
     router.push({ pathname: '/(app)/settings/categories/[id]', params: { id } });
 
-  useTabBarAction({
-    icon: Plus,
-    accessibilityLabel: 'Nueva categoría',
-    onPress: () => router.push('/(app)/settings/categories/new'),
-  });
+  useTabBarAction(
+    inPane
+      ? false
+      : {
+          icon: Plus,
+          accessibilityLabel: 'Nueva categoría',
+          onPress: () => router.push('/(app)/settings/categories/new'),
+        },
+  );
 
   return (
     <Screen edges={['top']} className="gap-4">
@@ -160,9 +179,37 @@ export default function CategoriesScreen() {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
-          <Group type={type} search={search} onEdit={goEdit} />
+          <Group
+            type={type}
+            search={search}
+            onEdit={goEdit}
+            selectedId={inPane ? selectedId : undefined}
+          />
         </ScrollView>
       )}
     </Screen>
+  );
+}
+
+/**
+ * The section's index route. Desktop: the list lives in the layout's left
+ * pane, so this is the right pane's "nothing open yet" state. Phones: the
+ * list itself.
+ */
+export default function CategoriesScreen() {
+  const desktop = useIsDesktop();
+  const router = useRouter();
+  if (!desktop) return <CategoriesList />;
+  return (
+    <MasterDetailEmpty
+      illustration={<CategoriesEmptyIllustration />}
+      title="Elige una categoría"
+      description="Su historial de gasto y sus subcategorías aparecen aquí, junto a la lista."
+      action={{
+        icon: Plus,
+        accessibilityLabel: 'Nueva categoría',
+        onPress: () => router.push('/(app)/settings/categories/new'),
+      }}
+    />
   );
 }

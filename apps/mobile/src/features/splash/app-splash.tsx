@@ -16,7 +16,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 /** Placeholder mark until there's a real logo. */
 const LOGO = '💸';
-const APP_NAME = 'Finance Tracker';
+const APP_NAME = 'Genobills';
 // The splash shows at least this long, so a fast start still reads as a
 // deliberate brand moment instead of a flash.
 const MIN_VISIBLE_MS = 1200;

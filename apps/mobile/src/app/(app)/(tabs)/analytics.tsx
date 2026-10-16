@@ -21,6 +21,7 @@ import {
   SegmentedControl,
   type SegmentedOption,
   ICON_COLORS,
+  useIsDesktop,
   useTabBarScrollPadding,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
@@ -64,6 +65,7 @@ const METRIC_OPTIONS: SegmentedOption<HeatmapVariant>[] = [
 
 export default function AnalyticsScreen() {
   const scrollPadding = useTabBarScrollPadding();
+  const desktop = useIsDesktop();
   const router = useRouter();
   const { data: accounts } = useAccounts();
   const { data: profile } = useProfile();
@@ -215,7 +217,7 @@ export default function AnalyticsScreen() {
   };
 
   return (
-    <Screen edges={['top']} className="gap-5">
+    <Screen edges={['top']} className="gap-5" width="wide">
       <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Análisis</Text>
 
       <SegmentedControl
@@ -303,58 +305,135 @@ export default function AnalyticsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
-          <SegmentedControl options={VIEW_OPTIONS} value={viewMode} onChange={setViewMode} />
+          {desktop ? (
+            // Desktop: the calendar/trend and the day on the left, the
+            // period's numbers on the right.
+            <View className="flex-row items-start gap-6">
+              <View className="gap-5" style={{ flex: 1.25 }}>
+                <SegmentedControl options={VIEW_OPTIONS} value={viewMode} onChange={setViewMode} />
 
-          {viewMode === 'calendar' ? (
-            <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
-              <View className="mb-4 flex-row justify-end gap-2">
-                {METRIC_OPTIONS.map((opt) => (
-                  <Chip
-                    key={opt.value}
-                    label={opt.label}
-                    selected={heatmapMetric === opt.value}
-                    dotColor={opt.value === 'income' ? ICON_COLORS.pos : ICON_COLORS.danger}
-                    onPress={() => setHeatmapMetric(opt.value)}
+                {viewMode === 'calendar' ? (
+                  <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
+                    <View className="mb-4 flex-row justify-end gap-2">
+                      {METRIC_OPTIONS.map((opt) => (
+                        <Chip
+                          key={opt.value}
+                          label={opt.label}
+                          selected={heatmapMetric === opt.value}
+                          dotColor={opt.value === 'income' ? ICON_COLORS.pos : ICON_COLORS.danger}
+                          onPress={() => setHeatmapMetric(opt.value)}
+                        />
+                      ))}
+                    </View>
+                    <CalendarHeatmap
+                      cells={heatmapCells}
+                      columns={columns}
+                      weekdayHeader={period === 'year' ? undefined : WEEKDAY_HEADER}
+                      selectedKey={selectedDate}
+                      onSelect={handleSelectCell}
+                      variant={heatmapMetric}
+                      showAmounts
+                    />
+                  </View>
+                ) : (
+                  <MonthlyTrendChart
+                    months={period === 'year' ? 12 : 6}
+                    referenceDate={referenceDate}
                   />
-                ))}
+                )}
+
+                {viewMode === 'calendar' && period !== 'year' && selectedDate ? (
+                  <DayDetailCard
+                    dateISO={selectedDate}
+                    transactions={tx}
+                    history={history}
+                    currency={currency}
+                    onPressTransaction={openTransaction}
+                  />
+                ) : null}
               </View>
-              <CalendarHeatmap
-                cells={heatmapCells}
-                columns={columns}
-                weekdayHeader={period === 'year' ? undefined : WEEKDAY_HEADER}
-                selectedKey={selectedDate}
-                onSelect={handleSelectCell}
-                variant={heatmapMetric}
-                showAmounts
-              />
+              <View className="flex-1 gap-5">
+                <InsightsStrip insights={insights} currency={currency} metric={heatmapMetric} />
+
+                {period === 'month' ? <BudgetsProgressCard currency={currency} /> : null}
+
+                <CategoryTrendCard
+                  trend={trend}
+                  onSeeAll={openMonthCategories}
+                  metric={heatmapMetric}
+                />
+
+                <BiggestExpensesCard
+                  expenses={biggest}
+                  currency={currency}
+                  onSeeAll={openExpenses}
+                  onPressTransaction={openTransaction}
+                  metric={heatmapMetric}
+                />
+              </View>
             </View>
           ) : (
-            <MonthlyTrendChart months={period === 'year' ? 12 : 6} referenceDate={referenceDate} />
+            <>
+              <SegmentedControl options={VIEW_OPTIONS} value={viewMode} onChange={setViewMode} />
+
+              {viewMode === 'calendar' ? (
+                <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
+                  <View className="mb-4 flex-row justify-end gap-2">
+                    {METRIC_OPTIONS.map((opt) => (
+                      <Chip
+                        key={opt.value}
+                        label={opt.label}
+                        selected={heatmapMetric === opt.value}
+                        dotColor={opt.value === 'income' ? ICON_COLORS.pos : ICON_COLORS.danger}
+                        onPress={() => setHeatmapMetric(opt.value)}
+                      />
+                    ))}
+                  </View>
+                  <CalendarHeatmap
+                    cells={heatmapCells}
+                    columns={columns}
+                    weekdayHeader={period === 'year' ? undefined : WEEKDAY_HEADER}
+                    selectedKey={selectedDate}
+                    onSelect={handleSelectCell}
+                    variant={heatmapMetric}
+                    showAmounts
+                  />
+                </View>
+              ) : (
+                <MonthlyTrendChart
+                  months={period === 'year' ? 12 : 6}
+                  referenceDate={referenceDate}
+                />
+              )}
+
+              {viewMode === 'calendar' && period !== 'year' && selectedDate ? (
+                <DayDetailCard
+                  dateISO={selectedDate}
+                  transactions={tx}
+                  history={history}
+                  currency={currency}
+                  onPressTransaction={openTransaction}
+                />
+              ) : null}
+              <InsightsStrip insights={insights} currency={currency} metric={heatmapMetric} />
+
+              {period === 'month' ? <BudgetsProgressCard currency={currency} /> : null}
+
+              <CategoryTrendCard
+                trend={trend}
+                onSeeAll={openMonthCategories}
+                metric={heatmapMetric}
+              />
+
+              <BiggestExpensesCard
+                expenses={biggest}
+                currency={currency}
+                onSeeAll={openExpenses}
+                onPressTransaction={openTransaction}
+                metric={heatmapMetric}
+              />
+            </>
           )}
-
-          {viewMode === 'calendar' && period !== 'year' && selectedDate ? (
-            <DayDetailCard
-              dateISO={selectedDate}
-              transactions={tx}
-              history={history}
-              currency={currency}
-              onPressTransaction={openTransaction}
-            />
-          ) : null}
-
-          <InsightsStrip insights={insights} currency={currency} metric={heatmapMetric} />
-
-          {period === 'month' ? <BudgetsProgressCard currency={currency} /> : null}
-
-          <CategoryTrendCard trend={trend} onSeeAll={openMonthCategories} metric={heatmapMetric} />
-
-          <BiggestExpensesCard
-            expenses={biggest}
-            currency={currency}
-            onSeeAll={openExpenses}
-            onPressTransaction={openTransaction}
-            metric={heatmapMetric}
-          />
         </ScrollView>
       )}
     </Screen>

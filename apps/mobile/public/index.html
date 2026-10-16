@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!-- SPA template for the web build (`web.output: "single"` ignores src/app/+html.tsx).
+     Expo fills in the title placeholder and appends the CSS, scripts, description
+     and theme color from app.json. -->
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <!-- interactive-widget: the mobile browser shrinks the layout when the keyboard opens,
+         instead of the keyboard covering inputs and buttons. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no, interactive-widget=resizes-content"
+    />
+    <title>%WEB_TITLE%</title>
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0D0F" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Genobills" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="robots" content="noindex" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <!-- The `react-native-web` recommended style reset. -->
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        overflow: hidden;
+        background-color: #f6f7f9;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #0b0d0f;
+        }
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>Genobills necesita JavaScript para funcionar.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

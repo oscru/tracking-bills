@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import {
   Platform,
   StyleSheet,
@@ -22,6 +22,16 @@ import { ICON_COLORS } from './icon-colors';
 
 /** Lime → chartreuse → green, top-left to bottom-right. */
 export const LIME_GRADIENT = ['#E3FF6B', '#B9F227', '#8EE05A'] as const;
+
+/**
+ * How far (px) the pale and green ends reach into a wide fill. The gradient
+ * used to stretch corner to corner whatever the size, so on a long button
+ * ("Guardar", the sidebar's action) the pale lime covered a whole third of
+ * it and the button read washed out next to a small one. Now a wide fill is
+ * the saturated middle lime with the ends only as accents, so every button
+ * is the same tone; anything up to twice this wide looks exactly as before.
+ */
+const ACCENT_SPAN = 64;
 
 /** `react-native-svg` ids must be plain — React's `useId` includes colons. */
 function useSvgId(prefix: string) {
@@ -56,17 +66,32 @@ export function GradientFill({
 }: GradientFillProps) {
   const fillId = useSvgId('fill');
   const sheenId = useSvgId('sheen');
+  const [width, setWidth] = useState(0);
   const last = colors.length - 1;
+  // Fraction of the width each end's accent takes (0.5 = the original
+  // corner-to-corner gradient, for small fills and before layout).
+  const edge = width > 0 ? Math.min(0.5, ACCENT_SPAN / width) : 0.5;
+  const mid = colors[Math.floor(last / 2)] ?? colors[0];
+  const stops =
+    edge < 0.5 && last >= 2
+      ? [
+          { offset: 0, color: colors[0] },
+          { offset: edge, color: mid },
+          { offset: 1 - edge, color: mid },
+          { offset: 1, color: colors[last] },
+        ]
+      : colors.map((c, i) => ({ offset: last === 0 ? 0 : i / last, color: c }));
   return (
     <View
       pointerEvents="none"
+      onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))}
       style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}
     >
       <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none">
         <Defs>
           <LinearGradient id={fillId} x1="0" y1="0" x2="1" y2="1">
-            {colors.map((c, i) => (
-              <Stop key={i} offset={last === 0 ? 0 : i / last} stopColor={c} />
+            {stops.map((stop, i) => (
+              <Stop key={i} offset={stop.offset} stopColor={stop.color} />
             ))}
           </LinearGradient>
           <LinearGradient id={sheenId} x1="0" y1="0" x2="0" y2="1">

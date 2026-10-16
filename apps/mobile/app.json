@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Finance Tracker",
+    "name": "Genobills",
     "slug": "finance-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "financetracker",
+    "scheme": "genobills",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
@@ -24,7 +24,11 @@
     "web": {
       "output": "single",
       "bundler": "metro",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./public/favicon-48.png",
+      "description": "Tus finanzas, en orden: ingresos, gastos, cuentas y presupuestos.",
+      "themeColor": "#F6F7F9",
+      "name": "Genobills",
+      "shortName": "Genobills"
     },
     "plugins": [
       "expo-router",

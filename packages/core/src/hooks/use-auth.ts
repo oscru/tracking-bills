@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   completeOAuthSignIn,
   deleteOwnAccount,
+  resetPasswordWithCode,
+  sendPasswordReset,
   signInWithPassword,
   signOut,
   signUpWithPassword,
@@ -27,6 +29,17 @@ export function useSignIn() {
 export function useOAuthCallback() {
   const reset = useAuthCacheReset();
   return useMutation({ mutationFn: completeOAuthSignIn, onSuccess: reset });
+}
+
+/** Emails a password-reset code. */
+export function useSendPasswordReset() {
+  return useMutation({ mutationFn: sendPasswordReset });
+}
+
+/** Verifies the emailed code and sets the new password — signs the user in. */
+export function useResetPasswordWithCode() {
+  const reset = useAuthCacheReset();
+  return useMutation({ mutationFn: resetPasswordWithCode, onSuccess: reset });
 }
 
 export function useSignUp() {

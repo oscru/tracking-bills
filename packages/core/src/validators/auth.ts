@@ -47,3 +47,24 @@ export const signUpSchema = z.object({
 
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
+
+/** Step 1 of "olvidé mi contraseña": where to send the code. */
+export const passwordResetRequestSchema = z.object({ email: emailSchema });
+
+/** Step 2: the emailed code plus the new password (same rules as sign-up), typed twice. */
+export const passwordResetSchema = z
+  .object({
+    email: emailSchema,
+    code: z
+      .string()
+      .trim()
+      .regex(/^\d{6,10}$/, 'Escribe el código de 6 dígitos que te enviamos'),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((v) => v.password === v.confirmPassword, {
+    path: ['confirmPassword'],
+    message: 'Las contraseñas no coinciden',
+  });
+
+export type PasswordResetInput = z.infer<typeof passwordResetSchema>;

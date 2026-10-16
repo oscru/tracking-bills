@@ -9,6 +9,7 @@ import {
   useUpdateCategory,
 } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
+import { formatDate, formatDateTime } from '@repo/core/utils';
 import type { Category } from '@repo/core/types';
 import {
   Button,
@@ -18,6 +19,7 @@ import {
   PageHeader,
   Screen,
   useTabBarScrollPadding,
+  useIsDesktop,
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
@@ -26,6 +28,8 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CategoryDetailSkeleton } from '../../../../../../features/categories/category-detail-skeleton';
 import { CategoryHistoryChart } from '../../../../../../features/categories/category-history-chart';
+import { SplitColumns } from '../../../../../../features/design/split-columns';
+import { RecordInfoButton } from '../../../../../../features/design/record-info';
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 /** Why `category` can't be deleted right now, or `null` if it can. Mirrors
@@ -64,6 +68,7 @@ export default function CategoryDetail() {
     fromTransactionId?: string;
   }>();
   const router = useRouter();
+  const desktop = useIsDesktop();
   const { data: categories, isLoading } = useCategories();
   const { data: favorites } = useFavoriteTransactions();
   const { data: budgets } = useBudgets();
@@ -104,7 +109,7 @@ export default function CategoryDetail() {
 
   if (isLoading) {
     return (
-      <Screen edges={['top']} className="gap-5">
+      <Screen edges={['top']} className="gap-5" width={desktop ? 'wide' : undefined}>
         <PageHeader title="Categoría" onBack={goBack} />
         <CategoryDetailSkeleton />
       </Screen>
@@ -144,9 +149,37 @@ export default function CategoryDetail() {
       ? `No puedes eliminarla: su subcategoría "${resolveCategoryLabel(blockedSubcategory.s)}" ${blockedSubcategory.reason}.`
       : null;
 
+  // Its first and last movement (this category and its subcategories),
+  // from the same per-day totals the chart reads — ISO dates sort as text.
+  const usedDays = (categoryDays ?? []).map((d) => d.date).sort();
+  const parent = category.parent_id
+    ? (categories ?? []).find((c) => c.id === category.parent_id)
+    : undefined;
+  const infoRows = [
+    { label: 'Tipo', value: category.type === 'income' ? 'Ingreso' : 'Gasto' },
+    { label: 'Categoría principal', value: parent ? resolveCategoryLabel(parent) : '' },
+    {
+      label: 'Subcategorías',
+      value: category.parent_id ? '' : String(subcategories.length),
+    },
+    { label: 'Origen', value: category.slug ? 'Del sistema' : 'Creada por ti' },
+    { label: 'Primer movimiento', value: usedDays[0] ? formatDate(usedDays[0]) : 'Ninguno' },
+    { label: 'Último movimiento', value: usedDays.at(-1) ? formatDate(usedDays.at(-1)!) : '' },
+    { label: 'Creada', value: formatDateTime(category.created_at) },
+    { label: 'Última modificación', value: formatDateTime(category.updated_at) },
+    {
+      label: 'Archivada',
+      value: category.archived_at ? formatDateTime(category.archived_at) : '',
+    },
+  ];
+
   return (
-    <Screen edges={['top']} className="gap-5">
-      <PageHeader title={resolveCategoryLabel(category)} onBack={goBack} />
+    <Screen edges={['top']} className="gap-5" width={desktop ? 'wide' : undefined}>
+      <PageHeader
+        title={resolveCategoryLabel(category)}
+        onBack={goBack}
+        action={<RecordInfoButton title="Información de la categoría" rows={infoRows} />}
+      />
 
       <View className="flex-1">
         <ScrollView
@@ -155,77 +188,89 @@ export default function CategoryDetail() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
-          <View className="flex-row items-center gap-2">
-            <CategoryDot color={category.color} icon={category.icon} size={17} />
-            <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-              {category.type === 'income' ? 'Ingreso' : 'Gasto'}
-              {category.archived ? ' · archivada' : ''}
-            </Text>
-          </View>
+          <SplitColumns
+            rightWidth={360}
+            // The chart needs room; in the pane beside the list, it stacks.
+            minWidth={900}
+            left={
+              <>
+                <View className="flex-row items-center gap-2">
+                  <CategoryDot color={category.color} icon={category.icon} size={17} />
+                  <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+                    {category.type === 'income' ? 'Ingreso' : 'Gasto'}
+                    {category.archived ? ' · archivada' : ''}
+                  </Text>
+                </View>
 
-          <CategoryHistoryChart category={category} subcategories={subcategories} />
-
-          {subcategories.length > 0 ? (
-            <View className="gap-2">
-              <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-                Subcategorías
-              </Text>
-              <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
-                {subcategories.map((s, i) => (
-                  <View key={s.id}>
-                    {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
-                    <Pressable
-                      onPress={() =>
-                        router.push({
-                          pathname: '/(app)/settings/categories/[id]',
-                          params: { id: s.id },
-                        })
-                      }
-                      className="flex-row items-center gap-3 py-3.5 active:opacity-60"
-                    >
-                      <CategoryDot color={s.color} icon={s.icon} size={16} />
-                      <Text className="flex-1 text-base text-ink dark:text-ink-dark">
-                        {resolveCategoryLabel(s)}
-                        {s.archived ? ' · archivada' : ''}
-                      </Text>
-                      <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text>
-                    </Pressable>
+                <CategoryHistoryChart category={category} subcategories={subcategories} />
+              </>
+            }
+            right={
+              <>
+                {subcategories.length > 0 ? (
+                  <View className="gap-2">
+                    <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+                      Subcategorías
+                    </Text>
+                    <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
+                      {subcategories.map((s, i) => (
+                        <View key={s.id}>
+                          {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
+                          <Pressable
+                            onPress={() =>
+                              router.push({
+                                pathname: '/(app)/settings/categories/[id]',
+                                params: { id: s.id },
+                              })
+                            }
+                            className="flex-row items-center gap-3 py-3.5 active:opacity-60"
+                          >
+                            <CategoryDot color={s.color} icon={s.icon} size={16} />
+                            <Text className="flex-1 text-base text-ink dark:text-ink-dark">
+                              {resolveCategoryLabel(s)}
+                              {s.archived ? ' · archivada' : ''}
+                            </Text>
+                            <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text>
+                          </Pressable>
+                        </View>
+                      ))}
+                    </View>
                   </View>
-                ))}
-              </View>
-            </View>
-          ) : null}
-
-          <View className="gap-3 border-t border-line pt-5 dark:border-line-dark">
-            <Button
-              label={category.archived ? 'Desarchivar' : 'Archivar'}
-              variant={category.archived ? 'secondary' : 'ghost-danger'}
-              loading={updateCategory.isPending}
-              onPress={() => (category.archived ? toggleArchive() : setConfirmArchive(true))}
-            />
-
-            {category.archived ? (
-              <View className="gap-1.5">
-                <Pressable
-                  onPress={() => (deleteBlockedReason ? null : setConfirmDelete(true))}
-                  disabled={Boolean(deleteBlockedReason)}
-                  className="items-center py-2"
-                  style={deleteBlockedReason ? { opacity: 0.4 } : undefined}
-                >
-                  <Text className="text-sm font-medium text-danger dark:text-danger-dark">
-                    Eliminar definitivamente
-                  </Text>
-                </Pressable>
-                {deleteBlockedReason ? (
-                  <Text className="px-4 text-center text-xs text-ink-2 dark:text-ink-2-dark">
-                    {deleteBlockedReason}
-                  </Text>
                 ) : null}
-              </View>
-            ) : null}
-          </View>
 
-          <ErrorCard message={error} />
+                <View className="gap-3 border-t border-line pt-5 dark:border-line-dark">
+                  <Button
+                    label={category.archived ? 'Desarchivar' : 'Archivar'}
+                    variant={category.archived ? 'secondary' : 'ghost-danger'}
+                    loading={updateCategory.isPending}
+                    onPress={() => (category.archived ? toggleArchive() : setConfirmArchive(true))}
+                  />
+
+                  {category.archived ? (
+                    <View className="gap-1.5">
+                      <Pressable
+                        onPress={() => (deleteBlockedReason ? null : setConfirmDelete(true))}
+                        disabled={Boolean(deleteBlockedReason)}
+                        className="items-center py-2"
+                        style={deleteBlockedReason ? { opacity: 0.4 } : undefined}
+                      >
+                        <Text className="text-sm font-medium text-danger dark:text-danger-dark">
+                          Eliminar definitivamente
+                        </Text>
+                      </Pressable>
+                      {deleteBlockedReason ? (
+                        <Text className="px-4 text-center text-xs text-ink-2 dark:text-ink-2-dark">
+                          {deleteBlockedReason}
+                        </Text>
+                      ) : null}
+                    </View>
+                  ) : null}
+                </View>
+
+                <ErrorCard message={error} />
+              </>
+            }
+          />
         </ScrollView>
       </View>
 

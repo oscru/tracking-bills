@@ -1,6 +1,13 @@
 import type { AuthError, Session } from '@supabase/supabase-js';
 
-import { signInSchema, signUpSchema, type SignInInput, type SignUpInput } from '../validators';
+import {
+  passwordResetSchema,
+  signInSchema,
+  signUpSchema,
+  type PasswordResetInput,
+  type SignInInput,
+  type SignUpInput,
+} from '../validators';
 import { supabase } from './client';
 import { SupabaseError } from './internal';
 
@@ -93,9 +100,29 @@ export async function completeOAuthSignIn(callbackUrl: string): Promise<Session>
   return data.session;
 }
 
+/**
+ * Emails a password-reset code (the recovery template shows `{{ .Token }}`).
+ * Supabase answers the same whether or not the address has an account, so
+ * this never reveals who's registered.
+ */
 export async function sendPasswordReset(email: string): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
   if (error) throw new AuthCallError(error);
+}
+
+/**
+ * Finishes "olvidé mi contraseña": the emailed code signs the user in
+ * (`verifyOtp`, type `recovery`), then the new password is set on that
+ * session. Leaves the user signed in.
+ */
+export async function resetPasswordWithCode(input: PasswordResetInput): Promise<Session> {
+  const { email, code, password } = passwordResetSchema.parse(input);
+  const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
+  if (error) throw new AuthCallError(error);
+  if (!data.session) throw new Error('No se pudo verificar el código.');
+  const { error: updateError } = await supabase.auth.updateUser({ password });
+  if (updateError) throw new AuthCallError(updateError);
+  return data.session;
 }
 
 /**

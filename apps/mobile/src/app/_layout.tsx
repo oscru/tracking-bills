@@ -80,9 +80,12 @@ function AuthRedirect() {
   useEffect(() => {
     if (loading) return;
     const inAuthGroup = segments[0] === '(auth)';
+    // The reset-password code signs the user in before the new password is
+    // set — that screen moves on to Inicio itself once both succeed.
+    const resettingPassword = (segments as string[])[1] === 'forgot-password';
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/sign-in');
-    } else if (session && inAuthGroup) {
+    } else if (session && inAuthGroup && !resettingPassword) {
       router.replace('/(app)');
     }
   }, [session, loading, segments, router]);

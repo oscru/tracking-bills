@@ -1,9 +1,17 @@
 import type { PeriodInsights } from '@repo/core/utils';
 import { formatCurrency } from '@repo/core/utils';
-import { ChartNoAxesColumn, CircleCheck, Flame, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react-native';
+import {
+  ChartNoAxesColumn,
+  CircleCheck,
+  Flame,
+  TrendingDown,
+  TrendingUp,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
+import type { ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { ICON_COLORS } from '@repo/ui';
+import { ICON_COLORS, useIsDesktop } from '@repo/ui';
 
 interface Props {
   insights: PeriodInsights;
@@ -29,10 +37,12 @@ function Chip({
   sublabel?: string;
   muted?: boolean;
 }) {
+  const grid = useIsDesktop();
   return (
     <View
       className="min-w-[136px] gap-1.5 rounded-2xl bg-surface p-3.5 dark:bg-surface-dark"
-      style={muted ? { opacity: 0.55 } : undefined}
+      // Desktop: two per row of the 2×2 grid (see below).
+      style={[grid ? { flexBasis: '45%', flexGrow: 1 } : null, muted ? { opacity: 0.55 } : null]}
     >
       <Icon size={16} color={iconColor} />
       <Text className="text-[15px] font-bold" style={{ color: valueColor }}>
@@ -86,12 +96,13 @@ export function InsightsStrip({ insights, currency, metric = 'expense' }: Props)
   const totalLabel = metric === 'income' ? 'recibido en total' : 'gastado en total';
   const projectionLabel = isCurrentPeriod ? 'proyectado a fin de periodo' : totalLabel;
 
+  // Desktop: a 2×2 grid — the column is wide enough to show all four at
+  // once, where a horizontal strip would cut the last one off.
+  const desktop = useIsDesktop();
+  const Container = desktop ? GridContainer : StripContainer;
+
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerClassName="gap-2.5"
-    >
+    <Container>
       <Chip
         icon={changeUp ? TrendingUp : TrendingDown}
         iconColor={changeColor}
@@ -121,6 +132,22 @@ export function InsightsStrip({ insights, currency, metric = 'expense' }: Props)
         label={`Mejor racha: ${bestNoSpendStreakDays} día${bestNoSpendStreakDays === 1 ? '' : 's'}`}
         muted={noSpendStreakDays === 0}
       />
+    </Container>
+  );
+}
+
+function StripContainer({ children }: { children: ReactNode }) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerClassName="gap-2.5"
+    >
+      {children}
     </ScrollView>
   );
+}
+
+function GridContainer({ children }: { children: ReactNode }) {
+  return <View className="flex-row flex-wrap gap-2.5">{children}</View>;
 }

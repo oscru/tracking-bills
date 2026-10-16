@@ -33,6 +33,7 @@ import {
   SwitchRow,
   TextField,
   type KeypadKey,
+  useIsDesktop,
 } from '@repo/ui';
 import {
   ArrowLeftRight,
@@ -42,8 +43,9 @@ import {
   Minus,
   X,
 } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccountPicker } from '../accounts/account-picker';
@@ -80,6 +82,33 @@ function sameIds(a: string[], b: string[]): boolean {
   const sorted = [...b].sort();
   return [...a].sort().every((id, i) => id === sorted[i]);
 }
+
+// Physical keyboard → calculator key (web).
+const KEYBOARD_TO_KEYPAD: Record<string, KeypadKey> = {
+  '0': '0',
+  '1': '1',
+  '2': '2',
+  '3': '3',
+  '4': '4',
+  '5': '5',
+  '6': '6',
+  '7': '7',
+  '8': '8',
+  '9': '9',
+  '.': '.',
+  ',': '.',
+  '+': 'add',
+  '-': 'sub',
+  '*': 'mul',
+  x: 'mul',
+  X: 'mul',
+  '/': 'div',
+  '=': 'equals',
+  Backspace: 'back',
+  Delete: 'clear',
+  c: 'clear',
+  C: 'clear',
+};
 
 const AMOUNT_ERROR = 'El monto no puede ser cero';
 
@@ -357,6 +386,49 @@ export function MovementForm({
 
   const tryCancel = () => (dirty ? setConfirmCancel(true) : onCancel());
 
+  // Web: the calculator also takes the physical keyboard — digits, . or ,
+  // + - * x / =, Backspace, C/Delete to clear, Enter to continue (desktop:
+  // to save), Esc to cancel. Refs keep the listener (subscribed once per view) calling the
+  // latest handlers without re-subscribing every render.
+  const desktop = useIsDesktop();
+  const keyHandlers = useRef({ onKey, goToDetails, tryCancel, submit, desktop });
+  useEffect(() => {
+    keyHandlers.current = { onKey, goToDetails, tryCancel, submit, desktop };
+  });
+  // Only while this screen is focused: "Nuevo movimiento" can stay mounted
+  // under another screen (e.g. after jumping to Movimientos from the
+  // sidebar), and a background listener turned Escape there into
+  // "cancel this hidden form" — which navigated back to the Dashboard.
+  useFocusEffect(
+    useCallback(() => {
+      // Desktop shows the calculator and the details together: always on.
+      if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+      if (view !== 'amount' && !desktop) return;
+      const onKeyDown = (e: KeyboardEvent) => {
+        // A sheet (category picker…) already handled it.
+        if (e.defaultPrevented) return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        const target = e.target as HTMLElement | null;
+        if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+        const key = KEYBOARD_TO_KEYPAD[e.key];
+        const h = keyHandlers.current;
+        if (key) {
+          e.preventDefault();
+          h.onKey(key);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (h.desktop) h.submit();
+          else h.goToDetails();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          h.tryCancel();
+        }
+      };
+      window.addEventListener('keydown', onKeyDown);
+      return () => window.removeEventListener('keydown', onKeyDown);
+    }, [view, desktop]),
+  );
+
   const minimize = () => {
     onMinimize?.({
       view,
@@ -373,291 +445,264 @@ export function MovementForm({
   };
 
   // --- amount step ---
-  if (view === 'amount') {
-    return (
-      <Screen className="gap-3">
-        <View className="flex-row items-center gap-3">
-          <IconButton icon={X} onPress={tryCancel} accessibilityLabel="Cancelar" />
-          <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
-            {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
+  // The form's pieces, shared by the phone's two steps (calculator, then
+  // details) and desktop's single two-column screen.
+  const header = (
+    <View className="flex-row items-center gap-3">
+      <IconButton icon={X} onPress={tryCancel} accessibilityLabel="Cancelar" />
+      <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
+        {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
+      </Text>
+      <IconButton
+        icon={Heart}
+        filled={saveAsFavorite}
+        onPress={() => setSaveAsFavorite((v) => !v)}
+        accessibilityLabel={saveAsFavorite ? 'No guardar como favorito' : 'Guardar como favorito'}
+      />
+      {onMinimize ? (
+        <IconButton icon={Minus} onPress={minimize} accessibilityLabel="Minimizar" />
+      ) : null}
+    </View>
+  );
+  const typeSwitch = <SegmentedControl options={TYPE_OPTIONS} value={type} onChange={changeType} />;
+  const calculator = (
+    <>
+      <View className="flex-1 items-center justify-center gap-2">
+        <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">Monto</Text>
+        <AmountDisplay
+          display={display}
+          hint={hasOp ? prettyExpr(amount) : null}
+          invalid={amountInvalid}
+        />
+        {desktop ? (
+          <Text className="mt-3 text-xs text-ink-3 dark:text-ink-3-dark">
+            También puedes escribir con tu teclado · Enter para guardar
           </Text>
-          <IconButton
-            icon={Heart}
-            filled={saveAsFavorite}
-            onPress={() => setSaveAsFavorite((v) => !v)}
-            accessibilityLabel={
-              saveAsFavorite ? 'No guardar como favorito' : 'Guardar como favorito'
-            }
-          />
-          {onMinimize ? (
-            <IconButton icon={Minus} onPress={minimize} accessibilityLabel="Minimizar" />
-          ) : null}
-        </View>
-
-        <SegmentedControl options={TYPE_OPTIONS} value={type} onChange={changeType} />
-
-        <View className="flex-1 items-center justify-center gap-2">
-          <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">Monto</Text>
-          <AmountDisplay
-            display={display}
-            hint={hasOp ? prettyExpr(amount) : null}
-            invalid={amountInvalid}
-          />
-        </View>
-
-        {/* Favorites are one-tap shortcuts (amount + account + category).
-        Accounts aren't picked here — the details step has the account
-        field, pre-filled with the first active one — keeping this the
-        calculator alone. */}
-        {type === 'expense' && favoriteExpenses.length > 0 ? (
-          <View className="flex-row flex-wrap justify-center gap-2">
-            {favoriteExpenses.map((f) => {
-              const { fg } = favoriteTint(f);
-              return (
-                <Chip
-                  key={f.id}
-                  label={f.label}
-                  icon={f.icon}
-                  dotColor={fg}
-                  selected={fromId === f.account_id && categoryId === f.category_id}
-                  onPress={() => applyFavorite(f)}
-                />
-              );
-            })}
-          </View>
-        ) : null}
-
-        <ErrorCard message={formError} />
-
-        <NumericKeypad onKey={onKey} />
-        <Button label="Continuar" onPress={goToDetails} />
-
-        <DiscardConfirmSheet
-          visible={confirmCancel}
-          onKeep={() => setConfirmCancel(false)}
-          onDiscard={onCancel}
-        />
-        <FavoriteQuickCreateSheet
-          visible={pendingSubmit != null}
-          onClose={finishSubmit}
-          initial={favoriteInitial}
-          onCreated={finishSubmit}
-        />
-      </Screen>
-    );
-  }
-
-  // --- details step ---
-  return (
-    <Screen edges={['top']} className="gap-4">
-      <View className="flex-row items-center gap-3">
-        <IconButton icon={X} onPress={tryCancel} accessibilityLabel="Cancelar" />
-        <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
-          {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
-        </Text>
-        <IconButton
-          icon={Heart}
-          filled={saveAsFavorite}
-          onPress={() => setSaveAsFavorite((v) => !v)}
-          accessibilityLabel={saveAsFavorite ? 'No guardar como favorito' : 'Guardar como favorito'}
-        />
-        {onMinimize ? (
-          <IconButton icon={Minus} onPress={minimize} accessibilityLabel="Minimizar" />
         ) : null}
       </View>
 
-      <SegmentedControl options={TYPE_OPTIONS} value={type} onChange={changeType} />
+      {/* Favorites are one-tap shortcuts (amount + account + category).
+    Accounts aren't picked here — the details step has the account
+    field, pre-filled with the first active one — keeping this the
+    calculator alone. */}
+      {type === 'expense' && favoriteExpenses.length > 0 ? (
+        <View className="flex-row flex-wrap justify-center gap-2">
+          {favoriteExpenses.map((f) => {
+            const { fg } = favoriteTint(f);
+            return (
+              <Chip
+                key={f.id}
+                label={f.label}
+                icon={f.icon}
+                dotColor={fg}
+                selected={fromId === f.account_id && categoryId === f.category_id}
+                onPress={() => applyFavorite(f)}
+              />
+            );
+          })}
+        </View>
+      ) : null}
+    </>
+  );
+  const amountSheets = (
+    <>
+      <DiscardConfirmSheet
+        visible={confirmCancel}
+        onKeep={() => setConfirmCancel(false)}
+        onDiscard={onCancel}
+      />
+      <FavoriteQuickCreateSheet
+        visible={pendingSubmit != null}
+        onClose={finishSubmit}
+        initial={favoriteInitial}
+        onCreated={finishSubmit}
+      />
+    </>
+  );
+  const fields = (
+    <>
+      <Field label="Fecha">
+        <DateField value={date} onChange={setDate} />
+      </Field>
 
-      <Pressable
-        onPress={() => setView('amount')}
-        className="items-center rounded-card bg-surface py-4 dark:bg-surface-dark"
-      >
-        <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">Monto</Text>
-        <Text className="mt-1 text-3xl font-bold tracking-tight text-ink dark:text-ink-dark">
-          {display}
-        </Text>
-      </Pressable>
-
-      <ScrollView className="flex-1" contentContainerClassName="gap-4 pb-4">
-        <Field label="Fecha">
-          <DateField value={date} onChange={setDate} />
-        </Field>
-
-        {type === 'transfer' ? (
-          <>
-            <Field label="De">
-              <Pressable
-                onPress={() => setAccountPickerOpen(true)}
-                className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+      {type === 'transfer' ? (
+        <>
+          <Field label="De">
+            <Pressable
+              onPress={() => setAccountPickerOpen(true)}
+              className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+            >
+              <Text className="text-base text-ink dark:text-ink-dark">
+                {selectedFromAccount ? selectedFromAccount.name : 'Elige una cuenta'}
+              </Text>
+              <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+                Ver todas ›
+              </Text>
+            </Pressable>
+          </Field>
+          <Field label="A">
+            <Pressable
+              onPress={() => setToAccountPickerOpen(true)}
+              className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+            >
+              <Text
+                className={
+                  selectedToAccount || selectedToPeer || goalId
+                    ? 'text-base text-ink dark:text-ink-dark'
+                    : 'text-base text-ink-3 dark:text-ink-3-dark'
+                }
               >
-                <Text className="text-base text-ink dark:text-ink-dark">
-                  {selectedFromAccount ? selectedFromAccount.name : 'Elige una cuenta'}
-                </Text>
-                <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                  Ver todas ›
-                </Text>
-              </Pressable>
-            </Field>
-            <Field label="A">
-              <Pressable
-                onPress={() => setToAccountPickerOpen(true)}
-                className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
-              >
+                {selectedToAccount
+                  ? selectedToAccount.name
+                  : selectedToPeer
+                    ? selectedToPeer.name
+                    : goalId
+                      ? `Aportación a “${goalName ?? 'tu meta'}”`
+                      : 'Elige una cuenta'}
+              </Text>
+              <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+                Ver todas ›
+              </Text>
+            </Pressable>
+          </Field>
+          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+            {selectedToPeer
+              ? `No cuenta como gasto para ti ni como ingreso para ${selectedToPeer.name}: le llega directo a su cuenta.`
+              : goalId && !selectedToAccount
+                ? 'Esta transferencia va hacia una meta de ahorro, no a otra cuenta — elige una cuenta aquí si quieres redirigirla.'
+                : selectedFromAccount
+                  ? `No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas en ${selectedFromAccount.currency} (esta app no convierte divisas).`
+                  : 'No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas.'}
+          </Text>
+        </>
+      ) : (
+        <>
+          <Field label="Cuenta">
+            <Pressable
+              onPress={() => setAccountPickerOpen(true)}
+              className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+            >
+              <Text className="text-base text-ink dark:text-ink-dark">
+                {selectedFromAccount ? selectedFromAccount.name : 'Elige una cuenta'}
+              </Text>
+              <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+                Ver todas ›
+              </Text>
+            </Pressable>
+          </Field>
+
+          <Field label="Categoría">
+            <Pressable
+              onPress={() => setPickerOpen(true)}
+              className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+            >
+              <View className="flex-row items-center gap-2">
+                {selectedCategory ? (
+                  <CategoryDot
+                    color={selectedCategory.color}
+                    icon={selectedCategory.icon}
+                    size={16}
+                  />
+                ) : null}
                 <Text
                   className={
-                    selectedToAccount || selectedToPeer || goalId
+                    selectedCategory
                       ? 'text-base text-ink dark:text-ink-dark'
                       : 'text-base text-ink-3 dark:text-ink-3-dark'
                   }
                 >
-                  {selectedToAccount
-                    ? selectedToAccount.name
-                    : selectedToPeer
-                      ? selectedToPeer.name
-                      : goalId
-                        ? `Aportación a “${goalName ?? 'tu meta'}”`
-                        : 'Elige una cuenta'}
+                  {selectedCategory
+                    ? resolveCategoryLabel(selectedCategory)
+                    : 'Elige una categoría'}
                 </Text>
-                <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                  Ver todas ›
-                </Text>
-              </Pressable>
-            </Field>
-            <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-              {selectedToPeer
-                ? `No cuenta como gasto para ti ni como ingreso para ${selectedToPeer.name}: le llega directo a su cuenta.`
-                : goalId && !selectedToAccount
-                  ? 'Esta transferencia va hacia una meta de ahorro, no a otra cuenta — elige una cuenta aquí si quieres redirigirla.'
-                  : selectedFromAccount
-                    ? `No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas en ${selectedFromAccount.currency} (esta app no convierte divisas).`
-                    : 'No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas.'}
-            </Text>
-          </>
-        ) : (
-          <>
-            <Field label="Cuenta">
-              <Pressable
-                onPress={() => setAccountPickerOpen(true)}
-                className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
-              >
-                <Text className="text-base text-ink dark:text-ink-dark">
-                  {selectedFromAccount ? selectedFromAccount.name : 'Elige una cuenta'}
-                </Text>
-                <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                  Ver todas ›
-                </Text>
-              </Pressable>
-            </Field>
-
-            <Field label="Categoría">
-              <Pressable
-                onPress={() => setPickerOpen(true)}
-                className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
-              >
-                <View className="flex-row items-center gap-2">
-                  {selectedCategory ? (
-                    <CategoryDot
-                      color={selectedCategory.color}
-                      icon={selectedCategory.icon}
-                      size={16}
-                    />
-                  ) : null}
-                  <Text
-                    className={
-                      selectedCategory
-                        ? 'text-base text-ink dark:text-ink-dark'
-                        : 'text-base text-ink-3 dark:text-ink-3-dark'
-                    }
-                  >
-                    {selectedCategory
-                      ? resolveCategoryLabel(selectedCategory)
-                      : 'Elige una categoría'}
-                  </Text>
-                </View>
-                <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                  Ver todas ›
-                </Text>
-              </Pressable>
-            </Field>
-          </>
-        )}
-
-        <Field label="Tags">
-          <Pressable
-            onPress={() => setTagPickerOpen(true)}
-            className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
-          >
-            <Text className="text-base text-ink dark:text-ink-dark">
-              {tagIds.length === 0
-                ? 'Sin tags'
-                : `${tagIds.length} tag${tagIds.length === 1 ? '' : 's'} seleccionada${tagIds.length === 1 ? '' : 's'}`}
-            </Text>
-            <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Ver todas ›
-            </Text>
-          </Pressable>
-          {profile?.travel_mode &&
-          profile.travel_trip_tag_id &&
-          tagIds.includes(profile.travel_trip_tag_id) ? (
-            <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-              Se añadió la tag de tu viaje automáticamente — modo viaje está activo.
-            </Text>
-          ) : null}
-        </Field>
-
-        <TextField
-          label="Descripción (opcional)"
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Descripción"
-        />
-
-        <SwitchRow
-          label="Completada"
-          description={
-            isFutureDate
-              ? 'No puede estar completada — la fecha es futura'
-              : effectiveCompleted
-                ? 'Ya se realizó'
-                : 'Pendiente por realizarse'
-          }
-          value={effectiveCompleted}
-          onValueChange={setIsCompleted}
-          disabled={isFutureDate}
-        />
-
-        {mode === 'edit' && onDelete ? (
-          confirmDelete ? (
-            <View className="flex-row gap-2">
-              <View className="flex-1">
-                <Button
-                  label="Conservar"
-                  variant="secondary"
-                  onPress={() => setConfirmDelete(false)}
-                />
               </View>
-              <View className="flex-1">
-                <Button label="Eliminar" variant="danger" onPress={onDelete} />
-              </View>
-            </View>
-          ) : (
-            <Pressable onPress={() => setConfirmDelete(true)} className="items-center py-2">
-              <Text className="text-sm font-semibold text-danger dark:text-danger-dark">
-                Eliminar movimiento
+              <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+                Ver todas ›
               </Text>
             </Pressable>
-          )
+          </Field>
+        </>
+      )}
+
+      <Field label="Tags">
+        <Pressable
+          onPress={() => setTagPickerOpen(true)}
+          className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+        >
+          <Text className="text-base text-ink dark:text-ink-dark">
+            {tagIds.length === 0
+              ? 'Sin tags'
+              : `${tagIds.length} tag${tagIds.length === 1 ? '' : 's'} seleccionada${tagIds.length === 1 ? '' : 's'}`}
+          </Text>
+          <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+            Ver todas ›
+          </Text>
+        </Pressable>
+        {profile?.travel_mode &&
+        profile.travel_trip_tag_id &&
+        tagIds.includes(profile.travel_trip_tag_id) ? (
+          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+            Se añadió la tag de tu viaje automáticamente — modo viaje está activo.
+          </Text>
         ) : null}
-      </ScrollView>
+      </Field>
 
-      <View
-        className="gap-2 border-t border-line bg-canvas pt-3 dark:border-line-dark dark:bg-canvas-dark"
-        style={{ paddingBottom: Math.max(insets.bottom, 12) }}
-      >
-        <ErrorCard message={formError ?? error} />
-        <Button label="Guardar" onPress={submit} loading={submitting} />
-      </View>
+      <TextField
+        label="Descripción (opcional)"
+        value={description}
+        onChangeText={setDescription}
+        placeholder="Descripción"
+      />
 
+      <SwitchRow
+        label="Completada"
+        description={
+          isFutureDate
+            ? 'No puede estar completada — la fecha es futura'
+            : effectiveCompleted
+              ? 'Ya se realizó'
+              : 'Pendiente por realizarse'
+        }
+        value={effectiveCompleted}
+        onValueChange={setIsCompleted}
+        disabled={isFutureDate}
+      />
+
+      {mode === 'edit' && onDelete ? (
+        confirmDelete ? (
+          <View className="flex-row gap-2">
+            <View className="flex-1">
+              <Button
+                label="Conservar"
+                variant="secondary"
+                onPress={() => setConfirmDelete(false)}
+              />
+            </View>
+            <View className="flex-1">
+              <Button label="Eliminar" variant="danger" onPress={onDelete} />
+            </View>
+          </View>
+        ) : (
+          <Pressable onPress={() => setConfirmDelete(true)} className="items-center py-2">
+            <Text className="text-sm font-semibold text-danger dark:text-danger-dark">
+              Eliminar movimiento
+            </Text>
+          </Pressable>
+        )
+      ) : null}
+    </>
+  );
+  const footer = (
+    <View
+      className="gap-2 border-t border-line bg-canvas pt-3 dark:border-line-dark dark:bg-canvas-dark"
+      style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+    >
+      <ErrorCard message={formError ?? error} />
+      <Button label="Guardar" onPress={submit} loading={submitting} />
+    </View>
+  );
+  const detailSheets = (
+    <>
       <CategoryPicker
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
@@ -748,6 +793,74 @@ export function MovementForm({
         initial={favoriteInitial}
         onCreated={finishSubmit}
       />
+    </>
+  );
+
+  // Desktop web: one screen, calculator on the left and the details on the
+  // right — no "Continuar" step. Typing still goes to the calculator (unless
+  // a field has focus) and Enter saves.
+  if (desktop) {
+    return (
+      <Screen edges={['top']} className="gap-4" width="wide">
+        {header}
+        <View style={{ maxWidth: 520 }}>{typeSwitch}</View>
+        <View className="flex-1 flex-row gap-6">
+          <View
+            style={{ width: 420 }}
+            // Outlined, not filled: the keypad's keys are surface-colored.
+            className="gap-4 rounded-card border border-line p-5 dark:border-line-dark"
+          >
+            {calculator}
+            <ErrorCard message={formError === AMOUNT_ERROR ? formError : null} />
+            <NumericKeypad onKey={onKey} />
+          </View>
+          <View className="flex-1 gap-4">
+            <ScrollView className="flex-1" contentContainerClassName="gap-4 pb-4">
+              {fields}
+            </ScrollView>
+            {footer}
+          </View>
+        </View>
+        {amountSheets}
+        {detailSheets}
+      </Screen>
+    );
+  }
+
+  if (view === 'amount') {
+    return (
+      <Screen className="gap-3" width="compact">
+        {header}
+        {typeSwitch}
+        {calculator}
+        <ErrorCard message={formError} />
+        <NumericKeypad onKey={onKey} />
+        <Button label="Continuar" onPress={goToDetails} />
+        {amountSheets}
+      </Screen>
+    );
+  }
+
+  // --- details step ---
+  return (
+    <Screen edges={['top']} className="gap-4" width="compact">
+      {header}
+      {typeSwitch}
+      <Pressable
+        onPress={() => setView('amount')}
+        className="items-center rounded-card bg-surface py-4 dark:bg-surface-dark"
+      >
+        <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">Monto</Text>
+        <Text className="mt-1 text-3xl font-bold tracking-tight text-ink dark:text-ink-dark">
+          {display}
+        </Text>
+      </Pressable>
+
+      <ScrollView className="flex-1" contentContainerClassName="gap-4 pb-4">
+        {fields}
+      </ScrollView>
+      {footer}
+      {detailSheets}
     </Screen>
   );
 }

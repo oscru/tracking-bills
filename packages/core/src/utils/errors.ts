@@ -29,6 +29,8 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   over_email_send_rate_limit: 'Demasiados intentos. Espera un momento e intenta de nuevo.',
   same_password: 'La nueva contraseña debe ser distinta a la actual.',
   user_not_found: 'No encontramos una cuenta con ese correo.',
+  otp_expired: 'El código no es válido o ya venció. Pide uno nuevo.',
+  otp_disabled: 'Por ahora no se pueden enviar códigos. Intenta más tarde.',
 };
 
 function constraintNameFrom(message: string): string | null {

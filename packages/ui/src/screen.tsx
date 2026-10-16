@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView, type Edge, type Edges } from 'react-native-safe-area-context';
 
 import { useFloatingTabBarInset } from './floating-tab-bar-inset';
+import { DESKTOP_CONTENT_WIDTH, useIsDesktop, type ScreenWidth } from './layout-mode';
 import { useKeyboardHeight } from './use-keyboard-height';
 
 function includesBottomEdge(edges: Edges): boolean {
@@ -19,6 +20,12 @@ export interface ScreenProps {
   center?: boolean;
   /** Wrap children in a keyboard-aware ScrollView (forms — not list screens). */
   scroll?: boolean;
+  /**
+   * Desktop web only: how wide the content column gets — `wide` for
+   * dashboards and lists, `narrow` (default) for forms and details. Phones
+   * and narrow windows always use the mobile column.
+   */
+  width?: ScreenWidth;
 }
 
 export function Screen({
@@ -27,7 +34,9 @@ export function Screen({
   edges = ['top', 'bottom'],
   center = false,
   scroll = false,
+  width = 'narrow',
 }: ScreenProps) {
+  const desktop = useIsDesktop();
   // Android only (0 on iOS) — see `useKeyboardHeight`'s doc comment for why
   // `KeyboardAvoidingView`'s own behaviors aren't used there.
   const keyboardHeight = useKeyboardHeight();
@@ -35,8 +44,15 @@ export function Screen({
   // a `scroll` screen's content gets room to scroll fully clear of it.
   const tabBarInset = useFloatingTabBarInset();
 
-  // On wide web the content column is capped and centered.
-  const web = Platform.OS === 'web' ? 'mx-auto w-full max-w-[480px]' : '';
+  // Web: a centered column — the phone-width one, or on desktop a wider one
+  // (set as a style: the width is dynamic) with roomier padding.
+  const web = Platform.OS === 'web' ? 'mx-auto w-full' : '';
+  const columnStyle =
+    Platform.OS !== 'web'
+      ? undefined
+      : desktop
+        ? { maxWidth: DESKTOP_CONTENT_WIDTH[width], paddingHorizontal: 40, paddingTop: 32 }
+        : { maxWidth: 480 };
 
   // Decorative breathing room, separate from `SafeAreaView`'s `edges`
   // (system chrome only). A screen that drops `'bottom'` already has
@@ -49,7 +65,10 @@ export function Screen({
     <ScrollView
       className="flex-1"
       contentContainerClassName={`grow px-5 ${vertical} ${web} ${center ? 'justify-center' : ''} ${className}`}
-      contentContainerStyle={tabBarInset > 0 ? { paddingBottom: tabBarInset + 24 } : undefined}
+      contentContainerStyle={[
+        columnStyle,
+        tabBarInset > 0 ? { paddingBottom: tabBarInset + 24 } : undefined,
+      ]}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive"
       showsVerticalScrollIndicator={false}
@@ -59,6 +78,7 @@ export function Screen({
   ) : (
     <View
       className={`flex-1 px-5 ${vertical} ${web} ${center ? 'justify-center' : ''} ${className}`}
+      style={columnStyle}
     >
       {children}
     </View>
@@ -81,7 +101,10 @@ export function Screen({
   }
 
   return (
-    <View className="flex-1 bg-canvas dark:bg-canvas-dark" style={{ paddingBottom: keyboardHeight }}>
+    <View
+      className="flex-1 bg-canvas dark:bg-canvas-dark"
+      style={{ paddingBottom: keyboardHeight }}
+    >
       <SafeAreaView edges={edges} className="flex-1">
         {content}
       </SafeAreaView>

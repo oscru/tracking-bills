@@ -18,6 +18,7 @@ import {
   Screen,
   useTabBarScrollPadding,
   HeroCard,
+  useIsDesktop,
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
@@ -25,6 +26,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../../../../../../features/budgets/budget-progress-bar';
+import { SplitColumns } from '../../../../../../features/design/split-columns';
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 const PERIOD_LABEL: Record<BudgetPeriodType, string> = {
@@ -38,6 +40,7 @@ export default function BudgetDetail() {
   const scrollPadding = useTabBarScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const desktop = useIsDesktop();
   const { data: budgets, isLoading } = useBudgets();
   const updateBudget = useUpdateBudget();
   const remove = useDeleteBudget();
@@ -102,7 +105,7 @@ export default function BudgetDetail() {
     updateBudget.mutate({ id: budget.id, patch: { archived: !budget.archived } });
 
   return (
-    <Screen edges={['top']} className="gap-5">
+    <Screen edges={['top']} className="gap-5" width={desktop ? 'wide' : undefined}>
       <PageHeader title={budget.name} onBack={() => router.back()} />
 
       <View className="flex-1 gap-5">
@@ -111,88 +114,99 @@ export default function BudgetDetail() {
           contentContainerClassName="gap-5"
           contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
-          {budget.archived ? (
-            <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
-              <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-                Archivado
-              </Text>
-            </View>
-          ) : null}
-
-          {/* This period's spend vs. the limit — the screen's headline. */}
-          <HeroCard contentStyle={{ gap: 12 }}>
-            <Text className="text-sm font-semibold text-white/70">{periodLabel}</Text>
-            <BudgetProgressBar
-              tone="onDark"
-              spent={progress.spent}
-              amount={Number(budget.amount)}
-              pct={progress.pct}
-              isOverBudget={progress.isOverBudget}
-              currency={budget.currency}
-              hasCategories={progress.hasCategories}
-            />
-          </HeroCard>
-
-          <View className="gap-2">
-            <Text className="px-1 text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-              Categorías ({budget.categories.length})
-            </Text>
-            <View className="gap-3 rounded-2xl border border-line p-4 dark:border-line-dark">
-              {budget.categories.map(({ category: c, amount: allocated }, i) => {
-                const catProgress = budgetProgress(
-                  [c.id],
-                  allocated,
-                  budget.currency,
-                  budget,
-                  transactions ?? [],
-                );
-                return (
-                  <View
-                    key={c.id}
-                    className={
-                      i > 0 ? 'gap-2 border-t border-line pt-3 dark:border-line-dark' : 'gap-2'
-                    }
-                  >
-                    <View className="flex-row items-center gap-2">
-                      <CategoryDot color={c.color} icon={c.icon} size={14} />
-                      <Text
-                        className="flex-1 text-sm text-ink dark:text-ink-dark"
-                        numberOfLines={1}
-                      >
-                        {resolveCategoryLabel(c)}
-                      </Text>
-                    </View>
-                    <BudgetProgressBar
-                      spent={catProgress.spent}
-                      amount={allocated}
-                      pct={catProgress.pct}
-                      isOverBudget={catProgress.isOverBudget}
-                      currency={budget.currency}
-                      hasCategories={catProgress.hasCategories}
-                    />
+          <SplitColumns
+            left={
+              <>
+                {budget.archived ? (
+                  <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
+                    <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
+                      Archivado
+                    </Text>
                   </View>
-                );
-              })}
-            </View>
-          </View>
+                ) : null}
 
-          <View className="gap-2 border-t border-line pt-5 dark:border-line-dark">
-            <Button
-              label={budget.archived ? 'Desarchivar' : 'Archivar presupuesto'}
-              variant={budget.archived ? 'secondary' : 'ghost-danger'}
-              loading={updateBudget.isPending}
-              onPress={() => (budget.archived ? toggleArchive() : setConfirmArchive(true))}
-            />
-            {budget.archived ? (
-              <Pressable onPress={() => setConfirmDelete(true)} className="items-center py-2">
-                <Text className="text-sm font-medium text-danger dark:text-danger-dark">
-                  Eliminar definitivamente
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
+                {/* This period's spend vs. the limit — the screen's headline. */}
+                <HeroCard contentStyle={{ gap: 12 }}>
+                  <Text className="text-sm font-semibold text-white/70">{periodLabel}</Text>
+                  <BudgetProgressBar
+                    tone="onDark"
+                    spent={progress.spent}
+                    amount={Number(budget.amount)}
+                    pct={progress.pct}
+                    isOverBudget={progress.isOverBudget}
+                    currency={budget.currency}
+                    hasCategories={progress.hasCategories}
+                  />
+                </HeroCard>
+              </>
+            }
+            right={
+              <>
+                <View className="gap-2">
+                  <Text className="px-1 text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+                    Categorías ({budget.categories.length})
+                  </Text>
+                  <View className="gap-3 rounded-2xl border border-line p-4 dark:border-line-dark">
+                    {budget.categories.map(({ category: c, amount: allocated }, i) => {
+                      const catProgress = budgetProgress(
+                        [c.id],
+                        allocated,
+                        budget.currency,
+                        budget,
+                        transactions ?? [],
+                      );
+                      return (
+                        <View
+                          key={c.id}
+                          className={
+                            i > 0
+                              ? 'gap-2 border-t border-line pt-3 dark:border-line-dark'
+                              : 'gap-2'
+                          }
+                        >
+                          <View className="flex-row items-center gap-2">
+                            <CategoryDot color={c.color} icon={c.icon} size={14} />
+                            <Text
+                              className="flex-1 text-sm text-ink dark:text-ink-dark"
+                              numberOfLines={1}
+                            >
+                              {resolveCategoryLabel(c)}
+                            </Text>
+                          </View>
+                          <BudgetProgressBar
+                            spent={catProgress.spent}
+                            amount={allocated}
+                            pct={catProgress.pct}
+                            isOverBudget={catProgress.isOverBudget}
+                            currency={budget.currency}
+                            hasCategories={catProgress.hasCategories}
+                          />
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
 
-          <ErrorCard message={error} />
+                <View className="gap-2 border-t border-line pt-5 dark:border-line-dark">
+                  <Button
+                    label={budget.archived ? 'Desarchivar' : 'Archivar presupuesto'}
+                    variant={budget.archived ? 'secondary' : 'ghost-danger'}
+                    loading={updateBudget.isPending}
+                    onPress={() => (budget.archived ? toggleArchive() : setConfirmArchive(true))}
+                  />
+                  {budget.archived ? (
+                    <Pressable onPress={() => setConfirmDelete(true)} className="items-center py-2">
+                      <Text className="text-sm font-medium text-danger dark:text-danger-dark">
+                        Eliminar definitivamente
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+
+                <ErrorCard message={error} />
+              </>
+            }
+          />
         </ScrollView>
       </View>
 

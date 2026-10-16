@@ -16,6 +16,8 @@ export interface ListRowProps {
   leading?: ReactNode;
   onPress?: () => void;
   showChevron?: boolean;
+  /** The row whose detail is open beside the list (desktop master–detail). */
+  selected?: boolean;
 }
 
 export function ListRow({
@@ -27,14 +29,18 @@ export function ListRow({
   leading,
   onPress,
   showChevron = false,
+  selected = false,
 }: ListRowProps) {
   const Wrapper = onPress ? Pressable : View;
   return (
     <Wrapper
       onPress={onPress}
-      className={`flex-row items-center gap-3 py-3.5 ${onPress ? 'active:opacity-60' : ''}`}
+      className={`flex-row items-center gap-3 py-3.5 ${onPress ? 'active:opacity-60' : ''} ${
+        selected ? '-mx-2 rounded-xl bg-lime-tint px-2 dark:bg-lime-tint-dark' : ''
+      }`}
     >
-      {leading ?? (dotColor || icon ? <CategoryDot color={dotColor} icon={icon} size={15} /> : null)}
+      {leading ??
+        (dotColor || icon ? <CategoryDot color={dotColor} icon={icon} size={15} /> : null)}
 
       <View className="flex-1">
         <Text className="text-base text-ink dark:text-ink-dark">{title}</Text>

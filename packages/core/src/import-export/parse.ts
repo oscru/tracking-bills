@@ -1,5 +1,3 @@
-import * as XLSX from 'xlsx';
-
 import {
   DEFAULT_IS_COMPLETED,
   FALLBACK_CATEGORY_NAME,
@@ -43,12 +41,19 @@ function cellNumber(row: unknown[], index: number | undefined): number | null {
   return Number.isFinite(num) ? num : null;
 }
 
+// Excel's 1900 date system: day 1 is 1900-01-01, and it keeps Lotus 1-2-3's
+// bug of a fake 1900-02-29 (serial 60) — so serials after it are one day
+// further from the epoch than the calendar says. Same result as
+// `XLSX.SSF.parse_date_code`, without loading `xlsx` just for this.
+const EXCEL_FAKE_LEAP_DAY = 60;
+const DAY_MS = 86_400_000;
+
 function excelSerialToISO(serial: number): string | null {
-  const parsed = XLSX.SSF.parse_date_code(serial) as
-    | { y: number; m: number; d: number }
-    | undefined;
-  if (!parsed) return null;
-  return `${parsed.y}-${String(parsed.m).padStart(2, '0')}-${String(parsed.d).padStart(2, '0')}`;
+  const days = Math.floor(serial);
+  if (!Number.isFinite(days) || days < 1) return null;
+  if (days === EXCEL_FAKE_LEAP_DAY) return '1900-02-29';
+  const epoch = Date.UTC(1899, 11, days < EXCEL_FAKE_LEAP_DAY ? 31 : 30);
+  return new Date(epoch + days * DAY_MS).toISOString().slice(0, 10);
 }
 
 /** Accepts ISO (`YYYY-MM-DD`, what our own export writes), `DD/MM/YYYY` (what
@@ -98,10 +103,23 @@ function parseCurrencyCode(
 function parseTagNames(row: unknown[], index: number | undefined): string[] {
   const text = cellText(row, index);
   if (!text) return [];
-  return [...new Set(text.split(',').map((t) => t.trim()).filter(Boolean))];
+  return [
+    ...new Set(
+      text
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean),
+    ),
+  ];
 }
 
-function parseIsCompleted(row: unknown[], index: number | undefined, issues: RowIssue[], sheet: string, rowNum: number): boolean {
+function parseIsCompleted(
+  row: unknown[],
+  index: number | undefined,
+  issues: RowIssue[],
+  sheet: string,
+  rowNum: number,
+): boolean {
   const text = cellText(row, index);
   if (!text) return DEFAULT_IS_COMPLETED;
   const normalized = text.toLowerCase();
@@ -127,7 +145,10 @@ function dataRows(sheet: RawSheet): { row: unknown[]; rowNum: number }[] {
 /** Sorted, comma-joined so tag order (which can differ between two sheets
  * listing the same row) doesn't produce a different key. */
 function tagsKeyPart(tagNames: string[]): string {
-  return [...tagNames].map((t) => t.toLowerCase()).sort().join(',');
+  return [...tagNames]
+    .map((t) => t.toLowerCase())
+    .sort()
+    .join(',');
 }
 
 // Identifies a row as "the same transaction" — used only to collapse an exact
@@ -188,7 +209,8 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
     const cols = mapHeaders(header);
     const keysThisSheet = new Set<string>();
 
-    const isTransferShape = cols.date != null && cols.value != null && cols.fromAccount != null && cols.toAccount != null;
+    const isTransferShape =
+      cols.date != null && cols.value != null && cols.fromAccount != null && cols.toAccount != null;
     const isMovementShape = cols.date != null && cols.value != null && cols.account != null;
 
     if (isTransferShape) {
@@ -200,19 +222,39 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
 
         if (!date && !fromAccountName && !toAccountName) continue;
         if (!date) {
-          issues.push({ sheet: sheet.name, row: rowNum, level: 'error', message: 'Fecha faltante o inválida' });
+          issues.push({
+            sheet: sheet.name,
+            row: rowNum,
+            level: 'error',
+            message: 'Fecha faltante o inválida',
+          });
           continue;
         }
         if (amount == null || amount <= 0) {
-          issues.push({ sheet: sheet.name, row: rowNum, level: 'error', message: 'Monto faltante o inválido' });
+          issues.push({
+            sheet: sheet.name,
+            row: rowNum,
+            level: 'error',
+            message: 'Monto faltante o inválido',
+          });
           continue;
         }
         if (!fromAccountName || !toAccountName) {
-          issues.push({ sheet: sheet.name, row: rowNum, level: 'error', message: 'Cuenta de origen o destino faltante' });
+          issues.push({
+            sheet: sheet.name,
+            row: rowNum,
+            level: 'error',
+            message: 'Cuenta de origen o destino faltante',
+          });
           continue;
         }
         if (fromAccountName.toLowerCase() === toAccountName.toLowerCase()) {
-          issues.push({ sheet: sheet.name, row: rowNum, level: 'error', message: 'La cuenta de origen y destino no pueden ser la misma' });
+          issues.push({
+            sheet: sheet.name,
+            row: rowNum,
+            level: 'error',
+            message: 'La cuenta de origen y destino no pueden ser la misma',
+          });
           continue;
         }
 
@@ -246,15 +288,30 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
         // than reporting as a broken data row.
         if (!date && !accountName) continue;
         if (!date) {
-          issues.push({ sheet: sheet.name, row: rowNum, level: 'error', message: 'Fecha faltante o inválida' });
+          issues.push({
+            sheet: sheet.name,
+            row: rowNum,
+            level: 'error',
+            message: 'Fecha faltante o inválida',
+          });
           continue;
         }
         if (rawAmount == null || rawAmount === 0) {
-          issues.push({ sheet: sheet.name, row: rowNum, level: 'error', message: 'Valor faltante o inválido' });
+          issues.push({
+            sheet: sheet.name,
+            row: rowNum,
+            level: 'error',
+            message: 'Valor faltante o inválido',
+          });
           continue;
         }
         if (!accountName) {
-          issues.push({ sheet: sheet.name, row: rowNum, level: 'error', message: 'Cuenta faltante' });
+          issues.push({
+            sheet: sheet.name,
+            row: rowNum,
+            level: 'error',
+            message: 'Cuenta faltante',
+          });
           continue;
         }
 
