@@ -1,0 +1,172 @@
+---
+/**
+ * A phone built from CSS 3D layers: a front face (bezel + screen), a stack of
+ * slices that gives it real thickness when it turns, and a back face. The
+ * scroll script in ScrollStory drives `transform` on [data-phone] and sets
+ * `--ry` so the glass sheen follows the rotation. Screens are passed in as
+ * children, each wrapped in [data-screen].
+ */
+const DEPTH = 12; // px of thickness, one slice per px
+---
+
+<div class="phone-stage" aria-hidden="true">
+  <div class="phone" data-phone>
+    {
+      Array.from({ length: DEPTH }, (_, i) => (
+        <div class="phone-slice" style={`transform: translateZ(${-(i + 1)}px)`} />
+      ))
+    }
+    <div class="phone-back" style={`transform: translateZ(${-(DEPTH + 1)}px) rotateY(180deg)`}>
+      <div class="phone-camera">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="phone-logo">
+        <img src="/favicon-48.png" alt="" width="56" height="56" />
+        <p>Genobills</p>
+      </div>
+    </div>
+    <div class="phone-front">
+      <div class="phone-screen">
+        <div class="phone-status">
+          <span>9:41</span>
+          <span class="phone-island"></span>
+          <span class="phone-battery"><i></i></span>
+        </div>
+        <slot />
+      </div>
+      <div class="phone-sheen"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Centered in its (relative) parent; ScrollStory sets --phone-scale to fit. */
+  .phone-stage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 300px;
+    height: 620px;
+    margin: -310px 0 0 -150px;
+    perspective: 1600px;
+    transform: scale(var(--phone-scale, 1));
+  }
+  .phone {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    will-change: transform;
+    --ry: 0;
+  }
+  .phone-front,
+  .phone-back,
+  .phone-slice {
+    position: absolute;
+    inset: 0;
+    border-radius: 50px;
+  }
+  .phone-slice {
+    background: linear-gradient(90deg, #3a3f46, #23272c 30%, #2e3238 70%, #3a3f46);
+  }
+  .phone-front {
+    background: #0b0d0f;
+    padding: 11px;
+    backface-visibility: hidden;
+    box-shadow:
+      inset 0 0 0 1.5px #4a4f57,
+      inset 0 0 0 3px #111;
+  }
+  .phone-screen {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 40px;
+    background: #f6f7f9;
+    color: #1a1d21;
+  }
+  .phone-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 22px 0 26px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .phone-island {
+    width: 86px;
+    height: 24px;
+    border-radius: 999px;
+    background: #0b0d0f;
+  }
+  .phone-battery {
+    width: 22px;
+    height: 11px;
+    border-radius: 3px;
+    border: 1.5px solid #1a1d21;
+    padding: 1px;
+  }
+  .phone-battery i {
+    display: block;
+    height: 100%;
+    width: 75%;
+    border-radius: 1px;
+    background: #1a1d21;
+  }
+  .phone-sheen {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: 50px;
+    background: linear-gradient(
+      115deg,
+      transparent calc(30% + var(--ry) * 0.8%),
+      rgb(255 255 255 / 0.16) calc(42% + var(--ry) * 0.8%),
+      transparent calc(54% + var(--ry) * 0.8%)
+    );
+    mix-blend-mode: screen;
+  }
+  .phone-back {
+    backface-visibility: hidden;
+    background:
+      radial-gradient(120% 80% at 30% 20%, rgb(185 242 39 / 0.16), transparent 60%),
+      linear-gradient(160deg, #23272c, #0f1113);
+    box-shadow: inset 0 0 0 1.5px #4a4f57;
+  }
+  .phone-camera {
+    position: absolute;
+    top: 22px;
+    left: 22px;
+    display: grid;
+    grid-template-columns: repeat(2, 30px);
+    gap: 8px;
+    padding: 10px;
+    border-radius: 26px;
+    background: rgb(255 255 255 / 0.06);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  }
+  .phone-camera span {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 40% 35%, #3b4a63, #07080a 60%);
+    box-shadow: 0 0 0 3px #1a1d21;
+  }
+  .phone-logo {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #b9f227;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .phone-logo img {
+    border-radius: 14px;
+    box-shadow: 0 0 40px rgb(185 242 39 / 0.4);
+  }
+</style>

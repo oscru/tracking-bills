@@ -1,0 +1,55 @@
+---
+/**
+ * Laptop + tablet + phone, each showing the app at its real layout. Drawn on a
+ * fixed 1100×600 canvas and scaled to the container width by the script below.
+ */
+import Dashboard from './screens/Dashboard.astro';
+import Inicio from './screens/Inicio.astro';
+import Presupuestos from './screens/Presupuestos.astro';
+---
+
+<div data-devices class="relative w-full" style="aspect-ratio: 1100 / 600">
+  <div data-devices-canvas class="absolute left-0 top-0 h-[600px] w-[1100px] origin-top-left" aria-hidden="true">
+    <!-- laptop -->
+    <div class="absolute left-[170px] top-0 w-[780px]">
+      <div class="rounded-t-[22px] rounded-b-[6px] bg-[#0b0d0f] p-[12px] pb-[14px] shadow-[inset_0_0_0_1.5px_#3a3f46]">
+        <div class="relative h-[472px] overflow-hidden rounded-[10px]">
+          <div class="origin-top-left" style="transform: scale(0.6407)"><Dashboard /></div>
+        </div>
+      </div>
+      <div class="relative -mx-[60px] h-[18px] rounded-b-[18px] bg-gradient-to-b from-[#3a3f46] to-[#1a1d21]">
+        <div class="mx-auto h-[7px] w-[130px] rounded-b-[8px] bg-[#16191d]"></div>
+      </div>
+      <div class="mx-auto -mt-1 h-6 w-[85%] rounded-full bg-black/60 blur-xl"></div>
+    </div>
+
+    <!-- tablet -->
+    <div class="absolute left-[20px] top-[170px] h-[420px] w-[310px] rounded-[30px] bg-[#0b0d0f] p-[13px] shadow-[inset_0_0_0_1.5px_#3a3f46,0_30px_60px_-20px_rgba(0,0,0,0.8)]">
+      <div class="relative h-full overflow-hidden rounded-[18px] bg-canvas text-ink">
+        <div class="absolute left-0 top-0 w-[380px] origin-top-left pt-5" style="transform: scale(0.746)">
+          <Presupuestos />
+        </div>
+      </div>
+    </div>
+
+    <!-- phone -->
+    <div class="absolute right-[40px] top-[215px] h-[375px] w-[180px] rounded-[34px] bg-[#0b0d0f] p-[8px] shadow-[inset_0_0_0_1.5px_#3a3f46,0_30px_60px_-20px_rgba(0,0,0,0.8)]">
+      <div class="relative h-full overflow-hidden rounded-[27px] bg-canvas text-ink">
+        <div class="absolute left-0 top-0 h-[596px] w-[276px] origin-top-left pt-6" style="transform: scale(0.594)">
+          <div class="relative h-full"><Inicio /></div>
+        </div>
+        <span class="absolute left-1/2 top-2 h-[11px] w-[46px] -translate-x-1/2 rounded-full bg-[#0b0d0f]"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const box = document.querySelector<HTMLElement>('[data-devices]');
+  const canvas = box?.querySelector<HTMLElement>('[data-devices-canvas]');
+  if (box && canvas) {
+    const fit = () => (canvas.style.transform = `scale(${box.clientWidth / 1100})`);
+    new ResizeObserver(fit).observe(box);
+    fit();
+  }
+</script>

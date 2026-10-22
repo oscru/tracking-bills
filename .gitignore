@@ -9,6 +9,7 @@ web-build/
 apps/*/.expo/
 apps/*/expo-env.d.ts
 apps/*/.expo-shared/
+apps/*/.astro/
 
 # native
 *.orig.*

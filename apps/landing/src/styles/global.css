@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* The landing is dark-only: lime shines on ink (see design-direction). The
+   phone screens inside stay in the app's light theme. */
+@layer base {
+  html {
+    @apply bg-canvas-dark text-ink-dark antialiased;
+    color-scheme: dark;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+  }
+  ::selection {
+    @apply bg-lime text-ink;
+  }
+}
+
+@layer components {
+  /* THE ACTION — same lime gradient as @repo/ui GradientFill. */
+  .lime-fill {
+    background-image: linear-gradient(135deg, #e3ff6b 0%, #b9f227 45%, #8ee05a 100%);
+  }
+  .btn-lime {
+    @apply lime-fill inline-flex items-center justify-center gap-2 rounded-ctl px-5 py-3 font-semibold text-ink transition hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime;
+    box-shadow: 0 0 0 0 rgb(185 242 39 / 0.5);
+  }
+  .btn-lime:hover {
+    box-shadow: 0 0 32px -6px rgb(185 242 39 / 0.6);
+  }
+  .btn-ink {
+    @apply inline-flex items-center justify-center gap-2 rounded-ctl bg-ink px-5 py-3 font-semibold text-white transition hover:bg-black;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-ctl px-4 py-2.5 font-medium text-ink-dark transition hover:bg-line-dark;
+  }
+  .tile {
+    @apply rounded-card border border-line-dark bg-surface-dark;
+  }
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-lime;
+  }
+}
+
+@layer utilities {
+  .caret {
+    animation: caret-blink 1s steps(1) infinite;
+  }
+  @keyframes caret-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+  }
+}

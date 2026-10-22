@@ -1,0 +1,135 @@
+---
+import Devices from '../components/Devices.astro';
+import Icon from '../components/Icon.astro';
+import ScrollStory from '../components/ScrollStory.astro';
+import StoreButtons from '../components/StoreButtons.astro';
+import Base from '../layouts/Base.astro';
+
+const appUrl = (import.meta.env.PUBLIC_APP_URL ?? 'https://tracking-bills-mobile.vercel.app').replace(/\/$/, '');
+const signUpUrl = `${appUrl}/sign-up`;
+const signInUrl = `${appUrl}/sign-in`;
+
+const details = [
+  { icon: 'chart', title: 'Análisis', body: 'Tendencia, calendario y gasto por categoría, sin tablas dinámicas.' },
+  { icon: 'star', title: 'Favoritos', body: 'Tus gastos de siempre, registrados en un toque.' },
+  { icon: 'tag', title: 'Etiquetas', body: 'Cruza categorías: ¿cuánto costó el viaje completo?' },
+  { icon: 'coins', title: 'Pesos y dólares', body: 'Cada cuenta en su moneda, sin conversiones a mano.' },
+  { icon: 'file', title: 'Importa y exporta', body: 'Trae tu historial desde Excel y llévatelo cuando quieras.' },
+  { icon: 'bell', title: 'Avisos a tiempo', body: 'Pagos pendientes, presupuestos y metas, antes de que se te pasen.' },
+] as const;
+const promises = [
+  'Sin anuncios.',
+  'Sin pedirte la contraseña de tu banco.',
+  'Tus datos se exportan cuando quieras.',
+];
+---
+
+<Base>
+  <header class="fixed inset-x-0 top-0 z-30 border-b border-white/5 bg-canvas-dark/70 backdrop-blur-xl">
+    <nav class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <a href="/" class="flex items-center gap-2 font-bold tracking-tight">
+        <img src="/favicon-48.png" alt="" width="28" height="28" class="rounded-lg" />
+        Genobills
+      </a>
+      <div class="flex items-center gap-1 text-sm">
+        <a href={signInUrl} class="btn-ghost">Entrar</a>
+        <a href={signUpUrl} class="btn-lime px-4 py-2.5">Crear cuenta</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <ScrollStory signUpUrl={signUpUrl} />
+
+    <!-- Devices -->
+    <section class="relative overflow-hidden py-20 md:py-28">
+      <div
+        class="pointer-events-none absolute left-1/2 top-2/3 h-[520px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-3xl"
+        style="background: radial-gradient(ellipse, rgb(185 242 39 / 0.22), transparent 65%)"
+        aria-hidden="true"
+      >
+      </div>
+      <div class="relative mx-auto max-w-6xl px-4 sm:px-6">
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="eyebrow">Web, iPhone, Android y tablet</p>
+          <h2 class="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Una cuenta. Todas tus pantallas.</h2>
+          <p class="mt-4 text-ink-2-dark sm:text-lg">
+            Revisa el mes en la compu, registra el café desde el celular. Todo se sincroniza solo.
+          </p>
+        </div>
+        <div class="mx-auto mt-12 max-w-5xl md:mt-16">
+          <Devices />
+        </div>
+        <div class="mt-10 flex flex-col items-center gap-4 sm:mt-12">
+          <StoreButtons class="justify-center" />
+          <a href={appUrl} class="text-sm font-medium text-ink-2-dark underline-offset-4 hover:text-ink-dark hover:underline">
+            o úsala en el navegador →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Details -->
+    <section class="pb-20 md:pb-28">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+        <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">
+          Y los detalles <span class="text-ink-3-dark">que hacen que te quedes.</span>
+        </h2>
+        <ul class="mt-10 grid gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+          {
+            details.map((d) => (
+              <li class="border-t border-line-dark pt-6">
+                <Icon name={d.icon} class="h-5 w-5 text-lime" />
+                <h3 class="mt-4 font-semibold">{d.title}</h3>
+                <p class="mt-1.5 text-sm leading-relaxed text-ink-2-dark">{d.body}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <!-- Promises -->
+    <section class="border-y border-line-dark py-16 md:py-24">
+      <ul class="mx-auto max-w-6xl space-y-3 px-4 sm:px-6">
+        {
+          promises.map((p) => (
+            <li class="flex items-start gap-4 text-3xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+              <span class="mt-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-lime text-ink sm:mt-3 sm:h-9 sm:w-9 md:mt-4">
+                <Icon name="check" class="h-4 w-4 sm:h-5 sm:w-5" />
+              </span>
+              {p}
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="px-4 py-20 sm:px-6 md:py-28">
+      <div class="lime-fill relative mx-auto max-w-6xl overflow-hidden rounded-[28px] px-6 py-16 text-center text-ink sm:px-12 md:py-24">
+        <h2 class="mx-auto max-w-3xl text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">
+          Que la próxima quincena sí rinda.
+        </h2>
+        <p class="mx-auto mt-5 max-w-lg text-lg text-ink/70">
+          Crea tu cuenta gratis y registra tu primer movimiento en menos de un minuto.
+        </p>
+        <div class="mt-8 flex flex-wrap justify-center gap-3">
+          <a href={signUpUrl} class="btn-ink px-6 py-3.5 text-base">Crear cuenta gratis <Icon name="arrowRight" /></a>
+          <a href={signInUrl} class="inline-flex items-center rounded-ctl px-5 py-3.5 font-semibold text-ink hover:bg-ink/10">Ya tengo cuenta</a>
+        </div>
+        <StoreButtons tone="onLime" class="mt-6 justify-center" />
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-line-dark">
+    <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-ink-2-dark sm:flex-row sm:px-6">
+      <p>© {new Date().getFullYear()} Genobills</p>
+      <div class="flex gap-4">
+        <a href={signInUrl} class="hover:text-ink-dark">Entrar</a>
+        <a href={signUpUrl} class="hover:text-ink-dark">Crear cuenta</a>
+      </div>
+    </div>
+  </footer>
+</Base>

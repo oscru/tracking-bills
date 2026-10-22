@@ -1,0 +1,284 @@
+---
+/**
+ * Apple-style pinned scroll story: the section is N viewports tall, its stage
+ * sticks to the viewport, and scroll progress turns the 3D phone, swaps the
+ * app screen and swaps the copy. Step 0 doubles as the hero.
+ */
+import Icon from './Icon.astro';
+import Phone3D from './Phone3D.astro';
+import StoreButtons from './StoreButtons.astro';
+import Inicio from './screens/Inicio.astro';
+import Monto from './screens/Monto.astro';
+import Movimientos from './screens/Movimientos.astro';
+import Objetivo from './screens/Objetivo.astro';
+import Personas from './screens/Personas.astro';
+import Presupuestos from './screens/Presupuestos.astro';
+
+interface Props {
+  signUpUrl: string;
+}
+const { signUpUrl } = Astro.props;
+
+const chapters = [
+  {
+    tag: 'Registrar',
+    title: 'Escribe la cuenta, no el resultado.',
+    body: 'El teclado de Genobills es una calculadora: 150 × 3, igual, listo. Registras un gasto en tres segundos sin salir de la app.',
+  },
+  {
+    tag: 'Movimientos',
+    title: 'Cada peso, en su lugar.',
+    body: 'Categorías y subcategorías, agrupado por día. Y pasar dinero a tu ahorro es una transferencia, no un gasto: tus números no se inflan.',
+  },
+  {
+    tag: 'Presupuestos',
+    title: 'Te avisa antes, no después.',
+    body: 'Mensuales, quincenales o semanales. Cuando una categoría se acerca al tope lo ves a tiempo, no en el estado de cuenta.',
+  },
+  {
+    tag: 'Objetivos',
+    title: 'Ahorra con fecha, no con fe.',
+    body: 'Ponle monto y fecha límite. Genobills te sugiere cuánto apartar y te dice si vas adelantado o atrasado.',
+  },
+  {
+    tag: 'Personas',
+    title: 'Cuentas claras con tu gente.',
+    body: 'Vincula a tu pareja, roomies o amigos con un código. Registren lo que se envían, en pesos o dólares, y vean cómo quedan.',
+  },
+];
+const steps = chapters.length + 2; // hero + chapters + outro
+---
+
+<section data-story class="relative" style={`height: calc(${steps} * 85svh + 15svh)`}>
+  <div class="sticky top-0 flex h-svh flex-col overflow-hidden pt-16 lg:flex-row lg:items-center">
+    <!-- glow that drifts with the phone -->
+    <div
+      data-glow
+      class="pointer-events-none absolute left-1/2 top-1/2 h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70 blur-3xl lg:left-[68%]"
+      style="background: radial-gradient(circle, rgb(185 242 39 / 0.28), transparent 62%)"
+      aria-hidden="true"
+    >
+    </div>
+
+    <div class="relative mx-auto grid w-full max-w-6xl flex-1 grid-rows-[auto_1fr] px-4 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:grid-rows-1 lg:items-center">
+      <!-- copy -->
+      <div class="relative h-[min(16.5rem,40svh)] lg:h-[26rem]">
+        <div data-panel class="story-panel is-active">
+          <p class="eyebrow">Finanzas personales<span class="hidden sm:inline"> · Web, iOS y Android</span></p>
+          <h1 class="mt-3 sm:mt-4 text-[2.35rem] font-extrabold leading-[0.98] tracking-tight sm:text-6xl lg:text-7xl">
+            ¿A dónde se fue la <span class="text-lime">quincena?</span>
+          </h1>
+          <p class="mt-4 max-w-md text-base text-ink-2-dark sm:text-lg">
+            Genobills te lo dice con peso y centavo, y te ayuda a que la próxima rinda más.
+          </p>
+          <div class="mt-6">
+            <a href={signUpUrl} class="btn-lime px-6 py-3.5">Empieza gratis <Icon name="arrowRight" /></a>
+          </div>
+          <StoreButtons class="mt-4 hidden sm:flex" />
+        </div>
+
+        {
+          chapters.map((c, i) => (
+            <div data-panel class="story-panel">
+              <p class="eyebrow">
+                <span class="text-ink-3-dark">0{i + 1}</span> · {c.tag}
+              </p>
+              <h2 class="mt-4 text-[2rem] font-bold leading-[1.05] tracking-tight sm:text-5xl">{c.title}</h2>
+              <p class="mt-4 max-w-md text-base leading-relaxed text-ink-2-dark sm:text-lg">{c.body}</p>
+            </div>
+          ))
+        }
+
+        <div data-panel class="story-panel">
+          <p class="eyebrow">Y todo esto</p>
+          <h2 class="mt-4 text-[2.2rem] font-extrabold leading-[1.02] tracking-tight sm:text-6xl">
+            Gratis. <span class="text-ink-3-dark">En tu compu y en tu celular.</span>
+          </h2>
+          <div class="mt-6">
+            <a href={signUpUrl} class="btn-lime px-6 py-3.5">Crear mi cuenta <Icon name="arrowRight" /></a>
+          </div>
+          <StoreButtons class="mt-4" />
+        </div>
+
+        <!-- progress -->
+        <div class="absolute -bottom-12 left-0 hidden items-center gap-1.5 lg:flex" aria-hidden="true">
+          {Array.from({ length: steps }, () => <span data-dot class="story-dot" />)}
+        </div>
+      </div>
+
+      <!-- phone -->
+      <div data-phone-box class="relative min-h-0 lg:h-[680px]">
+        <Phone3D>
+          <div data-screen class="story-screen is-active"><Inicio /></div>
+          <div data-screen class="story-screen"><Monto /></div>
+          <div data-screen class="story-screen"><Movimientos /></div>
+          <div data-screen class="story-screen"><Presupuestos /></div>
+          <div data-screen class="story-screen"><Objetivo /></div>
+          <div data-screen class="story-screen"><Personas /></div>
+        </Phone3D>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .story-panel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(6px);
+    pointer-events: none;
+    transition:
+      opacity 0.5s ease,
+      transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
+      filter 0.5s ease;
+  }
+  .story-panel.is-active {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    pointer-events: auto;
+  }
+  .story-screen {
+    position: absolute;
+    inset: 44px 0 0;
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+    transition:
+      opacity 0.35s ease,
+      transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .story-screen.is-active {
+    opacity: 1;
+    transform: none;
+  }
+  .story-dot {
+    height: 4px;
+    width: 14px;
+    border-radius: 999px;
+    background: #23272c;
+    transition:
+      width 0.4s ease,
+      background 0.4s ease;
+  }
+  .story-dot.is-active {
+    width: 34px;
+    background: #b9f227;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .story-panel,
+    .story-screen {
+      transition: opacity 0.2s linear;
+      transform: none;
+      filter: none;
+    }
+  }
+</style>
+
+<script>
+  type Pose = { ry: number; rx: number; rz: number; s: number };
+
+  // One pose per step: hero, five chapters, outro (turned around to the back).
+  const POSES: Pose[] = [
+    { ry: -28, rx: 10, rz: -6, s: 1 },
+    { ry: 18, rx: 4, rz: 3, s: 1.02 },
+    { ry: -16, rx: 6, rz: -2, s: 1 },
+    { ry: 16, rx: 3, rz: 2, s: 1.02 },
+    { ry: -14, rx: 6, rz: -3, s: 1 },
+    { ry: 12, rx: 4, rz: 2, s: 1 },
+    { ry: -164, rx: 8, rz: -5, s: 0.94 },
+  ];
+
+  const story = document.querySelector<HTMLElement>('[data-story]');
+  const phone = story?.querySelector<HTMLElement>('[data-phone]');
+  const box = story?.querySelector<HTMLElement>('[data-phone-box]');
+  const glow = story?.querySelector<HTMLElement>('[data-glow]');
+
+  if (story && phone && box) {
+    const panels = [...story.querySelectorAll<HTMLElement>('[data-panel]')];
+    const screens = [...story.querySelectorAll<HTMLElement>('[data-screen]')];
+    const dots = [...story.querySelectorAll<HTMLElement>('[data-dot]')];
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const last = POSES.length - 1;
+
+    const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    // Hold on each pose for the first and last 28% of its slot, move in between.
+    const settle = (f: number) => {
+      const t = clamp((f - 0.28) / 0.44);
+      return t * t * (3 - 2 * t);
+    };
+
+    let active = -1;
+    let intro = reduced ? 1 : 0;
+    const introStart = performance.now();
+
+    const fit = () => {
+      const s = Math.min(1, box.clientHeight / 690, box.clientWidth / 330);
+      box.style.setProperty('--phone-scale', String(Math.max(0.45, s)));
+    };
+
+    const render = () => {
+      const travel = story.offsetHeight - innerHeight;
+      const p = clamp(-story.getBoundingClientRect().top / travel);
+      const t = p * last;
+      const i = Math.min(Math.floor(t), last - 1);
+      const e = settle(t - i);
+      const a = POSES[i];
+      const b = POSES[i + 1];
+
+      const step = e < 0.5 ? i : i + 1;
+      if (step !== active) {
+        active = step;
+        panels.forEach((el, k) => el.classList.toggle('is-active', k === step));
+        dots.forEach((el, k) => el.classList.toggle('is-active', k === step));
+        const screen = Math.min(step, screens.length - 1);
+        screens.forEach((el, k) => el.classList.toggle('is-active', k === screen));
+      }
+
+      if (reduced) return;
+
+      // A little hop mid-turn, and the entrance on first load.
+      const lift = Math.sin(Math.PI * e) * 14;
+      const k = 1 - intro;
+      const ry = lerp(a.ry, b.ry, e) - k * 55;
+      const rx = lerp(a.rx, b.rx, e) + k * 10;
+      const rz = lerp(a.rz, b.rz, e);
+      const s = lerp(a.s, b.s, e) * (1 - k * 0.12);
+      phone.style.transform = `translateY(${k * 90 - lift}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${s})`;
+      phone.style.opacity = String(clamp(intro * 1.4));
+      phone.style.setProperty('--ry', ry.toFixed(1));
+      if (glow) glow.style.transform = `translate(-50%, -50%) translateX(${ry * 0.6}px) scale(${1 + Math.abs(Math.sin((ry * Math.PI) / 180)) * 0.15})`;
+    };
+
+    let queued = false;
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        render();
+      });
+    };
+
+    const animateIntro = (now: number) => {
+      const x = clamp((now - introStart) / 1300);
+      intro = 1 - Math.pow(1 - x, 3);
+      render();
+      if (x < 1) requestAnimationFrame(animateIntro);
+    };
+
+    fit();
+    render();
+    if (!reduced) requestAnimationFrame(animateIntro);
+    addEventListener('scroll', queue, { passive: true });
+    addEventListener('resize', () => {
+      fit();
+      queue();
+    });
+  }
+</script>

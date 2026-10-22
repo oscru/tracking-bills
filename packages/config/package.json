@@ -13,7 +13,9 @@
     "./tsconfig/react-library.json": "./tsconfig/react-library.json",
     "./eslint/base": "./eslint/base.js",
     "./eslint/expo": "./eslint/expo.js",
-    "./tailwind/preset": "./tailwind/preset.js"
+    "./tailwind/preset": "./tailwind/preset.js",
+    "./tailwind/web-preset": "./tailwind/web-preset.js",
+    "./tailwind/tokens": "./tailwind/tokens.js"
   },
   "dependencies": {
     "eslint-config-expo": "^57.0.2",

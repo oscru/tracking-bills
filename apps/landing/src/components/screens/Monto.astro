@@ -1,0 +1,54 @@
+---
+/** Step 1 of "Nuevo movimiento": the in-app calculator keypad. */
+type Key = { l: string; k: 'd' | 'op' | 'eq'; span?: string };
+const keys: Key[] = [
+  { l: 'C', k: 'op' }, { l: '÷', k: 'op' }, { l: '×', k: 'op' }, { l: '⌫', k: 'op' },
+  { l: '7', k: 'd' }, { l: '8', k: 'd' }, { l: '9', k: 'd' }, { l: '−', k: 'op' },
+  { l: '4', k: 'd' }, { l: '5', k: 'd' }, { l: '6', k: 'd' }, { l: '+', k: 'op' },
+  { l: '1', k: 'd' }, { l: '2', k: 'd' }, { l: '3', k: 'd' }, { l: '=', k: 'eq', span: 'row-span-2' },
+  { l: '0', k: 'd', span: 'col-span-2' }, { l: '.', k: 'd' },
+];
+---
+
+<div class="flex h-full flex-col px-4 pb-4">
+  <div class="flex items-center justify-between">
+    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-sm text-ink-2 shadow-sm">✕</span>
+    <p class="text-[13px] font-semibold">Nuevo movimiento</p>
+    <span class="w-8"></span>
+  </div>
+
+  <div class="mt-3 grid grid-cols-3 rounded-ctl bg-line p-0.5 text-center text-[11px] font-medium">
+    <span class="rounded-[12px] bg-ink py-1.5 text-white">Gasto</span>
+    <span class="py-1.5 text-ink-2">Ingreso</span>
+    <span class="py-1.5 text-ink-2">Transferencia</span>
+  </div>
+
+  <div class="flex flex-1 flex-col items-center justify-center">
+    <p class="text-[13px] text-ink-2">150 × 3</p>
+    <p class="mt-1 flex items-center text-[40px] font-bold tracking-tight">
+      $450.00<span class="caret ml-0.5 inline-block h-9 w-[3px] rounded bg-lime"></span>
+    </p>
+    <div class="mt-3 flex gap-2 text-[11px]">
+      <span class="rounded-full border border-line bg-surface px-2.5 py-1">🍽 Comida</span>
+      <span class="rounded-full border border-line bg-surface px-2.5 py-1">BBVA Débito</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-4 grid-rows-5 gap-1.5">
+    {
+      keys.map((key) => (
+        <span
+          class:list={[
+            'flex h-11 items-center justify-center rounded-ctl text-[17px] font-medium',
+            key.span,
+            key.k === 'd' && 'bg-surface shadow-[0_1px_0_rgba(0,0,0,0.04)]',
+            key.k === 'op' && 'bg-lime-tint text-lime-ink',
+            key.k === 'eq' && 'lime-fill h-auto text-[22px] text-ink',
+          ]}
+        >
+          {key.l}
+        </span>
+      ))
+    }
+  </div>
+</div>
