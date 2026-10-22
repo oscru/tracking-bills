@@ -8,6 +8,9 @@ export interface TextFieldProps extends TextInputProps {
   invalid?: boolean;
   /** Rendered inside the field, right-aligned — e.g. a show/hide password toggle. */
   rightElement?: React.ReactNode;
+  /** Rendered inside the field, left of the text — e.g. a field icon. */
+  leftElement?: React.ReactNode;
+  ref?: React.Ref<TextInput>;
 }
 
 export function TextField({
@@ -15,6 +18,7 @@ export function TextField({
   error,
   invalid,
   rightElement,
+  leftElement,
   onFocus,
   onBlur,
   ...props
@@ -36,9 +40,10 @@ export function TextField({
       <View
         className={`h-[52px] flex-row items-center rounded-ctl bg-surface dark:bg-surface-dark ${borderClass}`}
       >
+        {leftElement ? <View className="pl-3.5">{leftElement}</View> : null}
         <TextInput
           placeholderTextColor="#9CA3AF"
-          className={`flex-1 px-3.5 text-base text-ink dark:text-ink-dark`}
+          className={`flex-1 ${leftElement ? 'pl-2.5 pr-3.5' : 'px-3.5'} text-base text-ink dark:text-ink-dark`}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);

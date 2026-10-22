@@ -4,8 +4,8 @@ import { passwordResetRequestSchema, passwordResetSchema } from '@repo/core/vali
 import { Button, ErrorCard, ICON_COLORS, PageHeader, Screen, TextField } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Eye, EyeOff, MailCheck } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
 
 // Wait between "Reenviar código" taps — Supabase rate-limits these emails too.
 const RESEND_COOLDOWN_S = 60;
@@ -34,6 +34,8 @@ export default function ForgotPassword() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
   const [errors, setErrors] = useState<Errors>({});
   const [cooldown, setCooldown] = useState(0);
 
@@ -50,6 +52,7 @@ export default function ForgotPassword() {
       setErrors({ email: parsed.error.flatten().fieldErrors.email?.[0] });
       return;
     }
+    if (sendCode.isPending) return;
     sendCode.mutate(parsed.data.email, {
       onSuccess: () => {
         setStep('code');
@@ -71,6 +74,7 @@ export default function ForgotPassword() {
       });
       return;
     }
+    if (reset.isPending) return;
     reset.mutate(parsed.data, {
       onSuccess: () => router.replace('/(app)'),
       onError: (e) => setErrors({ form: toFriendlyMessage(e, 'No se pudo cambiar la contraseña') }),
@@ -149,9 +153,13 @@ export default function ForgotPassword() {
             autoComplete="one-time-code"
             textContentType="oneTimeCode"
             maxLength={10}
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => passwordRef.current?.focus()}
             error={errors.code}
           />
           <TextField
+            ref={passwordRef}
             label="Nueva contraseña"
             placeholder="Mínimo 8 caracteres"
             value={password}
@@ -159,10 +167,14 @@ export default function ForgotPassword() {
             secureTextEntry={!showPassword}
             autoComplete="new-password"
             textContentType="newPassword"
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => confirmRef.current?.focus()}
             error={errors.password}
             rightElement={eye}
           />
           <TextField
+            ref={confirmRef}
             label="Confirmar contraseña"
             placeholder="Escríbela de nuevo"
             value={confirmPassword}
@@ -170,6 +182,8 @@ export default function ForgotPassword() {
             secureTextEntry={!showPassword}
             autoComplete="new-password"
             textContentType="newPassword"
+            returnKeyType="go"
+            onSubmitEditing={submit}
             error={errors.confirm}
           />
 

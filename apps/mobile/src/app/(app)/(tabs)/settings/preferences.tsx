@@ -35,6 +35,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View, ScrollView } from 'react-native';
 
 import { CurrencyMultiPicker, CurrencyPicker } from '../../../../features/settings/currency-picker';
+import { switchColorScheme } from '../../../../features/settings/theme-sync';
 
 const THEME_OPTIONS: {
   value: ThemePreference;
@@ -342,9 +343,16 @@ function ThemeSection({ value }: { value: ThemePreference }) {
           {THEME_OPTIONS.map((opt) => (
             <Pressable
               key={opt.value}
-              onPress={() => {
-                updateProfile.mutate({ theme_preference: opt.value });
+              onPress={(e) => {
                 setPickerOpen(false);
+                if (opt.value === value) return;
+                // Switch now (with the reveal on web) instead of waiting for
+                // the saved profile to come back through `ThemeSync`.
+                switchColorScheme(opt.value, { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY });
+                updateProfile.mutate(
+                  { theme_preference: opt.value },
+                  { onError: () => switchColorScheme(value) },
+                );
               }}
               className="flex-row items-center gap-3 border-t border-line px-5 py-3.5 dark:border-line-dark"
             >

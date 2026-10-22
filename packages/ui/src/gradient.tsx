@@ -33,6 +33,14 @@ export const LIME_GRADIENT = ['#E3FF6B', '#B9F227', '#8EE05A'] as const;
  */
 const ACCENT_SPAN = 64;
 
+/**
+ * Web only: an `<svg>` with a `viewBox` and no explicit size keeps its
+ * aspect ratio (square here) instead of stretching to `absoluteFill`, so a
+ * card taller than it is wide got a background that stopped short. Native
+ * keeps sizing by layout (see `GradientFill`).
+ */
+const WEB_FILL = Platform.OS === 'web' ? ({ width: '100%', height: '100%' } as const) : {};
+
 /** `react-native-svg` ids must be plain — React's `useId` includes colons. */
 function useSvgId(prefix: string) {
   return `${prefix}${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
@@ -87,7 +95,12 @@ export function GradientFill({
       onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))}
       style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}
     >
-      <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none">
+      <Svg
+        {...WEB_FILL}
+        style={StyleSheet.absoluteFill}
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+      >
         <Defs>
           <LinearGradient id={fillId} x1="0" y1="0" x2="1" y2="1">
             {stops.map((stop, i) => (
@@ -184,7 +197,12 @@ export function HeroCard({
         pointerEvents="none"
         style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}
       >
-        <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="none">
+        <Svg
+          {...WEB_FILL}
+          style={StyleSheet.absoluteFill}
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
           <Defs>
             <LinearGradient id={borderId} x1="0" y1="0" x2="1" y2="1">
               <Stop offset="0" stopColor={glow} stopOpacity={light ? 0.7 : 0.9} />
@@ -210,6 +228,7 @@ export function HeroCard({
         ]}
       >
         <Svg
+          {...WEB_FILL}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
           viewBox="0 0 100 100"

@@ -23,6 +23,7 @@ import { enableFreeze } from 'react-native-screens';
 import * as WebBrowser from 'expo-web-browser';
 
 import { AppLock } from '../features/security/app-lock';
+import { ColorSchemeEffects } from '../features/settings/theme-sync';
 import { AppSplash } from '../features/splash/app-splash';
 import { FloatingDraftBubble } from '../features/transactions/floating-draft-bubble';
 
@@ -151,6 +152,7 @@ export default function RootLayout() {
         <SessionProvider>
           <SafeAreaProvider>
             <StatusBar style="auto" />
+            <ColorSchemeEffects />
             <NavigationTheme>
               <SheetPortalHost>
                 <AuthGate />

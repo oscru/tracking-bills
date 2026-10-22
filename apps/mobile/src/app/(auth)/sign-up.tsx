@@ -5,8 +5,8 @@ import { signUpSchema } from '@repo/core/validators';
 import { BackButton, Button, ErrorCard, Screen, TextField, ICON_COLORS } from '@repo/ui';
 import { Link } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
-import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { SsoButtons } from '../../features/auth/sso-buttons';
 import { GenderField } from '../../features/auth/gender-field';
@@ -27,6 +27,8 @@ export default function SignUp() {
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
   const [errors, setErrors] = useState<{
     fullName?: string;
     email?: string;
@@ -67,6 +69,7 @@ export default function SignUp() {
       setStep(1);
       return;
     }
+    if (signUp.isPending) return;
     signUp.mutate(full.data, {
       onSuccess: (res) => {
         if (res.needsEmailConfirmation) setConfirmationSent(true);
@@ -144,6 +147,8 @@ export default function SignUp() {
               autoCapitalize="words"
               autoComplete="name"
               textContentType="name"
+              returnKeyType="next"
+              onSubmitEditing={onNext}
               error={errors.fullName}
             />
 
@@ -191,10 +196,14 @@ export default function SignUp() {
               keyboardType="email-address"
               autoComplete="email"
               textContentType="emailAddress"
+              returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => passwordRef.current?.focus()}
               error={errors.email}
             />
 
             <TextField
+              ref={passwordRef}
               label="Contraseña"
               placeholder="Crea una contraseña segura"
               value={password}
@@ -202,6 +211,9 @@ export default function SignUp() {
               secureTextEntry={!showPassword}
               autoComplete="new-password"
               textContentType="newPassword"
+              returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => confirmRef.current?.focus()}
               error={errors.password}
               rightElement={
                 <Pressable
@@ -222,12 +234,15 @@ export default function SignUp() {
             {password ? <PasswordChecklist password={password} /> : null}
 
             <TextField
+              ref={confirmRef}
               label="Confirmar contraseña"
               placeholder="Repite tu contraseña"
               value={confirm}
               onChangeText={setConfirm}
               secureTextEntry={!showConfirm}
               autoComplete="new-password"
+              returnKeyType="go"
+              onSubmitEditing={onSubmit}
               error={errors.confirm}
               rightElement={
                 <Pressable

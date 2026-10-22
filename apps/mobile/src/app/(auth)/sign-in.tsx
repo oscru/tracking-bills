@@ -1,12 +1,14 @@
 import { useSignIn } from '@repo/core/hooks';
 import { toFriendlyMessage } from '@repo/core/utils';
 import { signInSchema } from '@repo/core/validators';
-import { Button, ErrorCard, ICON_COLORS, Screen, TextField } from '@repo/ui';
+import { Button, ErrorCard, ICON_COLORS, StaggerItem, TextField } from '@repo/ui';
 import { Link, useRouter } from 'expo-router';
-import { Eye, EyeOff } from 'lucide-react-native';
-import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import { useColorScheme } from 'nativewind';
+import { useRef, useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
 
+import { AuthShell } from '../../features/auth/auth-shell';
 import { SsoButtons } from '../../features/auth/sso-buttons';
 
 export default function SignIn() {
@@ -15,6 +17,9 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
+  const dark = useColorScheme().colorScheme === 'dark';
+  const iconColor = dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3;
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
 
   const onSubmit = () => {
@@ -25,92 +30,114 @@ export default function SignIn() {
       setErrors({ email: f.email?.[0], password: f.password?.[0] });
       return;
     }
+    if (signIn.isPending) return;
     signIn.mutate(parsed.data, {
       onError: (e) => setErrors({ form: toFriendlyMessage(e, 'No se pudo iniciar sesión') }),
     });
   };
 
   return (
-    <Screen center scroll>
-      <View className="gap-5">
-        <View className="mb-2 items-center gap-3">
-          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-lime">
-            <Text className="text-2xl">💸</Text>
-          </View>
-          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Genobills</Text>
-        </View>
-
-        <View className="gap-1">
-          <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Iniciar sesión</Text>
+    <AuthShell>
+      <StaggerItem index={2}>
+        <View className="gap-1.5">
+          <Text className="text-[28px] font-bold tracking-tight text-ink dark:text-ink-dark">
+            Hola de nuevo 👋
+          </Text>
           <Text className="text-base text-ink-2 dark:text-ink-2-dark">
-            Controla tus ingresos y gastos
+            Entra para ver cómo van tus cuentas.
           </Text>
         </View>
+      </StaggerItem>
 
-        <TextField
-          label="Correo"
-          placeholder="tucorreo@ejemplo.com"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          autoComplete="email"
-          textContentType="emailAddress"
-          error={errors.email}
-        />
-        <TextField
-          label="Contraseña"
-          placeholder="Tu contraseña"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-          autoComplete="current-password"
-          textContentType="password"
-          error={errors.password}
-          rightElement={
+      <StaggerItem index={3}>
+        <View className="gap-4">
+          <TextField
+            label="Correo"
+            placeholder="tucorreo@ejemplo.com"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            autoComplete="email"
+            textContentType="emailAddress"
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => passwordRef.current?.focus()}
+            error={errors.email}
+            leftElement={<Mail size={18} color={iconColor} />}
+          />
+          <View className="gap-2">
+            <TextField
+              ref={passwordRef}
+              label="Contraseña"
+              placeholder="Tu contraseña"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoComplete="current-password"
+              textContentType="password"
+              returnKeyType="go"
+              onSubmitEditing={onSubmit}
+              error={errors.password}
+              leftElement={<Lock size={18} color={iconColor} />}
+              rightElement={
+                <Pressable
+                  onPress={() => setShowPassword((v) => !v)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color={iconColor} />
+                  ) : (
+                    <Eye size={20} color={iconColor} />
+                  )}
+                </Pressable>
+              }
+            />
             <Pressable
-              onPress={() => setShowPassword((v) => !v)}
+              onPress={() =>
+                router.push({
+                  pathname: '/(auth)/forgot-password',
+                  params: { email: email.trim() },
+                })
+              }
               hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              className="self-end"
             >
-              {showPassword ? (
-                <EyeOff size={20} color={ICON_COLORS.ink3} />
-              ) : (
-                <Eye size={20} color={ICON_COLORS.ink3} />
-              )}
+              <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
+                ¿Olvidaste tu contraseña?
+              </Text>
             </Pressable>
-          }
-        />
+          </View>
 
-        <Pressable
-          onPress={() =>
-            router.push({ pathname: '/(auth)/forgot-password', params: { email: email.trim() } })
-          }
-          hitSlop={8}
-          className="-mt-2 self-end"
-        >
-          <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
-            ¿Olvidaste tu contraseña?
-          </Text>
-        </Pressable>
+          <ErrorCard message={errors.form} />
 
-        <ErrorCard message={errors.form} />
-
-        <Button label="Entrar" onPress={onSubmit} loading={signIn.isPending} />
-
-        <SsoButtons />
-
-        <View className="flex-row justify-center gap-1">
-          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿No tienes cuenta?</Text>
-          <Link href="/(auth)/sign-up" asChild>
-            <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Crear cuenta
-            </Text>
-          </Link>
+          <Button label="Entrar" onPress={onSubmit} loading={signIn.isPending} />
         </View>
-      </View>
-    </Screen>
+      </StaggerItem>
+
+      <StaggerItem index={4}>
+        <View className="gap-6">
+          <SsoButtons />
+
+          <View className="flex-row items-center justify-center gap-1.5 rounded-ctl bg-surface px-4 py-3.5 dark:bg-surface-dark">
+            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿Nuevo en Genobills?</Text>
+            <Link href="/(auth)/sign-up" asChild>
+              <Pressable hitSlop={8} className="flex-row items-center gap-1">
+                <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
+                  Crea tu cuenta gratis
+                </Text>
+                <ArrowRight
+                  size={15}
+                  color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk}
+                />
+              </Pressable>
+            </Link>
+          </View>
+        </View>
+      </StaggerItem>
+    </AuthShell>
   );
 }
