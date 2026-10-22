@@ -45,8 +45,13 @@ export const profileUpdateSchema = z.object({
    * `Gender`'s doc comment. Editing always sets a real value, never clears
    * one back to null (there's no UI path that would want to). */
   full_name: fullName.optional(),
-  birth_date: birthDate.optional(),
-  gender: genderSchema.optional(),
+  /** Optional, only for aggregate statistics (see the Aviso de privacidad). `null` deletes it. */
+  birth_date: birthDate.nullable().optional(),
+  /** Optional, only for aggregate statistics. `null` deletes it. */
+  gender: genderSchema.nullable().optional(),
+  /** Version of the legal documents accepted (`LEGAL_VERSION`), set with `legal_accepted_at`. */
+  legal_version: z.string().min(1).optional(),
+  legal_accepted_at: z.string().datetime().optional(),
   /** Custom order of the Home screen's optional cards — see `HOME_LAYOUT_ITEMS`. */
   home_layout: z.array(homeLayoutItemSchema).optional(),
   /** Which of those cards are switched off entirely. */

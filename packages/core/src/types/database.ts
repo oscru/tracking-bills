@@ -470,6 +470,8 @@ export type Database = {
           home_hidden_items: string[]
           home_layout: string[] | null
           id: string
+          legal_accepted_at: string | null
+          legal_version: string | null
           notification_prefs: Json
           plan: string
           theme_preference: string
@@ -490,6 +492,8 @@ export type Database = {
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id: string
+          legal_accepted_at?: string | null
+          legal_version?: string | null
           notification_prefs?: Json
           plan?: string
           theme_preference?: string
@@ -510,6 +514,8 @@ export type Database = {
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id?: string
+          legal_accepted_at?: string | null
+          legal_version?: string | null
           notification_prefs?: Json
           plan?: string
           theme_preference?: string

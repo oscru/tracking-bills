@@ -218,8 +218,13 @@ export function PeersList() {
             <Text className="flex-1 text-sm text-ink-2 dark:text-ink-2-dark">{step}</Text>
           </View>
         ))}
-        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-          Cada quien sigue llevando sus propias cuentas: nada se comparte ni se mezcla.
+        {/* Exactly what linking shares — see `ensure_contact_account` /
+        `linked_peers` in the peer_transfers migration. */}
+        <Text className="text-xs leading-5 text-ink-3 dark:text-ink-3-dark">
+          Cada quien sigue llevando sus propias cuentas. Al vincularse, cada persona ve el nombre de
+          la otra (o, si no tiene, la parte de su correo antes de la @) y las transferencias entre
+          ustedes; nada más de sus cuentas ni de sus movimientos. Puedes desvincularte cuando
+          quieras.
         </Text>
       </View>
 

@@ -4,9 +4,10 @@ import { profileUpdateSchema } from '@repo/core/validators';
 import { Button, ErrorCard, PageHeader, Screen, TextField } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { GenderField } from '../../../features/auth/gender-field';
+import { LegalLink } from '../../../features/legal/legal';
 import { DateField } from '../../../features/transactions/date-field';
 
 /** Owns the form state — only ever mounted once `profile` is loaded (see
@@ -32,7 +33,8 @@ function ProfileInfoForm({ profile }: { profile: Profile }) {
     setFieldErrors({});
     const parsed = profileUpdateSchema.safeParse({
       full_name: fullName,
-      birth_date: birthDate,
+      // Empty = delete it (both are optional).
+      birth_date: birthDate || null,
       gender,
     });
     if (!parsed.success) {
@@ -66,10 +68,33 @@ function ProfileInfoForm({ profile }: { profile: Profile }) {
         error={fieldErrors.full_name}
       />
 
-      <View className="gap-1.5">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-          Fecha de nacimiento
+      {/* Optional, and only for aggregate statistics — the Aviso de
+      privacidad says so; deleting them is one tap. */}
+      <View className="gap-1 rounded-2xl bg-surface p-4 dark:bg-surface-dark">
+        <Text className="text-[13px] font-bold uppercase tracking-wider text-ink-3 dark:text-ink-3-dark">
+          Opcional
         </Text>
+        <Text className="text-[13px] leading-5 text-ink-2 dark:text-ink-2-dark">
+          Tu fecha de nacimiento y tu género no son necesarios para usar Genobills. Si los
+          compartes, solo los usamos para estadísticas generales y anónimas sobre quién usa la app —
+          nunca para publicidad ni para decidir algo sobre ti. Puedes borrarlos cuando quieras. Más
+          detalles en el <LegalLink doc="privacy" />.
+        </Text>
+      </View>
+
+      <View className="gap-1.5">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+            Fecha de nacimiento
+          </Text>
+          {birthDate ? (
+            <Pressable onPress={() => setBirthDate('')} hitSlop={8} accessibilityRole="button">
+              <Text className="text-sm font-semibold text-danger dark:text-danger-dark">
+                Borrar
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
         <DateField
           value={birthDate}
           onChange={(v) => {
@@ -77,7 +102,7 @@ function ProfileInfoForm({ profile }: { profile: Profile }) {
             clearError();
           }}
           showQuickChips={false}
-          placeholder="Selecciona tu fecha de nacimiento"
+          placeholder="Opcional"
         />
         {fieldErrors.birth_date ? (
           <Text className="text-xs text-danger dark:text-danger-dark">
@@ -86,14 +111,28 @@ function ProfileInfoForm({ profile }: { profile: Profile }) {
         ) : null}
       </View>
 
-      <GenderField
-        value={gender}
-        onChange={(v) => {
-          setGender(v);
-          clearError();
-        }}
-        error={fieldErrors.gender}
-      />
+      <View className="gap-1.5">
+        <GenderField
+          value={gender}
+          onChange={(v) => {
+            setGender(v);
+            clearError();
+          }}
+          error={fieldErrors.gender}
+        />
+        {gender ? (
+          <Pressable
+            onPress={() => setGender(null)}
+            hitSlop={8}
+            accessibilityRole="button"
+            className="self-end"
+          >
+            <Text className="text-sm font-semibold text-danger dark:text-danger-dark">
+              Borrar género
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       <ErrorCard message={error} />
 

@@ -37,12 +37,12 @@ export const signUpSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   fullName: z.string().trim().min(1, 'Ingresa tu nombre'),
-  birthDate: birthDateSchema,
-  // The sign-up form starts with no gender picked (`null`); narrow that away
-  // here so `SignUpInput`'s `gender` is a plain `Gender`, not `Gender | null`.
-  gender: genderSchema
-    .nullable()
-    .refine((v): v is NonNullable<typeof v> => v !== null, { message: 'Elige una opción' }),
+  // Birth date and gender aren't asked at sign-up: they're optional, filled
+  // in from the profile if the person wants (see the Aviso de privacidad).
+  /** The sign-up form's checkbox: Términos y condiciones + Aviso de privacidad (+ age). */
+  acceptsLegal: z
+    .boolean()
+    .refine((v) => v, 'Para crear tu cuenta, acepta los términos y el aviso de privacidad'),
 });
 
 export type SignInInput = z.infer<typeof signInSchema>;

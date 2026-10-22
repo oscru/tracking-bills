@@ -1,76 +1,67 @@
 import { useSignUp } from '@repo/core/hooks';
-import type { Gender } from '@repo/core/types';
 import { toFriendlyMessage } from '@repo/core/utils';
 import { signUpSchema } from '@repo/core/validators';
-import { BackButton, Button, ErrorCard, Screen, TextField, ICON_COLORS } from '@repo/ui';
+import { Button, ErrorCard, ICON_COLORS, StaggerItem, TextField } from '@repo/ui';
 import { Link } from 'expo-router';
-import { Eye, EyeOff } from 'lucide-react-native';
+import { ArrowRight, Eye, EyeOff, Lock, Mail, MailCheck, User } from 'lucide-react-native';
+import { useColorScheme } from 'nativewind';
 import { useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
-import { SsoButtons } from '../../features/auth/sso-buttons';
-import { GenderField } from '../../features/auth/gender-field';
+import { AuthShell } from '../../features/auth/auth-shell';
 import { PasswordChecklist } from '../../features/auth/password-checklist';
-import { DateField } from '../../features/transactions/date-field';
+import { SsoButtons } from '../../features/auth/sso-buttons';
+import { LegalConsent, SsoLegalNotice } from '../../features/legal/legal';
 
-const infoSchema = signUpSchema.pick({ fullName: true, birthDate: true, gender: true });
-const credentialsSchema = signUpSchema.pick({ email: true, password: true });
+type Errors = {
+  fullName?: string;
+  email?: string;
+  password?: string;
+  confirm?: string;
+  acceptsLegal?: string;
+  form?: string;
+};
 
+/**
+ * Creating an account asks only for what the app needs to work: a name to
+ * greet you, and an email and password to sign in. Birth date and gender
+ * are optional and live in the profile (see the Aviso de privacidad).
+ */
 export default function SignUp() {
   const signUp = useSignUp();
-  const [step, setStep] = useState<1 | 2>(1);
+  const dark = useColorScheme().colorScheme === 'dark';
+  const iconColor = dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3;
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [gender, setGender] = useState<Gender | null>(null);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [acceptsLegal, setAcceptsLegal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
+  const [confirmationSent, setConfirmationSent] = useState(false);
+  const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
-  const [errors, setErrors] = useState<{
-    fullName?: string;
-    email?: string;
-    birthDate?: string;
-    gender?: string;
-    password?: string;
-    confirm?: string;
-    form?: string;
-  }>({});
-  const [confirmationSent, setConfirmationSent] = useState(false);
-
-  const onNext = () => {
-    setErrors({});
-    const parsed = infoSchema.safeParse({ fullName, birthDate, gender });
-    if (!parsed.success) {
-      const f = parsed.error.flatten().fieldErrors;
-      setErrors({ fullName: f.fullName?.[0], birthDate: f.birthDate?.[0], gender: f.gender?.[0] });
-      return;
-    }
-    setStep(2);
-  };
 
   const onSubmit = () => {
     setErrors({});
-    const parsed = credentialsSchema.safeParse({ email, password });
+    const parsed = signUpSchema.safeParse({ fullName, email, password, acceptsLegal });
     if (!parsed.success) {
       const f = parsed.error.flatten().fieldErrors;
-      setErrors({ email: f.email?.[0], password: f.password?.[0] });
+      setErrors({
+        fullName: f.fullName?.[0],
+        email: f.email?.[0],
+        password: f.password?.[0],
+        acceptsLegal: f.acceptsLegal?.[0],
+      });
       return;
     }
     if (password !== confirm) {
       setErrors({ confirm: 'Las contraseñas no coinciden' });
       return;
     }
-    const full = signUpSchema.safeParse({ fullName, email, birthDate, gender, password });
-    if (!full.success) {
-      setErrors({ form: 'Revisa la información del paso anterior' });
-      setStep(1);
-      return;
-    }
     if (signUp.isPending) return;
-    signUp.mutate(full.data, {
+    signUp.mutate(parsed.data, {
       onSuccess: (res) => {
         if (res.needsEmailConfirmation) setConfirmationSent(true);
       },
@@ -80,192 +71,157 @@ export default function SignUp() {
 
   if (confirmationSent) {
     return (
-      <Screen center scroll>
+      <AuthShell>
         <View className="gap-3">
-          <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Revisa tu correo</Text>
+          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-lime-tint dark:bg-lime-tint-dark">
+            <MailCheck size={24} color={ICON_COLORS.limeInk} />
+          </View>
+          <Text className="text-[28px] font-bold tracking-tight text-ink dark:text-ink-dark">
+            Revisa tu correo
+          </Text>
           <Text className="text-base text-ink-2 dark:text-ink-2-dark">
             Te enviamos un enlace de confirmación a {email}. Confírmalo y luego inicia sesión.
           </Text>
           <Link href="/(auth)/sign-in" asChild>
-            <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Volver a iniciar sesión
-            </Text>
+            <Pressable hitSlop={8}>
+              <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
+                Volver a iniciar sesión
+              </Text>
+            </Pressable>
           </Link>
         </View>
-      </Screen>
+      </AuthShell>
     );
   }
 
   return (
-    <Screen center scroll>
-      <View className="gap-5">
-        {step === 2 ? (
-          <View>
-            <BackButton onPress={() => setStep(1)} />
-          </View>
-        ) : null}
-
-        <View className="gap-3">
-          <View className="flex-row gap-1.5">
-            <View
-              className={`h-1 flex-1 rounded-full ${step >= 1 ? 'bg-ink dark:bg-ink-dark' : 'bg-line dark:bg-line-dark'}`}
-            />
-            <View
-              className={`h-1 flex-1 rounded-full ${step >= 2 ? 'bg-ink dark:bg-ink-dark' : 'bg-line dark:bg-line-dark'}`}
-            />
-          </View>
-          <Text className="text-xs font-medium text-ink-3 dark:text-ink-3-dark">
-            Paso {step} de 2
+    <AuthShell>
+      <StaggerItem index={2}>
+        <View className="gap-1.5">
+          <Text className="text-[28px] font-bold tracking-tight text-ink dark:text-ink-dark">
+            Crea tu cuenta
+          </Text>
+          <Text className="text-base text-ink-2 dark:text-ink-2-dark">
+            Solo te pedimos lo necesario para entrar.
           </Text>
         </View>
+      </StaggerItem>
 
-        {step === 1 ? (
-          <View className="gap-1">
-            <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Tu información</Text>
-            <Text className="text-base text-ink-2 dark:text-ink-2-dark">
-              Cuéntanos un poco sobre ti
-            </Text>
-          </View>
-        ) : (
-          <View className="gap-1">
-            <Text className="text-2xl font-bold text-ink dark:text-ink-dark">
-              Tu correo y contraseña
-            </Text>
-            <Text className="text-base text-ink-2 dark:text-ink-2-dark">
-              Con esto vas a iniciar sesión
-            </Text>
-          </View>
-        )}
+      <StaggerItem index={3}>
+        <View className="gap-4">
+          <TextField
+            label="Nombre"
+            placeholder="¿Cómo te llamamos?"
+            value={fullName}
+            onChangeText={setFullName}
+            autoCapitalize="words"
+            autoComplete="name"
+            textContentType="name"
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => emailRef.current?.focus()}
+            error={errors.fullName}
+            leftElement={<User size={18} color={iconColor} />}
+          />
+          <TextField
+            ref={emailRef}
+            label="Correo"
+            placeholder="tucorreo@ejemplo.com"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            autoComplete="email"
+            textContentType="emailAddress"
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => passwordRef.current?.focus()}
+            error={errors.email}
+            leftElement={<Mail size={18} color={iconColor} />}
+          />
+          <TextField
+            ref={passwordRef}
+            label="Contraseña"
+            placeholder="Crea una contraseña segura"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            autoComplete="new-password"
+            textContentType="newPassword"
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => confirmRef.current?.focus()}
+            error={errors.password}
+            leftElement={<Lock size={18} color={iconColor} />}
+            rightElement={
+              <Pressable
+                onPress={() => setShowPassword((v) => !v)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showPassword ? (
+                  <EyeOff size={20} color={iconColor} />
+                ) : (
+                  <Eye size={20} color={iconColor} />
+                )}
+              </Pressable>
+            }
+          />
+          {password ? <PasswordChecklist password={password} /> : null}
+          <TextField
+            ref={confirmRef}
+            label="Confirmar contraseña"
+            placeholder="Repite tu contraseña"
+            value={confirm}
+            onChangeText={setConfirm}
+            secureTextEntry={!showPassword}
+            autoComplete="new-password"
+            returnKeyType="go"
+            onSubmitEditing={onSubmit}
+            error={errors.confirm}
+            leftElement={<Lock size={18} color={iconColor} />}
+          />
 
-        {step === 1 ? (
-          <>
-            <TextField
-              label="Nombre"
-              placeholder="Ej. Ana García"
-              value={fullName}
-              onChangeText={setFullName}
-              autoCapitalize="words"
-              autoComplete="name"
-              textContentType="name"
-              returnKeyType="next"
-              onSubmitEditing={onNext}
-              error={errors.fullName}
-            />
+          <LegalConsent
+            checked={acceptsLegal}
+            onChange={(v) => {
+              setAcceptsLegal(v);
+              if (v) setErrors((e) => ({ ...e, acceptsLegal: undefined }));
+            }}
+            error={errors.acceptsLegal}
+          />
 
-            <View className="gap-1.5">
-              <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-                Fecha de nacimiento
-              </Text>
-              <DateField
-                value={birthDate}
-                onChange={setBirthDate}
-                showQuickChips={false}
-                placeholder="Selecciona tu fecha de nacimiento"
-              />
-              {errors.birthDate ? (
-                <Text className="text-xs text-danger dark:text-danger-dark">
-                  {errors.birthDate}
-                </Text>
-              ) : null}
-            </View>
+          <ErrorCard message={errors.form} />
 
-            <GenderField value={gender} onChange={setGender} error={errors.gender} />
+          <Button label="Crear cuenta" onPress={onSubmit} loading={signUp.isPending} />
+        </View>
+      </StaggerItem>
 
-            <Button label="Siguiente" onPress={onNext} />
-
+      <StaggerItem index={4}>
+        <View className="gap-6">
+          <View className="gap-3">
             <SsoButtons />
+            <SsoLegalNotice />
+          </View>
 
-            <View className="flex-row justify-center gap-1">
-              <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿Ya tienes cuenta?</Text>
-              <Link href="/(auth)/sign-in" asChild>
+          <View className="flex-row items-center justify-center gap-1.5 rounded-ctl bg-surface px-4 py-3.5 dark:bg-surface-dark">
+            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿Ya tienes cuenta?</Text>
+            <Link href="/(auth)/sign-in" asChild>
+              <Pressable hitSlop={8} className="flex-row items-center gap-1">
                 <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
-                  Iniciar sesión
+                  Inicia sesión
                 </Text>
-              </Link>
-            </View>
-          </>
-        ) : (
-          <>
-            <TextField
-              label="Correo"
-              placeholder="tucorreo@ejemplo.com"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              autoComplete="email"
-              textContentType="emailAddress"
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => passwordRef.current?.focus()}
-              error={errors.email}
-            />
-
-            <TextField
-              ref={passwordRef}
-              label="Contraseña"
-              placeholder="Crea una contraseña segura"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              autoComplete="new-password"
-              textContentType="newPassword"
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => confirmRef.current?.focus()}
-              error={errors.password}
-              rightElement={
-                <Pressable
-                  onPress={() => setShowPassword((v) => !v)}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color={ICON_COLORS.ink3} />
-                  ) : (
-                    <Eye size={20} color={ICON_COLORS.ink3} />
-                  )}
-                </Pressable>
-              }
-            />
-
-            {password ? <PasswordChecklist password={password} /> : null}
-
-            <TextField
-              ref={confirmRef}
-              label="Confirmar contraseña"
-              placeholder="Repite tu contraseña"
-              value={confirm}
-              onChangeText={setConfirm}
-              secureTextEntry={!showConfirm}
-              autoComplete="new-password"
-              returnKeyType="go"
-              onSubmitEditing={onSubmit}
-              error={errors.confirm}
-              rightElement={
-                <Pressable
-                  onPress={() => setShowConfirm((v) => !v)}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={showConfirm ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                >
-                  {showConfirm ? (
-                    <EyeOff size={20} color={ICON_COLORS.ink3} />
-                  ) : (
-                    <Eye size={20} color={ICON_COLORS.ink3} />
-                  )}
-                </Pressable>
-              }
-            />
-
-            <ErrorCard message={errors.form} />
-
-            <Button label="Crear cuenta" onPress={onSubmit} loading={signUp.isPending} />
-          </>
-        )}
-      </View>
-    </Screen>
+                <ArrowRight
+                  size={15}
+                  color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk}
+                />
+              </Pressable>
+            </Link>
+          </View>
+        </View>
+      </StaggerItem>
+    </AuthShell>
   );
 }

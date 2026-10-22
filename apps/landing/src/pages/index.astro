@@ -51,7 +51,7 @@ const promises = [
       </div>
       <div class="relative mx-auto max-w-6xl px-4 sm:px-6">
         <div class="mx-auto max-w-2xl text-center">
-          <p class="eyebrow">Web, iPhone, Android y tablet</p>
+          <p class="eyebrow">En el navegador de tu compu, tablet o celular</p>
           <h2 class="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Una cuenta. Todas tus pantallas.</h2>
           <p class="mt-4 text-ink-2-dark sm:text-lg">
             Revisa el mes en la compu, registra el café desde el celular. Todo se sincroniza solo.
@@ -112,7 +112,7 @@ const promises = [
           Que la próxima quincena sí rinda.
         </h2>
         <p class="mx-auto mt-5 max-w-lg text-lg text-ink/70">
-          Crea tu cuenta gratis y registra tu primer movimiento en menos de un minuto.
+          Crea tu cuenta gratis y empieza a registrar tus movimientos hoy.
         </p>
         <div class="mt-8 flex flex-wrap justify-center gap-3">
           <a href={signUpUrl} class="btn-ink px-6 py-3.5 text-base">Crear cuenta gratis <Icon name="arrowRight" /></a>
@@ -126,10 +126,13 @@ const promises = [
   <footer class="border-t border-line-dark">
     <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-ink-2-dark sm:flex-row sm:px-6">
       <p>© {new Date().getFullYear()} Genobills</p>
-      <div class="flex gap-4">
+      <nav class="flex flex-wrap justify-center gap-x-4 gap-y-2">
         <a href={signInUrl} class="hover:text-ink-dark">Entrar</a>
         <a href={signUpUrl} class="hover:text-ink-dark">Crear cuenta</a>
-      </div>
+        <a href="/terminos" class="hover:text-ink-dark">Términos</a>
+        <a href="/privacidad" class="hover:text-ink-dark">Privacidad</a>
+        <a href="/cookies" class="hover:text-ink-dark">Cookies</a>
+      </nav>
     </div>
   </footer>
 </Base>

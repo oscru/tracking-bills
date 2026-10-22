@@ -12,6 +12,7 @@ import {
 import { DesktopSidebar } from '../../features/navigation/desktop-sidebar';
 import { NotificationSync } from '../../features/notifications/notification-sync';
 import { LedgerSync } from '../../features/sync/ledger-sync';
+import { LegalGate } from '../../features/legal/legal-gate';
 import { ThemeSync } from '../../features/settings/theme-sync';
 import { WelcomeTour } from '../../features/tour/welcome-tour';
 
@@ -59,6 +60,9 @@ export default function AppRootLayout() {
           <AppTabBar tabs={TABS} />
         </>
       )}
+      {/* Last, over everything (navbar included): accepting the current
+      legal documents comes before using the app. */}
+      <LegalGate />
     </TabBarActionProvider>
   );
 }

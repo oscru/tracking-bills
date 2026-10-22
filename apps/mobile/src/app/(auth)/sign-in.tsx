@@ -10,6 +10,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { AuthShell } from '../../features/auth/auth-shell';
 import { SsoButtons } from '../../features/auth/sso-buttons';
+import { SsoLegalNotice } from '../../features/legal/legal';
 
 export default function SignIn() {
   const signIn = useSignIn();
@@ -120,7 +121,10 @@ export default function SignIn() {
 
       <StaggerItem index={4}>
         <View className="gap-6">
-          <SsoButtons />
+          <View className="gap-3">
+            <SsoButtons />
+            <SsoLegalNotice />
+          </View>
 
           <View className="flex-row items-center justify-center gap-1.5 rounded-ctl bg-surface px-4 py-3.5 dark:bg-surface-dark">
             <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿Nuevo en Genobills?</Text>

@@ -8,6 +8,7 @@ import {
   type SignInInput,
   type SignUpInput,
 } from '../validators';
+import { LEGAL_VERSION } from '../legal';
 import { supabase } from './client';
 import { SupabaseError } from './internal';
 
@@ -39,14 +40,16 @@ export interface SignUpResult {
 }
 
 export async function signUpWithPassword(input: SignUpInput): Promise<SignUpResult> {
-  const { email, password, fullName, birthDate, gender } = signUpSchema.parse(input);
+  const { email, password, fullName } = signUpSchema.parse(input);
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     // Read by the `handle_new_user` trigger into the new profile row — the
     // only way to get these fields there even when email confirmation
     // delays having an authenticated session to update the row directly.
-    options: { data: { full_name: fullName, birth_date: birthDate, gender } },
+    // `legal_version`: what the person just accepted in the form (the
+    // schema only lets this through with the checkbox ticked).
+    options: { data: { full_name: fullName, legal_version: LEGAL_VERSION } },
   });
   if (error) throw new AuthCallError(error);
   return {

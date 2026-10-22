@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
+import { LEGAL_LABELS, openLegal } from '../../../features/legal/legal';
 import { ProfileSkeleton } from '../../../features/profile/profile-skeleton';
 
 const GENDER_LABEL: Record<Gender, string> = {
@@ -28,10 +29,13 @@ export default function ProfileScreen() {
   const rows = [
     { label: 'Nombre', value: profile?.full_name ?? UNSET_LABEL },
     {
-      label: 'Fecha de nacimiento',
+      label: 'Fecha de nacimiento (opcional)',
       value: profile?.birth_date ? formatDate(profile.birth_date) : UNSET_LABEL,
     },
-    { label: 'Género', value: profile?.gender ? GENDER_LABEL[profile.gender] : UNSET_LABEL },
+    {
+      label: 'Género (opcional)',
+      value: profile?.gender ? GENDER_LABEL[profile.gender] : UNSET_LABEL,
+    },
   ];
 
   return (
@@ -60,6 +64,35 @@ export default function ProfileScreen() {
                   <Text className="text-base text-ink dark:text-ink-dark">{r.value}</Text>
                 </View>
               ))}
+            </View>
+
+            <View className="gap-2">
+              <Text className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
+                Legal
+              </Text>
+              <View className="overflow-hidden rounded-2xl border border-line dark:border-line-dark">
+                {(['terms', 'privacy', 'cookies'] as const).map((doc, i) => (
+                  <Pressable
+                    key={doc}
+                    onPress={() => openLegal(doc)}
+                    accessibilityRole="link"
+                    className={`flex-row items-center justify-between px-4 py-3.5 active:opacity-70 ${
+                      i > 0 ? 'border-t border-line dark:border-line-dark' : ''
+                    }`}
+                  >
+                    <Text className="text-base text-ink dark:text-ink-dark">
+                      {LEGAL_LABELS[doc]}
+                    </Text>
+                    <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text>
+                  </Pressable>
+                ))}
+              </View>
+              {profile?.legal_accepted_at ? (
+                <Text className="px-1 text-xs text-ink-3 dark:text-ink-3-dark">
+                  Aceptaste la versión {profile.legal_version} el{' '}
+                  {formatDate(profile.legal_accepted_at.slice(0, 10))}.
+                </Text>
+              ) : null}
             </View>
           </View>
         )}
