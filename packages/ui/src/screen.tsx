@@ -26,6 +26,15 @@ export interface ScreenProps {
    * and narrow windows always use the mobile column.
    */
   width?: ScreenWidth;
+  /**
+   * `scroll` only: pinned above the scrolling content, in the same column
+   * (a page header that stays put while the rest scrolls). The scroll area
+   * itself spans the whole screen, so the wheel/touch works in the side
+   * gutters too — not only over the column.
+   */
+  header?: ReactNode;
+  /** `scroll` only: e.g. off while something on the page is being dragged. */
+  scrollEnabled?: boolean;
 }
 
 export function Screen({
@@ -35,6 +44,8 @@ export function Screen({
   center = false,
   scroll = false,
   width = 'narrow',
+  header,
+  scrollEnabled = true,
 }: ScreenProps) {
   const desktop = useIsDesktop();
   // Android only (0 on iOS) — see `useKeyboardHeight`'s doc comment for why
@@ -62,19 +73,29 @@ export function Screen({
   const vertical = `pt-3 ${includesBottomEdge(edges) ? 'pb-4' : 'pb-1'}`;
 
   const content = scroll ? (
-    <ScrollView
-      className="flex-1"
-      contentContainerClassName={`grow px-5 ${vertical} ${web} ${center ? 'justify-center' : ''} ${className}`}
-      contentContainerStyle={[
-        columnStyle,
-        tabBarInset > 0 ? { paddingBottom: tabBarInset + 24 } : undefined,
-      ]}
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="interactive"
-      showsVerticalScrollIndicator={false}
-    >
-      {children}
-    </ScrollView>
+    <>
+      {header ? (
+        <View className={`px-5 pt-3 ${web}`} style={columnStyle}>
+          {header}
+        </View>
+      ) : null}
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName={`grow px-5 ${vertical} ${web} ${center ? 'justify-center' : ''} ${className}`}
+        contentContainerStyle={[
+          columnStyle,
+          // Under a pinned header: just a gap, not the page's top padding again.
+          header ? { paddingTop: 20 } : undefined,
+          tabBarInset > 0 ? { paddingBottom: tabBarInset + 24 } : undefined,
+        ]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={scrollEnabled}
+      >
+        {children}
+      </ScrollView>
+    </>
   ) : (
     <View
       className={`flex-1 px-5 ${vertical} ${web} ${center ? 'justify-center' : ''} ${className}`}

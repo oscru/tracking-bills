@@ -466,6 +466,7 @@ export type Database = {
           full_name: string | null
           gender: string | null
           has_seen_tour: boolean
+          home_grid: Json | null
           home_hidden_items: string[]
           home_layout: string[] | null
           id: string
@@ -485,6 +486,7 @@ export type Database = {
           full_name?: string | null
           gender?: string | null
           has_seen_tour?: boolean
+          home_grid?: Json | null
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id: string
@@ -504,6 +506,7 @@ export type Database = {
           full_name?: string | null
           gender?: string | null
           has_seen_tour?: boolean
+          home_grid?: Json | null
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id?: string

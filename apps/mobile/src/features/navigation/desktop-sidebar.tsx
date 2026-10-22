@@ -92,14 +92,27 @@ function writeCollapsed(collapsed: boolean) {
  * "Seguridad" (fingerprint/Face ID lock) and "Ver tour de nuevo" are
  * phone-only, and "Preferencias" lives in the user menu at the bottom.
  */
-const SETTINGS_ITEMS: { segment: string; label: string; icon: LucideIcon }[] = [
+const SETTINGS_ITEMS: {
+  segment: string;
+  label: string;
+  icon: LucideIcon;
+  /** Somewhere other than its settings screen. */
+  href?: Href;
+}[] = [
   { segment: 'accounts', label: 'Cuentas', icon: WalletCards },
   { segment: 'categories', label: 'Categorías', icon: Shapes },
   { segment: 'tags', label: 'Tags', icon: Tag },
   { segment: 'budgets', label: 'Presupuestos', icon: Gauge },
   { segment: 'goals', label: 'Objetivos', icon: Target },
   { segment: 'peers', label: 'Personas', icon: UsersRound },
-  { segment: 'home-layout', label: 'Editar dashboard', icon: LayoutTemplate },
+  // Opens the dashboard's own edit mode (move, resize, add, remove widgets)
+  // rather than the phone's widgets-on/off settings screen.
+  {
+    segment: 'home-layout',
+    label: 'Personalizar dashboard',
+    icon: LayoutTemplate,
+    href: { pathname: '/(app)', params: { edit: '1' } },
+  },
   { segment: 'notifications', label: 'Avisos y recordatorios', icon: BellRing },
   { segment: 'import-export', label: 'Importar y exportar', icon: FileSpreadsheet },
 ];
@@ -140,7 +153,9 @@ function SubItem({
         gap: 10,
         height: 36,
         paddingLeft: 26,
-        paddingRight: 12,
+        // Nothing trails the label — tight, so the longer ones
+        // ("Personalizar dashboard") fit without truncating.
+        paddingRight: 6,
         borderRadius: 12,
         backgroundColor: bg(state),
       })}
@@ -541,23 +556,31 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
         >
           <Animated.View style={[{ marginBottom: 28 }, headerStyle]}>
             <View className={`items-center gap-2.5 ${rail ? 'flex-col' : 'flex-row px-1'}`}>
-              <View className="h-9 w-9 items-center justify-center overflow-hidden rounded-[11px]">
-                <GradientFill radius={11} />
-                <Text selectable={false} className="text-lg">
-                  💸
-                </Text>
-              </View>
-              {rail ? null : (
-                <Animated.View style={[{ flex: 1 }, labelStyle]}>
-                  <Text
-                    selectable={false}
-                    style={{ color: ON_INK }}
-                    className="text-[17px] font-extrabold tracking-tight"
-                  >
-                    Genobills
+              {/* The logo (and name) take you home, like most dashboards. */}
+              <Pressable
+                onPress={() => router.navigate('/(app)')}
+                accessibilityRole="link"
+                accessibilityLabel="Ir a Inicio"
+                className={`items-center gap-2.5 active:opacity-70 ${rail ? '' : 'flex-1 flex-row'}`}
+              >
+                <View className="h-9 w-9 items-center justify-center overflow-hidden rounded-[11px]">
+                  <GradientFill radius={11} />
+                  <Text selectable={false} className="text-lg">
+                    💸
                   </Text>
-                </Animated.View>
-              )}
+                </View>
+                {rail ? null : (
+                  <Animated.View style={[{ flex: 1 }, labelStyle]}>
+                    <Text
+                      selectable={false}
+                      style={{ color: ON_INK }}
+                      className="text-[17px] font-extrabold tracking-tight"
+                    >
+                      Genobills
+                    </Text>
+                  </Animated.View>
+                )}
+              </Pressable>
               {/* The bell sits with the sidebar's own controls — the usual dashboard
         spot — instead of being one more section in the navigation. */}
               {/* On the rail, it fades into the room the header grew for it. */}
@@ -625,7 +648,9 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
                             label={item.label}
                             active={settingsSection === item.segment}
                             onPress={() =>
-                              router.navigate(`/(app)/settings/${item.segment}` as Href)
+                              router.navigate(
+                                item.href ?? (`/(app)/settings/${item.segment}` as Href),
+                              )
                             }
                           />
                         ))}
@@ -767,7 +792,7 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
               active={settingsSection === item.segment}
               onPress={() => {
                 closeFlyout();
-                router.navigate(`/(app)/settings/${item.segment}` as Href);
+                router.navigate(item.href ?? (`/(app)/settings/${item.segment}` as Href));
               }}
             />
           ))}

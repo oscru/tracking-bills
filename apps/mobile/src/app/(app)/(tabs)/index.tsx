@@ -18,21 +18,28 @@ import {
   splitPendingByDate,
   todayISODate,
   totalsByCurrencyFromBalances,
-  visibleHomeLayout,
   type HomeLayoutItem,
   getDateFormat,
 } from '@repo/core/utils';
-import { Screen, StaggerItem, ICON_COLORS, useIsDesktop, useTabBarScrollPadding } from '@repo/ui';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { Calendar, ChevronRight, Clock, Eye, EyeOff } from 'lucide-react-native';
+import { Screen, ICON_COLORS, useIsDesktop } from '@repo/ui';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Calendar, Check, ChevronRight, Clock, Eye, EyeOff, LayoutGrid } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 
 import { AccountIcon } from '../../../features/accounts/account-icon';
+import { CardScrollView } from '../../../features/design/card-scroll-view';
 import { BudgetsCard } from '../../../features/home/budgets-card';
 import { CategorySpendCard } from '../../../features/home/category-spend-card';
 import { useProgressiveCount, WidgetPlaceholder } from '../../../features/home/deferred-widgets';
+import {
+  AddWidgetsSheet,
+  EditToolbar,
+  FixedInEdit,
+  useHomeEditor,
+} from '../../../features/home/home-editor';
+import { WidgetGrid } from '../../../features/home/widget-grid';
 import { HomeSkeleton } from '../../../features/home/home-skeleton';
 import { MonthPickerSheet } from '../../../features/home/month-picker-sheet';
 import { MonthSwiper } from '../../../features/home/month-swiper';
@@ -40,6 +47,7 @@ import { RollingNumber } from '../../../features/home/rolling-number';
 import { MonthlyTrendChart } from '../../../features/home/monthly-trend-chart';
 import { NotificationBell } from '../../../features/notifications/notification-bell';
 import { WeeklySpendCard } from '../../../features/home/weekly-spend-card';
+import { useTabBarAction } from '../../../features/navigation/floating-tab-bar';
 
 // The balance's type, spelled out — the rolling digits need the exact line
 // height (it's each wheel's window). Matches text-4xl font-bold tracking-tight.
@@ -58,7 +66,6 @@ const PENDING_FILTER = { isCompleted: false } as const;
 const INITIAL_WIDGETS = 1;
 
 export default function HomeScreen() {
-  const scrollPadding = useTabBarScrollPadding();
   const desktop = useIsDesktop();
   // The three headline numbers fit side by side only on a roomy window;
   // on a small desktop the balance gets its own row.
@@ -80,13 +87,43 @@ export default function HomeScreen() {
   // Bumped each time Inicio comes into view — replays the balance's roll.
   const [rollKey, setRollKey] = useState(0);
   useFocusEffect(useCallback(() => setRollKey((k) => k + 1), []));
-  const layoutOrder = useMemo(
-    () => visibleHomeLayout(profile?.home_layout, profile?.home_hidden_items),
-    [profile],
+  // The widget matrix — its own layout per device (4 columns on desktop, 2
+  // on phones). Edit mode ("Personalizar") works on a draft, saved on "Listo".
+  const device = desktop ? 'desktop' : 'mobile';
+  const editor = useHomeEditor(profile ?? undefined, device);
+  const editing = editor.editing;
+  const [dragging, setDragging] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  // While editing, the navbar's action (the "+") becomes "Listo".
+  useTabBarAction(
+    editing ? { icon: Check, accessibilityLabel: 'Listo', onPress: editor.done } : null,
   );
-  // The widgets below the balance mount progressively: the first ones with
-  // the screen, the rest one per frame right after (see useProgressiveCount).
-  const mountedWidgets = useProgressiveCount(layoutOrder.length, INITIAL_WIDGETS);
+  // Leaving Inicio mid-edit keeps what you did, like tapping "Listo".
+  const doneRef = useRef(editor.done);
+  useEffect(() => {
+    doneRef.current = editor.done;
+  });
+  useFocusEffect(useCallback(() => () => doneRef.current(), []));
+  // Opciones › Inicio links here with `?edit=1` to open edit mode.
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
+  const startRef = useRef(editor.start);
+  useEffect(() => {
+    startRef.current = editor.start;
+  });
+  useEffect(() => {
+    if (edit === '1' && profile) {
+      startRef.current();
+      router.setParams({ edit: undefined });
+    }
+  }, [edit, profile, router]);
+  // The widgets mount progressively: the first ones with the screen, the
+  // rest one per frame right after (see useProgressiveCount) — in the
+  // order they sit on screen, top to bottom.
+  const mountOrder = useMemo(
+    () => [...editor.items].sort((a, b) => a.y - b.y || a.x - b.x).map((it) => it.id),
+    [editor.items],
+  );
+  const mountedWidgets = useProgressiveCount(mountOrder.length, INITIAL_WIDGETS);
 
   const active = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
   const visibleAccounts = useMemo(() => active.filter((a) => a.show_on_home), [active]);
@@ -200,7 +237,7 @@ export default function HomeScreen() {
               params: { pending: '1', to: addDaysISO(today, -1) },
             })
           }
-          className="flex-row items-center gap-3 rounded-2xl bg-warning-tint p-4 active:opacity-80 dark:bg-warning-tint-dark"
+          className="flex-1 flex-row items-center gap-3 bg-warning-tint p-4 active:opacity-80 dark:bg-warning-tint-dark"
         >
           <View className="h-10 w-10 items-center justify-center rounded-full bg-surface dark:bg-surface-dark">
             <Clock size={20} color={dark ? ICON_COLORS.warningDark : ICON_COLORS.warning} />
@@ -227,7 +264,7 @@ export default function HomeScreen() {
               params: { pending: '1', from: today },
             })
           }
-          className="flex-row items-center gap-3 rounded-2xl bg-lime-tint p-4 active:opacity-80 dark:bg-lime-tint-dark"
+          className="flex-1 flex-row items-center gap-3 bg-lime-tint p-4 active:opacity-80 dark:bg-lime-tint-dark"
         >
           <View className="h-10 w-10 items-center justify-center rounded-full bg-surface dark:bg-surface-dark">
             <Calendar size={20} color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk} />
@@ -248,7 +285,7 @@ export default function HomeScreen() {
         </Pressable>
       ) : null,
 
-    budgets: <BudgetsCard />,
+    budgets: <BudgetsCard fill />,
 
     categorySpend:
       categoryBreakdowns.length === 0 ? (
@@ -257,16 +294,24 @@ export default function HomeScreen() {
           currency={currency}
           onSeeAll={openMonthlySpending}
           onSelectCategory={openCategory}
+          fill
+        />
+      ) : categoryBreakdowns.length === 1 ? (
+        <CategorySpendCard
+          breakdown={categoryBreakdowns[0]!.breakdown}
+          currency={categoryBreakdowns[0]!.currency}
+          onSeeAll={openMonthlySpending}
+          onSelectCategory={openCategory}
+          fill
         />
       ) : (
-        <View className="gap-3">
+        // One card per currency, stacked — the whole stack scrolls in the cell.
+        <CardScrollView className="flex-1" contentContainerClassName="gap-3">
           {categoryBreakdowns.map((g) => (
             <View key={g.currency} className="gap-1.5">
-              {categoryBreakdowns.length > 1 ? (
-                <Text className="px-1 text-xs font-semibold text-ink-3 dark:text-ink-3-dark">
-                  {g.currency}
-                </Text>
-              ) : null}
+              <Text className="px-1 text-xs font-semibold text-ink-3 dark:text-ink-3-dark">
+                {g.currency}
+              </Text>
               <CategorySpendCard
                 breakdown={g.breakdown}
                 currency={g.currency}
@@ -275,17 +320,28 @@ export default function HomeScreen() {
               />
             </View>
           ))}
-        </View>
+        </CardScrollView>
       ),
 
-    weeklySpend: <WeeklySpendCard onPress={() => router.push('/(app)/analytics')} />,
+    weeklySpend: <WeeklySpendCard fill onPress={() => router.push('/(app)/analytics')} />,
 
-    monthlyTrend: <MonthlyTrendChart />,
+    monthlyTrend: <MonthlyTrendChart fill />,
 
+    // Fills its grid cell: the header stays put and the list scrolls.
     accounts: (
-      <View className="gap-2">
-        <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Tus cuentas</Text>
-        <View className="rounded-card border border-line dark:border-line-dark">
+      <View className="flex-1 gap-2 p-4">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Tus cuentas</Text>
+          <Pressable onPress={() => router.push('/(app)/settings/accounts')} hitSlop={8}>
+            <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
+              Ver todas ›
+            </Text>
+          </Pressable>
+        </View>
+        <CardScrollView
+          className="shrink grow-0 overflow-hidden rounded-card border border-line dark:border-line-dark"
+          gutter={false}
+        >
           {visibleAccounts.map((a, i) => (
             <Pressable
               key={a.id}
@@ -310,7 +366,7 @@ export default function HomeScreen() {
                 : 'No tienes cuentas visibles aquí — actívalas desde Cuenta › Mostrar en inicio.'}
             </Text>
           ) : null}
-        </View>
+        </CardScrollView>
       </View>
     ),
   };
@@ -415,65 +471,130 @@ export default function HomeScreen() {
     </View>
   );
 
-  // Widgets mounted after the first frame fade in as they arrive, without
-  // the cascade delay of their position.
-  const renderWidget = (key: HomeLayoutItem, i: number) =>
-    i < mountedWidgets ? (
-      <StaggerItem key={key} index={i < INITIAL_WIDGETS ? i : 0}>
-        {cards[key]}
-      </StaggerItem>
-    ) : (
-      <WidgetPlaceholder key={key} />
-    );
-  const REMINDERS: HomeLayoutItem[] = ['pending', 'upcoming'];
-  const reminderKeys = layoutOrder.filter((k) => REMINDERS.includes(k) && cards[k] != null);
-  const gridKeys = layoutOrder.filter((k) => !REMINDERS.includes(k));
+  // A widget not mounted yet shows a skeleton in its cell (its cell fades
+  // in once it is — see `WidgetGrid`).
+  const renderWidget = (key: HomeLayoutItem) =>
+    !editing && mountOrder.indexOf(key) >= mountedWidgets ? <WidgetPlaceholder /> : cards[key];
 
-  return (
-    <Screen edges={['top']} className="gap-5" width="wide">
-      {desktop ? (
-        // Desktop: a page header — greeting on the left, month on the right —
-        // ruled off from the widgets, which scroll under it on the same
-        // background.
-        <View className="flex-row items-end justify-between border-b border-line pb-5 dark:border-line-dark">
-          <View className="gap-1">
-            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-              {greeting}
-              {firstName ? `, ${firstName}` : ''}
-            </Text>
-            <Text className="text-3xl font-extrabold tracking-tight text-ink dark:text-ink-dark">
-              Tu resumen
-            </Text>
-          </View>
-          <MonthSwiper
-            yearLabel={yearLabel}
-            monthLabel={monthLabel}
-            isCurrentMonth={isCurrentMonth}
-            monthKey={selectedMonth}
-            onShift={shiftMonth}
-            onOpenPicker={() => setMonthPickerOpen(true)}
-          />
+  const grid = (
+    <WidgetGrid
+      items={editor.items}
+      device={device}
+      editing={editing}
+      longPress={!desktop}
+      renderWidget={renderWidget}
+      onChange={editor.setItems}
+      onRemove={editor.remove}
+      onDraggingChange={setDragging}
+    />
+  );
+
+  // Edit mode: the matrix alone, full width — the widgets to add live in a
+  // floating sheet opened from the edit bar, not beside what you arrange.
+  const editGrid = (
+    <View>
+      {editor.items.length === 0 ? (
+        <View className="mb-3 items-center rounded-card border-2 border-dashed border-line px-6 py-6 dark:border-line-dark">
+          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+            Tu inicio está vacío
+          </Text>
+          <Text className="mt-0.5 text-xs text-ink-3 dark:text-ink-3-dark">
+            Toca Agregar para sumar widgets.
+          </Text>
         </View>
-      ) : (
-        <View className="relative">
-          <MonthSwiper
-            yearLabel={yearLabel}
-            monthLabel={monthLabel}
-            isCurrentMonth={isCurrentMonth}
-            monthKey={selectedMonth}
-            onShift={shiftMonth}
-            onOpenPicker={() => setMonthPickerOpen(true)}
-          />
-          {/* Pinned to the row's right edge so the month selector stays centered.
+      ) : null}
+      {grid}
+    </View>
+  );
+
+  // Phones only: on desktop it's "Personalizar dashboard" in the sidebar's
+  // Opciones (which links here with `?edit=1`).
+  const customizeButton = (
+    <Pressable
+      onPress={editor.start}
+      accessibilityRole="button"
+      accessibilityLabel="Personalizar inicio"
+      hitSlop={6}
+      className="h-9 w-9 items-center justify-center rounded-full border border-line bg-surface active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
+    >
+      <LayoutGrid size={17} color={dark ? ICON_COLORS.inkDark : ICON_COLORS.ink} />
+    </Pressable>
+  );
+
+  // The page header stays pinned; everything else scrolls — in a scroll
+  // area as wide as the screen (see `Screen`'s `header`), so the wheel works
+  // over the side gutters too, not just over the content column.
+  const pageHeader = editing ? (
+    <EditToolbar
+      onDone={editor.done}
+      onCancel={editor.cancel}
+      onReset={editor.reset}
+      compact={!desktop}
+      error={editor.saveError}
+      onOpenAdd={() => setAddOpen(true)}
+      addCount={editor.available.length}
+    />
+  ) : desktop ? (
+    // Desktop: a page header — greeting on the left, month on the right —
+    // ruled off from the widgets, which scroll under it on the same
+    // background.
+    <View className="flex-row items-end justify-between border-b border-line pb-5 dark:border-line-dark">
+      <View className="gap-1">
+        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
+          {greeting}
+          {firstName ? `, ${firstName}` : ''}
+        </Text>
+        <Text className="text-3xl font-extrabold tracking-tight text-ink dark:text-ink-dark">
+          Tu resumen
+        </Text>
+      </View>
+      <View className="flex-row items-center gap-4">
+        <MonthSwiper
+          yearLabel={yearLabel}
+          monthLabel={monthLabel}
+          isCurrentMonth={isCurrentMonth}
+          monthKey={selectedMonth}
+          onShift={shiftMonth}
+          onOpenPicker={() => setMonthPickerOpen(true)}
+        />
+      </View>
+    </View>
+  ) : (
+    <View className="relative">
+      <MonthSwiper
+        yearLabel={yearLabel}
+        monthLabel={monthLabel}
+        isCurrentMonth={isCurrentMonth}
+        monthKey={selectedMonth}
+        onShift={shiftMonth}
+        onOpenPicker={() => setMonthPickerOpen(true)}
+      />
+      <View className="absolute bottom-0 left-0 top-0 justify-center">{customizeButton}</View>
+      {/* Pinned to the row's right edge so the month selector stays centered.
         Desktop has the notifications in the sidebar. */}
-          {desktop ? null : (
-            <View className="absolute bottom-0 right-0 top-0 justify-center">
-              <NotificationBell />
-            </View>
-          )}
+      {desktop ? null : (
+        <View className="absolute bottom-0 right-0 top-0 justify-center">
+          <NotificationBell />
         </View>
       )}
+    </View>
+  );
 
+  return (
+    <Screen
+      edges={['top']}
+      className="gap-5"
+      width="wide"
+      scroll
+      header={pageHeader}
+      scrollEnabled={!dragging}
+    >
+      <AddWidgetsSheet
+        visible={editing && addOpen}
+        onClose={() => setAddOpen(false)}
+        available={editor.available}
+        onAdd={editor.add}
+      />
       <MonthPickerSheet
         visible={monthPickerOpen}
         onClose={() => setMonthPickerOpen(false)}
@@ -486,51 +607,26 @@ export default function HomeScreen() {
       />
 
       {loading ? (
-        <ScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: scrollPadding }}
-        >
-          <HomeSkeleton />
-        </ScrollView>
+        <HomeSkeleton />
       ) : (
-        <ScrollView
-          className="flex-1"
-          contentContainerClassName="gap-5"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: scrollPadding }}
-        >
-          {kpisInline ? (
-            // Desktop: the three headline numbers side by side.
-            <View className="flex-row gap-5">
-              <View style={{ flex: 1.3 }}>{balanceCard}</View>
-              <View className="flex-1">{monthCards}</View>
-            </View>
-          ) : (
-            <>
-              {balanceCard}
-              {monthCards}
-            </>
-          )}
-
-          {desktop ? (
-            <>
-              {/* Reminders span the full width; the rest flow into two columns. */}
-              {reminderKeys.map((key) => renderWidget(key, layoutOrder.indexOf(key)))}
-              <View className="flex-row items-start gap-5">
-                {[0, 1].map((col) => (
-                  <View key={col} className="flex-1 gap-5">
-                    {gridKeys
-                      .filter((_, i) => i % 2 === col)
-                      .map((key) => renderWidget(key, layoutOrder.indexOf(key)))}
-                  </View>
-                ))}
+        <>
+          <FixedInEdit editing={editing}>
+            {kpisInline ? (
+              // Desktop: the three headline numbers side by side.
+              <View className="flex-row gap-5">
+                <View style={{ flex: 1.3 }}>{balanceCard}</View>
+                <View className="flex-1">{monthCards}</View>
               </View>
-            </>
-          ) : (
-            layoutOrder.map((key, i) => renderWidget(key, i))
-          )}
-        </ScrollView>
+            ) : (
+              <View className="gap-5">
+                {balanceCard}
+                {monthCards}
+              </View>
+            )}
+          </FixedInEdit>
+
+          {editing ? editGrid : grid}
+        </>
       )}
     </Screen>
   );

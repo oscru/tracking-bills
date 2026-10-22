@@ -8,20 +8,30 @@ import {
   previousPeriodRange,
   todayISODate,
 } from '@repo/core/utils';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const BAR_MAX_HEIGHT = 40;
+// `fill`: the weekday letters under the bars, and the shortest bars may get.
+const DAY_LABEL_HEIGHT = 20;
+const FILL_MIN_BAR_HEIGHT = 32;
 
 interface Props {
   onPress: () => void;
+  /**
+   * Fill the parent (a Home grid cell): the bars grow into the room the
+   * card has, instead of a fixed 40px.
+   */
+  fill?: boolean;
 }
 
 /** Home screen card: this week's spend at a glance — total, vs. last week,
  * and a Mon–Sun mini bar chart. Taps through to the full Análisis tab. One
  * section per currency present, never blended together. */
-export function WeeklySpendCard({ onPress }: Props) {
+export function WeeklySpendCard({ onPress, fill = false }: Props) {
+  // `fill`: the height left for the bars (one currency; several stack at the fixed height).
+  const [barsArea, setBarsArea] = useState(0);
   const now = useMemo(() => new Date(), []);
   // Just this week and the one before (what the card compares) — not the
   // whole history.
@@ -47,7 +57,9 @@ export function WeeklySpendCard({ onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
-      className="gap-4 rounded-card bg-surface p-5 active:opacity-80 dark:bg-surface-dark"
+      className={`gap-4 rounded-card bg-surface p-5 active:opacity-80 dark:bg-surface-dark ${
+        fill ? 'flex-1' : ''
+      }`}
     >
       <View className="flex-row items-center justify-between">
         <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
@@ -59,8 +71,12 @@ export function WeeklySpendCard({ onPress }: Props) {
       </View>
 
       {hasData ? (
-        <View className="gap-4">
+        <View className={fill ? 'flex-1 gap-4' : 'gap-4'}>
           {groups.map(({ currency, insights, days }) => {
+            const grow = fill && groups.length === 1;
+            const barMax = grow
+              ? Math.max(FILL_MIN_BAR_HEIGHT, barsArea - DAY_LABEL_HEIGHT)
+              : BAR_MAX_HEIGHT;
             const maxDay = Math.max(1, ...days.map((d) => d.total));
             const changeUp = (insights.pctChangeVsPrevious ?? 0) >= 0;
             // More spend is worse, so "up" reads as bad (red) and "down" as
@@ -74,7 +90,7 @@ export function WeeklySpendCard({ onPress }: Props) {
                   : 'text-pos dark:text-pos-dark';
 
             return (
-              <View key={currency} className="gap-2">
+              <View key={currency} className={grow ? 'flex-1 gap-2' : 'gap-2'}>
                 {groups.length > 1 ? (
                   <Text className="text-xs font-semibold text-ink-3 dark:text-ink-3-dark">
                     {currency}
@@ -93,20 +109,23 @@ export function WeeklySpendCard({ onPress }: Props) {
                   ) : null}
                 </View>
 
-                <View className="flex-row items-end gap-2">
+                <View
+                  className={grow ? 'flex-1 flex-row items-end gap-2' : 'flex-row items-end gap-2'}
+                  onLayout={grow ? (e) => setBarsArea(e.nativeEvent.layout.height) : undefined}
+                >
                   {days.map((d, i) => {
                     const isToday = d.date === today;
                     return (
                       <View key={d.date} className="flex-1 items-center gap-1.5">
                         <View
                           className="w-full items-center justify-end"
-                          style={{ height: BAR_MAX_HEIGHT }}
+                          style={{ height: barMax }}
                         >
                           <View
                             className={`w-full rounded-t-[4px] ${
                               isToday ? 'bg-lime' : 'bg-lime-tint dark:bg-lime-tint-dark'
                             }`}
-                            style={{ height: Math.max(4, (d.total / maxDay) * BAR_MAX_HEIGHT) }}
+                            style={{ height: Math.max(4, (d.total / maxDay) * barMax) }}
                           />
                         </View>
                         <Text

@@ -8,6 +8,7 @@ export * from './errors';
 export * from './currencies';
 export * from './summaries';
 export { HOME_LAYOUT_ITEMS, type HomeLayoutItem };
+export * from '../home-grid';
 
 /**
  * Converts a DB-sourced amount to integer cents (`Math.round(amount * 100)`).

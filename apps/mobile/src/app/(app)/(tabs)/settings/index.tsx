@@ -107,8 +107,8 @@ export default function SettingsScreen() {
 
           <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
             <ListRow
-              title="Personalizar inicio"
-              subtitle="Orden de las tarjetas de la pantalla principal"
+              title="Widgets del inicio"
+              subtitle="Cuáles se muestran — acomódalos desde Personalizar"
               showChevron
               onPress={() => router.push('/(app)/settings/home-layout')}
             />

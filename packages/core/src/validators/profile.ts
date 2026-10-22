@@ -6,6 +6,20 @@ import { currencyCodeSchema } from './account';
 
 export const homeLayoutItemSchema = z.enum(HOME_LAYOUT_ITEMS);
 
+const gridItemSchema = z.object({
+  id: homeLayoutItemSchema,
+  x: z.number().int().min(0),
+  y: z.number().int().min(0),
+  w: z.number().int().min(1),
+  h: z.number().int().min(1),
+});
+
+/** `profiles.home_grid` — one layout per device, either may be absent. */
+export const homeGridSchema = z.object({
+  desktop: z.array(gridItemSchema).optional(),
+  mobile: z.array(gridItemSchema).optional(),
+});
+
 export const themePreferenceSchema = z.enum(['system', 'light', 'dark']);
 
 export const genderSchema = z.enum(['female', 'male', 'other', 'prefer_not_to_say']);
@@ -37,6 +51,8 @@ export const profileUpdateSchema = z.object({
   home_layout: z.array(homeLayoutItemSchema).optional(),
   /** Which of those cards are switched off entirely. */
   home_hidden_items: z.array(homeLayoutItemSchema).optional(),
+  /** Per-device widget matrix (position + size of each card) — see `home-grid.ts`. */
+  home_grid: homeGridSchema.optional(),
   /** Preselected by default when creating a new account — must stay one of `enabled_currencies`. */
   currency: currencyCodeSchema.optional(),
   /** The currency "pack" offered when picking an account's currency — a user-curated subset of ISO 4217. */
