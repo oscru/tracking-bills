@@ -3,7 +3,7 @@ import { toFriendlyMessage } from '@repo/core/utils';
 import { signUpSchema } from '@repo/core/validators';
 import { Button, ErrorCard, ICON_COLORS, StaggerItem, TextField } from '@repo/ui';
 import { Link } from 'expo-router';
-import { ArrowRight, Eye, EyeOff, Lock, Mail, MailCheck, User } from 'lucide-react-native';
+import { Eye, EyeOff, MailCheck } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
@@ -110,8 +110,8 @@ export default function SignUp() {
       <StaggerItem index={3}>
         <View className="gap-4">
           <TextField
-            label="Nombre"
-            placeholder="¿Cómo te llamamos?"
+            placeholder="Nombre"
+            accessibilityLabel="Nombre"
             value={fullName}
             onChangeText={setFullName}
             autoCapitalize="words"
@@ -121,12 +121,11 @@ export default function SignUp() {
             submitBehavior="submit"
             onSubmitEditing={() => emailRef.current?.focus()}
             error={errors.fullName}
-            leftElement={<User size={18} color={iconColor} />}
           />
           <TextField
             ref={emailRef}
-            label="Correo"
-            placeholder="tucorreo@ejemplo.com"
+            placeholder="Correo"
+            accessibilityLabel="Correo"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -138,12 +137,11 @@ export default function SignUp() {
             submitBehavior="submit"
             onSubmitEditing={() => passwordRef.current?.focus()}
             error={errors.email}
-            leftElement={<Mail size={18} color={iconColor} />}
           />
           <TextField
             ref={passwordRef}
-            label="Contraseña"
-            placeholder="Crea una contraseña segura"
+            placeholder="Contraseña"
+            accessibilityLabel="Contraseña"
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
@@ -153,7 +151,6 @@ export default function SignUp() {
             submitBehavior="submit"
             onSubmitEditing={() => confirmRef.current?.focus()}
             error={errors.password}
-            leftElement={<Lock size={18} color={iconColor} />}
             rightElement={
               <Pressable
                 onPress={() => setShowPassword((v) => !v)}
@@ -172,8 +169,8 @@ export default function SignUp() {
           {password ? <PasswordChecklist password={password} /> : null}
           <TextField
             ref={confirmRef}
-            label="Confirmar contraseña"
-            placeholder="Repite tu contraseña"
+            placeholder="Confirma tu contraseña"
+            accessibilityLabel="Confirma tu contraseña"
             value={confirm}
             onChangeText={setConfirm}
             secureTextEntry={!showPassword}
@@ -181,7 +178,6 @@ export default function SignUp() {
             returnKeyType="go"
             onSubmitEditing={onSubmit}
             error={errors.confirm}
-            leftElement={<Lock size={18} color={iconColor} />}
           />
 
           <LegalConsent
@@ -206,17 +202,13 @@ export default function SignUp() {
             <SsoLegalNotice />
           </View>
 
-          <View className="flex-row items-center justify-center gap-1.5 rounded-ctl bg-surface px-4 py-3.5 dark:bg-surface-dark">
+          <View className="flex-row items-center justify-center gap-1.5">
             <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿Ya tienes cuenta?</Text>
             <Link href="/(auth)/sign-in" asChild>
-              <Pressable hitSlop={8} className="flex-row items-center gap-1">
-                <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
+              <Pressable hitSlop={8}>
+                <Text className="text-sm font-semibold text-ink underline dark:text-ink-dark">
                   Inicia sesión
                 </Text>
-                <ArrowRight
-                  size={15}
-                  color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk}
-                />
               </Pressable>
             </Link>
           </View>

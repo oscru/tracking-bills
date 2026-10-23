@@ -28,7 +28,7 @@ function SsoButton({
       disabled={disabled}
       onPress={onPress}
       style={disabled ? { opacity: 0.5 } : undefined}
-      className="h-[52px] flex-1 flex-row items-center justify-center gap-2 rounded-ctl border border-line bg-surface px-3 active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
+      className="h-12 flex-1 flex-row items-center justify-center gap-2 rounded-ctl border border-line bg-surface px-3 active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
     >
       {loading ? (
         <ActivityIndicator color={iconColor} />
@@ -54,7 +54,7 @@ export function SsoButtons() {
     <View className="gap-4">
       <View className="flex-row items-center gap-3">
         <View className="h-px flex-1 bg-line dark:bg-line-dark" />
-        <Text className="text-xs font-medium text-ink-3 dark:text-ink-3-dark">O CONTINÚA CON</Text>
+        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">o</Text>
         <View className="h-px flex-1 bg-line dark:bg-line-dark" />
       </View>
 

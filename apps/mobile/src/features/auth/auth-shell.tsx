@@ -3,6 +3,7 @@ import { Moon, Sun } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useState, type ReactNode } from 'react';
 import {
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -25,8 +26,9 @@ import { setSignedOutTheme } from '../settings/theme-sync';
 /**
  * Layout for the auth screens. Desktop web: a split screen — a lime brand
  * "poster" on the left (big ink headline + tilted movement stickers), the
- * form on the right. Phones and narrow windows: one column with the logo
- * and a compact version of the poster above the form.
+ * form on the right. Phones and narrow windows: just the logo above the
+ * form — nothing else competing with it (the poster and the theme switch
+ * are desktop-only; on a phone the system theme rules).
  */
 export function AuthShell({ children }: { children: ReactNode }) {
   const desktop = useIsDesktop();
@@ -60,13 +62,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
     <Screen center scroll>
       <View className="gap-6">
         <StaggerItem index={0}>
-          <View className="flex-row items-center justify-between">
+          <View className="pb-2">
             <BrandMark />
-            <ThemeToggle />
           </View>
-        </StaggerItem>
-        <StaggerItem index={1}>
-          <CompactPoster />
         </StaggerItem>
         {children}
       </View>
@@ -99,15 +97,23 @@ function ThemeToggle() {
   );
 }
 
-/** Ink tile with a lime "G" + wordmark — inverted to a lime tile on the dark canvas, where ink would vanish. */
+// The app icon (same artwork as the web favicon).
+const BRAND_ICON = require('../../../assets/images/brand-icon.png') as number;
+
+/**
+ * The app icon + wordmark. On the lime poster, an ink tile with a lime "G"
+ * instead — the (lime) icon would vanish into it.
+ */
 function BrandMark({ onLime = false }: { onLime?: boolean }) {
   return (
     <View className="flex-row items-center gap-2.5">
-      <View
-        className={`h-10 w-10 items-center justify-center rounded-[12px] bg-ink ${onLime ? '' : 'dark:bg-lime'}`}
-      >
-        <Text className={`text-lg font-black text-lime ${onLime ? '' : 'dark:text-ink'}`}>G</Text>
-      </View>
+      {onLime ? (
+        <View className="h-10 w-10 items-center justify-center rounded-[12px] bg-ink">
+          <Text className="text-lg font-black text-lime">G</Text>
+        </View>
+      ) : (
+        <Image source={BRAND_ICON} style={{ width: 40, height: 40, borderRadius: 12 }} />
+      )}
       <Text
         className={`text-lg font-bold tracking-tight ${onLime ? 'text-ink' : 'text-ink dark:text-ink-dark'}`}
       >
@@ -129,7 +135,6 @@ type StickerProps = {
   /** `ink` (default) or a white sticker for contrast. */
   tone?: 'ink' | 'white';
   rotate: number;
-  small?: boolean;
   style?: ViewStyle;
 };
 
@@ -141,35 +146,24 @@ const STICKER_SHADOW: ViewStyle = {
   elevation: 8,
 };
 
-function Sticker({
-  emoji,
-  label,
-  amount,
-  income,
-  tone = 'ink',
-  rotate,
-  small,
-  style,
-}: StickerProps) {
+function Sticker({ emoji, label, amount, income, tone = 'ink', rotate, style }: StickerProps) {
   const white = tone === 'white';
   return (
     <View
-      className={`flex-row items-center self-start rounded-full ${small ? 'gap-2 py-2 pl-2 pr-3.5' : 'gap-3 py-2.5 pl-2.5 pr-5'} ${white ? 'bg-white' : 'bg-ink'}`}
+      className={`flex-row items-center gap-3 self-start rounded-full py-2.5 pl-2.5 pr-5 ${white ? 'bg-white' : 'bg-ink'}`}
       style={[STICKER_SHADOW, { transform: [{ rotate: `${rotate}deg` }] }, style]}
     >
       <View
-        className={`items-center justify-center rounded-full ${small ? 'h-8 w-8' : 'h-11 w-11'} ${white ? 'bg-canvas' : 'bg-white/10'}`}
+        className={`h-11 w-11 items-center justify-center rounded-full ${white ? 'bg-canvas' : 'bg-white/10'}`}
       >
-        <Text className={small ? 'text-base' : 'text-xl'}>{emoji}</Text>
+        <Text className="text-xl">{emoji}</Text>
       </View>
       <View>
-        <Text
-          className={`font-semibold ${small ? 'text-xs' : 'text-sm'} ${white ? 'text-ink-2' : 'text-white/60'}`}
-        >
+        <Text className={`text-sm font-semibold ${white ? 'text-ink-2' : 'text-white/60'}`}>
           {label}
         </Text>
         <Text
-          className={`font-bold tracking-tight ${small ? 'text-sm' : 'text-lg'} ${
+          className={`text-lg font-bold tracking-tight ${
             income ? (white ? 'text-pos' : 'text-lime') : white ? 'text-ink' : 'text-white'
           }`}
         >
@@ -212,7 +206,7 @@ function Rings({ size, style }: { size: number; style: ViewStyle }) {
  * spins away. Desktop poster only.
  * ------------------------------------------------------------------------- */
 
-type StickerData = Omit<StickerProps, 'rotate' | 'small' | 'style'>;
+type StickerData = Omit<StickerProps, 'rotate' | 'style'>;
 
 const STICKER_SETS: Record<string, StickerData[]> = {
   Gastos: [
@@ -369,30 +363,6 @@ function PosterPanel() {
             </Pressable>
           );
         })}
-      </View>
-    </View>
-  );
-}
-
-/* ---------------------------------------------------------------------------
- * Phone / narrow window: compact poster
- * ------------------------------------------------------------------------- */
-
-function CompactPoster() {
-  return (
-    <View className="overflow-hidden rounded-[26px] bg-lime p-5" style={{ minHeight: 168 }}>
-      <Rings size={300} style={{ top: -120, right: -110 }} />
-      <Text
-        className="font-black text-ink"
-        style={{ fontSize: 34, lineHeight: 34, letterSpacing: -1.2, maxWidth: '58%' }}
-      >
-        Que la quincena sí rinda.
-      </Text>
-      <View style={{ position: 'absolute', top: 22, right: -14 }}>
-        <Sticker emoji="💸" label="Quincena" amount="+$9,500" income rotate={6} small />
-      </View>
-      <View style={{ position: 'absolute', top: 92, right: 18 }}>
-        <Sticker emoji="🌮" label="Tacos" amount="−$185" rotate={-5} small />
       </View>
     </View>
   );

@@ -1,18 +1,50 @@
 import { useProfile, useUpdateProfile } from '@repo/core/hooks';
 import { HOME_LAYOUT_ITEMS, type HomeLayoutItem } from '@repo/core/utils';
-import { Button, PageHeader, Screen, ICON_COLORS } from '@repo/ui';
+import { Button, PageHeader, Screen, ICON_COLORS, useIsDesktop } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { ActivityIndicator, Switch, Text, View } from 'react-native';
 
+import { HomeOrderEditor } from '../../../../features/home/home-order-editor';
 import { WIDGET_META } from '../../../../features/home/widget-catalog';
 
 /**
- * Which of Home's widgets show at all. Where they sit and how big they are
- * is arranged on Home itself (edit mode, "Personalizar"): this screen links
- * there. A widget switched back on lands in the first free spot.
+ * Opciones › Personalizar inicio. In the app (and a phone-width browser):
+ * the widgets' order and which ones show — their sizes are fixed. On the
+ * web dashboard (desktop layout): just which ones show; where they sit and
+ * how big they are is arranged on Home itself (edit mode, "Personalizar"),
+ * which this screen links to. A widget switched back on there lands in the
+ * first free spot.
  */
 export default function HomeLayoutScreen() {
+  const desktop = useIsDesktop();
+  return desktop ? <WebWidgetsScreen /> : <AppOrderScreen />;
+}
+
+function AppOrderScreen() {
+  const router = useRouter();
+  const { data: profile, isLoading } = useProfile();
+
+  return (
+    <Screen edges={['top']} className="gap-5">
+      <PageHeader title="Personalizar inicio" onBack={() => router.back()} />
+
+      <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
+        Arrastra del ícono para reordenar, o apaga una tarjeta para quitarla de tu inicio. El
+        selector de mes, el balance total y los ingresos/gastos del mes siempre se quedan fijos
+        arriba.
+      </Text>
+
+      {isLoading || !profile ? (
+        <ActivityIndicator className="mt-8" />
+      ) : (
+        <HomeOrderEditor profile={profile} />
+      )}
+    </Screen>
+  );
+}
+
+function WebWidgetsScreen() {
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();

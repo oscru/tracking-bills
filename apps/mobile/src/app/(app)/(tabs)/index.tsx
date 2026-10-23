@@ -18,15 +18,16 @@ import {
   splitPendingByDate,
   todayISODate,
   totalsByCurrencyFromBalances,
+  visibleHomeLayout,
   type HomeLayoutItem,
   getDateFormat,
 } from '@repo/core/utils';
-import { Screen, ICON_COLORS, useIsDesktop, useIsWideDesktop } from '@repo/ui';
+import { Screen, StaggerItem, ICON_COLORS, useIsDesktop, useIsWideDesktop } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Calendar, Check, ChevronRight, Clock, Eye, EyeOff, LayoutGrid } from 'lucide-react-native';
+import { Calendar, Check, ChevronRight, Clock, Eye, EyeOff } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
 
 import { AccountIcon } from '../../../features/accounts/account-icon';
 import { CardScrollView } from '../../../features/design/card-scroll-view';
@@ -61,6 +62,11 @@ const BALANCE_TEXT = {
 // Stable, so the pending query's key (and cache entry) doesn't change per render.
 const PENDING_FILTER = { isCompleted: false } as const;
 
+// Touch screens (tablets on the web dashboard) start dragging a widget with a
+// long press, so a swipe over one still scrolls; a mouse drags right away.
+const COARSE_POINTER =
+  Platform.OS === 'web' && Boolean(globalThis.matchMedia?.('(pointer: coarse)').matches);
+
 // Widgets rendered with the screen's first frame — about what fits on screen
 // under the balance and income/expense cards.
 const INITIAL_WIDGETS = 1;
@@ -87,9 +93,18 @@ export default function HomeScreen() {
   // Bumped each time Inicio comes into view — replays the balance's roll.
   const [rollKey, setRollKey] = useState(0);
   useFocusEffect(useCallback(() => setRollKey((k) => k + 1), []));
-  // The widget matrix — its own layout per device (4 columns on a wide
-  // desktop, 2 on phones and tablets, where 4 would be too narrow). Edit mode
-  // ("Personalizar") works on a draft, saved on "Listo".
+  // Two ways to lay out the widgets. The web dashboard (the desktop layout,
+  // tablets included) is a matrix the user arranges and resizes — its own
+  // layout per width (4 columns on a wide desktop, 2 on a compact one, where
+  // 4 would be too narrow); edit mode ("Personalizar") works on a draft,
+  // saved on "Listo". The app — and a phone-width browser, which looks the
+  // same — stacks them at fixed sizes, in the order and selection set in
+  // Opciones › Personalizar inicio.
+  const gridMode = desktop;
+  const listOrder = useMemo(
+    () => visibleHomeLayout(profile?.home_layout, profile?.home_hidden_items),
+    [profile],
+  );
   const wide = useIsWideDesktop();
   const device = wide ? 'desktop' : 'mobile';
   const editor = useHomeEditor(profile ?? undefined, device);
@@ -114,16 +129,19 @@ export default function HomeScreen() {
   });
   useEffect(() => {
     if (edit === '1' && profile) {
-      startRef.current();
+      if (gridMode) startRef.current();
       router.setParams({ edit: undefined });
     }
-  }, [edit, profile, router]);
+  }, [edit, profile, router, gridMode]);
   // The widgets mount progressively: the first ones with the screen, the
   // rest one per frame right after (see useProgressiveCount) — in the
   // order they sit on screen, top to bottom.
   const mountOrder = useMemo(
-    () => [...editor.items].sort((a, b) => a.y - b.y || a.x - b.x).map((it) => it.id),
-    [editor.items],
+    () =>
+      gridMode
+        ? [...editor.items].sort((a, b) => a.y - b.y || a.x - b.x).map((it) => it.id)
+        : listOrder,
+    [gridMode, editor.items, listOrder],
   );
   const mountedWidgets = useProgressiveCount(mountOrder.length, INITIAL_WIDGETS);
 
@@ -225,10 +243,52 @@ export default function HomeScreen() {
       params: { month: selectedMonth, label: monthYearLabel },
     });
 
-  // Every card the user can reorder from Opciones › Personalizar inicio —
-  // rendered below in `layoutOrder`'s sequence. The month selector, balance
-  // card, and income/expense totals aren't here: they're the screen's
-  // anchor and always come first.
+  const categoriesPerCurrency = categoryBreakdowns.map((g) => (
+    <View key={g.currency} className="gap-1.5">
+      <Text className="px-1 text-xs font-semibold text-ink-3 dark:text-ink-3-dark">
+        {g.currency}
+      </Text>
+      <CategorySpendCard
+        breakdown={g.breakdown}
+        currency={g.currency}
+        onSeeAll={openMonthlySpending}
+        onSelectCategory={openCategory}
+      />
+    </View>
+  ));
+  const accountRows = (
+    <>
+      {visibleAccounts.map((a, i) => (
+        <Pressable
+          key={a.id}
+          onPress={() => openAccount(a.id)}
+          className={`flex-row items-center gap-3 px-4 py-3.5 active:opacity-60 ${
+            i > 0 ? 'border-t border-line dark:border-line-dark' : ''
+          }`}
+        >
+          <AccountIcon account={a} />
+          <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
+            {a.name}
+          </Text>
+          <Text className="text-[15px] font-semibold text-ink dark:text-ink-dark">
+            {hidden ? '•••' : formatCurrency(accountBalancesById.get(a.id) ?? 0, a.currency)}
+          </Text>
+        </Pressable>
+      ))}
+      {visibleAccounts.length === 0 ? (
+        <Text className="px-4 py-4 text-sm text-ink-2 dark:text-ink-2-dark">
+          {active.length === 0
+            ? 'Aún no tienes cuentas.'
+            : 'No tienes cuentas visibles aquí — actívalas desde Cuenta › Mostrar en inicio.'}
+        </Text>
+      ) : null}
+    </>
+  );
+
+  // Every widget the user can show or hide — in the grid (filling their
+  // cells: `fill`), or stacked at their own size. The month selector,
+  // balance card, and income/expense totals aren't here: they're the
+  // screen's anchor and always come first.
   const cards: Record<HomeLayoutItem, ReactNode> = {
     pending:
       overdue.length > 0 ? (
@@ -239,7 +299,9 @@ export default function HomeScreen() {
               params: { pending: '1', to: addDaysISO(today, -1) },
             })
           }
-          className="flex-1 flex-row items-center gap-3 bg-warning-tint p-4 active:opacity-80 dark:bg-warning-tint-dark"
+          className={`flex-row items-center gap-3 bg-warning-tint p-4 active:opacity-80 dark:bg-warning-tint-dark ${
+            gridMode ? 'flex-1' : 'rounded-2xl'
+          }`}
         >
           <View className="h-10 w-10 items-center justify-center rounded-full bg-surface dark:bg-surface-dark">
             <Clock size={20} color={dark ? ICON_COLORS.warningDark : ICON_COLORS.warning} />
@@ -266,7 +328,9 @@ export default function HomeScreen() {
               params: { pending: '1', from: today },
             })
           }
-          className="flex-1 flex-row items-center gap-3 bg-lime-tint p-4 active:opacity-80 dark:bg-lime-tint-dark"
+          className={`flex-row items-center gap-3 bg-lime-tint p-4 active:opacity-80 dark:bg-lime-tint-dark ${
+            gridMode ? 'flex-1' : 'rounded-2xl'
+          }`}
         >
           <View className="h-10 w-10 items-center justify-center rounded-full bg-surface dark:bg-surface-dark">
             <Calendar size={20} color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk} />
@@ -287,7 +351,7 @@ export default function HomeScreen() {
         </Pressable>
       ) : null,
 
-    budgets: <BudgetsCard fill />,
+    budgets: <BudgetsCard fill={gridMode} />,
 
     categorySpend:
       categoryBreakdowns.length === 0 ? (
@@ -296,7 +360,7 @@ export default function HomeScreen() {
           currency={currency}
           onSeeAll={openMonthlySpending}
           onSelectCategory={openCategory}
-          fill
+          fill={gridMode}
         />
       ) : categoryBreakdowns.length === 1 ? (
         <CategorySpendCard
@@ -304,34 +368,28 @@ export default function HomeScreen() {
           currency={categoryBreakdowns[0]!.currency}
           onSeeAll={openMonthlySpending}
           onSelectCategory={openCategory}
-          fill
+          fill={gridMode}
         />
-      ) : (
-        // One card per currency, stacked — the whole stack scrolls in the cell.
+      ) : // One card per currency, stacked — in the grid, the whole stack
+      // scrolls in the cell.
+      gridMode ? (
         <CardScrollView className="flex-1" contentContainerClassName="gap-3">
-          {categoryBreakdowns.map((g) => (
-            <View key={g.currency} className="gap-1.5">
-              <Text className="px-1 text-xs font-semibold text-ink-3 dark:text-ink-3-dark">
-                {g.currency}
-              </Text>
-              <CategorySpendCard
-                breakdown={g.breakdown}
-                currency={g.currency}
-                onSeeAll={openMonthlySpending}
-                onSelectCategory={openCategory}
-              />
-            </View>
-          ))}
+          {categoriesPerCurrency}
         </CardScrollView>
+      ) : (
+        <View className="gap-3">{categoriesPerCurrency}</View>
       ),
 
-    weeklySpend: <WeeklySpendCard fill onPress={() => router.push('/(app)/analytics')} />,
+    weeklySpend: (
+      <WeeklySpendCard fill={gridMode} onPress={() => router.push('/(app)/analytics')} />
+    ),
 
-    monthlyTrend: <MonthlyTrendChart fill />,
+    monthlyTrend: <MonthlyTrendChart fill={gridMode} />,
 
-    // Fills its grid cell: the header stays put and the list scrolls.
+    // In the grid it fills its cell: the header stays put and the list
+    // scrolls. Stacked, it's a plain list under its title.
     accounts: (
-      <View className="flex-1 gap-2 p-4">
+      <View className={gridMode ? 'flex-1 gap-2 p-4' : 'gap-2'}>
         <View className="flex-row items-center justify-between">
           <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Tus cuentas</Text>
           <Pressable onPress={() => router.push('/(app)/settings/accounts')} hitSlop={8}>
@@ -340,35 +398,18 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
         </View>
-        <CardScrollView
-          className="shrink grow-0 overflow-hidden rounded-card border border-line dark:border-line-dark"
-          gutter={false}
-        >
-          {visibleAccounts.map((a, i) => (
-            <Pressable
-              key={a.id}
-              onPress={() => openAccount(a.id)}
-              className={`flex-row items-center gap-3 px-4 py-3.5 active:opacity-60 ${
-                i > 0 ? 'border-t border-line dark:border-line-dark' : ''
-              }`}
-            >
-              <AccountIcon account={a} />
-              <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
-                {a.name}
-              </Text>
-              <Text className="text-[15px] font-semibold text-ink dark:text-ink-dark">
-                {hidden ? '•••' : formatCurrency(accountBalancesById.get(a.id) ?? 0, a.currency)}
-              </Text>
-            </Pressable>
-          ))}
-          {visibleAccounts.length === 0 ? (
-            <Text className="px-4 py-4 text-sm text-ink-2 dark:text-ink-2-dark">
-              {active.length === 0
-                ? 'Aún no tienes cuentas.'
-                : 'No tienes cuentas visibles aquí — actívalas desde Cuenta › Mostrar en inicio.'}
-            </Text>
-          ) : null}
-        </CardScrollView>
+        {gridMode ? (
+          <CardScrollView
+            className="shrink grow-0 overflow-hidden rounded-card border border-line dark:border-line-dark"
+            gutter={false}
+          >
+            {accountRows}
+          </CardScrollView>
+        ) : (
+          <View className="rounded-card border border-line dark:border-line-dark">
+            {accountRows}
+          </View>
+        )}
       </View>
     ),
   };
@@ -474,7 +515,7 @@ export default function HomeScreen() {
   );
 
   // A widget not mounted yet shows a skeleton in its cell (its cell fades
-  // in once it is — see `WidgetGrid`).
+  // in once it is — see `WidgetGrid`) or in its place in the stack.
   const renderWidget = (key: HomeLayoutItem) =>
     !editing && mountOrder.indexOf(key) >= mountedWidgets ? <WidgetPlaceholder /> : cards[key];
 
@@ -483,7 +524,7 @@ export default function HomeScreen() {
       items={editor.items}
       device={device}
       editing={editing}
-      longPress={!desktop}
+      longPress={COARSE_POINTER}
       renderWidget={renderWidget}
       onChange={editor.setItems}
       onRemove={editor.remove}
@@ -509,18 +550,16 @@ export default function HomeScreen() {
     </View>
   );
 
-  // Phones only: on desktop it's "Personalizar dashboard" in the sidebar's
-  // Opciones (which links here with `?edit=1`).
-  const customizeButton = (
-    <Pressable
-      onPress={editor.start}
-      accessibilityRole="button"
-      accessibilityLabel="Personalizar inicio"
-      hitSlop={6}
-      className="h-9 w-9 items-center justify-center rounded-full border border-line bg-surface active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
-    >
-      <LayoutGrid size={17} color={dark ? ICON_COLORS.inkDark : ICON_COLORS.ink} />
-    </Pressable>
+  // Stacked (the app): widgets mounted after the first frame fade in as they
+  // arrive, without the cascade delay of their position.
+  const list = listOrder.map((key, i) =>
+    i < mountedWidgets ? (
+      <StaggerItem key={key} index={i < INITIAL_WIDGETS ? i : 0}>
+        {cards[key]}
+      </StaggerItem>
+    ) : (
+      <WidgetPlaceholder key={key} />
+    ),
   );
 
   // The page header stays pinned; everything else scrolls — in a scroll
@@ -571,7 +610,6 @@ export default function HomeScreen() {
         onShift={shiftMonth}
         onOpenPicker={() => setMonthPickerOpen(true)}
       />
-      <View className="absolute bottom-0 left-0 top-0 justify-center">{customizeButton}</View>
       {/* Pinned to the row's right edge so the month selector stays centered.
         Desktop has the notifications in the sidebar. */}
       {desktop ? null : (
@@ -627,7 +665,7 @@ export default function HomeScreen() {
             )}
           </FixedInEdit>
 
-          {editing ? editGrid : grid}
+          {editing ? editGrid : gridMode ? grid : list}
         </>
       )}
     </Screen>

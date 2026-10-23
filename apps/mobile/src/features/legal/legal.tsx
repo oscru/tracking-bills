@@ -35,13 +35,13 @@ export function openLegal(doc: LegalDocument) {
   WebBrowser.openBrowserAsync(url).catch(() => {});
 }
 
-/** An inline link to a document, inside a sentence. */
+/** An inline link to a document, inside a sentence — underlined, in the text's ink (lime is for the screen's main action). */
 export function LegalLink({ doc, children }: { doc: LegalDocument; children?: ReactNode }) {
   return (
     <Text
       accessibilityRole="link"
       onPress={() => openLegal(doc)}
-      className="font-semibold text-lime-ink underline dark:text-lime-ink-dark"
+      className="font-medium text-ink underline dark:text-ink-dark"
     >
       {children ?? LEGAL_LABELS[doc]}
     </Text>
@@ -103,9 +103,9 @@ export function LegalConsent({
 /** Under the Google/Apple buttons: signing in with them also means accepting. */
 export function SsoLegalNotice() {
   return (
-    <Text className="text-center text-xs leading-5 text-ink-3 dark:text-ink-3-dark">
-      Al continuar con Google o Apple aceptas los <LegalLink doc="terms" /> y el{' '}
-      <LegalLink doc="privacy" />.
+    <Text className="text-center text-[11px] leading-4 text-ink-3 dark:text-ink-3-dark">
+      Al continuar aceptas los <LegalLink doc="terms">Términos</LegalLink> y el{' '}
+      <LegalLink doc="privacy">Aviso de privacidad</LegalLink>.
     </Text>
   );
 }

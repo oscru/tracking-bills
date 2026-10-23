@@ -7,7 +7,7 @@ import {
   useTags,
   useUpdateProfile,
 } from '@repo/core/hooks';
-import { Avatar, ListRow, Screen, useTabBarScrollPadding } from '@repo/ui';
+import { Avatar, ListRow, Screen, useIsDesktop, useTabBarScrollPadding } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -16,6 +16,7 @@ import { SettingsSkeleton } from '../../../../features/settings/settings-skeleto
 export default function SettingsScreen() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
+  const desktop = useIsDesktop();
   const { user } = useSession();
   const updateProfile = useUpdateProfile();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
@@ -107,8 +108,14 @@ export default function SettingsScreen() {
 
           <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
             <ListRow
-              title="Widgets del inicio"
-              subtitle="Cuáles se muestran — acomódalos desde Personalizar"
+              // The web dashboard arranges and resizes its widgets on Inicio
+              // itself; the app orders them here (see `home-layout`).
+              title={desktop ? 'Widgets del inicio' : 'Personalizar inicio'}
+              subtitle={
+                desktop
+                  ? 'Cuáles se muestran — acomódalos desde Personalizar'
+                  : 'Orden de las tarjetas de la pantalla principal'
+              }
               showChevron
               onPress={() => router.push('/(app)/settings/home-layout')}
             />

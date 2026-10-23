@@ -3,7 +3,7 @@ import { toFriendlyMessage } from '@repo/core/utils';
 import { signInSchema } from '@repo/core/validators';
 import { Button, ErrorCard, ICON_COLORS, StaggerItem, TextField } from '@repo/ui';
 import { Link, useRouter } from 'expo-router';
-import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
@@ -53,8 +53,8 @@ export default function SignIn() {
       <StaggerItem index={3}>
         <View className="gap-4">
           <TextField
-            label="Correo"
-            placeholder="tucorreo@ejemplo.com"
+            placeholder="Correo"
+            accessibilityLabel="Correo"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -66,13 +66,12 @@ export default function SignIn() {
             submitBehavior="submit"
             onSubmitEditing={() => passwordRef.current?.focus()}
             error={errors.email}
-            leftElement={<Mail size={18} color={iconColor} />}
           />
           <View className="gap-2">
             <TextField
               ref={passwordRef}
-              label="Contraseña"
-              placeholder="Tu contraseña"
+              placeholder="Contraseña"
+              accessibilityLabel="Contraseña"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -81,7 +80,6 @@ export default function SignIn() {
               returnKeyType="go"
               onSubmitEditing={onSubmit}
               error={errors.password}
-              leftElement={<Lock size={18} color={iconColor} />}
               rightElement={
                 <Pressable
                   onPress={() => setShowPassword((v) => !v)}
@@ -107,7 +105,7 @@ export default function SignIn() {
               hitSlop={8}
               className="self-end"
             >
-              <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
+              <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
                 ¿Olvidaste tu contraseña?
               </Text>
             </Pressable>
@@ -126,17 +124,13 @@ export default function SignIn() {
             <SsoLegalNotice />
           </View>
 
-          <View className="flex-row items-center justify-center gap-1.5 rounded-ctl bg-surface px-4 py-3.5 dark:bg-surface-dark">
+          <View className="flex-row items-center justify-center gap-1.5">
             <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿Nuevo en Genobills?</Text>
             <Link href="/(auth)/sign-up" asChild>
-              <Pressable hitSlop={8} className="flex-row items-center gap-1">
-                <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
+              <Pressable hitSlop={8}>
+                <Text className="text-sm font-semibold text-ink underline dark:text-ink-dark">
                   Crea tu cuenta gratis
                 </Text>
-                <ArrowRight
-                  size={15}
-                  color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk}
-                />
               </Pressable>
             </Link>
           </View>

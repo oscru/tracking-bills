@@ -1,9 +1,11 @@
 import type { HomeLayoutItem } from './home-layout';
 
 /**
- * Home's widget matrix: each widget sits at a cell (`x`, `y`) and spans `w`
- * columns × `h` rows. Desktop and phone keep separate layouts (4 and 2
- * columns). Like a phone's home screen, widgets float up: nothing leaves an
+ * The web dashboard's widget matrix: each widget sits at a cell (`x`, `y`)
+ * and spans `w` columns × `h` rows. A wide desktop and a compact one (a
+ * tablet) keep separate layouts — 4 and 2 columns; the stored keys are
+ * `desktop` and `mobile`. The app doesn't use it: it stacks the widgets at
+ * fixed sizes, ordered by `profiles.home_layout`. Like a phone's home screen, widgets float up: nothing leaves an
  * empty row above it, though a widget can sit beside a shorter one with a
  * gap under that one. A widget dropped or grown onto others pushes them
  * down — except dragging one DOWN onto another, which moves that other one
