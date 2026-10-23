@@ -3,6 +3,7 @@ import type { Category } from '@repo/core/types';
 import { formatCurrency } from '@repo/core/utils';
 import { BottomSheet, Button, CategoryDot, CurrencyField } from '@repo/ui';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 interface Props {
@@ -29,6 +30,7 @@ export function CategoryAmountSheet({
   onClose,
   onConfirm,
 }: Props) {
+  const { t } = useTranslation(['budgets', 'common']);
   const [amountText, setAmountText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +48,7 @@ export function CategoryAmountSheet({
   const confirm = () => {
     const amount = Number(amountText.replace(',', '.'));
     if (!Number.isFinite(amount) || amount <= 0) {
-      setError('El monto debe ser mayor a 0');
+      setError('transactions:form.amountPositive');
       return;
     }
     onConfirm(amount);
@@ -56,7 +58,7 @@ export function CategoryAmountSheet({
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      title="Asignar monto"
+      title={t('amountSheet.title')}
       dismissKeyboardOnOpen={false}
     >
       <View className="gap-4 px-5 pb-8">
@@ -70,7 +72,7 @@ export function CategoryAmountSheet({
         ) : null}
 
         <CurrencyField
-          label="Monto asignado"
+          label={t('amountSheet.amount')}
           value={amountText}
           onChangeText={(t) => {
             setAmountText(t);
@@ -84,12 +86,12 @@ export function CategoryAmountSheet({
         {remaining > 0 ? (
           <Pressable onPress={() => setAmountText(String(remaining))} hitSlop={8}>
             <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Usar el restante ({formatCurrency(remaining, currency)})
+              {t('amountSheet.useRemaining', { amount: formatCurrency(remaining, currency) })}
             </Text>
           </Pressable>
         ) : null}
 
-        <Button label="Guardar" onPress={confirm} />
+        <Button label={t('common:save')} onPress={confirm} />
       </View>
     </BottomSheet>
   );

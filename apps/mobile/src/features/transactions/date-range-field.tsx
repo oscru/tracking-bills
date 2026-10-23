@@ -1,15 +1,12 @@
+import { currentLocale } from '@repo/core/i18n';
 import { formatDate, todayISODate, getDateFormat } from '@repo/core/utils';
 import { BottomSheet, Chip, SegmentedControl, ICON_COLORS } from '@repo/ui';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { capitalize, monthGrid, WEEKDAYS } from './calendar-grid';
-
-const MODE_OPTIONS = [
-  { value: 'day' as const, label: 'Día' },
-  { value: 'range' as const, label: 'Rango' },
-];
+import { capitalize, monthGrid, weekdayInitials } from './calendar-grid';
 
 export interface DateRangeFieldProps {
   /** Inclusive `YYYY-MM-DD` bounds. Equal values mean a single day. `null` = no filter. */
@@ -43,6 +40,7 @@ export function DateRangeField({
   renderTrigger,
   forceRangeMode = false,
 }: DateRangeFieldProps) {
+  const { t } = useTranslation(['transactions', 'common']);
   const initialMode = forceRangeMode || (from && to && from !== to) ? 'range' : 'day';
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'day' | 'range'>(initialMode);
@@ -70,7 +68,7 @@ export function DateRangeField({
   const today = todayISODate();
   const grid = monthGrid(viewYear, viewMonth);
   const monthTitle = capitalize(
-    getDateFormat('es-MX', { month: 'long' }).format(new Date(viewYear, viewMonth, 1)),
+    getDateFormat(currentLocale(), { month: 'long' }).format(new Date(viewYear, viewMonth, 1)),
   );
 
   const clear = () => {
@@ -99,7 +97,7 @@ export function DateRangeField({
   };
 
   const label = !from
-    ? 'Todas las fechas'
+    ? t('date.allDates')
     : from === to
       ? formatDate(from)
       : `${formatDate(from)} – ${formatDate(to ?? from)}`;
@@ -125,12 +123,12 @@ export function DateRangeField({
       <BottomSheet
         visible={open}
         onClose={() => setOpen(false)}
-        title="Fecha"
+        title={t('date.title')}
         headerAction={
           from ? (
             <Pressable onPress={clear} hitSlop={8}>
               <Text className="text-[13px] font-semibold text-danger dark:text-danger-dark">
-                Limpiar
+                {t('date.clear')}
               </Text>
             </Pressable>
           ) : undefined
@@ -143,7 +141,10 @@ export function DateRangeField({
         >
           {forceRangeMode ? null : (
             <SegmentedControl
-              options={MODE_OPTIONS}
+              options={[
+                { value: 'day' as const, label: t('date.day') },
+                { value: 'range' as const, label: t('date.range') },
+              ]}
               value={mode}
               onChange={(v) => {
                 setMode(v);
@@ -155,14 +156,14 @@ export function DateRangeField({
 
           <View className="flex-row gap-2">
             <Chip
-              label="Hoy"
+              label={t('common:today')}
               onPress={() => {
                 onChange(today, today);
                 setOpen(false);
               }}
             />
             <Chip
-              label="Este mes"
+              label={t('date.thisMonth')}
               onPress={() => {
                 const [first, last] = monthBounds(new Date());
                 onChange(first, last);
@@ -184,8 +185,8 @@ export function DateRangeField({
           </View>
 
           <View className="flex-row">
-            {WEEKDAYS.map((w) => (
-              <View key={w} className="flex-1 items-center">
+            {weekdayInitials().map((w, i) => (
+              <View key={i} className="flex-1 items-center">
                 <Text className="text-xs font-semibold text-ink-3 dark:text-ink-3-dark">{w}</Text>
               </View>
             ))}
@@ -246,7 +247,7 @@ export function DateRangeField({
 
           {mode === 'range' && rangeStart && !rangeEnd ? (
             <Text className="text-center text-[13px] text-ink-2 dark:text-ink-2-dark">
-              Elige la fecha final
+              {t('date.pickEnd')}
             </Text>
           ) : null}
         </ScrollView>

@@ -1,0 +1,28 @@
+{
+  "slides": {
+    "accounts": {
+      "title": "Your accounts",
+      "description": "Add your bank accounts, cash or cards to keep track of your money."
+    },
+    "transactions": {
+      "title": "Your transactions",
+      "description": "Log every expense or income in seconds and see your whole history in one place."
+    },
+    "categories": {
+      "title": "Categories",
+      "description": "Sort your transactions to understand where your money really goes."
+    },
+    "budgets": {
+      "title": "Budgets",
+      "description": "Set a spending limit per category and we'll let you know when you're getting close."
+    },
+    "goals": {
+      "title": "Goals",
+      "description": "Decide how much you want to save and by when, and follow your progress in real time."
+    },
+    "tags": {
+      "title": "Tags",
+      "description": "Group transactions across categories — perfect for a trip or a one-off project."
+    }
+  }
+}

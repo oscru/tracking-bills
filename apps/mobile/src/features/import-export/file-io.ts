@@ -1,3 +1,4 @@
+import { i18n } from '@repo/core/i18n';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -16,7 +17,7 @@ function stripDataUrlPrefix(value: string): string {
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(reader.error ?? new Error('No se pudo leer el archivo'));
+    reader.onerror = () => reject(reader.error ?? new Error(i18n.t('importExport:readFailed')));
     reader.onload = () => resolve(stripDataUrlPrefix(String(reader.result)));
     reader.readAsDataURL(blob);
   });

@@ -1,0 +1,51 @@
+{
+  "title": "Análisis",
+  "period": {
+    "week": "Semana",
+    "month": "Mes",
+    "year": "Año"
+  },
+  "view": {
+    "calendar": "Calendario",
+    "trend": "Tendencia"
+  },
+  "previousPeriod": "Periodo anterior",
+  "nextPeriod": "Periodo siguiente",
+  "insights": {
+    "vsPrevious": "vs. periodo anterior",
+    "savingsRate": "tasa de ahorro",
+    "projected": "proyectado a fin de periodo",
+    "totalSpent": "gastado en total",
+    "totalReceived": "recibido en total",
+    "noSpendDays_one": "{{count}} día sin gastar",
+    "noSpendDays_other": "{{count}} días sin gastar",
+    "bestStreak_one": "Mejor racha: {{count}} día",
+    "bestStreak_other": "Mejor racha: {{count}} días"
+  },
+  "biggest": {
+    "expense": "Gastos más grandes",
+    "income": "Ingresos más grandes"
+  },
+  "emptyPeriod": {
+    "expense": "Sin gastos en este periodo.",
+    "income": "Sin ingresos en este periodo."
+  },
+  "seeAll": "Ver todas ›",
+  "trending": "Categorías en tendencia",
+  "budgets": {
+    "title": "Presupuestos",
+    "note": "Periodo actual de cada presupuesto — no cambia con el mes de arriba"
+  },
+  "monthly": {
+    "title": "Gastos del mes",
+    "titleWith": "Gastos · {{label}}",
+    "empty": "Sin gastos",
+    "emptyBody": "No hay gastos registrados en este mes."
+  },
+  "category": {
+    "bySubcategory": "Por subcategoría",
+    "emptyBody": "Sin movimientos en esta categoría este mes.",
+    "fallbackTitle": "Categoría",
+    "movements": "Movimientos · {{count}}"
+  }
+}

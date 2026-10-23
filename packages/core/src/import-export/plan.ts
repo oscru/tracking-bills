@@ -1,5 +1,13 @@
+import { i18n } from '../i18n/instance';
 import type { Account, Category, Tag } from '../types';
 import type { MovementDraft, ParsedWorkbook, RowIssue, TransferDraft } from './types';
+
+/** An import issue's text in the current language (`importExport:issues`). */
+const ti = (key: string, options?: Record<string, unknown>): string =>
+  (i18n.t as (key: string, options?: Record<string, unknown>) => string)(
+    `importExport:issues.${key}`,
+    options,
+  );
 
 /** Points at either an already-existing catalog row, or one that this plan
  * still needs to create — resolved to a real id only once `runImportPlan`
@@ -130,7 +138,11 @@ class CatalogResolver {
           sheet: context.sheet,
           row: context.row,
           level: 'warning',
-          message: `Divisa del archivo (${currencyHint}) distinta a la de la cuenta existente "${existing.name}" (${existing.currency}) — se usará la de la cuenta`,
+          message: ti('currencyExisting', {
+            file: currencyHint,
+            name: existing.name,
+            currency: existing.currency,
+          }),
         });
       }
       return { existingId: existing.id };
@@ -147,7 +159,11 @@ class CatalogResolver {
         sheet: context.sheet,
         row: context.row,
         level: 'warning',
-        message: `Divisa del archivo (${currencyHint}) distinta a la que se usará para la nueva cuenta "${plan.name}" (${plan.currency}) — se usará ${plan.currency}`,
+        message: ti('currencyNew', {
+          file: currencyHint,
+          name: plan.name,
+          currency: plan.currency,
+        }),
       });
     }
     return { newKey: k };
@@ -239,7 +255,12 @@ export function buildImportPlan(
         sheet: t.sourceSheet,
         row: t.sourceRow,
         level: 'error',
-        message: `"${t.fromAccountName}" (${fromCurrency}) y "${t.toAccountName}" (${toCurrency}) tienen divisas distintas — no se puede transferir entre ellas`,
+        message: ti('transferCurrencies', {
+          from: t.fromAccountName,
+          fromCurrency,
+          to: t.toAccountName,
+          toCurrency,
+        }),
       });
       continue;
     }

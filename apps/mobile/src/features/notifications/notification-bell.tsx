@@ -3,10 +3,12 @@ import { ICON_COLORS } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 /** Header bell that opens the notification center, with an unread count badge. */
 export function NotificationBell() {
+  const { t } = useTranslation('navigation');
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
@@ -18,7 +20,7 @@ export function NotificationBell() {
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={
-        unreadCount > 0 ? `Notificaciones, ${unreadCount} sin leer` : 'Notificaciones'
+        unreadCount > 0 ? t('notificationsUnread', { count: unreadCount }) : t('notifications')
       }
       className="h-[38px] w-[38px] items-center justify-center rounded-full bg-surface active:opacity-70 dark:bg-surface-dark"
     >

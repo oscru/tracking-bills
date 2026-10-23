@@ -3,13 +3,16 @@ import { z } from 'zod';
 /** income | expense | transfer */
 export const transactionTypeSchema = z.enum(['income', 'expense', 'transfer']);
 
-const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'validation:dateFormat');
 const uuid = z.string().uuid();
 // income/expense movements must be categorized — only a transfer has none.
 const requiredCategoryId = z
-  .string({ required_error: 'Elige una categoría', invalid_type_error: 'Elige una categoría' })
-  .uuid('Elige una categoría');
-const amount = z.number().positive('Debe ser mayor a 0').finite();
+  .string({
+    required_error: 'validation:pickCategory',
+    invalid_type_error: 'validation:pickCategory',
+  })
+  .uuid('validation:pickCategory');
+const amount = z.number().positive('validation:positive').finite();
 const description = z.string().trim().max(280).nullish();
 // Omitted -> the DB defaults it to current_date.
 const transaction_date = isoDateSchema.optional();
@@ -38,7 +41,7 @@ export const transactionCreateSchema = z
     }),
   ])
   .refine((v) => v.type !== 'transfer' || Boolean(v.to_account_id) !== Boolean(v.goal_id), {
-    message: 'Elige una cuenta o un objetivo de destino',
+    message: 'validation:pickTarget',
     path: ['to_account_id'],
   });
 
@@ -64,11 +67,11 @@ export const transactionUpdateSchema = z
     is_completed,
   })
   .refine((v) => v.type !== 'transfer' || !v.category_id, {
-    message: 'Una transferencia no lleva categoría',
+    message: 'validation:transferNoCategory',
     path: ['category_id'],
   })
   .refine((v) => v.type == null || v.type === 'transfer' || (!v.to_account_id && !v.goal_id), {
-    message: 'Solo una transferencia puede tener cuenta o meta destino',
+    message: 'validation:onlyTransferTarget',
     path: ['to_account_id'],
   });
 

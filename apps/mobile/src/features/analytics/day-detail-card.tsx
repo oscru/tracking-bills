@@ -4,6 +4,7 @@ import { formatCurrency, formatDate, longestNoSpendStreak, noSpendStreak } from 
 import { CategoryDot, ICON_COLORS } from '@repo/ui';
 import { Flame } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 interface Props {
@@ -30,6 +31,7 @@ export function DayDetailCard({
   currency,
   onPressTransaction,
 }: Props) {
+  const { t } = useTranslation(['analytics', 'transactions']);
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const warningColor = dark ? ICON_COLORS.warningDark : ICON_COLORS.warning;
@@ -66,17 +68,19 @@ export function DayDetailCard({
           <View className="flex-row items-center gap-1.5">
             <Flame size={15} color={warningColor} />
             <Text className="text-sm font-semibold" style={{ color: warningColor }}>
-              {streak} día{streak === 1 ? '' : 's'} sin gastar
+              {t('insights.noSpendDays', { count: streak })}
             </Text>
           </View>
           <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-            Mejor racha: {bestStreak} día{bestStreak === 1 ? '' : 's'}
+            {t('insights.bestStreak', { count: bestStreak })}
           </Text>
         </View>
       ) : (
         <View>
           {dayTx.map((tx, i) => {
-            const label = tx.category ? resolveCategoryLabel(tx.category) : 'Sin categoría';
+            const label = tx.category
+              ? resolveCategoryLabel(tx.category)
+              : t('transactions:row.noCategory');
             const description = tx.description?.trim();
             return (
               <Pressable
@@ -95,7 +99,7 @@ export function DayDetailCard({
                     {description || label}
                   </Text>
                   <Text className="text-xs text-ink-3 dark:text-ink-3-dark" numberOfLines={1}>
-                    {description ? label : 'Movimiento'}
+                    {description ? label : t('transactions:detail.title')}
                   </Text>
                 </View>
                 <Text

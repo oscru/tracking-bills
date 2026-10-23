@@ -2,6 +2,7 @@ import { useProfile } from '@repo/core/hooks';
 import { PageHeader, Screen, Button, ErrorCard } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
 
 import { BudgetBasicsFields } from '../../../../../../features/budgets/budget-basics-fields';
@@ -10,6 +11,7 @@ import { useBudgetDraft } from '../../../../../../features/budgets/budget-draft-
 /** Step 1: name, amount + currency (both locked once the budget is created),
  * and the period's size/anchor/repetition. */
 export default function NewBudgetBasics() {
+  const { t } = useTranslation('budgets');
   const router = useRouter();
   const { data: profile } = useProfile();
   const { draft, setDraft } = useBudgetDraft();
@@ -17,19 +19,19 @@ export default function NewBudgetBasics() {
 
   const goToCategories = () => {
     setFieldError(null);
-    if (!draft.name.trim()) return setFieldError('Ponle un nombre');
+    if (!draft.name.trim()) return setFieldError(t('nameRequired'));
     const amount = Number(draft.amountText.replace(',', '.'));
     if (!Number.isFinite(amount) || amount <= 0)
-      return setFieldError('El monto debe ser mayor a 0');
+      return setFieldError('transactions:form.amountPositive');
     if (draft.periodType === 'custom' && (!draft.customFrom || !draft.customTo)) {
-      return setFieldError('Elige el rango de fechas');
+      return setFieldError(t('pickRange'));
     }
     router.push('/(app)/settings/budgets/new/categories');
   };
 
   return (
     <Screen className="gap-4">
-      <PageHeader title="Nuevo presupuesto" onBack={() => router.back()} />
+      <PageHeader title={t('new')} onBack={() => router.back()} />
 
       <ScrollView
         className="flex-1"
@@ -69,7 +71,7 @@ export default function NewBudgetBasics() {
 
         <ErrorCard message={fieldError} />
 
-        <Button label="Siguiente" onPress={goToCategories} />
+        <Button label={t('next')} onPress={goToCategories} />
       </ScrollView>
     </Screen>
   );

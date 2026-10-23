@@ -11,6 +11,7 @@ import {
   ICON_COLORS,
 } from '@repo/ui';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import type { FavoriteFormInitial } from './favorite-form';
@@ -33,11 +34,12 @@ interface Props {
  * description — only a name, an icon, and an optional fixed amount.
  */
 export function FavoriteQuickCreateSheet({ visible, onClose, initial, onCreated }: Props) {
+  const { t } = useTranslation('favorites');
   return (
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      title="Guardar como favorito"
+      title={t('form.saveAsTitle')}
       dismissKeyboardOnOpen={false}
     >
       <QuickFavoriteFields
@@ -56,6 +58,7 @@ function QuickFavoriteFields({
   initial: FavoriteFormInitial;
   onCreated: () => void;
 }) {
+  const { t } = useTranslation(['favorites', 'transactions', 'common']);
   const create = useCreateFavoriteTransaction();
   const { data: accounts } = useAccounts();
   const { error, setError, clearError } = useFormError();
@@ -75,14 +78,14 @@ function QuickFavoriteFields({
 
   const submit = () => {
     dirty();
-    if (!label.trim()) return setFieldError('Ponle un nombre');
-    if (!icon) return setFieldError('Elige un ícono');
+    if (!label.trim()) return setFieldError('favorites:form.nameRequired');
+    if (!icon) return setFieldError('favorites:form.iconRequired');
 
     let amount: number | null = null;
     if (fixedAmount) {
       amount = Number(amountText.replace(',', '.'));
       if (!Number.isFinite(amount) || amount <= 0) {
-        return setFieldError('El monto debe ser mayor a 0');
+        return setFieldError('transactions:form.amountPositive');
       }
     }
 
@@ -100,13 +103,13 @@ function QuickFavoriteFields({
 
     const parsed = favoriteTransactionCreateSchema.safeParse(payload);
     if (!parsed.success) {
-      setFieldError(parsed.error.issues[0]?.message ?? 'Revisa los datos');
+      setFieldError(parsed.error.issues[0]?.message ?? 'transactions:form.checkData');
       return;
     }
 
     create.mutate(parsed.data, {
       onSuccess: () => onCreated(),
-      onError: (e) => setError(e, 'No se pudo guardar el favorito'),
+      onError: (e) => setError(e, t('saveFailed')),
     });
   };
 
@@ -125,30 +128,26 @@ function QuickFavoriteFields({
         </Pressable>
         <Pressable onPress={() => setIconPickerOpen(true)} hitSlop={8}>
           <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-            {icon ? 'Cambiar ícono' : 'Elegir ícono'}
+            {t(icon ? 'form.changeIcon' : 'form.pickIcon')}
           </Text>
         </Pressable>
       </View>
 
       <TextField
-        label="Nombre"
+        label={t('form.name')}
         value={label}
-        onChangeText={(t) => {
-          setLabel(t);
+        onChangeText={(text) => {
+          setLabel(text);
           dirty();
         }}
-        placeholder="Ej. Café"
+        placeholder={t('form.namePlaceholder')}
         maxLength={40}
         autoFocus
       />
 
       <SwitchRow
-        label="Monto fijo"
-        description={
-          fixedAmount
-            ? 'Se prellena, pero puedes ajustarlo antes de guardar'
-            : 'Monto libre — lo escribes cada vez que lo uses'
-        }
+        label={t('form.fixedAmount')}
+        description={fixedAmount ? t('form.fixedOn') : t('form.fixedOff')}
         value={fixedAmount}
         onValueChange={(v) => {
           setFixedAmount(v);
@@ -158,10 +157,10 @@ function QuickFavoriteFields({
 
       {fixedAmount ? (
         <CurrencyField
-          label="Monto"
+          label={t('transactions:form.amount')}
           value={amountText}
-          onChangeText={(t) => {
-            setAmountText(t);
+          onChangeText={(text) => {
+            setAmountText(text);
             dirty();
           }}
           currency={currency}
@@ -170,7 +169,7 @@ function QuickFavoriteFields({
 
       <ErrorCard message={fieldError ?? error} />
 
-      <Button label="Guardar" onPress={submit} loading={create.isPending} />
+      <Button label={t('common:save')} onPress={submit} loading={create.isPending} />
 
       <IconPicker
         visible={iconPickerOpen}

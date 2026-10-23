@@ -12,10 +12,10 @@ export const accountTypeSchema = z.enum([
   'credit_card',
 ]);
 
-export const currencyCodeSchema = z.string().trim().length(3, 'Usa un código de divisa de 3 letras');
+export const currencyCodeSchema = z.string().trim().length(3, 'validation:currencyCode');
 
 export const accountCreateSchema = z.object({
-  name: z.string().trim().min(1, 'Ponle un nombre').max(60),
+  name: z.string().trim().min(1, 'validation:nameGiven').max(60),
   type: accountTypeSchema,
   currency: currencyCodeSchema.default('MXN'),
   initial_balance: z.number().finite().default(0),

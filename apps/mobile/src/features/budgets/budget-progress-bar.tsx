@@ -1,6 +1,7 @@
 import { formatCurrency } from '@repo/core/utils';
 import { CircleAlert } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { ICON_COLORS } from '@repo/ui';
 
@@ -32,6 +33,7 @@ export function BudgetProgressBar({
   hasCategories,
   tone = 'default',
 }: Props) {
+  const { t } = useTranslation('budgets');
   const { colorScheme } = useColorScheme();
   const onDark = tone === 'onDark';
   // On the hero surface the background is always dark, whatever the theme.
@@ -46,7 +48,7 @@ export function BudgetProgressBar({
       <View className="flex-row items-center gap-2 rounded-xl bg-warning-tint px-3.5 py-3 dark:bg-warning-tint-dark">
         <CircleAlert size={16} color={warningColor} />
         <Text className="flex-1 text-[13px] font-medium leading-[17px] text-warning dark:text-warning-dark">
-          Sin categorías asignadas — este presupuesto no está contando ningún gasto.
+          {t('progress.noCategories')}
         </Text>
       </View>
     );
@@ -58,7 +60,7 @@ export function BudgetProgressBar({
         <Text className={`text-sm ${onDark ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>
           {formatCurrency(spent, currency)}{' '}
           <Text className={onDark ? 'text-white/50' : 'text-ink-3 dark:text-ink-3-dark'}>
-            de {formatCurrency(amount, currency)}
+            {t('progress.of', { amount: formatCurrency(amount, currency) })}
           </Text>
         </Text>
         <Text className="text-sm font-semibold" style={{ color: barColor }}>

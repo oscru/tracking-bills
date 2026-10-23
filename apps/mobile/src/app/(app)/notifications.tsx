@@ -12,6 +12,7 @@ import {
   NotificationsEmptyIllustration,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { NotificationRow } from '../../features/notifications/notification-row';
@@ -59,6 +60,7 @@ function Section({
  * Pushed over the tabs, so the floating tab bar isn't shown here.
  */
 export default function NotificationsScreen() {
+  const { t } = useTranslation('notifications');
   const router = useRouter();
   const { items, unreadCount, isLoading } = useNotifications();
   const markRead = useMarkNotificationsRead();
@@ -75,7 +77,7 @@ export default function NotificationsScreen() {
   return (
     <Screen className="gap-4">
       <PageHeader
-        title="Notificaciones"
+        title={t('center.title')}
         onBack={() => router.back()}
         action={
           unreadCount > 0 ? (
@@ -85,7 +87,7 @@ export default function NotificationsScreen() {
               accessibilityRole="button"
             >
               <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                Marcar todo leído
+                {t('center.markAllRead')}
               </Text>
             </Pressable>
           ) : undefined
@@ -97,8 +99,8 @@ export default function NotificationsScreen() {
       ) : items.length === 0 ? (
         <EmptyState
           illustration={<NotificationsEmptyIllustration />}
-          title="Todo en orden"
-          description="Aquí te avisaremos de pagos pendientes, presupuestos y tus metas de ahorro."
+          title={t('center.emptyTitle')}
+          description={t('center.emptyBody')}
         />
       ) : (
         <ScrollView
@@ -107,14 +109,14 @@ export default function NotificationsScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Section
-            title="Nuevas"
+            title={t('center.new')}
             items={unread}
             offset={0}
             onOpen={open}
             onDismiss={(n) => dismiss.mutate(n.id)}
           />
           <Section
-            title="Anteriores"
+            title={t('center.earlier')}
             items={read}
             offset={unread.length}
             onOpen={open}

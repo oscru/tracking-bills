@@ -88,6 +88,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "accounts_peer_user_id_fkey"
+            columns: ["peer_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_receive_into_account_id_fkey"
+            columns: ["receive_into_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "accounts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -454,7 +468,22 @@ export type Database = {
           inviter_id?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "peer_links_invitee_id_fkey"
+            columns: ["invitee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "peer_links_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -470,6 +499,7 @@ export type Database = {
           home_hidden_items: string[]
           home_layout: string[] | null
           id: string
+          language: string | null
           legal_accepted_at: string | null
           legal_version: string | null
           notification_prefs: Json
@@ -492,6 +522,7 @@ export type Database = {
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id: string
+          language?: string | null
           legal_accepted_at?: string | null
           legal_version?: string | null
           notification_prefs?: Json
@@ -514,6 +545,7 @@ export type Database = {
           home_hidden_items?: string[]
           home_layout?: string[] | null
           id?: string
+          language?: string | null
           legal_accepted_at?: string | null
           legal_version?: string | null
           notification_prefs?: Json
@@ -692,6 +724,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transactions_peer_transaction_id_fkey"
+            columns: ["peer_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "transactions_to_account_id_fkey"
             columns: ["to_account_id"]
             isOneToOne: false
@@ -718,42 +757,66 @@ export type Database = {
       }
       daily_category_totals: {
         Row: {
-          date: string | null
-          currency: string | null
           category_id: string | null
-          total: number | null
           count: number | null
+          currency: string | null
+          date: string | null
+          total: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       daily_totals: {
         Row: {
-          date: string | null
+          count: number | null
           currency: string | null
-          type: string | null
+          date: string | null
           total: number | null
-          count: number | null
-        }
-        Relationships: []
-      }
-      tag_transaction_counts: {
-        Row: {
-          tag_id: string | null
           type: string | null
-          count: number | null
         }
         Relationships: []
       }
       monthly_category_totals: {
         Row: {
-          month: string | null
-          currency: string | null
-          type: string | null
           category_id: string | null
-          total: number | null
           count: number | null
+          currency: string | null
+          month: string | null
+          total: number | null
+          type: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tag_transaction_counts: {
+        Row: {
+          count: number | null
+          tag_id: string | null
+          type: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -761,38 +824,43 @@ export type Database = {
         Args: { p_code: string; p_receive_account_id: string }
         Returns: string
       }
-      create_peer_invite: { Args: never; Returns: string }
-      linked_peers: {
-        Args: never
-        Returns: {
-          link_id: string
-          peer_id: string | null
-          peer_name: string | null
-          status: string
-          code: string | null
-          expires_at: string
-          is_inviter: boolean
-          receive_currencies: string[]
-        }[]
-      }
-      peer_contact_account: {
-        Args: { p_peer: string; p_currency: string }
-        Returns: string
-      }
-      set_peer_receive_account: {
-        Args: { p_peer: string; p_account_id: string }
-        Returns: undefined
-      }
-      unlink_peer: { Args: { p_link_id: string }; Returns: undefined }
       account_net_before: {
-        Args: { p_account_id: string; p_date?: string; p_created_at?: string }
+        Args: { p_account_id: string; p_created_at?: string; p_date?: string }
         Returns: number
       }
+      create_peer_invite: { Args: never; Returns: string }
       delete_own_account: { Args: never; Returns: undefined }
+      ensure_contact_account: {
+        Args: { p_currency: string; p_owner: string; p_peer: string }
+        Returns: string
+      }
       increment_favorite_transaction_use: {
         Args: { favorite_id: string }
         Returns: undefined
       }
+      linked_peers: {
+        Args: never
+        Returns: {
+          code: string
+          expires_at: string
+          is_inviter: boolean
+          link_id: string
+          peer_id: string
+          peer_name: string
+          receive_currencies: string[]
+          status: string
+        }[]
+      }
+      peer_contact_account: {
+        Args: { p_currency: string; p_peer: string }
+        Returns: string
+      }
+      peers_are_linked: { Args: { p_a: string; p_b: string }; Returns: boolean }
+      set_peer_receive_account: {
+        Args: { p_account_id: string; p_peer: string }
+        Returns: undefined
+      }
+      unlink_peer: { Args: { p_link_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

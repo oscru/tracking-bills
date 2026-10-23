@@ -1,5 +1,6 @@
 import '../global.css';
 import '../web-setup';
+import '../i18n-setup';
 
 import {
   createQueryClient,
@@ -16,6 +17,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments }
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -23,6 +25,7 @@ import { enableFreeze } from 'react-native-screens';
 import * as WebBrowser from 'expo-web-browser';
 
 import { AppLock } from '../features/security/app-lock';
+import { LanguageEffects } from '../features/settings/language-sync';
 import { ColorSchemeEffects } from '../features/settings/theme-sync';
 import { AppSplash } from '../features/splash/app-splash';
 import { FloatingDraftBubble } from '../features/transactions/floating-draft-bubble';
@@ -132,13 +135,19 @@ function LaunchSplash() {
 
 function AuthGate() {
   const { session, loading } = useSession();
+  // Switching the language remounts the screens: every text and every
+  // formatted amount or date redraws in it — also the ones in components
+  // that don't read translations themselves. It happens on launch (under
+  // the splash, once the profile says which) and when it's changed in
+  // Preferencias.
+  const { i18n } = useTranslation();
 
   // The branded splash (`AppSplash`) covers this while the session loads.
   if (loading) return <View className="flex-1 bg-canvas-dark" />;
 
   return (
     <>
-      <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
+      <Stack key={i18n.language} screenOptions={{ headerShown: false, animation: 'fade' }} />
       <AuthRedirect />
       {session ? <FloatingDraftBubble /> : null}
     </>
@@ -153,6 +162,7 @@ export default function RootLayout() {
           <SafeAreaProvider>
             <StatusBar style="auto" />
             <ColorSchemeEffects />
+            <LanguageEffects />
             <NavigationTheme>
               <SheetPortalHost>
                 <AuthGate />

@@ -1,3 +1,4 @@
+import { i18n } from '@repo/core/i18n';
 import { Text, View } from 'react-native';
 
 /** A person's initial in a circle — lime while linked, gray once unlinked. */
@@ -27,6 +28,6 @@ export function PersonAvatar({
 
 /** What a contact account's net means, in words: who has sent the other more. */
 export function netLabel(net: number): string {
-  if (Math.round(net * 100) === 0) return 'Están parejos';
-  return net > 0 ? 'Le has enviado más' : 'Te ha enviado más';
+  if (Math.round(net * 100) === 0) return i18n.t('peers:net.even');
+  return i18n.t(net > 0 ? 'peers:net.youSentMore' : 'peers:net.theySentMore');
 }

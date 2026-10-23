@@ -14,10 +14,11 @@ import {
 import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, View, ScrollView } from 'react-native';
 
 import { AccountIcon } from '../../../../../features/accounts/account-icon';
-import { ACCOUNT_TYPE_LABEL } from '../../../../../features/accounts/account-types';
+import { accountTypeLabel } from '../../../../../features/accounts/account-types';
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 import {
   MasterDetailEmpty,
@@ -26,12 +27,13 @@ import {
 } from '../../../../../features/settings/master-detail';
 
 const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
-  { value: 'active', label: 'Activas' },
-  { value: 'archived', label: 'Archivadas' },
+  { value: 'active', label: 'active' },
+  { value: 'archived', label: 'archived' },
 ];
 
 /** The section's list — on a wide desktop, also drawn beside the open record (see `_layout`). */
 export function AccountsList() {
+  const { t } = useTranslation('accounts');
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   // Desktop: the record open in the pane beside this list.
@@ -55,31 +57,31 @@ export function AccountsList() {
       ? false
       : {
           icon: Plus,
-          accessibilityLabel: 'Nueva cuenta',
+          accessibilityLabel: t('new'),
           onPress: () => router.push('/(app)/settings/accounts/new'),
         },
   );
 
   return (
     <Screen edges={['top']} className="gap-4">
-      <PageHeader title="Cuentas" onBack={() => router.back()} />
-      <SegmentedControl options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+      <PageHeader title={t('title')} onBack={() => router.back()} />
+      <SegmentedControl
+        options={STATUS_OPTIONS.map((o) => ({ ...o, label: t(`tabs.${o.value}`) }))}
+        value={status}
+        onChange={setStatus}
+      />
 
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
       ) : error ? (
         <View className="mt-8">
-          <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar las cuentas')} />
+          <ErrorCard message={toFriendlyMessage(error, t('loadFailed'))} />
         </View>
       ) : visible.length === 0 ? (
         <EmptyState
           illustration={<AccountsEmptyIllustration />}
-          title={status === 'archived' ? 'Sin cuentas archivadas' : 'Aún no tienes cuentas'}
-          description={
-            status === 'archived'
-              ? undefined
-              : 'Crea una cuenta para empezar a registrar tus movimientos.'
-          }
+          title={t(status === 'archived' ? 'emptyArchived' : 'empty')}
+          description={status === 'archived' ? undefined : t('emptyHint')}
         />
       ) : (
         <ScrollView
@@ -93,7 +95,7 @@ export function AccountsList() {
                 {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
                 <ListRow
                   title={a.name}
-                  subtitle={ACCOUNT_TYPE_LABEL[a.type]}
+                  subtitle={accountTypeLabel(a.type)}
                   leading={<AccountIcon account={a} />}
                   trailing={
                     <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
@@ -124,17 +126,18 @@ export function AccountsList() {
  * list itself.
  */
 export default function AccountsScreen() {
+  const { t } = useTranslation('accounts');
   const panes = useMasterDetailPanes();
   const router = useRouter();
   if (!panes) return <AccountsList />;
   return (
     <MasterDetailEmpty
       illustration={<AccountsEmptyIllustration />}
-      title="Elige una cuenta"
-      description="Su saldo, sus movimientos y sus ajustes aparecen aquí, junto a la lista."
+      title={t('pickTitle')}
+      description={t('pickHint')}
       action={{
         icon: Plus,
-        accessibilityLabel: 'Nueva cuenta',
+        accessibilityLabel: t('new'),
         onPress: () => router.push('/(app)/settings/accounts/new'),
       }}
     />

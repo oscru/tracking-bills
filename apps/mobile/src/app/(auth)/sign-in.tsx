@@ -6,6 +6,7 @@ import { Link, useRouter } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { AuthShell } from '../../features/auth/auth-shell';
@@ -13,6 +14,7 @@ import { SsoButtons } from '../../features/auth/sso-buttons';
 import { SsoLegalNotice } from '../../features/legal/legal';
 
 export default function SignIn() {
+  const { t } = useTranslation('auth');
   const signIn = useSignIn();
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -33,7 +35,7 @@ export default function SignIn() {
     }
     if (signIn.isPending) return;
     signIn.mutate(parsed.data, {
-      onError: (e) => setErrors({ form: toFriendlyMessage(e, 'No se pudo iniciar sesión') }),
+      onError: (e) => setErrors({ form: toFriendlyMessage(e, t('signIn.failed')) }),
     });
   };
 
@@ -42,19 +44,17 @@ export default function SignIn() {
       <StaggerItem index={2}>
         <View className="gap-1.5">
           <Text className="text-[28px] font-bold tracking-tight text-ink dark:text-ink-dark">
-            Hola de nuevo 👋
+            {t('signIn.title')}
           </Text>
-          <Text className="text-base text-ink-2 dark:text-ink-2-dark">
-            Entra para ver cómo van tus cuentas.
-          </Text>
+          <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('signIn.subtitle')}</Text>
         </View>
       </StaggerItem>
 
       <StaggerItem index={3}>
         <View className="gap-4">
           <TextField
-            placeholder="Correo"
-            accessibilityLabel="Correo"
+            placeholder={t('fields.email')}
+            accessibilityLabel={t('fields.email')}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -70,8 +70,8 @@ export default function SignIn() {
           <View className="gap-2">
             <TextField
               ref={passwordRef}
-              placeholder="Contraseña"
-              accessibilityLabel="Contraseña"
+              placeholder={t('fields.password')}
+              accessibilityLabel={t('fields.password')}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -85,7 +85,9 @@ export default function SignIn() {
                   onPress={() => setShowPassword((v) => !v)}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  accessibilityLabel={t(
+                    showPassword ? 'fields.hidePassword' : 'fields.showPassword',
+                  )}
                 >
                   {showPassword ? (
                     <EyeOff size={20} color={iconColor} />
@@ -106,14 +108,14 @@ export default function SignIn() {
               className="self-end"
             >
               <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-                ¿Olvidaste tu contraseña?
+                {t('signIn.forgotPassword')}
               </Text>
             </Pressable>
           </View>
 
           <ErrorCard message={errors.form} />
 
-          <Button label="Entrar" onPress={onSubmit} loading={signIn.isPending} />
+          <Button label={t('signIn.submit')} onPress={onSubmit} loading={signIn.isPending} />
         </View>
       </StaggerItem>
 
@@ -125,11 +127,11 @@ export default function SignIn() {
           </View>
 
           <View className="flex-row items-center justify-center gap-1.5">
-            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿Nuevo en Genobills?</Text>
+            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{t('signIn.newHere')}</Text>
             <Link href="/(auth)/sign-up" asChild>
               <Pressable hitSlop={8}>
                 <Text className="text-sm font-semibold text-ink underline dark:text-ink-dark">
-                  Crea tu cuenta gratis
+                  {t('signIn.createAccount')}
                 </Text>
               </Pressable>
             </Link>

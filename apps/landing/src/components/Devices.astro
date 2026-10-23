@@ -6,9 +6,10 @@
  */
 import { Image } from 'astro:assets';
 
-import desktop from '../assets/app-screens/devices-desktop.webp';
-import phone from '../assets/app-screens/devices-phone.webp';
-import tablet from '../assets/app-screens/devices-tablet.webp';
+import { langOf } from '../i18n';
+import { screensFor } from './app-screens';
+
+const { desktop, tablet, phone } = screensFor(langOf(Astro));
 ---
 
 <div data-devices class="relative w-full" style="aspect-ratio: 1100 / 600">

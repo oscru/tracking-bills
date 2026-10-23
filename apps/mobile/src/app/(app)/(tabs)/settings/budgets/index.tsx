@@ -1,5 +1,4 @@
 import { useBudgetSpendTransactions, useBudgets } from '@repo/core/hooks';
-import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetProgress, formatDate, toFriendlyMessage } from '@repo/core/utils';
 import {
   BudgetsEmptyIllustration,
@@ -14,24 +13,19 @@ import {
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../../../../../features/budgets/budget-progress-bar';
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 
-const PERIOD_LABEL: Record<BudgetPeriodType, string> = {
-  weekly: 'Semanal',
-  biweekly: 'Quincenal',
-  monthly: 'Mensual',
-  custom: 'Personalizado',
-};
-
 const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
-  { value: 'active', label: 'Activos' },
-  { value: 'archived', label: 'Archivados' },
+  { value: 'active', label: 'active' },
+  { value: 'archived', label: 'archived' },
 ];
 
 export default function BudgetsScreen() {
+  const { t } = useTranslation('budgets');
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
@@ -44,29 +38,31 @@ export default function BudgetsScreen() {
 
   useTabBarAction({
     icon: Plus,
-    accessibilityLabel: 'Nuevo presupuesto',
+    accessibilityLabel: t('new'),
     onPress: () => router.push('/(app)/settings/budgets/new'),
   });
 
   return (
     <Screen edges={['top']} className="gap-4">
-      <PageHeader title="Presupuestos" onBack={() => router.back()} />
+      <PageHeader title={t('title')} onBack={() => router.back()} />
 
-      <SegmentedControl options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+      <SegmentedControl
+        options={STATUS_OPTIONS.map((o) => ({ ...o, label: t(`tabs.${o.value}`) }))}
+        value={status}
+        onChange={setStatus}
+      />
 
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
       ) : error ? (
         <View className="mt-8">
-          <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar los presupuestos')} />
+          <ErrorCard message={toFriendlyMessage(error, t('loadFailed'))} />
         </View>
       ) : visible.length === 0 ? (
         <EmptyState
           illustration={<BudgetsEmptyIllustration />}
-          title={status === 'archived' ? 'Sin presupuestos archivados' : 'Sin presupuestos todavía'}
-          description={
-            status === 'archived' ? undefined : 'Crea uno para controlar tu gasto por categoría.'
-          }
+          title={t(status === 'archived' ? 'emptyArchived' : 'empty')}
+          description={status === 'archived' ? undefined : t('emptyHint')}
         />
       ) : (
         <ScrollView
@@ -86,8 +82,8 @@ export default function BudgetsScreen() {
             const rangeLabel = `${formatDate(progress.from)} – ${formatDate(progress.to)}`;
             const periodLabel =
               b.period_type === 'custom'
-                ? 'Personalizado'
-                : `${PERIOD_LABEL[b.period_type]}${b.repeats ? ' · se repite' : ''}`;
+                ? t('period.custom')
+                : `${t(`period.${b.period_type}`)}${b.repeats ? t('repeatsSuffix') : ''}`;
 
             return (
               <StaggerItem key={b.id} index={i}>
@@ -118,8 +114,7 @@ export default function BudgetsScreen() {
                   />
 
                   <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                    {b.categories.length} categoría{b.categories.length === 1 ? '' : 's'} ·{' '}
-                    {rangeLabel}
+                    {t('categoriesCount', { count: b.categories.length })} · {rangeLabel}
                   </Text>
                 </Pressable>
               </StaggerItem>

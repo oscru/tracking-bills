@@ -19,6 +19,7 @@ import { ListFilter, MousePointerClick } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { useColorScheme } from 'nativewind';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountIcon } from '../../../../features/accounts/account-icon';
@@ -72,13 +73,8 @@ const getItemType = (item: ListItem) => {
   return `${item.intro ? 'introRow' : 'row'}-${shape}`;
 };
 
-const TITLE: Record<TransactionType, string> = {
-  income: 'Ingresos',
-  expense: 'Gastos',
-  transfer: 'Transferencias',
-};
-
 export default function TransactionsScreen() {
+  const { t } = useTranslation('transactions');
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { colorScheme } = useColorScheme();
@@ -288,7 +284,7 @@ export default function TransactionsScreen() {
     </ScrollView>
   ) : error ? (
     <View className="mt-8">
-      <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar los movimientos')} />
+      <ErrorCard message={toFriendlyMessage(error, t('list.loadFailed'))} />
     </View>
   ) : (
     <View className="flex-1">
@@ -319,12 +315,8 @@ export default function TransactionsScreen() {
             <EmptyState
               className=""
               illustration={<TransactionsEmptyIllustration />}
-              title="Sin movimientos"
-              description={
-                filtered
-                  ? 'No hay movimientos con estos filtros.'
-                  : 'Toca el botón + para registrar el primero.'
-              }
+              title={t('list.emptyTitle')}
+              description={filtered ? t('list.emptyFiltered') : t('list.emptyHint')}
             />
           </View>
         }
@@ -392,16 +384,16 @@ export default function TransactionsScreen() {
           <Text className="text-2xl font-bold text-ink dark:text-ink-dark">
             {pendingOnly
               ? from && !to
-                ? 'Próximos'
-                : 'Pendientes'
+                ? t('list.upcoming')
+                : t('list.pending')
               : type
-                ? TITLE[type]
-                : 'Movimientos'}
+                ? t(`types.${type}`)
+                : t('list.title')}
           </Text>
           {filtered ? (
             <Pressable onPress={clearAll} hitSlop={8}>
               <Text className="text-[13px] font-semibold text-danger dark:text-danger-dark">
-                × Limpiar filtros
+                {t('list.clearFilters')}
               </Text>
             </Pressable>
           ) : null}
@@ -415,7 +407,7 @@ export default function TransactionsScreen() {
           <TextField
             value={search}
             onChangeText={setSearch}
-            placeholder="Buscar por descripción…"
+            placeholder={t('list.search')}
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="search"
@@ -425,7 +417,7 @@ export default function TransactionsScreen() {
         <Pressable
           onPress={() => setFiltersOpen(true)}
           accessibilityRole="button"
-          accessibilityLabel="Filtros"
+          accessibilityLabel={t('list.filters')}
           className={`h-[52px] w-[52px] items-center justify-center rounded-ctl border ${
             activeFilterCount > 0
               ? 'border-lime bg-lime'
@@ -467,10 +459,10 @@ export default function TransactionsScreen() {
                   <MousePointerClick size={22} color={ICON_COLORS.limeInk} />
                 </View>
                 <Text className="text-center text-base font-semibold text-ink dark:text-ink-dark">
-                  Selecciona un movimiento
+                  {t('list.selectTitle')}
                 </Text>
                 <Text className="text-center text-sm text-ink-2 dark:text-ink-2-dark">
-                  Su detalle aparece aquí, sin salir de la lista.
+                  {t('list.selectHint')}
                 </Text>
               </View>
             )}

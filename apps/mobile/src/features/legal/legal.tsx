@@ -1,9 +1,11 @@
+import { currentLanguage, translateMessage } from '@repo/core/i18n';
 import { LEGAL_PATHS, type LegalDocument } from '@repo/core/utils';
 import { ICON_COLORS } from '@repo/ui';
 import * as WebBrowser from 'expo-web-browser';
 import { Check } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import type { ReactNode } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { Platform, Pressable, Text, View } from 'react-native';
 
 /**
@@ -15,14 +17,9 @@ const SITE_URL = (process.env.EXPO_PUBLIC_SITE_URL ?? 'https://genobills.vercel.
   '',
 );
 
-export const LEGAL_LABELS: Record<LegalDocument, string> = {
-  terms: 'Términos y condiciones',
-  privacy: 'Aviso de privacidad',
-  cookies: 'Política de cookies',
-};
-
+/** The document in the app's language. */
 export function legalUrl(doc: LegalDocument): string {
-  return `${SITE_URL}${LEGAL_PATHS[doc]}`;
+  return `${SITE_URL}${LEGAL_PATHS[currentLanguage()][doc]}`;
 }
 
 /** Opens a document: a new tab on web, the in-app browser on phones. */
@@ -37,13 +34,14 @@ export function openLegal(doc: LegalDocument) {
 
 /** An inline link to a document, inside a sentence — underlined, in the text's ink (lime is for the screen's main action). */
 export function LegalLink({ doc, children }: { doc: LegalDocument; children?: ReactNode }) {
+  const { t } = useTranslation('legal');
   return (
     <Text
       accessibilityRole="link"
       onPress={() => openLegal(doc)}
       className="font-medium text-ink underline dark:text-ink-dark"
     >
-      {children ?? LEGAL_LABELS[doc]}
+      {children ?? t(`documents.${doc}`)}
     </Text>
   );
 }
@@ -62,6 +60,7 @@ export function LegalConsent({
   onChange: (checked: boolean) => void;
   error?: string;
 }) {
+  const { t } = useTranslation('legal');
   const dark = useColorScheme().colorScheme === 'dark';
   return (
     <View className="gap-1.5">
@@ -71,7 +70,7 @@ export function LegalConsent({
         accessibilityState={{ checked }}
         // The links inside are separate elements; screen readers need the
         // whole sentence here.
-        accessibilityLabel="Acepto los Términos y condiciones y el Aviso de privacidad. Tengo 18 años o más, o tengo entre 13 y 17 y cuento con el consentimiento de mi madre, padre o tutor."
+        accessibilityLabel={t('consentA11y')}
         hitSlop={4}
         className="flex-row items-start gap-3"
       >
@@ -89,12 +88,17 @@ export function LegalConsent({
           ) : null}
         </View>
         <Text className="flex-1 text-[13px] leading-5 text-ink-2 dark:text-ink-2-dark">
-          Acepto los <LegalLink doc="terms" /> y el <LegalLink doc="privacy" />. Tengo 18 años o
-          más, o tengo entre 13 y 17 y cuento con el consentimiento de mi madre, padre o tutor.
+          <Trans
+            t={t}
+            i18nKey="consent"
+            components={{ terms: <LegalLink doc="terms" />, privacy: <LegalLink doc="privacy" /> }}
+          />
         </Text>
       </Pressable>
       {error ? (
-        <Text className="pl-[34px] text-sm text-danger dark:text-danger-dark">{error}</Text>
+        <Text className="pl-[34px] text-sm text-danger dark:text-danger-dark">
+          {translateMessage(error)}
+        </Text>
       ) : null}
     </View>
   );
@@ -104,8 +108,11 @@ export function LegalConsent({
 export function SsoLegalNotice() {
   return (
     <Text className="text-center text-[11px] leading-4 text-ink-3 dark:text-ink-3-dark">
-      Al continuar aceptas los <LegalLink doc="terms">Términos</LegalLink> y el{' '}
-      <LegalLink doc="privacy">Aviso de privacidad</LegalLink>.
+      <Trans
+        ns="legal"
+        i18nKey="ssoNotice"
+        components={{ terms: <LegalLink doc="terms" />, privacy: <LegalLink doc="privacy" /> }}
+      />
     </Text>
   );
 }

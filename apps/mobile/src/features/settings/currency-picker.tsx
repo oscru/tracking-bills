@@ -1,7 +1,8 @@
-import { CURRENCIES, type CurrencyMeta } from '@repo/core/utils';
+import { CURRENCIES, currencyName, type CurrencyMeta } from '@repo/core/utils';
 import { BottomSheet, Button, ICON_COLORS } from '@repo/ui';
 import { Check, Circle, CircleCheck } from 'lucide-react-native';
 import { memo, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
 
 interface Props {
@@ -32,7 +33,7 @@ const Row = memo(function Row({
       </View>
       <View className="flex-1">
         <Text className="text-[15px] font-medium capitalize text-ink dark:text-ink-dark">
-          {item.name}
+          {currencyName(item)}
         </Text>
         <Text className="text-xs text-ink-2 dark:text-ink-2-dark">{item.code}</Text>
       </View>
@@ -48,6 +49,7 @@ const Row = memo(function Row({
  * virtualization, re-rendering all of them on each keystroke was slow enough
  * to drop keystrokes in the search field. */
 export function CurrencyPicker({ visible, onClose, selectedCode, onSelect, codes }: Props) {
+  const { t } = useTranslation('preferences');
   const [q, setQ] = useState('');
 
   const base = useMemo(
@@ -59,7 +61,10 @@ export function CurrencyPicker({ visible, onClose, selectedCode, onSelect, codes
     const needle = q.trim().toLowerCase();
     if (!needle) return base;
     return base.filter(
-      (c) => c.name.toLowerCase().includes(needle) || c.code.toLowerCase().includes(needle),
+      (c) =>
+        currencyName(c).toLowerCase().includes(needle) ||
+        c.name.toLowerCase().includes(needle) ||
+        c.code.toLowerCase().includes(needle),
     );
   }, [base, q]);
 
@@ -70,12 +75,12 @@ export function CurrencyPicker({ visible, onClose, selectedCode, onSelect, codes
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Moneda">
+    <BottomSheet visible={visible} onClose={onClose} title={t('currencyPicker.title')}>
       <View className="px-5 pb-3">
         <TextInput
           value={q}
           onChangeText={setQ}
-          placeholder="Buscar moneda o código…"
+          placeholder={t('currencyPicker.search')}
           placeholderTextColor={ICON_COLORS.ink3}
           autoCapitalize="none"
           className="h-11 rounded-ctl border border-line bg-surface px-3 text-[15px] text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark"
@@ -95,7 +100,7 @@ export function CurrencyPicker({ visible, onClose, selectedCode, onSelect, codes
         )}
         ListEmptyComponent={
           <Text className="px-5 py-4 text-sm text-ink-2 dark:text-ink-2-dark">
-            No hay monedas que coincidan.
+            {t('currencyPicker.noMatches')}
           </Text>
         }
       />
@@ -127,7 +132,7 @@ const MultiRow = memo(function MultiRow({
       </View>
       <View className="flex-1">
         <Text className="text-[15px] font-medium capitalize text-ink dark:text-ink-dark">
-          {item.name}
+          {currencyName(item)}
         </Text>
         <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
           {item.code}
@@ -169,23 +174,27 @@ export function CurrencyMultiPicker({
   minSelected = 1,
   inUseCodes,
 }: MultiProps) {
+  const { t } = useTranslation(['preferences', 'common']);
   const [q, setQ] = useState('');
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return CURRENCIES;
     return CURRENCIES.filter(
-      (c) => c.name.toLowerCase().includes(needle) || c.code.toLowerCase().includes(needle),
+      (c) =>
+        currencyName(c).toLowerCase().includes(needle) ||
+        c.name.toLowerCase().includes(needle) ||
+        c.code.toLowerCase().includes(needle),
     );
   }, [q]);
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Divisas habilitadas">
+    <BottomSheet visible={visible} onClose={onClose} title={t('currencyPicker.enabledTitle')}>
       <View className="px-5 pb-3">
         <TextInput
           value={q}
           onChangeText={setQ}
-          placeholder="Buscar moneda o código…"
+          placeholder={t('currencyPicker.search')}
           placeholderTextColor={ICON_COLORS.ink3}
           autoCapitalize="none"
           className="h-11 rounded-ctl border border-line bg-surface px-3 text-[15px] text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark"
@@ -210,7 +219,7 @@ export function CurrencyMultiPicker({
               item={item}
               selected={selected}
               disabled={disabled}
-              lockedReason={inUse ? 'en uso' : undefined}
+              lockedReason={inUse ? t('currencyPicker.inUse') : undefined}
               onPress={() => {
                 if (disabled) return;
                 onToggle(item.code);
@@ -220,13 +229,13 @@ export function CurrencyMultiPicker({
         }}
         ListEmptyComponent={
           <Text className="px-5 py-4 text-sm text-ink-2 dark:text-ink-2-dark">
-            No hay monedas que coincidan.
+            {t('currencyPicker.noMatches')}
           </Text>
         }
       />
 
       <View className="px-5 pb-4 pt-2">
-        <Button label="Listo" onPress={onClose} />
+        <Button label={t('common:done')} onPress={onClose} />
       </View>
     </BottomSheet>
   );

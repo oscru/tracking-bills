@@ -1,29 +1,53 @@
 ---
 import '../styles/global.css';
 
+import { langOf, PAGES, texts, type Page } from '../i18n';
+
 interface Props {
+  /** Which page this is — for its address in the other language. */
+  page: Page;
   title?: string;
   description?: string;
 }
 
-const {
-  title = 'Genobills — Tus finanzas, en orden',
-  description = 'Registra ingresos y gastos, controla tus cuentas, presupuestos y metas, y registra lo que te pasas con otras personas. Gratis, desde el navegador de tu compu o tu celular.',
-} = Astro.props;
+const lang = langOf(Astro);
+const { common } = texts(lang);
+const { page, title = common.meta.title, description = common.meta.description } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const english = new URL(PAGES[page].en, Astro.site).href;
+const spanish = new URL(PAGES[page].es, Astro.site).href;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {
+      lang === 'es' && (
+        /* English for anyone whose browser speaks no Spanish — only when they
+           arrive from outside the site, so choosing "Español" sticks without
+           storing anything (the cookie policy promises the site stores nothing). */
+        <script is:inline define:vars={{ englishPath: PAGES[page].en }}>
+          try {
+            const fromSite = document.referrer && new URL(document.referrer).origin === location.origin;
+            const langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
+            const spanish = langs.some((l) => /^es(-|$)/i.test(l || ''));
+            const bot = /bot|crawl|spider|slurp|lighthouse/i.test(navigator.userAgent);
+            if (!fromSite && !spanish && !bot) location.replace(englishPath);
+          } catch {}
+        </script>
+      )
+    }
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="es" href={spanish} />
+    <link rel="alternate" hreflang="en" href={english} />
+    <link rel="alternate" hreflang="x-default" href={english} />
     <meta name="color-scheme" content="dark" />
-    
+
     <meta name="theme-color" content="#0B0D0F" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
@@ -31,7 +55,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="es_MX" />
+    <meta property="og:locale" content={common.meta.ogLocale} />
     <meta property="og:site_name" content="Genobills" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />

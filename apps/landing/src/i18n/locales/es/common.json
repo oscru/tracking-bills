@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "title": "Genobills — Tus finanzas, en orden",
+    "description": "Registra ingresos y gastos, controla tus cuentas, presupuestos y metas, y registra lo que te pasas con otras personas. Gratis, desde el navegador de tu compu o tu celular.",
+    "ogLocale": "es_MX"
+  },
+  "nav": {
+    "signIn": "Entrar",
+    "signUp": "Crear cuenta",
+    "language": "English",
+    "languageLabel": "Ver el sitio en inglés"
+  },
+  "footer": {
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "cookies": "Cookies"
+  },
+  "stores": {
+    "downloadOn": "Descárgalo en el",
+    "availableOn": "Disponible en",
+    "comingSoon": "Próximamente en",
+    "comingSoonLabel": "{name}: próximamente"
+  }
+}

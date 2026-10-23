@@ -1,0 +1,48 @@
+{
+  "hero": {
+    "eyebrow": "Personal finance",
+    "eyebrowMore": " · On the web · iOS and Android, soon",
+    "title": "Where did your ",
+    "titleHighlight": "paycheck go?",
+    "body": "Genobills tells you down to the last cent, and helps the next one go further.",
+    "cta": "Start for free"
+  },
+  "chapters": [
+    {
+      "tag": "Log it",
+      "title": "Type the math, not the answer.",
+      "body": "Genobills' keypad is a calculator: 150 × 3, equals, done. You log an expense in three seconds without leaving the app."
+    },
+    {
+      "tag": "Transactions",
+      "title": "Every peso in its place.",
+      "body": "Categories and subcategories, grouped by day. And moving money into savings is a transfer, not an expense, so your numbers don't inflate."
+    },
+    {
+      "tag": "Insights",
+      "title": "Your month at a glance.",
+      "body": "A calendar that shows which days the money went, month-over-month trends and where each peso goes by category. Not a single spreadsheet."
+    },
+    {
+      "tag": "Budgets",
+      "title": "It warns you before, not after.",
+      "body": "Monthly, biweekly or weekly. When a category gets close to its limit you see it in time, not on your statement."
+    },
+    {
+      "tag": "Goals",
+      "title": "Save with a date, not with hope.",
+      "body": "Give it an amount and a deadline. Genobills suggests how much to set aside and tells you whether you're ahead or behind."
+    },
+    {
+      "tag": "People",
+      "title": "Clear accounts with your people.",
+      "body": "Link your partner, roommates or friends with a code. Log what you send each other, in pesos or dollars, and see where you stand."
+    }
+  ],
+  "outro": {
+    "eyebrow": "And all of this",
+    "title": "Free. ",
+    "titleMuted": "On your computer and your phone.",
+    "cta": "Create my account"
+  }
+}

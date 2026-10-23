@@ -5,6 +5,7 @@ import { CategoryDot, ICON_COLORS } from '@repo/ui';
 import { CircleX, Plus } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { CategoryPicker } from '../categories/category-picker';
@@ -28,6 +29,7 @@ interface Props {
  * one to change its amount, remove any of them. Tracks how much of the total
  * is still unassigned, and flags (without blocking) going more than 10% over. */
 export function BudgetCategoriesEditor({ categories, onChange, totalAmount, currency }: Props) {
+  const { t } = useTranslation('budgets');
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const { data: allCategories } = useCategories();
@@ -96,7 +98,7 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
     <View className="gap-3">
       <View className="flex-row items-center justify-between rounded-2xl bg-surface p-4 dark:bg-surface-dark">
         <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-          Restante por repartir
+          {t('editor.remaining')}
         </Text>
         <Text className={`text-base font-bold ${remainingColor}`}>
           {formatCurrency(remaining, currency)}
@@ -106,17 +108,16 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
       {overTolerance ? (
         <View className="rounded-xl bg-warning-tint p-3.5 dark:bg-warning-tint-dark">
           <Text className="text-xs leading-[17px] text-warning dark:text-warning-dark">
-            Repartiste {formatCurrency(overBy, currency)} más de tu presupuesto de{' '}
-            {formatCurrency(totalAmount, currency)} — más del 10% de tolerancia. Puedes crearlo así,
-            pero considera ajustar los montos.
+            {t('editor.over', {
+              over: formatCurrency(overBy, currency),
+              total: formatCurrency(totalAmount, currency),
+            })}
           </Text>
         </View>
       ) : null}
 
       {chosen.length === 0 ? (
-        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-          Sin categorías todavía. Añade al menos una.
-        </Text>
+        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{t('editor.empty')}</Text>
       ) : (
         <View className="rounded-2xl border border-line dark:border-line-dark">
           {chosen.map(({ allocation, category: c }, i) => (
@@ -148,7 +149,7 @@ export function BudgetCategoriesEditor({ categories, onChange, totalAmount, curr
       >
         <Plus size={18} color={ICON_COLORS.limeInk} />
         <Text className="text-[14px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-          Añadir categoría
+          {t('editor.add')}
         </Text>
       </Pressable>
 

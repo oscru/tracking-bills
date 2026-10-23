@@ -1,0 +1,32 @@
+{
+  "tabs": {
+    "index": "Inicio",
+    "transactions": "Movimientos",
+    "analytics": "Análisis",
+    "settings": "Opciones"
+  },
+  "dashboard": "Dashboard",
+  "settingsItems": {
+    "accounts": "Cuentas",
+    "categories": "Categorías",
+    "tags": "Tags",
+    "budgets": "Presupuestos",
+    "goals": "Objetivos",
+    "peers": "Personas",
+    "homeLayout": "Personalizar dashboard",
+    "notifications": "Avisos y recordatorios",
+    "importExport": "Importar y exportar"
+  },
+  "newMovement": "Nuevo movimiento",
+  "notifications": "Notificaciones",
+  "notificationsUnread": "Notificaciones, {{count}} sin leer",
+  "goHome": "Ir a Inicio",
+  "yourAccount": "Tu cuenta",
+  "menu": {
+    "profile": "Mi perfil",
+    "preferences": "Preferencias",
+    "signOut": "Cerrar sesión"
+  },
+  "expandSidebar": "Expandir barra lateral",
+  "collapseSidebar": "Colapsar barra lateral"
+}

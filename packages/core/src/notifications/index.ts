@@ -15,6 +15,7 @@
  * Pure functions only (no React/Expo) — the phase-2 scheduler and a future
  * server push job reuse these same rules.
  */
+import { i18n } from '../i18n/instance';
 import { resolveCategoryLabel } from '../i18n';
 import type { BudgetWithCategories, TransactionWithRefs } from '../supabase';
 import type { Account, Goal } from '../types';
@@ -91,24 +92,25 @@ const GOAL_MILESTONES = [25, 50, 75] as const;
 // "behind" past this much shortfall, so a few days' slack doesn't nag.
 const GOAL_BEHIND_TOLERANCE = 0.9;
 
+/** A notification text in the current language (`notifications:items`). */
+const tn = (key: string, options?: Record<string, unknown>): string =>
+  (i18n.t as (key: string, options?: Record<string, unknown>) => string)(
+    `notifications:items.${key}`,
+    options,
+  );
+
 // --- pending movements ------------------------------------------------------
 
 function pendingLabel(t: TransactionWithRefs): string {
   const description = t.description?.trim();
   if (description) return description;
-  if (t.type === 'transfer') return 'Transferencia';
-  return t.category ? resolveCategoryLabel(t.category) : 'Movimiento';
+  if (t.type === 'transfer') return tn('transfer');
+  return t.category ? resolveCategoryLabel(t.category) : tn('movement');
 }
 
 function pendingAmount(t: TransactionWithRefs): string {
   const amount = formatCurrency(Number(t.amount), t.account?.currency ?? 'MXN');
   return t.account?.name ? `${amount} · ${t.account.name}` : amount;
-}
-
-function pendingVerb(t: TransactionWithRefs): string {
-  if (t.type === 'income') return 'esperas recibir';
-  if (t.type === 'transfer') return 'toca transferir';
-  return 'toca pagar';
 }
 
 function pendingNotifications(
@@ -133,7 +135,7 @@ function pendingNotifications(
         kind: 'pending-today',
         category: 'pending',
         severity: 'warning',
-        title: `Hoy ${pendingVerb(t)} ${label}`,
+        title: tn(`pendingToday.${t.type}`, { label }),
         body: pendingAmount(t),
         date: today,
         target,
@@ -144,7 +146,7 @@ function pendingNotifications(
         kind: 'pending-tomorrow',
         category: 'pending',
         severity: 'info',
-        title: `Mañana ${pendingVerb(t)} ${label}`,
+        title: tn(`pendingTomorrow.${t.type}`, { label }),
         body: pendingAmount(t),
         date: today,
         target,
@@ -159,10 +161,12 @@ function pendingNotifications(
         kind: 'pending-overdue',
         category: 'pending',
         severity: 'critical',
-        title: `${label} sigue pendiente`,
-        body: `Era para el ${formatDate(t.transaction_date)} (hace ${daysLate} día${
-          daysLate === 1 ? '' : 's'
-        }) · ${pendingAmount(t)}. ¿Ya se realizó?`,
+        title: tn('overdueTitle', { label }),
+        body: tn('overdueBody', {
+          date: formatDate(t.transaction_date),
+          count: daysLate,
+          amount: pendingAmount(t),
+        }),
         date: addDaysISO(t.transaction_date, 1 + round * overdueRepeatDays),
         target,
       });
@@ -183,17 +187,17 @@ function peerNotifications(received: TransactionWithRefs[], today: string): AppN
   for (const t of received) {
     if (!t.is_peer_mirror || !t.is_completed) continue;
     if (t.transaction_date > today || t.transaction_date < since) continue;
-    const who = t.account?.name ?? 'Alguien';
+    const who = t.account?.name ?? tn('someone');
     const amount = formatCurrency(Number(t.amount), t.account?.currency ?? 'MXN');
     out.push({
       id: `peer-received:${t.id}`,
       kind: 'peer-received',
       category: 'peer',
       severity: 'success',
-      title: `${who} te envió ${amount}`,
+      title: tn('peerTitle', { who, amount }),
       body: t.to_account?.name
-        ? `Llegó a ${t.to_account.name}. No cuenta como ingreso.`
-        : 'No cuenta como ingreso.',
+        ? tn('peerBodyAccount', { account: t.to_account.name })
+        : tn('peerBody'),
       date: t.transaction_date,
       target: { type: 'transaction', id: t.id },
     });
@@ -268,11 +272,13 @@ function budgetNotifications(
         kind: 'budget-exceeded',
         category: 'budget',
         severity: 'critical',
-        title: `Te pasaste en ${budget.name}`,
-        body: `Gastaste ${formatCurrency(progress.spent, budget.currency)} de ${formatCurrency(
-          amount,
-          budget.currency,
-        )} (${formatCurrency(-progress.remaining, budget.currency)} de más). El periodo termina el ${formatDate(progress.to)}.`,
+        title: tn('budgetExceededTitle', { name: budget.name }),
+        body: tn('budgetExceededBody', {
+          spent: formatCurrency(progress.spent, budget.currency),
+          limit: formatCurrency(amount, budget.currency),
+          over: formatCurrency(-progress.remaining, budget.currency),
+          end: formatDate(progress.to),
+        }),
         date:
           budgetCrossingDate(budget, transactions, progress.from, progress.to, amount + 0.005) ??
           today,
@@ -284,10 +290,11 @@ function budgetNotifications(
         kind: 'budget-threshold',
         category: 'budget',
         severity: 'warning',
-        title: `Llevas el ${Math.floor(progress.pct)}% de ${budget.name}`,
-        body: `Te quedan ${formatCurrency(progress.remaining, budget.currency)} para ${daysLeft} día${
-          daysLeft === 1 ? '' : 's'
-        }.`,
+        title: tn('budgetThresholdTitle', { pct: Math.floor(progress.pct), name: budget.name }),
+        body: tn('budgetThresholdBody', {
+          remaining: formatCurrency(progress.remaining, budget.currency),
+          count: daysLeft,
+        }),
         date:
           budgetCrossingDate(
             budget,
@@ -350,8 +357,11 @@ function goalNotifications(
         kind: 'goal-completed',
         category: 'goal',
         severity: 'success',
-        title: `¡Completaste ${goal.name}!`,
-        body: `Juntaste ${money(progress.saved)} de ${money(Number(goal.target_amount))}.`,
+        title: tn('goalCompletedTitle', { name: goal.name }),
+        body: tn('goalCompletedBody', {
+          saved: money(progress.saved),
+          target: money(Number(goal.target_amount)),
+        }),
         date: lastContribution ?? today,
         target,
       });
@@ -366,8 +376,11 @@ function goalNotifications(
         kind: 'goal-milestone',
         category: 'goal',
         severity: 'success',
-        title: `Llegaste al ${milestone}% de ${goal.name}`,
-        body: `Llevas ${money(progress.saved)} · te faltan ${money(progress.remaining)}.`,
+        title: tn('goalMilestoneTitle', { pct: milestone, name: goal.name }),
+        body: tn('goalMilestoneBody', {
+          saved: money(progress.saved),
+          remaining: money(progress.remaining),
+        }),
         date: lastContribution ?? today,
         target,
       });
@@ -389,8 +402,8 @@ function goalNotifications(
             kind: 'goal-contribution-due',
             category: 'goal',
             severity: 'info',
-            title: `Toca aportar a ${goal.name}`,
-            body: `Tu plan es ${money(contribution)} cada ${interval} días.`,
+            title: tn('goalDueTitle', { name: goal.name }),
+            body: tn('goalDueBody', { amount: money(contribution), days: interval }),
             date: lastDue,
             target,
           });
@@ -424,12 +437,16 @@ function goalNotifications(
           kind: 'goal-behind',
           category: 'goal',
           severity: 'warning',
-          title: pastDeadline ? `${goal.name} no llegó a tiempo` : `${goal.name} va atrasado`,
+          title: tn(pastDeadline ? 'goalLateTitle' : 'goalBehindTitle', { name: goal.name }),
           body: pastDeadline
-            ? `La fecha límite era el ${formatDate(goal.deadline)} y te faltan ${money(progress.remaining)}.`
-            : `Para llegar el ${formatDate(goal.deadline)} necesitas unos ${money(
-                suggestion ?? progress.remaining,
-              )} al mes.`,
+            ? tn('goalLateBody', {
+                date: formatDate(goal.deadline),
+                remaining: money(progress.remaining),
+              })
+            : tn('goalBehindBody', {
+                date: formatDate(goal.deadline),
+                amount: money(suggestion ?? progress.remaining),
+              }),
           date: `${month}-01` > createdOn ? `${month}-01` : createdOn,
           target,
         });

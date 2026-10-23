@@ -3,10 +3,11 @@ import type { Account } from '@repo/core/types';
 import { BottomSheet, ICON_COLORS } from '@repo/ui';
 import { Check, UserRound } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { AccountIcon } from './account-icon';
-import { ACCOUNT_TYPE_LABEL } from './account-types';
+import { accountTypeLabel } from './account-types';
 
 interface Props {
   visible: boolean;
@@ -30,7 +31,7 @@ interface Props {
 export function AccountPicker({
   visible,
   onClose,
-  title = 'Cuenta',
+  title,
   selectedId,
   onSelect,
   excludeId,
@@ -39,6 +40,7 @@ export function AccountPicker({
   onSelectPeer,
   selectedPeerId,
 }: Props) {
+  const { t } = useTranslation('accounts');
   const [q, setQ] = useState('');
   const { data: accounts } = useAccounts();
   const { data: peers } = useLinkedPeers();
@@ -73,12 +75,12 @@ export function AccountPicker({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={title}>
+    <BottomSheet visible={visible} onClose={onClose} title={title ?? t('picker.title')}>
       <View className="px-5 pb-3">
         <TextInput
           value={q}
           onChangeText={setQ}
-          placeholder="Buscar cuenta…"
+          placeholder={t('picker.search')}
           placeholderTextColor={ICON_COLORS.ink3}
           className="h-11 rounded-ctl border border-line bg-surface px-3 text-[15px] text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark"
         />
@@ -88,7 +90,7 @@ export function AccountPicker({
         {people.length > 0 ? (
           <>
             <Text className="px-5 pb-1.5 pt-1 text-xs font-semibold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
-              Personas
+              {t('picker.people')}
             </Text>
             {people.map((p) => {
               // Known up front instead of failing on save: they need an
@@ -99,7 +101,7 @@ export function AccountPicker({
                   key={p.linkId}
                   disabled={!canReceive}
                   onPress={() => {
-                    onSelectPeer?.(p.peerId!, p.peerName ?? 'Persona');
+                    onSelectPeer?.(p.peerId!, p.peerName ?? t('picker.person'));
                     setQ('');
                     onClose();
                   }}
@@ -112,12 +114,12 @@ export function AccountPicker({
                   </View>
                   <View className="flex-1">
                     <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
-                      {p.peerName ?? 'Persona'}
+                      {p.peerName ?? t('picker.person')}
                     </Text>
                     <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
                       {canReceive
-                        ? 'Le llega directo a su cuenta'
-                        : `Aún no puede recibir ${currencyFilter} — debe elegir dónde en Personas`}
+                        ? t('picker.peerReceives')
+                        : t('picker.peerCantReceive', { currency: currencyFilter })}
                     </Text>
                   </View>
                   {selectedPeerId === p.peerId ? (
@@ -127,7 +129,7 @@ export function AccountPicker({
               );
             })}
             <Text className="px-5 pb-1.5 pt-4 text-xs font-semibold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
-              Tus cuentas
+              {t('picker.yours')}
             </Text>
           </>
         ) : null}
@@ -141,7 +143,7 @@ export function AccountPicker({
             <View className="flex-1">
               <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">{a.name}</Text>
               <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-                {ACCOUNT_TYPE_LABEL[a.type]} · {a.currency}
+                {accountTypeLabel(a.type)} · {a.currency}
               </Text>
             </View>
             {selectedId === a.id ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
@@ -150,7 +152,7 @@ export function AccountPicker({
 
         {filtered.length === 0 ? (
           <Text className="px-5 py-4 text-sm text-ink-2 dark:text-ink-2-dark">
-            No hay cuentas que coincidan.
+            {t('picker.noMatches')}
           </Text>
         ) : null}
       </ScrollView>

@@ -7,8 +7,10 @@ import {
   FavoriteForm,
   type FavoriteFormInitial,
 } from '../../../../../features/favorites/favorite-form';
+import { useTranslation } from 'react-i18next';
 
 export default function NewFavorite() {
+  const { t } = useTranslation(['favorites', 'common']);
   const router = useRouter();
   const create = useCreateFavoriteTransaction();
   const { error, setError, clearError } = useFormError();
@@ -35,11 +37,11 @@ export default function NewFavorite() {
 
   return (
     <Screen className="gap-4">
-      <PageHeader title="Nuevo favorito" onBack={() => router.back()} />
+      <PageHeader title={t('new')} onBack={() => router.back()} />
 
       <FavoriteForm
         initial={initial}
-        submitLabel="Guardar"
+        submitLabel={t('common:save')}
         submitting={create.isPending}
         error={error}
         onDirty={clearError}
@@ -47,7 +49,7 @@ export default function NewFavorite() {
           clearError();
           create.mutate(input, {
             onSuccess: () => router.back(),
-            onError: (e) => setError(e, 'No se pudo guardar el favorito'),
+            onError: (e) => setError(e, t('saveFailed')),
           });
         }}
       />

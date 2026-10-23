@@ -1,0 +1,33 @@
+{
+  "title": "Opciones",
+  "welcome": "Bienvenido",
+  "rows": {
+    "accounts": "Cuentas",
+    "accountsCount_one": "{{count}} activa",
+    "accountsCount_other": "{{count}} activas",
+    "categories": "Categorías",
+    "categoriesCount_one": "{{count}} categoría",
+    "categoriesCount_other": "{{count}} categorías",
+    "tags": "Tags",
+    "tagsCount_one": "{{count}} activa",
+    "tagsCount_other": "{{count}} activas",
+    "budgets": "Presupuestos",
+    "budgetsCount_one": "{{count}} presupuesto",
+    "budgetsCount_other": "{{count}} presupuestos",
+    "goals": "Objetivos",
+    "goalsCount_one": "{{count}} objetivo",
+    "goalsCount_other": "{{count}} objetivos",
+    "peers": "Personas",
+    "peersHint": "Pásale dinero a tu pareja sin que cuente como gasto",
+    "security": "Seguridad",
+    "securityHint": "Desbloqueo con huella o Face ID",
+    "notifications": "Notificaciones",
+    "notificationsHint": "Recordatorios de pagos, presupuestos y metas",
+    "preferences": "Preferencias",
+    "preferencesHint": "Moneda, tema e idioma",
+    "importExport": "Importar y exportar",
+    "importExportHint": "Comparte o migra tus movimientos vía Excel",
+    "tour": "Ver tour de nuevo",
+    "tourHint": "Repite la introducción a la app"
+  }
+}

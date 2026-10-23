@@ -1,6 +1,7 @@
 import { tagCreateSchema, type TagCreateInput } from '@repo/core/validators';
 import { Button, ColorPicker, ErrorCard, TextField } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
 import { CATEGORY_COLORS } from '../categories/color-picker';
@@ -30,6 +31,7 @@ export function TagForm({
   onDirty,
   footer,
 }: Props) {
+  const { t } = useTranslation('tags');
   const [name, setName] = useState(initial?.name ?? '');
   const [color, setColor] = useState(initial?.color ?? CATEGORY_COLORS[0]);
   const [nameError, setNameError] = useState<string | undefined>();
@@ -51,20 +53,22 @@ export function TagForm({
       keyboardShouldPersistTaps="handled"
     >
       <TextField
-        label="Nombre"
+        label={t('form.name')}
         value={name}
         onChangeText={(text) => {
           setName(text);
           setNameError(undefined);
           onDirty?.();
         }}
-        placeholder="Ej. Vacaciones"
+        placeholder={t('form.namePlaceholder')}
         error={nameError}
         invalid={Boolean(error)}
       />
 
       <View className="gap-2">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Color</Text>
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+          {t('form.color')}
+        </Text>
         <ColorPicker value={color} onChange={setColor} colors={CATEGORY_COLORS} />
       </View>
 

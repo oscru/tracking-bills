@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, Dimensions, PanResponder, Pressable, Text, View } from 'react-native';
 import Reanimated, {
   Easing,
@@ -85,6 +86,7 @@ const TYPE_ICON: Record<string, LucideIcon> = {
  * plain tap (no meaningful movement) reopens the form.
  */
 export function FloatingDraftBubble() {
+  const { t } = useTranslation('transactions');
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { minimized, snapshot } = useDraftTransaction();
@@ -167,7 +169,7 @@ export function FloatingDraftBubble() {
       <Pressable
         onPress={() => setConfirmDiscard(true)}
         hitSlop={10}
-        accessibilityLabel="Descartar movimiento"
+        accessibilityLabel={t('bubble.discard')}
         className="absolute -right-1.5 -top-1.5 h-6 w-6 items-center justify-center rounded-full border-2 border-canvas bg-danger dark:border-canvas-dark dark:bg-danger-dark"
       >
         <X size={13} color="#fff" />

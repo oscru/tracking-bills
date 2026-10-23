@@ -1,0 +1,53 @@
+{
+  "done": "Listo",
+  "cancel": "Cancelar",
+  "income": "Ingresos",
+  "expenses": "Gastos",
+  "previousMonth": "Mes anterior",
+  "nextMonth": "Mes siguiente",
+  "changeMonth": "{{month}} {{year}}, cambiar mes",
+  "fixed": "Fijo",
+  "remove": "Quitar {{name}}",
+  "add": "Agregar",
+  "save": "Guardar",
+  "saveChanges": "Guardar cambios",
+  "delete": "Eliminar",
+  "keep": "Conservar",
+  "discard": "Descartar",
+  "today": "Hoy",
+  "yesterday": "Ayer",
+  "all": "Todos",
+  "noResults": "Sin resultados.",
+  "saveFailed": "No se pudo guardar",
+  "saveChangesFailed": "No se pudieron guardar los cambios",
+  "deleteFailed": "No se pudo eliminar",
+  "tomorrow": "Mañana",
+  "activity": {
+    "created": {
+      "justNow": "Recién creado",
+      "today": "Creado hoy",
+      "yesterday": "Creado ayer",
+      "daysAgo_one": "Creado hace {{count}} día",
+      "daysAgo_other": "Creado hace {{count}} días",
+      "onDate": "Creado el {{date}}"
+    }
+  },
+  "archive": "Archivar",
+  "unarchive": "Desarchivar",
+  "create": "Crear",
+  "info": {
+    "created": "Creada",
+    "updated": "Última modificación",
+    "archived": "Archivada",
+    "title": "Información"
+  },
+  "total": "Total",
+  "pending": "Pendiente",
+  "new": "Nuevo",
+  "skip": "Omitir",
+  "start": "Comenzar",
+  "next": "Siguiente",
+  "back": "Volver",
+  "close": "Cerrar",
+  "noCategory": "Sin categoría"
+}

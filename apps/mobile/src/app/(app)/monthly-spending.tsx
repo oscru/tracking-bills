@@ -4,6 +4,7 @@ import { PageHeader, Screen, ICON_COLORS, useIsWideDesktop } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChartPie } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
 import { CategorySpendDonut } from '../../features/home/category-spend-donut';
@@ -11,6 +12,7 @@ import { CategorySpendRow } from '../../features/home/category-spend-row';
 import { CategorySpendSkeleton } from '../../features/home/category-spend-skeleton';
 
 export default function MonthlySpendingScreen() {
+  const { t } = useTranslation('analytics');
   const router = useRouter();
   // Two columns only on a wide desktop; a compact one stacks them, as on phones.
   const twoColumns = useIsWideDesktop();
@@ -56,7 +58,7 @@ export default function MonthlySpendingScreen() {
   return (
     <Screen className="gap-5" width={twoColumns ? 'wide' : undefined}>
       <PageHeader
-        title={params.label ? `Gastos · ${params.label}` : 'Gastos del mes'}
+        title={params.label ? t('monthly.titleWith', { label: params.label }) : t('monthly.title')}
         onBack={() => router.back()}
       />
 
@@ -178,10 +180,10 @@ export default function MonthlySpendingScreen() {
       ) : (
         <View className="mt-16 items-center gap-2">
           <ChartPie size={28} color={ICON_COLORS.ink3} />
-          <Text className="text-base font-semibold text-ink dark:text-ink-dark">Sin gastos</Text>
-          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-            No hay gastos registrados en este mes.
+          <Text className="text-base font-semibold text-ink dark:text-ink-dark">
+            {t('monthly.empty')}
           </Text>
+          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{t('monthly.emptyBody')}</Text>
         </View>
       )}
     </Screen>

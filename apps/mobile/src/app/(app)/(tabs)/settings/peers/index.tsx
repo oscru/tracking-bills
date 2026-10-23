@@ -18,6 +18,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useGlobalSearchParams, useRouter, type Href } from 'expo-router';
 import { Check, Copy, Share2 } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Share, Text, View } from 'react-native';
 
 import { AccountPicker } from '../../../../../features/accounts/account-picker';
@@ -30,16 +31,7 @@ import {
 } from '../../../../../features/settings/master-detail';
 
 type Tab = 'people' | 'link';
-const TABS: { value: Tab; label: string }[] = [
-  { value: 'people', label: 'Tus personas' },
-  { value: 'link', label: 'Vincular' },
-];
-
-const STEPS = [
-  'Crea un código y compártelo con la otra persona.',
-  'Ella lo escribe en «Tengo un código» y elige en qué cuenta recibe.',
-  'Listo: pásense dinero sin que cuente como gasto ni como ingreso.',
-];
+const TABS: Tab[] = ['people', 'link'];
 
 /** One person, all their currencies on one card — tap for the detail. */
 function PersonCard({
@@ -51,6 +43,7 @@ function PersonCard({
   selected: boolean;
   onPress: () => void;
 }) {
+  const { t } = useTranslation('peers');
   const nets = [...person.net.entries()];
   const shown = nets.slice(0, 2);
   return (
@@ -67,7 +60,7 @@ function PersonCard({
         </Text>
         <Text className="text-xs text-ink-2 dark:text-ink-2-dark" numberOfLines={1}>
           {person.accounts.length === 0
-            ? 'Sin transferencias todavía'
+            ? t('noTransfers')
             : person.accounts.map((a) => a.currency).join(' · ')}
         </Text>
       </View>
@@ -78,12 +71,12 @@ function PersonCard({
             className="text-[13px] font-semibold text-ink dark:text-ink-dark"
             numberOfLines={1}
           >
-            {Math.round(net * 100) === 0 ? 'Parejos' : formatCurrency(Math.abs(net), currency)}
+            {Math.round(net * 100) === 0 ? t('even') : formatCurrency(Math.abs(net), currency)}
           </Text>
         ))}
         {shown.length > 0 ? (
           <Text className="text-[11px] text-ink-3 dark:text-ink-3-dark">
-            {nets.length > 2 ? `+${nets.length - 2} más` : netLabel(shown[0]![1])}
+            {nets.length > 2 ? t('more', { count: nets.length - 2 }) : netLabel(shown[0]![1])}
           </Text>
         ) : null}
       </View>
@@ -101,6 +94,7 @@ function PersonCard({
  * also the list beside the open person (see `_layout`).
  */
 export function PeersList() {
+  const { t } = useTranslation('peers');
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const inPane = useInListPane();
@@ -124,7 +118,7 @@ export function PeersList() {
 
   const share = (inviteCode: string) =>
     Share.share({
-      message: `Vinculémonos en Genobills para pasarnos dinero sin que cuente como gasto ni ingreso. Abre Opciones › Personas › Vincular › "Tengo un código" y escribe: ${inviteCode}`,
+      message: t('shareMessage', { code: inviteCode }),
     }).catch(() => {});
 
   // "Copiado" for a moment after copying the code, then back to "Copiar".
@@ -138,21 +132,21 @@ export function PeersList() {
         clearTimeout(copyTimer.current ?? undefined);
         copyTimer.current = setTimeout(() => setCopied(false), 2000);
       })
-      .catch(() => setError('No se pudo copiar el código.'));
+      .catch(() => setError(t('copyFailed')));
   };
 
   const invite = () => {
     setError(null);
     createInvite.mutate(undefined, {
       onSuccess: (newCode) => share(newCode),
-      onError: (e) => setError(toFriendlyMessage(e, 'No se pudo crear la invitación')),
+      onError: (e) => setError(toFriendlyMessage(e, t('inviteFailed'))),
     });
   };
 
   const join = () => {
     setError(null);
-    if (code.trim().length !== 6) return setError('El código tiene 6 caracteres.');
-    if (!joinAccountId) return setError('Elige la cuenta donde vas a recibir.');
+    if (code.trim().length !== 6) return setError(t('codeLength'));
+    if (!joinAccountId) return setError(t('pickReceive'));
     acceptInvite.mutate(
       { code: code.trim(), receiveAccountId: joinAccountId },
       {
@@ -162,7 +156,7 @@ export function PeersList() {
           setJoinAccountId(null);
           setTab('people');
         },
-        onError: (e) => setError(toFriendlyMessage(e, 'No se pudo usar el código')),
+        onError: (e) => setError(toFriendlyMessage(e, t('joinFailed'))),
       },
     );
   };
@@ -195,25 +189,25 @@ export function PeersList() {
       <EmptyState
         className="flex-none"
         illustration={<PeersEmptyIllustration />}
-        title="Aún no tienes personas vinculadas"
-        description="Vincúlate con tu pareja o con quien compartas gastos para pasarse dinero sin que cuente como gasto ni ingreso."
+        title={t('emptyTitle')}
+        description={t('emptyBody')}
       />
       <View className="self-center">
-        <Button label="Vincular a alguien" onPress={() => setTab('link')} />
+        <Button label={t('linkSomeone')} onPress={() => setTab('link')} />
       </View>
     </View>
   ) : (
     <>
-      {section('Vinculadas', linked, 0)}
-      {section('Ya no vinculadas', unlinked, linked.length)}
+      {section(t('linked'), linked, 0)}
+      {section(t('unlinked'), unlinked, linked.length)}
     </>
   );
 
   const linkTab = (
     <>
       <View className="gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">
-        <Text className="text-base font-bold text-ink dark:text-ink-dark">Cómo funciona</Text>
-        {STEPS.map((step, i) => (
+        <Text className="text-base font-bold text-ink dark:text-ink-dark">{t('howItWorks')}</Text>
+        {t('steps', { returnObjects: true }).map((step, i) => (
           <View key={step} className="flex-row items-start gap-3">
             <View className="h-6 w-6 items-center justify-center rounded-full bg-lime">
               <Text className="text-xs font-bold text-ink">{i + 1}</Text>
@@ -223,19 +217,12 @@ export function PeersList() {
         ))}
         {/* Exactly what linking shares — see `ensure_contact_account` /
         `linked_peers` in the peer_transfers migration. */}
-        <Text className="text-xs leading-5 text-ink-3 dark:text-ink-3-dark">
-          Cada quien sigue llevando sus propias cuentas. Al vincularse, cada persona ve el nombre de
-          la otra (o, si no tiene, la parte de su correo antes de la @) y las transferencias entre
-          ustedes; nada más de sus cuentas ni de sus movimientos. Puedes desvincularte cuando
-          quieras.
-        </Text>
+        <Text className="text-xs leading-5 text-ink-3 dark:text-ink-3-dark">{t('privacy')}</Text>
       </View>
 
       {myInvite?.code ? (
         <View className="gap-2 rounded-card border border-dashed border-line p-5 dark:border-line-dark">
-          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-            Tu código de invitación (vence en 7 días)
-          </Text>
+          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{t('yourCode')}</Text>
           <Text className="text-3xl font-bold tracking-[6px] text-ink dark:text-ink-dark">
             {myInvite.code}
           </Text>
@@ -243,7 +230,7 @@ export function PeersList() {
             <Pressable
               onPress={() => copy(myInvite.code!)}
               accessibilityRole="button"
-              accessibilityLabel={copied ? 'Código copiado' : 'Copiar código'}
+              accessibilityLabel={t(copied ? 'codeCopied' : 'copyCode')}
               className="flex-row items-center gap-1.5"
               hitSlop={6}
             >
@@ -253,7 +240,7 @@ export function PeersList() {
                 <Copy size={14} color={ICON_COLORS.limeInk} />
               )}
               <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                {copied ? 'Copiado' : 'Copiar'}
+                {t(copied ? 'copied' : 'copy')}
               </Text>
             </Pressable>
             <Pressable
@@ -263,7 +250,7 @@ export function PeersList() {
             >
               <Share2 size={14} color={ICON_COLORS.limeInk} />
               <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                Compartir
+                {t('share')}
               </Text>
             </Pressable>
           </View>
@@ -272,19 +259,23 @@ export function PeersList() {
 
       <View className="gap-3">
         <Button
-          label={myInvite ? 'Crear otro código' : 'Invitar a alguien'}
+          label={t(myInvite ? 'newCode' : 'invite')}
           onPress={invite}
           loading={createInvite.isPending}
         />
-        <Button label="Tengo un código" variant="secondary" onPress={() => setJoinOpen(true)} />
+        <Button label={t('haveCode')} variant="secondary" onPress={() => setJoinOpen(true)} />
       </View>
     </>
   );
 
   return (
     <Screen edges={['top']} className="gap-4">
-      <PageHeader title="Personas" onBack={() => router.back()} />
-      <SegmentedControl options={TABS} value={tab} onChange={setTab} />
+      <PageHeader title={t('title')} onBack={() => router.back()} />
+      <SegmentedControl
+        options={TABS.map((value) => ({ value, label: t(`tabs.${value}`) }))}
+        value={tab}
+        onChange={setTab}
+      />
 
       <ScrollView
         className="flex-1"
@@ -296,13 +287,13 @@ export function PeersList() {
         {tab === 'people' ? peopleTab : linkTab}
       </ScrollView>
 
-      <BottomSheet visible={joinOpen} onClose={() => setJoinOpen(false)} title="Usar un código">
+      <BottomSheet visible={joinOpen} onClose={() => setJoinOpen(false)} title={t('useCode')}>
         <View className="gap-4 px-5 pb-6 pt-1">
           <TextField
-            label="Código"
+            label={t('code')}
             value={code}
             onChangeText={(v) => setCode(v.toUpperCase())}
-            placeholder="Ej. K7P2QX"
+            placeholder={t('codePlaceholder')}
             autoCapitalize="characters"
             autoCorrect={false}
             maxLength={6}
@@ -318,21 +309,21 @@ export function PeersList() {
                   : 'text-base text-ink-3 dark:text-ink-3-dark'
               }
             >
-              {accountName(joinAccountId) ?? '¿En qué cuenta recibes?'}
+              {accountName(joinAccountId) ?? t('whichAccount')}
             </Text>
             <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Elegir ›
+              {t('pick')}
             </Text>
           </Pressable>
           <ErrorCard message={error} />
-          <Button label="Vincular" onPress={join} loading={acceptInvite.isPending} />
+          <Button label={t('link')} onPress={join} loading={acceptInvite.isPending} />
         </View>
       </BottomSheet>
 
       <AccountPicker
         visible={joinPickerOpen}
         onClose={() => setJoinPickerOpen(false)}
-        title="¿En qué cuenta recibes?"
+        title={t('whichAccount')}
         selectedId={joinAccountId}
         onSelect={setJoinAccountId}
       />
@@ -346,13 +337,14 @@ export function PeersList() {
  * list itself.
  */
 export default function PeersScreen() {
+  const { t } = useTranslation('peers');
   const panes = useMasterDetailPanes();
   if (!panes) return <PeersList />;
   return (
     <MasterDetailEmpty
       illustration={<PeersEmptyIllustration />}
-      title="Elige a una persona"
-      description="Su balance, sus cuentas y el historial de lo que se han enviado aparecen aquí, junto a la lista."
+      title={t('pickTitle')}
+      description={t('pickHint')}
     />
   );
 }

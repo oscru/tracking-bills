@@ -1,0 +1,40 @@
+{
+  "title": "Seguridad",
+  "biometric": {
+    "faceId": "Face ID",
+    "touchId": "Touch ID",
+    "fingerprint": "huella",
+    "face": "reconocimiento facial",
+    "generic": "biometría"
+  },
+  "prompt": {
+    "cancel": "Cancelar",
+    "fallback": "Usar código",
+    "enable": "Confirma para activar el bloqueo con {{method}}",
+    "disable": "Confirma para desactivar el bloqueo",
+    "unlock": "Desbloquea tu app de finanzas"
+  },
+  "verifyFailed": "No pudimos verificar tu identidad.",
+  "verifyFailedRetry": "No pudimos verificar tu identidad. Intenta de nuevo.",
+  "mobileOnly": "Disponible en la app móvil",
+  "mobileOnlyHint": "El bloqueo con huella o Face ID se activa desde la app de iOS o Android.",
+  "enroll": "Configura tu huella o rostro",
+  "noHardware": "Tu teléfono no tiene biometría",
+  "enrollHint": "Registra una huella o tu rostro en los ajustes del teléfono para poder usarlos aquí.",
+  "noHardwareHint": "Este dispositivo no tiene lector de huella ni reconocimiento facial.",
+  "intro": "Pide tu {{method}} al abrir la app, para que nadie más vea tus saldos y movimientos. Si falla, puedes usar el código de tu teléfono.",
+  "lockWith": "Bloquear con {{method}}",
+  "relock": "Volver a bloquear",
+  "relockHint": "Tiempo que la app puede estar en segundo plano antes de pedirte tu {{method}} otra vez.",
+  "timeouts": {
+    "0": "Al salir",
+    "60": "1 min",
+    "300": "5 min",
+    "900": "15 min"
+  },
+  "deviceOnly": "Esta opción se guarda solo en este dispositivo.",
+  "locked": "App bloqueada",
+  "useToSee": "Usa tu {{method}} para ver tu información.",
+  "unlockWith": "Desbloquear con {{method}}",
+  "signOutPassword": "Cerrar sesión e ingresar con contraseña"
+}

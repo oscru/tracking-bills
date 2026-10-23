@@ -1,3 +1,4 @@
+import { currentLocale } from '@repo/core/i18n';
 import { getDateFormat } from '@repo/core/utils';
 import { BottomSheet, ICON_COLORS } from '@repo/ui';
 import { Check, ChevronDown, ChevronLeft } from 'lucide-react-native';
@@ -8,10 +9,10 @@ import { capitalize } from '../transactions/calendar-grid';
 
 const YEAR_COUNT = 20;
 
+/** January…December in the current language, capitalized. */
 function monthNames(): string[] {
-  return Array.from({ length: 12 }, (_, i) =>
-    capitalize(getDateFormat('es-MX', { month: 'long' }).format(new Date(2000, i, 1))),
-  );
+  const format = getDateFormat(currentLocale(), { month: 'long' });
+  return Array.from({ length: 12 }, (_, i) => capitalize(format.format(new Date(2000, i, 1))));
 }
 
 interface Props {

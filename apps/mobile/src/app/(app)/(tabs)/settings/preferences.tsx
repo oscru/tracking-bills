@@ -8,8 +8,9 @@ import {
   useUpdateProfile,
   useUpdateTag,
 } from '@repo/core/hooks';
+import { i18n, isLanguage, type Language } from '@repo/core/i18n';
 import type { Profile, Tag, ThemePreference } from '@repo/core/types';
-import { findCurrency, toFriendlyMessage, type CurrencyMeta } from '@repo/core/utils';
+import { currencyName, findCurrency, toFriendlyMessage, type CurrencyMeta } from '@repo/core/utils';
 import {
   BottomSheet,
   Button,
@@ -26,28 +27,31 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  Languages,
   Moon,
   Smartphone,
   Sun,
   type LucideIcon,
 } from 'lucide-react-native';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View, ScrollView } from 'react-native';
 
 import { CurrencyMultiPicker, CurrencyPicker } from '../../../../features/settings/currency-picker';
+import { deviceLanguage } from '../../../../features/settings/language-sync';
 import { switchColorScheme } from '../../../../features/settings/theme-sync';
 
 const THEME_OPTIONS: {
   value: ThemePreference;
-  label: string;
   icon: LucideIcon;
 }[] = [
-  { value: 'system', label: 'Sistema', icon: Smartphone },
-  { value: 'light', label: 'Claro', icon: Sun },
-  { value: 'dark', label: 'Oscuro', icon: Moon },
+  { value: 'system', icon: Smartphone },
+  { value: 'light', icon: Sun },
+  { value: 'dark', icon: Moon },
 ];
 
 export default function PreferencesScreen() {
+  const { t } = useTranslation('preferences');
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
@@ -55,7 +59,7 @@ export default function PreferencesScreen() {
 
   return (
     <Screen edges={['top']} className="gap-6">
-      <PageHeader title="Preferencias" onBack={() => router.back()} />
+      <PageHeader title={t('title')} onBack={() => router.back()} />
 
       {isLoading || !profile || tagsLoading || !tags ? (
         <ActivityIndicator className="mt-8" />
@@ -72,12 +76,7 @@ export default function PreferencesScreen() {
           <ThemeSection value={profile.theme_preference} />
           <TravelModeSection profile={profile} tags={tags} />
 
-          <View className="gap-2 rounded-2xl border border-line px-4 py-4 dark:border-line-dark">
-            <Text className="text-sm font-medium text-ink dark:text-ink-dark">Idioma</Text>
-            <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-              Por ahora la app solo está disponible en español.
-            </Text>
-          </View>
+          <LanguageSection value={profile.language} />
         </ScrollView>
       )}
     </Screen>
@@ -85,6 +84,7 @@ export default function PreferencesScreen() {
 }
 
 function CurrencySection({ profile }: { profile: Profile }) {
+  const { t } = useTranslation(['preferences', 'common']);
   const updateProfile = useUpdateProfile();
   const [pickerOpen, setPickerOpen] = useState(false);
   const meta = findCurrency(profile.currency);
@@ -96,20 +96,19 @@ function CurrencySection({ profile }: { profile: Profile }) {
   return (
     <View className="gap-2">
       <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-        Moneda por defecto
+        {t('currency.title')}
       </Text>
       <Pressable
         onPress={() => setPickerOpen(true)}
         className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
       >
         <Text className="text-[15px] font-medium capitalize text-ink dark:text-ink-dark">
-          {meta ? `${meta.symbol} · ${meta.name} (${meta.code})` : profile.currency}
+          {meta ? `${meta.symbol} · ${currencyName(meta)} (${meta.code})` : profile.currency}
         </Text>
         <ChevronDown size={18} color={ICON_COLORS.ink3} />
       </Pressable>
       <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-        Se preselecciona al crear una cuenta, presupuesto u objetivo nuevo — cada uno conserva su
-        propia divisa después, no se mezclan en un solo total.
+        {t('currency.hint')}
       </Text>
 
       <CurrencyPicker
@@ -124,6 +123,7 @@ function CurrencySection({ profile }: { profile: Profile }) {
 }
 
 function EnabledCurrenciesSection({ profile }: { profile: Profile }) {
+  const { t } = useTranslation(['preferences', 'common']);
   const updateProfile = useUpdateProfile();
   const { data: accounts } = useAccounts();
   const { data: budgets } = useBudgets();
@@ -149,9 +149,7 @@ function EnabledCurrenciesSection({ profile }: { profile: Profile }) {
     const has = codes.includes(code);
     if (has && codes.length <= 1) return;
     if (has && inUseCodes.includes(code)) {
-      setBlockedMessage(
-        `No puedes deshabilitar ${code}: todavía tienes cuentas, presupuestos o metas en esa divisa.`,
-      );
+      setBlockedMessage(t('enabled.inUse', { code }));
       return;
     }
     setBlockedMessage(null);
@@ -166,7 +164,7 @@ function EnabledCurrenciesSection({ profile }: { profile: Profile }) {
         // picker, but a concurrent edit from another device (a new account
         // created in the gap between loading this list and tapping toggle)
         // could still make the DB-level check the one that actually catches it.
-        onError: (e) => setBlockedMessage(toFriendlyMessage(e, 'No se pudo actualizar')),
+        onError: (e) => setBlockedMessage(toFriendlyMessage(e, t('enabled.updateFailed'))),
       },
     );
   };
@@ -174,7 +172,7 @@ function EnabledCurrenciesSection({ profile }: { profile: Profile }) {
   return (
     <View className="gap-2">
       <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-        Divisas habilitadas
+        {t('enabled.title')}
       </Text>
       <Pressable
         onPress={() => setPickerOpen(true)}
@@ -189,8 +187,7 @@ function EnabledCurrenciesSection({ profile }: { profile: Profile }) {
         <ChevronRight size={18} color={ICON_COLORS.ink3} />
       </Pressable>
       <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-        Como elegir idiomas en un traductor: busca y marca las que realmente usas — son las únicas
-        que vas a poder elegir al crear una cuenta, un presupuesto o un objetivo.
+        {t('enabled.hint')}
       </Text>
       <ErrorCard message={blockedMessage} />
 
@@ -206,6 +203,7 @@ function EnabledCurrenciesSection({ profile }: { profile: Profile }) {
 }
 
 function TravelModeSection({ profile, tags }: { profile: Profile; tags: Tag[] }) {
+  const { t } = useTranslation(['preferences', 'common']);
   const updateProfile = useUpdateProfile();
   const createTag = useCreateTag();
   const updateTag = useUpdateTag();
@@ -244,7 +242,7 @@ function TravelModeSection({ profile, tags }: { profile: Profile; tags: Tag[] })
           setNamingTrip(false);
           updateProfile.mutate({ travel_mode: true, travel_trip_tag_id: tag.id });
         },
-        onError: (e) => setError(toFriendlyMessage(e, 'No se pudo crear la tag del viaje')),
+        onError: (e) => setError(toFriendlyMessage(e, t('travel.createFailed'))),
       },
     );
   };
@@ -258,8 +256,8 @@ function TravelModeSection({ profile, tags }: { profile: Profile; tags: Tag[] })
   return (
     <View className="gap-2">
       <SwitchRow
-        label="Modo viaje"
-        description="Mientras esté activo, cada gasto, ingreso y transferencia que registres se etiqueta automáticamente con la tag de tu viaje, para que puedas verlos todos juntos después."
+        label={t('travel.title')}
+        description={t('travel.hint')}
         value={profile.travel_mode}
         onValueChange={toggle}
       />
@@ -267,10 +265,10 @@ function TravelModeSection({ profile, tags }: { profile: Profile; tags: Tag[] })
       {showNaming ? (
         <View className="gap-2 rounded-ctl border border-line bg-surface p-3.5 dark:border-line-dark dark:bg-surface-dark">
           <Text className="text-sm font-medium text-ink dark:text-ink-dark">
-            ¿Cómo se llama tu viaje?
+            {t('travel.nameQuestion')}
           </Text>
           <TextField
-            placeholder="Ej. Viaje a Cancún"
+            placeholder={t('travel.namePlaceholder')}
             value={tripName}
             onChangeText={setTripName}
             autoFocus
@@ -279,7 +277,7 @@ function TravelModeSection({ profile, tags }: { profile: Profile; tags: Tag[] })
           <View className="flex-row gap-2">
             <View className="flex-1">
               <Button
-                label="Cancelar"
+                label={t('common:cancel')}
                 variant="secondary"
                 onPress={() => {
                   setNamingTrip(false);
@@ -289,7 +287,7 @@ function TravelModeSection({ profile, tags }: { profile: Profile; tags: Tag[] })
             </View>
             <View className="flex-1">
               <Button
-                label="Activar"
+                label={t('travel.activate')}
                 onPress={confirmTripName}
                 loading={createTag.isPending}
                 disabled={!tripName.trim()}
@@ -300,15 +298,15 @@ function TravelModeSection({ profile, tags }: { profile: Profile; tags: Tag[] })
       ) : tripTag ? (
         <View className="gap-1.5">
           <TextField
-            label="Nombre del viaje"
+            label={t('travel.name')}
             value={tripName}
             onChangeText={setTripName}
             onBlur={renameTrip}
-            placeholder="Nombre del viaje"
+            placeholder={t('travel.name')}
           />
           {profile.travel_mode ? (
             <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-              Viaje activo: tus movimientos nuevos se están etiquetando con “{tripTag.name}”.
+              {t('travel.active', { name: tripTag.name })}
             </Text>
           ) : null}
         </View>
@@ -318,13 +316,16 @@ function TravelModeSection({ profile, tags }: { profile: Profile; tags: Tag[] })
 }
 
 function ThemeSection({ value }: { value: ThemePreference }) {
+  const { t } = useTranslation(['preferences', 'common']);
   const updateProfile = useUpdateProfile();
   const [pickerOpen, setPickerOpen] = useState(false);
   const selected = THEME_OPTIONS.find((o) => o.value === value) ?? THEME_OPTIONS[0]!;
 
   return (
     <View className="gap-2">
-      <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Tema</Text>
+      <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+        {t('theme.title')}
+      </Text>
       <Pressable
         onPress={() => setPickerOpen(true)}
         className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
@@ -332,13 +333,17 @@ function ThemeSection({ value }: { value: ThemePreference }) {
         <View className="flex-row items-center gap-2.5">
           <selected.icon size={18} color={ICON_COLORS.limeInk} />
           <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
-            {selected.label}
+            {t(`theme.${selected.value}`)}
           </Text>
         </View>
         <ChevronDown size={18} color={ICON_COLORS.ink3} />
       </Pressable>
 
-      <BottomSheet visible={pickerOpen} onClose={() => setPickerOpen(false)} title="Tema">
+      <BottomSheet
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        title={t('theme.title')}
+      >
         <View className="pb-4">
           {THEME_OPTIONS.map((opt) => (
             <Pressable
@@ -360,9 +365,78 @@ function ThemeSection({ value }: { value: ThemePreference }) {
                 <opt.icon size={16} color={ICON_COLORS.limeInk} />
               </View>
               <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
-                {opt.label}
+                {t(`theme.${opt.value}`)}
               </Text>
               {value === opt.value ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
+            </Pressable>
+          ))}
+        </View>
+      </BottomSheet>
+    </View>
+  );
+}
+
+const LANGUAGE_OPTIONS: (Language | null)[] = [null, 'es', 'en'];
+
+/** Interface language: Automático (the device's — `null`), Español or English. */
+function LanguageSection({ value }: { value: string | null }) {
+  const { t } = useTranslation('preferences');
+  const updateProfile = useUpdateProfile();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const chosen = isLanguage(value) ? value : null;
+  const label = (option: Language | null) => t(option ? `language.${option}` : 'language.system');
+
+  return (
+    <View className="gap-2">
+      <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+        {t('language.title')}
+      </Text>
+      <Pressable
+        onPress={() => setPickerOpen(true)}
+        className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
+      >
+        <View className="flex-row items-center gap-2.5">
+          <Languages size={18} color={ICON_COLORS.limeInk} />
+          <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
+            {label(chosen)}
+          </Text>
+        </View>
+        <ChevronDown size={18} color={ICON_COLORS.ink3} />
+      </Pressable>
+
+      <BottomSheet
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        title={t('language.title')}
+      >
+        <View className="pb-4">
+          {LANGUAGE_OPTIONS.map((option) => (
+            <Pressable
+              key={option ?? 'system'}
+              onPress={() => {
+                setPickerOpen(false);
+                if (option === chosen) return;
+                // Switch now instead of waiting for the saved profile to come
+                // back through `LanguageEffects`.
+                void i18n.changeLanguage(option ?? deviceLanguage());
+                updateProfile.mutate(
+                  { language: option },
+                  { onError: () => void i18n.changeLanguage(chosen ?? deviceLanguage()) },
+                );
+              }}
+              className="flex-row items-center gap-3 border-t border-line px-5 py-3.5 dark:border-line-dark"
+            >
+              <View className="flex-1">
+                <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
+                  {label(option)}
+                </Text>
+                {option === null ? (
+                  <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+                    {t('language.systemHint')}
+                  </Text>
+                ) : null}
+              </View>
+              {chosen === option ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
             </Pressable>
           ))}
         </View>

@@ -1,0 +1,68 @@
+{
+  "progress": {
+    "of": "de {{amount}}",
+    "noCategories": "Sin categorías asignadas — este presupuesto no está contando ningún gasto."
+  },
+  "title": "Presupuestos",
+  "budget": "Presupuesto",
+  "new": "Nuevo presupuesto",
+  "edit": "Editar presupuesto",
+  "notFound": "Presupuesto no encontrado.",
+  "period": {
+    "weekly": "Semanal",
+    "biweekly": "Quincenal",
+    "monthly": "Mensual",
+    "custom": "Personalizado"
+  },
+  "repeatsSuffix": " · se repite",
+  "tabs": {
+    "active": "Activos",
+    "archived": "Archivados"
+  },
+  "loadFailed": "No se pudieron cargar los presupuestos",
+  "emptyArchived": "Sin presupuestos archivados",
+  "empty": "Sin presupuestos todavía",
+  "emptyHint": "Crea uno para controlar tu gasto por categoría.",
+  "categoriesCount_one": "{{count}} categoría",
+  "categoriesCount_other": "{{count}} categorías",
+  "categoriesTitle": "Categorías ({{count}})",
+  "archive": "Archivar presupuesto",
+  "deleteForever": "Eliminar definitivamente",
+  "archiveTitle": "¿Archivar presupuesto?",
+  "archiveBody": "Deja de aparecer en Inicio y Análisis, pero conserva su historial. Puedes desarchivarlo cuando quieras.",
+  "deleteTitle": "¿Eliminar presupuesto?",
+  "deleteBody": "Se elimina el presupuesto y su relación con sus categorías, sin poder deshacerlo. No afecta los movimientos ya registrados.",
+  "saveFailed": "No se pudo guardar el presupuesto",
+  "pickCategories": "Elige sus categorías",
+  "create": "Crear presupuesto",
+  "next": "Siguiente",
+  "pickRange": "Elige el rango de fechas",
+  "nameRequired": "Ponle un nombre",
+  "basics": {
+    "name": "Nombre",
+    "namePlaceholder": "Ej. Comida y entretenimiento",
+    "amount": "Monto",
+    "period": "Rango del presupuesto",
+    "dates": "Rango de fechas",
+    "repeat": "Repetir automáticamente",
+    "repeatHint": {
+      "weekly": "Al terminar la semana, se abre una nueva automáticamente",
+      "biweekly": "Al terminar la quincena, se abre una nueva automáticamente",
+      "monthly": "Al terminar el mes, se abre uno nuevo automáticamente"
+    },
+    "starts": "Empieza",
+    "currencyLocked": "Divisa: {{currency}} — no se puede cambiar después de crear el presupuesto."
+  },
+  "editor": {
+    "remaining": "Restante por repartir",
+    "over": "Repartiste {{over}} más de tu presupuesto de {{total}} — más del 10% de tolerancia. Puedes crearlo así, pero considera ajustar los montos.",
+    "empty": "Sin categorías todavía. Añade al menos una.",
+    "add": "Añadir categoría"
+  },
+  "amountSheet": {
+    "title": "Asignar monto",
+    "amount": "Monto asignado",
+    "useRemaining": "Usar el restante ({{amount}})"
+  },
+  "archivedBadge": "Archivado"
+}

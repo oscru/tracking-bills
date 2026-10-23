@@ -1,0 +1,35 @@
+{
+  "title": "Tags",
+  "tag": "Tag",
+  "new": "New tag",
+  "edit": "Edit tag",
+  "delete": "Delete tag",
+  "notFound": "Tag not found.",
+  "tabs": {
+    "active": "Active",
+    "archived": "Archived"
+  },
+  "loadFailed": "Couldn't load your tags",
+  "emptyArchived": "No archived tags",
+  "empty": "No tags yet",
+  "emptyHint": "Create a tag to group transactions across categories.",
+  "count_one": "{{count}} transaction",
+  "count_other": "{{count}} transactions",
+  "pickTitle": "Pick a tag",
+  "pickHint": "Its transactions show up here, next to the list.",
+  "saveFailed": "Couldn't save the tag",
+  "createFailed": "Couldn't create the tag",
+  "info": "Tag details",
+  "transactions": "Transactions",
+  "archivedBadge": "Archived",
+  "transactionsCard": "Transactions",
+  "linked_one": "linked transaction · tap to see it",
+  "linked_other": "linked transactions · tap to see them",
+  "archiveTitle": "Archive this tag?",
+  "archiveBody": "You won't be able to pick it for new transactions, but it stays on the expenses and income that already have it. You can unarchive it anytime.",
+  "form": {
+    "name": "Name",
+    "namePlaceholder": "e.g. Vacation",
+    "color": "Color"
+  }
+}

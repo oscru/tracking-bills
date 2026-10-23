@@ -10,10 +10,11 @@ import {
   type CategoryHistoryRange,
   type SpendSeries,
 } from '@repo/core/utils';
-import { Chip, SegmentedControl, ICON_COLORS, type SegmentedOption } from '@repo/ui';
+import { Chip, SegmentedControl, ICON_COLORS } from '@repo/ui';
 import { ChartColumn, ChartLine } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { LinearGradient, Stop } from 'react-native-svg';
@@ -31,24 +32,7 @@ const SWITCH_WIDTH = 196;
 // for 30 daily bars.
 const MAX_ANIMATED_BARS = 12;
 
-const RANGE_OPTIONS: SegmentedOption<CategoryHistoryRange>[] = [
-  { value: 'all', label: 'Todo' },
-  { value: 'year', label: '1 año' },
-  { value: 'half', label: '6 meses' },
-  { value: 'month', label: '1 mes' },
-];
-
-const PERIOD_LABEL: Record<Exclude<CategoryHistoryRange, 'all'>, string> = {
-  year: 'los 12 meses anteriores',
-  half: 'los 6 meses anteriores',
-  month: 'los 30 días anteriores',
-};
-
-const UNIT_LABEL: Record<SpendSeries['granularity'], string> = {
-  day: 'día',
-  month: 'mes',
-  year: 'año',
-};
+const RANGES: CategoryHistoryRange[] = ['all', 'year', 'half', 'month'];
 
 /** Which categories the charts sum: the parent rolls up its subcategories. */
 type Selection = { kind: 'all' } | { kind: 'one'; category: Category };
@@ -66,6 +50,7 @@ interface Props {
  * include its subcategories. One chart per currency, never blended.
  */
 export function CategoryHistoryChart({ category, subcategories }: Props) {
+  const { t } = useTranslation('categories');
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const { width: windowWidth } = useWindowDimensions();
@@ -144,13 +129,13 @@ export function CategoryHistoryChart({ category, subcategories }: Props) {
       >
         <View className="flex-row items-center justify-between">
           <Text className="flex-1 pr-2 text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-            Historial
+            {t('history.title')}
           </Text>
           <View style={{ width: SWITCH_WIDTH }}>
             <SegmentedControl
               options={[
-                { value: 'bar', label: 'Barras', icon: ChartColumn },
-                { value: 'line', label: 'Línea', icon: ChartLine },
+                { value: 'bar', label: t('history.chart.bar'), icon: ChartColumn },
+                { value: 'line', label: t('history.chart.line'), icon: ChartLine },
               ]}
               value={kind}
               onChange={setKind}
@@ -158,7 +143,11 @@ export function CategoryHistoryChart({ category, subcategories }: Props) {
           </View>
         </View>
 
-        <SegmentedControl options={RANGE_OPTIONS} value={range} onChange={setRange} />
+        <SegmentedControl
+          options={RANGES.map((value) => ({ value, label: t(`history.range.${value}`) }))}
+          value={range}
+          onChange={setRange}
+        />
 
         {activeSubs.length > 0 ? (
           <ScrollView
@@ -167,7 +156,7 @@ export function CategoryHistoryChart({ category, subcategories }: Props) {
             contentContainerClassName="gap-2"
           >
             <Chip
-              label="Todas"
+              label={t('history.allChip')}
               selected={selection.kind === 'all'}
               onPress={() => setSelection({ kind: 'all' })}
             />
@@ -260,9 +249,7 @@ export function CategoryHistoryChart({ category, subcategories }: Props) {
           })
         ) : (
           <View className="items-center justify-center py-10">
-            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-              Sin movimientos en este periodo.
-            </Text>
+            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{t('history.empty')}</Text>
           </View>
         )}
       </View>
@@ -310,6 +297,7 @@ function TrendCard({
   category: Category;
   subcategories: Category[];
 }) {
+  const { t } = useTranslation('categories');
   const { currency, transactions, series, total } = group;
   const money = (n: number) => formatCurrency(n, currency);
   const comparison =
@@ -347,7 +335,9 @@ function TrendCard({
   return (
     <View className="gap-4 rounded-2xl border border-line bg-surface p-4 dark:border-line-dark dark:bg-surface-dark">
       <View className="flex-row items-center justify-between">
-        <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">Tendencia</Text>
+        <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
+          {t('history.trend')}
+        </Text>
         {showCurrency ? (
           <Text className="text-xs font-semibold text-ink-3 dark:text-ink-3-dark">{currency}</Text>
         ) : null}
@@ -357,7 +347,7 @@ function TrendCard({
         <View className="flex-row items-end justify-between">
           <View>
             <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-              vs. {PERIOD_LABEL[range as Exclude<CategoryHistoryRange, 'all'>]}
+              {t(`history.vsRange.${range as Exclude<CategoryHistoryRange, 'all'>}`)}
             </Text>
             <Text className="text-sm text-ink-3 dark:text-ink-3-dark">
               {money(comparison.previous)} → {money(comparison.current)}
@@ -370,7 +360,7 @@ function TrendCard({
       <View className="flex-row gap-3">
         <View className="flex-1 rounded-xl bg-canvas p-3 dark:bg-canvas-dark">
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            Promedio por {UNIT_LABEL[series.granularity]}
+            {t(`history.averagePer.${series.granularity}`)}
           </Text>
           <Text className="mt-0.5 text-base font-bold text-ink dark:text-ink-dark">
             {money(average)}
@@ -378,7 +368,7 @@ function TrendCard({
         </View>
         <View className="flex-1 rounded-xl bg-canvas p-3 dark:bg-canvas-dark">
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark" numberOfLines={1}>
-            Más alto · {peakLabel}
+            {t('history.peak', { label: peakLabel })}
           </Text>
           <Text className="mt-0.5 text-base font-bold text-ink dark:text-ink-dark">
             {money(peak.total)}
@@ -389,7 +379,7 @@ function TrendCard({
       {rows.length > 0 ? (
         <View className="gap-3 border-t border-line pt-4 dark:border-line-dark">
           <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-            Por subcategoría
+            {t('history.bySubcategory')}
           </Text>
           {rows.map(({ c, current, pct, isParent }) => (
             <View key={c.id} className="flex-row items-center gap-3">

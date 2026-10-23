@@ -1,5 +1,6 @@
 import { formatDate } from '@repo/core/utils';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../budgets/budget-progress-bar';
@@ -21,6 +22,7 @@ interface Props {
  * right under a month navigator that could otherwise read as scoping it
  * too). Each budget shows in its own locked currency. */
 export function BudgetsProgressCard({ currency }: Props) {
+  const { t } = useTranslation('analytics');
   const router = useRouter();
   const rows = useBudgetProgressRows(currency);
 
@@ -29,10 +31,10 @@ export function BudgetsProgressCard({ currency }: Props) {
   return (
     <View className="gap-4 rounded-card bg-surface p-5 dark:bg-surface-dark">
       <View>
-        <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">Presupuestos</Text>
-        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-          Periodo actual de cada presupuesto — no cambia con el mes de arriba
+        <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
+          {t('budgets.title')}
         </Text>
+        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">{t('budgets.note')}</Text>
       </View>
       {rows.map(({ budget, progress }) => (
         <Pressable

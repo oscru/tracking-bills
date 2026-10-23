@@ -1,0 +1,48 @@
+{
+  "hero": {
+    "eyebrow": "Finanzas personales",
+    "eyebrowMore": " · En la web · iOS y Android, pronto",
+    "title": "¿A dónde se fue la ",
+    "titleHighlight": "quincena?",
+    "body": "Genobills te lo dice con peso y centavo, y te ayuda a que la próxima rinda más.",
+    "cta": "Empieza gratis"
+  },
+  "chapters": [
+    {
+      "tag": "Registrar",
+      "title": "Escribe la cuenta, no el resultado.",
+      "body": "El teclado de Genobills es una calculadora: 150 × 3, igual, listo. Registras un gasto en tres segundos sin salir de la app."
+    },
+    {
+      "tag": "Movimientos",
+      "title": "Cada peso, en su lugar.",
+      "body": "Categorías y subcategorías, agrupado por día. Y pasar dinero a tu ahorro es una transferencia, no un gasto: tus números no se inflan."
+    },
+    {
+      "tag": "Análisis",
+      "title": "Tu mes, de un vistazo.",
+      "body": "Un calendario que te dice qué días se te fue la lana, tendencias mes a mes y en qué categoría se va cada peso. Sin una sola hoja de cálculo."
+    },
+    {
+      "tag": "Presupuestos",
+      "title": "Te avisa antes, no después.",
+      "body": "Mensuales, quincenales o semanales. Cuando una categoría se acerca al tope lo ves a tiempo, no en el estado de cuenta."
+    },
+    {
+      "tag": "Objetivos",
+      "title": "Ahorra con fecha, no con fe.",
+      "body": "Ponle monto y fecha límite. Genobills te sugiere cuánto apartar y te dice si vas adelantado o atrasado."
+    },
+    {
+      "tag": "Personas",
+      "title": "Cuentas claras con tu gente.",
+      "body": "Vincula a tu pareja, roomies o amigos con un código. Registren lo que se envían, en pesos o dólares, y vean cómo quedan."
+    }
+  ],
+  "outro": {
+    "eyebrow": "Y todo esto",
+    "title": "Gratis. ",
+    "titleMuted": "En tu compu y en tu celular.",
+    "cta": "Crear mi cuenta"
+  }
+}

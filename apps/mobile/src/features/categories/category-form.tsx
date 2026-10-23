@@ -13,6 +13,7 @@ import {
   ICON_COLORS,
 } from '@repo/ui';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { IconPicker } from '../favorites/icon-picker';
@@ -48,6 +49,7 @@ export function CategoryForm({
   onDirty,
   footer,
 }: Props) {
+  const { t } = useTranslation(['categories', 'favorites']);
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState<CategoryType>(initial?.type ?? 'expense');
   const [icon, setIcon] = useState<string | null>(initial?.icon ?? null);
@@ -97,29 +99,31 @@ export function CategoryForm({
         </Pressable>
         <Pressable onPress={() => setIconPickerOpen(true)} hitSlop={8}>
           <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-            {icon ? 'Cambiar ícono' : 'Elegir ícono'}
+            {t(icon ? 'favorites:form.changeIcon' : 'favorites:form.pickIcon')}
           </Text>
         </Pressable>
       </View>
 
       <TextField
-        label="Nombre"
+        label={t('form.name')}
         value={name}
         onChangeText={(text) => {
           setName(text);
           setNameError(undefined);
           onDirty?.();
         }}
-        placeholder="Ej. Mascota"
+        placeholder={t('form.namePlaceholder')}
         error={nameError}
         invalid={Boolean(error)}
       />
 
       <View className="gap-2">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Tipo</Text>
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+          {t('form.type')}
+        </Text>
         <View className={`flex-row gap-2 ${hasSubcategories ? 'opacity-50' : ''}`}>
           <Chip
-            label="Gasto"
+            label={t('type.expense')}
             selected={type === 'expense'}
             disabled={hasSubcategories}
             onPress={() => {
@@ -128,7 +132,7 @@ export function CategoryForm({
             }}
           />
           <Chip
-            label="Ingreso"
+            label={t('type.income')}
             selected={type === 'income'}
             disabled={hasSubcategories}
             onPress={() => {
@@ -138,15 +142,13 @@ export function CategoryForm({
           />
         </View>
         {hasSubcategories ? (
-          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            No puedes cambiar el tipo mientras tenga subcategorías. Muévelas o elimínalas primero.
-          </Text>
+          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">{t('form.typeLocked')}</Text>
         ) : null}
       </View>
 
       <View className="gap-1.5">
         <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-          Categoría superior (opcional)
+          {t('form.parentOptional')}
         </Text>
         <Pressable
           onPress={() => setParentOpen(true)}
@@ -155,22 +157,24 @@ export function CategoryForm({
           <View className="flex-row items-center gap-2">
             {parent ? <CategoryDot color={parent.color} icon={parent.icon} size={16} /> : null}
             <Text className="text-base text-ink dark:text-ink-dark">
-              {parent ? resolveCategoryLabel(parent) : 'Ninguna'}
+              {parent ? resolveCategoryLabel(parent) : t('form.none')}
             </Text>
           </View>
           <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-            Elegir ›
+            {t('form.pick')}
           </Text>
         </Pressable>
         {parentId ? (
           <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-            Se creará como subcategoría (hereda el tipo).
+            {t('form.subcategoryNote')}
           </Text>
         ) : null}
       </View>
 
       <View className="gap-2">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Color</Text>
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+          {t('form.color')}
+        </Text>
         <ColorPicker value={color} onChange={setColor} colors={CATEGORY_COLORS} />
       </View>
 

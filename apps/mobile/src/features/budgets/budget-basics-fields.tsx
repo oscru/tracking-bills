@@ -1,23 +1,18 @@
 import type { BudgetPeriodType } from '@repo/core/types';
 import { Chip, CurrencyField, SwitchRow, TextField, ICON_COLORS } from '@repo/ui';
 import { Calendar } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { DateField } from '../transactions/date-field';
 import { DateRangeField } from '../transactions/date-range-field';
 
 const PERIOD_OPTIONS: { value: BudgetPeriodType; label: string }[] = [
-  { value: 'weekly', label: 'Semanal' },
-  { value: 'biweekly', label: 'Quincenal' },
-  { value: 'monthly', label: 'Mensual' },
-  { value: 'custom', label: 'Personalizado' },
+  { value: 'weekly', label: 'weekly' },
+  { value: 'biweekly', label: 'biweekly' },
+  { value: 'monthly', label: 'monthly' },
+  { value: 'custom', label: 'custom' },
 ];
-
-const REPEATS_DESCRIPTION: Record<Exclude<BudgetPeriodType, 'custom'>, string> = {
-  weekly: 'Al terminar la semana, se abre una nueva automáticamente',
-  biweekly: 'Al terminar la quincena, se abre una nueva automáticamente',
-  monthly: 'Al terminar el mes, se abre uno nuevo automáticamente',
-};
 
 interface Props {
   name: string;
@@ -62,19 +57,20 @@ export function BudgetBasicsFields({
   repeats,
   onChangeRepeats,
 }: Props) {
+  const { t } = useTranslation('budgets');
   return (
     <View className="gap-5">
       <TextField
-        label="Nombre"
+        label={t('basics.name')}
         value={name}
         onChangeText={onChangeName}
-        placeholder="Ej. Comida y entretenimiento"
+        placeholder={t('basics.namePlaceholder')}
         maxLength={60}
       />
 
       <View className="gap-2">
         <CurrencyField
-          label="Monto"
+          label={t('basics.amount')}
           value={amountText}
           onChangeText={onChangeAmount}
           currency={currency}
@@ -92,20 +88,20 @@ export function BudgetBasicsFields({
           </View>
         ) : (
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            Divisa: {currency} — no se puede cambiar después de crear el presupuesto.
+            {t('basics.currencyLocked', { currency })}
           </Text>
         )}
       </View>
 
       <View className="gap-2">
         <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-          Rango del presupuesto
+          {t('basics.period')}
         </Text>
         <View className="flex-row flex-wrap gap-2">
           {PERIOD_OPTIONS.map((opt) => (
             <Chip
               key={opt.value}
-              label={opt.label}
+              label={t(`period.${opt.value}`)}
               selected={periodType === opt.value}
               onPress={() => onChangePeriodType(opt.value)}
             />
@@ -116,7 +112,7 @@ export function BudgetBasicsFields({
       {periodType === 'custom' ? (
         <View className="gap-2">
           <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-            Rango de fechas
+            {t('basics.dates')}
           </Text>
           <DateRangeField
             from={customFrom}
@@ -136,7 +132,7 @@ export function BudgetBasicsFields({
                       : 'text-base text-ink-3 dark:text-ink-3-dark'
                   }
                 >
-                  {active ? label : 'Elige el rango de fechas'}
+                  {active ? label : t('pickRange')}
                 </Text>
               </Pressable>
             )}
@@ -145,13 +141,15 @@ export function BudgetBasicsFields({
       ) : (
         <>
           <View className="gap-2">
-            <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Empieza</Text>
+            <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+              {t('basics.starts')}
+            </Text>
             <DateField value={startDate} onChange={onChangeStartDate} />
           </View>
 
           <SwitchRow
-            label="Repetir automáticamente"
-            description={REPEATS_DESCRIPTION[periodType]}
+            label={t('basics.repeat')}
+            description={t(`basics.repeatHint.${periodType}`)}
             value={repeats}
             onValueChange={onChangeRepeats}
           />

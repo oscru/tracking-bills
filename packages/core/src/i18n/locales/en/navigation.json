@@ -1,0 +1,32 @@
+{
+  "tabs": {
+    "index": "Home",
+    "transactions": "Transactions",
+    "analytics": "Insights",
+    "settings": "Settings"
+  },
+  "dashboard": "Dashboard",
+  "settingsItems": {
+    "accounts": "Accounts",
+    "categories": "Categories",
+    "tags": "Tags",
+    "budgets": "Budgets",
+    "goals": "Goals",
+    "peers": "People",
+    "homeLayout": "Customize dashboard",
+    "notifications": "Alerts and reminders",
+    "importExport": "Import and export"
+  },
+  "newMovement": "New transaction",
+  "notifications": "Notifications",
+  "notificationsUnread": "Notifications, {{count}} unread",
+  "goHome": "Go to Home",
+  "yourAccount": "Your account",
+  "menu": {
+    "profile": "My profile",
+    "preferences": "Preferences",
+    "signOut": "Sign out"
+  },
+  "expandSidebar": "Expand sidebar",
+  "collapseSidebar": "Collapse sidebar"
+}

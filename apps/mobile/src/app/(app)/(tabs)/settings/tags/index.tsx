@@ -14,6 +14,7 @@ import {
 import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, View, ScrollView } from 'react-native';
 
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
@@ -23,15 +24,13 @@ import {
   useMasterDetailPanes,
 } from '../../../../../features/settings/master-detail';
 
-const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
-  { value: 'active', label: 'Activas' },
-  { value: 'archived', label: 'Archivadas' },
-];
+const STATUSES = ['active', 'archived'] as const;
 
 const NO_COUNTS = { expense: 0, income: 0 };
 
 /** The section's list — on a wide desktop, also drawn beside the open record (see `_layout`). */
 export function TagsList() {
+  const { t } = useTranslation('tags');
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   // Desktop: the record open in the pane beside this list.
@@ -49,31 +48,31 @@ export function TagsList() {
       ? false
       : {
           icon: Plus,
-          accessibilityLabel: 'Nueva tag',
+          accessibilityLabel: t('new'),
           onPress: () => router.push('/(app)/settings/tags/new'),
         },
   );
 
   return (
     <Screen edges={['top']} className="gap-4">
-      <PageHeader title="Tags" onBack={() => router.back()} />
-      <SegmentedControl options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+      <PageHeader title={t('title')} onBack={() => router.back()} />
+      <SegmentedControl
+        options={STATUSES.map((value) => ({ value, label: t(`tabs.${value}`) }))}
+        value={status}
+        onChange={setStatus}
+      />
 
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
       ) : error ? (
         <View className="mt-8">
-          <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar las tags')} />
+          <ErrorCard message={toFriendlyMessage(error, t('loadFailed'))} />
         </View>
       ) : visible.length === 0 ? (
         <EmptyState
           illustration={<TagsEmptyIllustration />}
-          title={status === 'archived' ? 'Sin tags archivadas' : 'Sin tags todavía'}
-          description={
-            status === 'archived'
-              ? undefined
-              : 'Crea una tag para agrupar movimientos entre categorías.'
-          }
+          title={t(status === 'archived' ? 'emptyArchived' : 'empty')}
+          description={status === 'archived' ? undefined : t('emptyHint')}
         />
       ) : (
         <ScrollView
@@ -90,7 +89,7 @@ export function TagsList() {
                   {i > 0 ? <View className="h-px bg-line dark:bg-line-dark" /> : null}
                   <ListRow
                     title={tag.name}
-                    subtitle={`${total} transacci${total === 1 ? 'ón' : 'ones'}`}
+                    subtitle={t('count', { count: total })}
                     dotColor={tag.color}
                     showChevron
                     selected={inPane && selectedId === tag.id}
@@ -114,17 +113,18 @@ export function TagsList() {
  * list itself.
  */
 export default function TagsScreen() {
+  const { t } = useTranslation('tags');
   const panes = useMasterDetailPanes();
   const router = useRouter();
   if (!panes) return <TagsList />;
   return (
     <MasterDetailEmpty
       illustration={<TagsEmptyIllustration />}
-      title="Elige una tag"
-      description="Sus movimientos aparecen aquí, junto a la lista."
+      title={t('pickTitle')}
+      description={t('pickHint')}
       action={{
         icon: Plus,
-        accessibilityLabel: 'Nueva tag',
+        accessibilityLabel: t('new'),
         onPress: () => router.push('/(app)/settings/tags/new'),
       }}
     />

@@ -1,0 +1,40 @@
+{
+  "title": "Security",
+  "biometric": {
+    "faceId": "Face ID",
+    "touchId": "Touch ID",
+    "fingerprint": "fingerprint",
+    "face": "face recognition",
+    "generic": "biometrics"
+  },
+  "prompt": {
+    "cancel": "Cancel",
+    "fallback": "Use passcode",
+    "enable": "Confirm to turn on locking with {{method}}",
+    "disable": "Confirm to turn off locking",
+    "unlock": "Unlock your finance app"
+  },
+  "verifyFailed": "We couldn't verify it's you.",
+  "verifyFailedRetry": "We couldn't verify it's you. Try again.",
+  "mobileOnly": "Available in the mobile app",
+  "mobileOnlyHint": "Locking with fingerprint or Face ID is turned on from the iOS or Android app.",
+  "enroll": "Set up your fingerprint or face",
+  "noHardware": "Your phone has no biometrics",
+  "enrollHint": "Register a fingerprint or your face in your phone's settings to use them here.",
+  "noHardwareHint": "This device has no fingerprint reader or face recognition.",
+  "intro": "Ask for your {{method}} when the app opens, so nobody else sees your balances and transactions. If it fails, you can use your phone's passcode.",
+  "lockWith": "Lock with {{method}}",
+  "relock": "Lock again after",
+  "relockHint": "How long the app can be in the background before asking for your {{method}} again.",
+  "timeouts": {
+    "0": "On leaving",
+    "60": "1 min",
+    "300": "5 min",
+    "900": "15 min"
+  },
+  "deviceOnly": "This setting is saved on this device only.",
+  "locked": "App locked",
+  "useToSee": "Use your {{method}} to see your information.",
+  "unlockWith": "Unlock with {{method}}",
+  "signOutPassword": "Sign out and sign in with your password"
+}

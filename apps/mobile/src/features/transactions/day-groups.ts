@@ -1,3 +1,4 @@
+import { i18n } from '@repo/core/i18n';
 import type { TransactionWithRefs } from '@repo/core/supabase';
 import { addDaysISO, formatDate, todayISODate } from '@repo/core/utils';
 
@@ -46,10 +47,10 @@ export function groupByDay(transactions: TransactionWithRefs[]): DaySection[] {
   });
 }
 
-/** `YYYY-MM-DD` -> "Hoy" / "Ayer" / a medium localized date. */
+/** `YYYY-MM-DD` -> "Hoy" / "Ayer" (in the current language) / a medium localized date. */
 export function dayHeaderLabel(iso: string): string {
   const today = todayISODate();
-  if (iso === today) return 'Hoy';
-  if (iso === addDaysISO(today, -1)) return 'Ayer';
+  if (iso === today) return i18n.t('common:today');
+  if (iso === addDaysISO(today, -1)) return i18n.t('common:yesterday');
   return formatDate(iso);
 }

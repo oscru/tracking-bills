@@ -8,11 +8,13 @@ import {
 } from '@repo/core/hooks';
 import { Screen } from '@repo/ui';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text } from 'react-native';
 
 import { MovementForm } from '../../../../../features/transactions/movement-form';
 
 export default function EditTransaction() {
+  const { t } = useTranslation(['transactions', 'common']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: rawTx, isLoading } = useTransaction(id);
@@ -32,7 +34,7 @@ export default function EditTransaction() {
   if (!tx) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Movimiento no encontrado.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
@@ -54,7 +56,7 @@ export default function EditTransaction() {
         goal_id: tx.goal_id,
         goalName: tx.goal?.name,
         category_id: tx.category_id,
-        tags: tx.tags.map((t) => t.id),
+        tags: tx.tags.map((tag) => tag.id),
         description: tx.description,
         transaction_date: tx.transaction_date,
         is_completed: tx.is_completed,
@@ -73,14 +75,14 @@ export default function EditTransaction() {
                 { onSuccess: () => router.back(), onError: () => router.back() },
               );
             },
-            onError: (e) => setError(e, 'No se pudo guardar'),
+            onError: (e) => setError(e, t('common:saveFailed')),
           },
         );
       }}
       onDelete={() =>
         remove.mutate(id, {
           onSuccess: () => router.back(),
-          onError: (e) => setError(e, 'No se pudo eliminar'),
+          onError: (e) => setError(e, t('common:deleteFailed')),
         })
       }
     />

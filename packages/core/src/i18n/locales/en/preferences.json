@@ -1,0 +1,43 @@
+{
+  "language": {
+    "title": "Language",
+    "system": "Automatic",
+    "systemHint": "Your device's language",
+    "es": "Español",
+    "en": "English"
+  },
+  "title": "Preferences",
+  "theme": {
+    "title": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "currency": {
+    "title": "Default currency",
+    "hint": "It's preselected when you create a new account, budget or goal — each one keeps its own currency afterwards; they're never mixed into one total."
+  },
+  "enabled": {
+    "title": "Enabled currencies",
+    "hint": "Like picking languages in a translator: search and check the ones you actually use — they're the only ones you'll be able to pick when creating an account, budget or goal.",
+    "inUse": "You can't turn off {{code}}: you still have accounts, budgets or goals in that currency.",
+    "updateFailed": "Couldn't update"
+  },
+  "travel": {
+    "title": "Travel mode",
+    "hint": "While it's on, every expense, income and transfer you record is tagged with your trip's tag automatically, so you can see them all together later.",
+    "nameQuestion": "What's your trip called?",
+    "namePlaceholder": "e.g. Trip to Cancún",
+    "activate": "Turn on",
+    "name": "Trip name",
+    "active": "Trip on: your new transactions are being tagged “{{name}}”.",
+    "createFailed": "Couldn't create the trip tag"
+  },
+  "currencyPicker": {
+    "title": "Currency",
+    "search": "Search currency or code…",
+    "noMatches": "No currencies match.",
+    "enabledTitle": "Enabled currencies",
+    "inUse": "in use"
+  }
+}

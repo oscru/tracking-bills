@@ -52,7 +52,8 @@
         {
           "faceIDPermission": "Usa Face ID para desbloquear tu app y proteger tu información financiera."
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

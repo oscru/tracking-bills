@@ -1,0 +1,38 @@
+{
+  "title": "Profile",
+  "edit": "Edit profile",
+  "unset": "Not set",
+  "name": "Name",
+  "namePlaceholder": "e.g. Ana García",
+  "birthDate": "Date of birth",
+  "birthDateOptional": "Date of birth (optional)",
+  "gender": "Gender",
+  "genderOptional": "Gender (optional)",
+  "genders": {
+    "female": "Female",
+    "male": "Male",
+    "other": "Other",
+    "prefer_not_to_say": "Prefer not to say"
+  },
+  "pickOption": "Pick an option",
+  "legal": "Legal",
+  "signOut": "Sign out",
+  "deleteAccount": "Delete account",
+  "optional": "Optional",
+  "clear": "Clear",
+  "clearGender": "Clear gender",
+  "optionalNote": "Your date of birth and gender aren't needed to use Genobills. If you share them, we only use them for general, anonymous statistics about who uses the app — never for advertising or to decide anything about you. You can delete them anytime. More in the <privacy>Privacy notice</privacy>.",
+  "delete": {
+    "warning": "This permanently deletes your account<email> (<b>{{email}}</b>)</email> and <b>all</b> your data — accounts, transactions, budgets, goals, categories and tags. It can't be undone.",
+    "warningNoEmail": "This permanently deletes your account and <b>all</b> your data — accounts, transactions, budgets, goals, categories and tags. It can't be undone.",
+    "password": "Confirm your password",
+    "typeEmail": "Type your email to confirm",
+    "ssoNote": "You signed in with Google/Apple, so there's no password to confirm — type the email you created your account with ({{email}}) instead.",
+    "confirmWord": "DELETE",
+    "typeWord": "Type \"{{word}}\" to confirm",
+    "submit": "Delete my account permanently",
+    "failed": "Couldn't delete the account",
+    "wrongPassword": "Wrong password"
+  },
+  "acceptedVersion": "You accepted version {{version}} on {{date}}."
+}

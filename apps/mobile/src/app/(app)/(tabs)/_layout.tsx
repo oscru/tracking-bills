@@ -1,6 +1,7 @@
 import { FloatingTabBarInsetContext, useIsDesktop } from '@repo/ui';
 import { Tabs, useRouter, type Href } from 'expo-router';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useFloatingTabBarHeight } from '../../../features/navigation/floating-tab-bar';
 
@@ -32,6 +33,7 @@ export default function AppLayout() {
   // Desktop web has a sidebar, not a bar floating over the content.
   const desktop = useIsDesktop();
   usePreloadTabs();
+  const { t } = useTranslation('navigation');
 
   return (
     <FloatingTabBarInsetContext.Provider value={desktop ? 0 : floatingInset}>
@@ -54,25 +56,25 @@ export default function AppLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Inicio',
+            title: t('tabs.index'),
           }}
         />
         <Tabs.Screen
           name="transactions"
           options={{
-            title: 'Movimientos',
+            title: t('tabs.transactions'),
           }}
         />
         <Tabs.Screen
           name="analytics"
           options={{
-            title: 'Análisis',
+            title: t('tabs.analytics'),
           }}
         />
         <Tabs.Screen
           name="settings"
           options={{
-            title: 'Opciones',
+            title: t('tabs.settings'),
           }}
         />
       </Tabs>

@@ -3,10 +3,11 @@ import { HOME_LAYOUT_ITEMS, type HomeLayoutItem } from '@repo/core/utils';
 import { Button, PageHeader, Screen, ICON_COLORS, useIsDesktop } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Switch, Text, View } from 'react-native';
 
 import { HomeOrderEditor } from '../../../../features/home/home-order-editor';
-import { WIDGET_META } from '../../../../features/home/widget-catalog';
+import { useWidgetMeta } from '../../../../features/home/widget-catalog';
 
 /**
  * Opciones › Personalizar inicio. In the app (and a phone-width browser):
@@ -22,17 +23,16 @@ export default function HomeLayoutScreen() {
 }
 
 function AppOrderScreen() {
+  const { t } = useTranslation('home');
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
 
   return (
     <Screen edges={['top']} className="gap-5">
-      <PageHeader title="Personalizar inicio" onBack={() => router.back()} />
+      <PageHeader title={t('layout.appTitle')} onBack={() => router.back()} />
 
       <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-        Arrastra del ícono para reordenar, o apaga una tarjeta para quitarla de tu inicio. El
-        selector de mes, el balance total y los ingresos/gastos del mes siempre se quedan fijos
-        arriba.
+        {t('layout.appBody')}
       </Text>
 
       {isLoading || !profile ? (
@@ -45,6 +45,8 @@ function AppOrderScreen() {
 }
 
 function WebWidgetsScreen() {
+  const { t } = useTranslation('home');
+  const widgetMeta = useWidgetMeta();
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
@@ -61,15 +63,14 @@ function WebWidgetsScreen() {
 
   return (
     <Screen edges={['top']} className="gap-5">
-      <PageHeader title="Widgets del inicio" onBack={() => router.back()} />
+      <PageHeader title={t('layout.webTitle')} onBack={() => router.back()} />
 
       <View className="gap-3 rounded-card bg-lime-tint p-4 dark:bg-lime-tint-dark">
         <Text className="text-[13px] leading-[18px] text-ink dark:text-ink-dark">
-          Para mover los widgets y cambiar su tamaño, entra a Personalizar en tu inicio. Aquí eliges
-          cuáles se muestran.
+          {t('layout.webBody')}
         </Text>
         <Button
-          label="Acomodar en Inicio"
+          label={t('layout.arrange')}
           onPress={() => router.navigate({ pathname: '/(app)', params: { edit: '1' } })}
         />
       </View>
@@ -79,7 +80,7 @@ function WebWidgetsScreen() {
       ) : (
         <View className="gap-2.5">
           {HOME_LAYOUT_ITEMS.map((key) => {
-            const meta = WIDGET_META[key];
+            const meta = widgetMeta(key);
             const off = hidden.has(key);
             return (
               <View

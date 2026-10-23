@@ -3,10 +3,11 @@ import { LEGAL_VERSION, toFriendlyMessage } from '@repo/core/utils';
 import { Button, ErrorCard, ICON_COLORS } from '@repo/ui';
 import { ShieldCheck } from 'lucide-react-native';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { LEGAL_LABELS, LegalConsent, openLegal } from './legal';
+import { LegalConsent, openLegal } from './legal';
 
 /**
  * Asks to accept the legal documents before using the app when the profile
@@ -16,6 +17,7 @@ import { LEGAL_LABELS, LegalConsent, openLegal } from './legal';
  * the whole app until accepted; not accepting means signing out.
  */
 export function LegalGate() {
+  const { t } = useTranslation('legal');
   const { data: profile } = useProfile();
   const update = useUpdateProfile();
   const signOut = useSignOut();
@@ -30,13 +32,13 @@ export function LegalGate() {
 
   const accept = () => {
     if (!checked) {
-      setError('Marca la casilla para continuar');
+      setError(t('gate.mustCheck'));
       return;
     }
     setError(undefined);
     update.mutate(
       { legal_version: LEGAL_VERSION, legal_accepted_at: new Date().toISOString() },
-      { onError: (e) => setError(toFriendlyMessage(e, 'No se pudo guardar. Intenta de nuevo.')) },
+      { onError: (e) => setError(toFriendlyMessage(e, t('gate.saveFailed'))) },
     );
   };
 
@@ -56,12 +58,10 @@ export function LegalGate() {
             </View>
             <View className="gap-2">
               <Text className="text-[28px] font-bold tracking-tight text-ink dark:text-ink-dark">
-                {isUpdate ? 'Actualizamos nuestros documentos' : 'Antes de continuar'}
+                {t(isUpdate ? 'gate.updatedTitle' : 'gate.firstTitle')}
               </Text>
               <Text className="text-base leading-6 text-ink-2 dark:text-ink-2-dark">
-                {isUpdate
-                  ? 'Cambiamos nuestros términos o nuestro aviso de privacidad. Revísalos y acéptalos para seguir usando Genobills.'
-                  : 'Para usar Genobills necesitamos que aceptes nuestros términos y nuestro aviso de privacidad. En resumen: solo guardamos lo necesario para que la app funcione, no vendemos tus datos y no mostramos anuncios.'}
+                {t(isUpdate ? 'gate.updatedBody' : 'gate.firstBody')}
               </Text>
             </View>
 
@@ -76,10 +76,10 @@ export function LegalGate() {
                   }`}
                 >
                   <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
-                    {LEGAL_LABELS[doc]}
+                    {t(`documents.${doc}`)}
                   </Text>
                   <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
-                    Leer ›
+                    {t('gate.read')}
                   </Text>
                 </Pressable>
               ))}
@@ -96,7 +96,7 @@ export function LegalGate() {
             <ErrorCard message={error} />
 
             <View className="gap-3">
-              <Button label="Aceptar y continuar" onPress={accept} loading={update.isPending} />
+              <Button label={t('gate.accept')} onPress={accept} loading={update.isPending} />
               <Pressable
                 onPress={() => signOut.mutate()}
                 hitSlop={8}
@@ -104,7 +104,7 @@ export function LegalGate() {
                 className="items-center py-2"
               >
                 <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                  No acepto, cerrar sesión
+                  {t('gate.decline')}
                 </Text>
               </Pressable>
             </View>

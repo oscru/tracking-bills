@@ -6,6 +6,7 @@ import { useFocusEffect } from 'expo-router';
 import { ArrowLeftRight, Eye, Pencil, Tag, type LucideIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, Easing, Pressable, Text, View } from 'react-native';
 import {
   PanGestureHandler,
@@ -30,14 +31,14 @@ interface SwipeMeta {
   side: 'left' | 'right';
   tone: 'ink' | 'muted';
   icon: LucideIcon;
-  label: string;
+  labelKey: 'row.edit' | 'row.view';
 }
 
-const EDIT_META: SwipeMeta = { side: 'left', tone: 'ink', icon: Pencil, label: 'Editar' };
-const VIEW_META: SwipeMeta = { side: 'right', tone: 'muted', icon: Eye, label: 'Ver' };
+const EDIT_META: SwipeMeta = { side: 'left', tone: 'ink', icon: Pencil, labelKey: 'row.edit' };
+const VIEW_META: SwipeMeta = { side: 'right', tone: 'muted', icon: Eye, labelKey: 'row.view' };
 // A transfer a linked person sent you can't be edited (it's theirs) — the
 // "Editar" side opens its detail instead, where you can pick where it landed.
-const MIRROR_META: SwipeMeta = { side: 'left', tone: 'ink', icon: Eye, label: 'Ver' };
+const MIRROR_META: SwipeMeta = { side: 'left', tone: 'ink', icon: Eye, labelKey: 'row.view' };
 
 /** Tailwind bg + raw icon/text colors for one action's tone, light/dark aware. */
 function swipeColors(tone: SwipeMeta['tone'], dark: boolean) {
@@ -67,7 +68,8 @@ function SwipeAction({
 }) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
-  const { side, tone, icon: Icon, label } = meta;
+  const { side, tone, icon: Icon, labelKey } = meta;
+  const { t } = useTranslation('transactions');
   const opacity = translateX.interpolate({
     inputRange: side === 'left' ? [0, ACTION_WIDTH / 2] : [-ACTION_WIDTH / 2, 0],
     outputRange: side === 'left' ? [0, 1] : [1, 0],
@@ -87,7 +89,7 @@ function SwipeAction({
         className={`flex-1 items-center justify-center gap-1 ${colors.bg}`}
       >
         <Icon size={18} color={colors.icon} />
-        <Text className={`text-xs font-semibold ${colors.text}`}>{label}</Text>
+        <Text className={`text-xs font-semibold ${colors.text}`}>{t(labelKey)}</Text>
       </Pressable>
     </Animated.View>
   );
@@ -109,7 +111,8 @@ function SwipeFill({
 }) {
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
-  const { side, tone, icon: Icon, label } = meta;
+  const { side, tone, icon: Icon, labelKey } = meta;
+  const { t } = useTranslation('transactions');
   const colors = swipeColors(tone, dark);
   const width = progress.interpolate({
     inputRange: [0, 1],
@@ -134,7 +137,7 @@ function SwipeFill({
         className="items-center justify-center gap-1"
       >
         <Icon size={18} color={colors.icon} />
-        <Text className={`text-xs font-semibold ${colors.text}`}>{label}</Text>
+        <Text className={`text-xs font-semibold ${colors.text}`}>{t(labelKey)}</Text>
       </View>
     </Animated.View>
   );
@@ -172,6 +175,7 @@ export const TransactionListItem = memo(function TransactionListItem({
    * can make it the (only) open one. Pass a stable function. */
   onReveal: (id: string) => void;
 }) {
+  const { t } = useTranslation(['transactions', 'common']);
   const {
     type,
     amount,
@@ -438,16 +442,16 @@ export const TransactionListItem = memo(function TransactionListItem({
     // generic "Transferencia".
     title =
       account?.type === 'contact'
-        ? `Recibida de ${account.name}`
+        ? t('row.receivedFrom', { name: account.name })
         : to_account?.type === 'contact'
-          ? `Enviada a ${to_account.name}`
-          : 'Transferencia';
+          ? t('row.sentTo', { name: to_account.name })
+          : t('row.transfer');
     subtitle = `${account?.name ?? '—'} → ${goal?.name ?? to_account?.name ?? '—'}`;
     sign = '';
     amountClass = 'text-ink-2 dark:text-ink-2-dark';
     color = ICON_COLORS.limeInk;
   } else {
-    const categoryLabel = category ? resolveCategoryLabel(category) : 'Sin categoría';
+    const categoryLabel = category ? resolveCategoryLabel(category) : t('row.noCategory');
     const trimmedDescription = description?.trim();
     title = trimmedDescription || categoryLabel;
     subtitle = trimmedDescription
@@ -528,7 +532,7 @@ export const TransactionListItem = memo(function TransactionListItem({
               </Text>
               {is_completed === false ? (
                 <Text className="text-[10px] font-semibold uppercase tracking-wide text-warning dark:text-warning-dark">
-                  Pendiente
+                  {t('common:pending')}
                 </Text>
               ) : null}
             </View>

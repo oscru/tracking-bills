@@ -2,6 +2,7 @@ import type { CategorySpend } from '@repo/core/utils';
 import { formatCurrency } from '@repo/core/utils';
 import { useColorScheme } from 'nativewind';
 import { useEffect, useId } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 import Animated, {
@@ -106,6 +107,7 @@ export function CategorySpendDonut({
   radius = 72,
   onSlicePress,
 }: Props) {
+  const { t } = useTranslation('common');
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   // The bigger desktop donut gets a bigger total to match.
@@ -224,7 +226,7 @@ export function CategorySpendDonut({
           <Text
             className={`${xxl ? 'text-base' : xl ? 'text-sm' : large ? 'text-xs' : 'text-[11px]'} text-ink-2 dark:text-ink-2-dark`}
           >
-            Total
+            {t('total')}
           </Text>
           <Text
             className={`${xxl ? 'text-4xl' : xl ? 'text-3xl' : large ? 'text-xl' : 'text-base'} font-bold text-ink dark:text-ink-dark`}

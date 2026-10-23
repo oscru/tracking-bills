@@ -1,0 +1,28 @@
+{
+  "slides": {
+    "accounts": {
+      "title": "Tus cuentas",
+      "description": "Registra tus cuentas de banco, efectivo o tarjetas para llevar el control de tu dinero."
+    },
+    "transactions": {
+      "title": "Tus movimientos",
+      "description": "Anota cada gasto o ingreso en segundos y mira tu historial completo en un solo lugar."
+    },
+    "categories": {
+      "title": "Categorías",
+      "description": "Clasifica tus movimientos para entender en qué se va realmente tu dinero."
+    },
+    "budgets": {
+      "title": "Presupuestos",
+      "description": "Ponle un límite a tu gasto por categoría y te avisamos cuando te estés acercando."
+    },
+    "goals": {
+      "title": "Metas",
+      "description": "Define cuánto quieres ahorrar y para cuándo, y sigue tu progreso en tiempo real."
+    },
+    "tags": {
+      "title": "Tags",
+      "description": "Agrupa movimientos entre categorías — perfecto para un viaje o un proyecto puntual."
+    }
+  }
+}

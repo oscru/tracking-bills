@@ -1,0 +1,51 @@
+{
+  "title": "Insights",
+  "period": {
+    "week": "Week",
+    "month": "Month",
+    "year": "Year"
+  },
+  "view": {
+    "calendar": "Calendar",
+    "trend": "Trend"
+  },
+  "previousPeriod": "Previous period",
+  "nextPeriod": "Next period",
+  "insights": {
+    "vsPrevious": "vs. previous period",
+    "savingsRate": "savings rate",
+    "projected": "projected by period end",
+    "totalSpent": "spent in total",
+    "totalReceived": "received in total",
+    "noSpendDays_one": "{{count}} day without spending",
+    "noSpendDays_other": "{{count}} days without spending",
+    "bestStreak_one": "Best streak: {{count}} day",
+    "bestStreak_other": "Best streak: {{count}} days"
+  },
+  "biggest": {
+    "expense": "Biggest expenses",
+    "income": "Biggest income"
+  },
+  "emptyPeriod": {
+    "expense": "No spending in this period.",
+    "income": "No income in this period."
+  },
+  "seeAll": "See all ›",
+  "trending": "Trending categories",
+  "budgets": {
+    "title": "Budgets",
+    "note": "Each budget's current period — it doesn't follow the month above"
+  },
+  "monthly": {
+    "title": "This month's spending",
+    "titleWith": "Spending · {{label}}",
+    "empty": "No spending",
+    "emptyBody": "No expenses recorded this month."
+  },
+  "category": {
+    "bySubcategory": "By subcategory",
+    "emptyBody": "No transactions in this category this month.",
+    "fallbackTitle": "Category",
+    "movements": "Transactions · {{count}}"
+  }
+}

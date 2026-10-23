@@ -22,11 +22,13 @@ import {
   type HomeLayoutItem,
   getDateFormat,
 } from '@repo/core/utils';
+import { currentLocale } from '@repo/core/i18n';
 import { Screen, StaggerItem, ICON_COLORS, useIsDesktop, useIsWideDesktop } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Calendar, Check, ChevronRight, Clock, Eye, EyeOff } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
 
 import { AccountIcon } from '../../../features/accounts/account-icon';
@@ -72,6 +74,7 @@ const COARSE_POINTER =
 const INITIAL_WIDGETS = 1;
 
 export default function HomeScreen() {
+  const { t } = useTranslation(['home', 'common']);
   const desktop = useIsDesktop();
   // The three headline numbers fit side by side only on a roomy window;
   // on a small desktop the balance gets its own row.
@@ -113,7 +116,7 @@ export default function HomeScreen() {
   const [addOpen, setAddOpen] = useState(false);
   // While editing, the navbar's action (the "+") becomes "Listo".
   useTabBarAction(
-    editing ? { icon: Check, accessibilityLabel: 'Listo', onPress: editor.done } : null,
+    editing ? { icon: Check, accessibilityLabel: t('common:done'), onPress: editor.done } : null,
   );
   // Leaving Inicio mid-edit keeps what you did, like tapping "Listo".
   const doneRef = useRef(editor.done);
@@ -157,7 +160,9 @@ export default function HomeScreen() {
   const currency = profile?.currency ?? active[0]?.currency ?? 'MXN';
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? null;
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const greeting = t(
+    hour < 12 ? 'greeting.morning' : hour < 19 ? 'greeting.afternoon' : 'greeting.evening',
+  );
   const balances = useMemo(
     () => totalsByCurrencyFromBalances(active, accountBalancesById),
     [active, accountBalancesById],
@@ -196,7 +201,7 @@ export default function HomeScreen() {
     [selectedYear, selectedMonthIdx],
   );
   const selectedMonth = `${selectedYear}-${String(selectedMonthIdx + 1).padStart(2, '0')}`;
-  const monthLabel = getDateFormat('es-MX', { month: 'long' }).format(monthDate);
+  const monthLabel = getDateFormat(currentLocale(), { month: 'long' }).format(monthDate);
   const yearLabel = String(selectedYear);
   const monthStart = `${selectedMonth}-01`;
   const monthEnd = todayISODate(new Date(selectedYear, selectedMonthIdx + 1, 0));
@@ -277,9 +282,7 @@ export default function HomeScreen() {
       ))}
       {visibleAccounts.length === 0 ? (
         <Text className="px-4 py-4 text-sm text-ink-2 dark:text-ink-2-dark">
-          {active.length === 0
-            ? 'Aún no tienes cuentas.'
-            : 'No tienes cuentas visibles aquí — actívalas desde Cuenta › Mostrar en inicio.'}
+          {active.length === 0 ? t('accounts.none') : t('accounts.noneVisible')}
         </Text>
       ) : null}
     </>
@@ -308,11 +311,10 @@ export default function HomeScreen() {
           </View>
           <View className="flex-1">
             <Text className="text-[15px] font-bold text-warning dark:text-warning-dark">
-              {overdue.length} movimiento{overdue.length === 1 ? '' : 's'} pendiente
-              {overdue.length === 1 ? '' : 's'}
+              {t('pending.title', { count: overdue.length })}
             </Text>
             <Text className="text-xs text-warning opacity-80 dark:text-warning-dark">
-              Aún no se han realizado, toca para revisarlos
+              {t('pending.body')}
             </Text>
           </View>
           <ChevronRight size={18} color={dark ? ICON_COLORS.warningDark : ICON_COLORS.warning} />
@@ -337,14 +339,14 @@ export default function HomeScreen() {
           </View>
           <View className="flex-1">
             <Text className="text-[15px] font-bold text-lime-ink dark:text-lime-ink-dark">
-              {nearestUpcomingDays === 0
-                ? `${upcoming.length} movimiento${upcoming.length === 1 ? '' : 's'} por realizar hoy`
-                : `${upcoming.length} movimiento${upcoming.length === 1 ? '' : 's'} próximo${upcoming.length === 1 ? '' : 's'}`}
+              {t(nearestUpcomingDays === 0 ? 'upcoming.today' : 'upcoming.title', {
+                count: upcoming.length,
+              })}
             </Text>
             <Text className="text-xs text-lime-ink opacity-80 dark:text-lime-ink-dark">
               {nearestUpcomingDays === 0
-                ? 'Programado para hoy, toca para revisarlo'
-                : `El más cercano en ${nearestUpcomingDays} día${nearestUpcomingDays === 1 ? '' : 's'}`}
+                ? t('upcoming.todayBody')
+                : t('upcoming.nearest', { count: nearestUpcomingDays ?? 0 })}
             </Text>
           </View>
           <ChevronRight size={18} color={dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk} />
@@ -391,10 +393,12 @@ export default function HomeScreen() {
     accounts: (
       <View className={gridMode ? 'flex-1 gap-2 p-4' : 'gap-2'}>
         <View className="flex-row items-center justify-between">
-          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Tus cuentas</Text>
+          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+            {t('accounts.title')}
+          </Text>
           <Pressable onPress={() => router.push('/(app)/settings/accounts')} hitSlop={8}>
             <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Ver todas ›
+              {t('accounts.seeAll')}
             </Text>
           </Pressable>
         </View>
@@ -417,8 +421,15 @@ export default function HomeScreen() {
   const balanceCard = (
     <View className="rounded-card bg-surface p-5 dark:bg-surface-dark">
       <View className="flex-row items-center justify-between">
-        <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Balance total</Text>
-        <Pressable onPress={() => setHidden((h) => !h)} hitSlop={10}>
+        <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+          {t('balanceTotal')}
+        </Text>
+        <Pressable
+          onPress={() => setHidden((h) => !h)}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={t(hidden ? 'showBalance' : 'hideBalance')}
+        >
           {hidden ? (
             <Eye size={20} color={ICON_COLORS.ink3} />
           ) : (
@@ -470,7 +481,9 @@ export default function HomeScreen() {
         onPress={() => openMonth('income')}
         className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
       >
-        <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Ingresos</Text>
+        <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">
+          {t('common:income')}
+        </Text>
         {month.length === 0 ? (
           <Text className="mt-1 text-xl font-bold text-pos dark:text-pos-dark">
             {hidden ? '•••' : formatCurrency(0, currency)}
@@ -491,7 +504,9 @@ export default function HomeScreen() {
         onPress={() => openMonth('expense')}
         className="flex-1 rounded-2xl bg-surface p-4 active:opacity-70 dark:bg-surface-dark"
       >
-        <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">Gastos</Text>
+        <Text className="text-xs capitalize text-ink-2 dark:text-ink-2-dark">
+          {t('common:expenses')}
+        </Text>
         {month.length === 0 ? (
           <Text className="mt-1 text-xl font-bold text-danger dark:text-danger-dark">
             {hidden ? '•••' : formatCurrency(0, currency)}
@@ -539,10 +554,10 @@ export default function HomeScreen() {
       {editor.items.length === 0 ? (
         <View className="mb-3 items-center rounded-card border-2 border-dashed border-line px-6 py-6 dark:border-line-dark">
           <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-            Tu inicio está vacío
+            {t('editor.empty')}
           </Text>
           <Text className="mt-0.5 text-xs text-ink-3 dark:text-ink-3-dark">
-            Toca Agregar para sumar widgets.
+            {t('editor.emptyHint')}
           </Text>
         </View>
       ) : null}
@@ -586,7 +601,7 @@ export default function HomeScreen() {
           {firstName ? `, ${firstName}` : ''}
         </Text>
         <Text className="text-3xl font-extrabold tracking-tight text-ink dark:text-ink-dark">
-          Tu resumen
+          {t('summaryTitle')}
         </Text>
       </View>
       <View className="flex-row items-center gap-4">

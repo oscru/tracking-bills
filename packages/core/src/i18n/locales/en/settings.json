@@ -1,0 +1,33 @@
+{
+  "title": "Settings",
+  "welcome": "Welcome",
+  "rows": {
+    "accounts": "Accounts",
+    "accountsCount_one": "{{count}} active",
+    "accountsCount_other": "{{count}} active",
+    "categories": "Categories",
+    "categoriesCount_one": "{{count}} category",
+    "categoriesCount_other": "{{count}} categories",
+    "tags": "Tags",
+    "tagsCount_one": "{{count}} active",
+    "tagsCount_other": "{{count}} active",
+    "budgets": "Budgets",
+    "budgetsCount_one": "{{count}} budget",
+    "budgetsCount_other": "{{count}} budgets",
+    "goals": "Goals",
+    "goalsCount_one": "{{count}} goal",
+    "goalsCount_other": "{{count}} goals",
+    "peers": "People",
+    "peersHint": "Send your partner money without it counting as an expense",
+    "security": "Security",
+    "securityHint": "Unlock with fingerprint or Face ID",
+    "notifications": "Notifications",
+    "notificationsHint": "Reminders for bills, budgets and goals",
+    "preferences": "Preferences",
+    "preferencesHint": "Currency, theme and language",
+    "importExport": "Import and export",
+    "importExportHint": "Share or move your transactions via Excel",
+    "tour": "See the tour again",
+    "tourHint": "Replay the app introduction"
+  }
+}

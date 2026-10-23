@@ -5,6 +5,7 @@ import { todayISODate } from '@repo/core/utils';
 import { Button, ErrorCard, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text } from 'react-native';
 
 import { BudgetBasicsFields } from '../../../../../../features/budgets/budget-basics-fields';
@@ -14,6 +15,7 @@ import {
 } from '../../../../../../features/budgets/budget-categories-editor';
 
 export default function EditBudget() {
+  const { t } = useTranslation(['budgets', 'common']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: budgets, isLoading } = useBudgets();
@@ -52,9 +54,7 @@ export default function EditBudget() {
   if (!budget) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">
-          Presupuesto no encontrado.
-        </Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
@@ -71,7 +71,7 @@ export default function EditBudget() {
     setFieldError(null);
     const amount = Number(amountText.replace(',', '.'));
     if (periodType === 'custom' && (!customFrom || !customTo)) {
-      setFieldError('Elige el rango de fechas');
+      setFieldError(t('pickRange'));
       return;
     }
     const categoryPayload = categories.map((c) => ({
@@ -101,21 +101,21 @@ export default function EditBudget() {
 
     const parsed = budgetUpdateSchema.safeParse(payload);
     if (!parsed.success) {
-      setFieldError(parsed.error.issues[0]?.message ?? 'Revisa los datos');
+      setFieldError(parsed.error.issues[0]?.message ?? 'transactions:form.checkData');
       return;
     }
     update.mutate(
       { id: budget.id, patch: parsed.data },
       {
         onSuccess: () => router.back(),
-        onError: (e) => setError(e, 'No se pudieron guardar los cambios'),
+        onError: (e) => setError(e, t('common:saveChangesFailed')),
       },
     );
   };
 
   return (
     <Screen className="gap-4">
-      <PageHeader title="Editar presupuesto" onBack={() => router.back()} />
+      <PageHeader title={t('edit')} onBack={() => router.back()} />
 
       <ScrollView
         className="flex-1"
@@ -171,7 +171,7 @@ export default function EditBudget() {
         <ErrorCard message={fieldError ?? error} />
 
         <Button
-          label="Guardar cambios"
+          label={t('common:saveChanges')}
           onPress={submit}
           loading={update.isPending}
           disabled={categories.length === 0}

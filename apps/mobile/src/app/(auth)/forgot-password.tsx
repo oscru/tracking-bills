@@ -5,6 +5,7 @@ import { Button, ErrorCard, ICON_COLORS, PageHeader, Screen, TextField } from '@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Eye, EyeOff, MailCheck } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 // Wait between "Reenviar código" taps — Supabase rate-limits these emails too.
@@ -23,6 +24,7 @@ type Errors = { email?: string; code?: string; password?: string; confirm?: stri
  * still shown here instead of the app jumping to Inicio.
  */
 export default function ForgotPassword() {
+  const { t } = useTranslation('auth');
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string }>();
   const sendCode = useSendPasswordReset();
@@ -41,8 +43,8 @@ export default function ForgotPassword() {
 
   useEffect(() => {
     if (cooldown <= 0) return;
-    const t = setTimeout(() => setCooldown((s) => s - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
   }, [cooldown]);
 
   const requestCode = () => {
@@ -58,7 +60,7 @@ export default function ForgotPassword() {
         setStep('code');
         setCooldown(RESEND_COOLDOWN_S);
       },
-      onError: (e) => setErrors({ form: toFriendlyMessage(e, 'No se pudo enviar el código') }),
+      onError: (e) => setErrors({ form: toFriendlyMessage(e, t('forgot.sendFailed')) }),
     });
   };
 
@@ -77,7 +79,7 @@ export default function ForgotPassword() {
     if (reset.isPending) return;
     reset.mutate(parsed.data, {
       onSuccess: () => router.replace('/(app)'),
-      onError: (e) => setErrors({ form: toFriendlyMessage(e, 'No se pudo cambiar la contraseña') }),
+      onError: (e) => setErrors({ form: toFriendlyMessage(e, t('forgot.submitFailed')) }),
     });
   };
 
@@ -86,7 +88,7 @@ export default function ForgotPassword() {
       onPress={() => setShowPassword((v) => !v)}
       hitSlop={8}
       accessibilityRole="button"
-      accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+      accessibilityLabel={t(showPassword ? 'fields.hidePassword' : 'fields.showPassword')}
     >
       {showPassword ? (
         <EyeOff size={20} color={ICON_COLORS.ink3} />
@@ -104,16 +106,16 @@ export default function ForgotPassword() {
         <View className="gap-5 pt-2">
           <View className="gap-1">
             <Text className="text-2xl font-bold text-ink dark:text-ink-dark">
-              ¿Olvidaste tu contraseña?
+              {t('forgot.title')}
             </Text>
             <Text className="text-base text-ink-2 dark:text-ink-2-dark">
-              Escribe tu correo y te enviaremos un código para crear una nueva.
+              {t('forgot.subtitle')}
             </Text>
           </View>
 
           <TextField
-            label="Correo"
-            placeholder="tucorreo@ejemplo.com"
+            label={t('fields.email')}
+            placeholder={t('forgot.emailPlaceholder')}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -128,7 +130,7 @@ export default function ForgotPassword() {
 
           <ErrorCard message={errors.form} />
 
-          <Button label="Enviar código" onPress={requestCode} loading={sendCode.isPending} />
+          <Button label={t('forgot.send')} onPress={requestCode} loading={sendCode.isPending} />
         </View>
       ) : (
         <View className="gap-5 pt-2">
@@ -136,16 +138,23 @@ export default function ForgotPassword() {
             <View className="h-12 w-12 items-center justify-center rounded-2xl bg-lime-tint dark:bg-lime-tint-dark">
               <MailCheck size={24} color={ICON_COLORS.limeInk} />
             </View>
-            <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Revisa tu correo</Text>
+            <Text className="text-2xl font-bold text-ink dark:text-ink-dark">
+              {t('forgot.checkEmail')}
+            </Text>
             <Text className="text-base text-ink-2 dark:text-ink-2-dark">
-              Si hay una cuenta con{' '}
-              <Text className="font-semibold text-ink dark:text-ink-dark">{email.trim()}</Text>, te
-              enviamos un código. Escríbelo aquí junto con tu nueva contraseña.
+              <Trans
+                t={t}
+                i18nKey="forgot.codeSent"
+                values={{ email: email.trim() }}
+                components={{
+                  email: <Text className="font-semibold text-ink dark:text-ink-dark" />,
+                }}
+              />
             </Text>
           </View>
 
           <TextField
-            label="Código"
+            label={t('forgot.code')}
             placeholder="123456"
             value={code}
             onChangeText={(v) => setCode(v.replace(/\D/g, ''))}
@@ -160,8 +169,8 @@ export default function ForgotPassword() {
           />
           <TextField
             ref={passwordRef}
-            label="Nueva contraseña"
-            placeholder="Mínimo 8 caracteres"
+            label={t('forgot.newPassword')}
+            placeholder={t('forgot.newPasswordPlaceholder')}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
@@ -175,8 +184,8 @@ export default function ForgotPassword() {
           />
           <TextField
             ref={confirmRef}
-            label="Confirmar contraseña"
-            placeholder="Escríbela de nuevo"
+            label={t('forgot.confirmPassword')}
+            placeholder={t('forgot.confirmPlaceholder')}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry={!showPassword}
@@ -189,18 +198,20 @@ export default function ForgotPassword() {
 
           <ErrorCard message={errors.form} />
 
-          <Button label="Cambiar contraseña" onPress={submit} loading={reset.isPending} />
+          <Button label={t('forgot.submit')} onPress={submit} loading={reset.isPending} />
 
           <View className="flex-row flex-wrap justify-center gap-1">
-            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿No te llegó?</Text>
+            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
+              {t('forgot.didntArrive')}
+            </Text>
             {cooldown > 0 ? (
               <Text className="text-sm text-ink-3 dark:text-ink-3-dark">
-                Reenviar en {cooldown} s
+                {t('forgot.resendIn', { seconds: cooldown })}
               </Text>
             ) : (
               <Pressable onPress={requestCode} hitSlop={8} disabled={sendCode.isPending}>
                 <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
-                  Reenviar código
+                  {t('forgot.resend')}
                 </Text>
               </Pressable>
             )}

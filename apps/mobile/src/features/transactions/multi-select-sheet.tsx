@@ -1,6 +1,7 @@
 import { BottomSheet, CategoryDot, ICON_COLORS } from '@repo/ui';
 import { Check, Plus } from 'lucide-react-native';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 export interface MultiSelectOption {
@@ -49,16 +50,16 @@ export function MultiSelectSheet({
   values,
   onChange,
   onCreateNew,
-  createLabel = 'Crear nueva',
+  createLabel,
   searchPlaceholder,
 }: Props) {
+  const { t } = useTranslation(['transactions', 'common']);
   const [q, setQ] = useState('');
   const typed = q.trim();
   const needle = typed.toLowerCase();
-  const visibleOptions = useMemo(
-    () => (needle ? options.filter((o) => o.label.toLowerCase().includes(needle)) : options),
-    [options, needle],
-  );
+  const visibleOptions = needle
+    ? options.filter((o) => o.label.toLowerCase().includes(needle))
+    : options;
   const exactMatch = needle !== '' && options.some((o) => o.label.toLowerCase() === needle);
   const allSelected = options.length > 0 && values.length === options.length;
 
@@ -82,7 +83,7 @@ export function MultiSelectSheet({
       headerAction={
         <Pressable onPress={onClose} hitSlop={8}>
           <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-            Listo
+            {t('common:done')}
           </Text>
         </Pressable>
       }
@@ -118,7 +119,9 @@ export function MultiSelectSheet({
               className="flex-1 text-[15px] font-semibold text-lime-ink dark:text-lime-ink-dark"
               numberOfLines={1}
             >
-              {typed ? `Crear «${typed}»` : createLabel}
+              {typed
+                ? t('multiSelect.createTyped', { name: typed })
+                : (createLabel ?? t('multiSelect.createNew'))}
             </Text>
           </Pressable>
         ) : null}
@@ -131,7 +134,7 @@ export function MultiSelectSheet({
           >
             <Checkbox checked={allSelected} />
             <Text className="flex-1 text-[15px] font-bold text-ink dark:text-ink-dark">
-              Seleccionar todo
+              {t('multiSelect.selectAll')}
             </Text>
           </Pressable>
         )}
@@ -156,7 +159,7 @@ export function MultiSelectSheet({
 
         {visibleOptions.length === 0 && !onCreateNew ? (
           <Text className="px-5 py-4 text-sm text-ink-2 dark:text-ink-2-dark">
-            {typed ? 'Sin resultados.' : 'No hay opciones todavía.'}
+            {typed ? t('common:noResults') : t('multiSelect.empty')}
           </Text>
         ) : null}
       </ScrollView>

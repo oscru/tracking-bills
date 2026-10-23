@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../budgets/budget-progress-bar';
@@ -12,6 +13,7 @@ const TOP_N = 3;
  * their current-period limit, most urgent first. Each budget shows in its
  * own locked currency — they're not blended into a single number. */
 export function BudgetsCard({ fill = false }: { fill?: boolean }) {
+  const { t } = useTranslation('home');
   const router = useRouter();
   const rows = useBudgetProgressRows();
 
@@ -27,10 +29,12 @@ export function BudgetsCard({ fill = false }: { fill?: boolean }) {
       className={`gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark ${fill ? 'flex-1' : ''}`}
     >
       <View className="flex-row items-center justify-between">
-        <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">Presupuestos</Text>
+        <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
+          {t('budgets.title')}
+        </Text>
         <Pressable onPress={() => router.push('/(app)/settings/budgets')} hitSlop={8}>
           <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-            Ver todos ›
+            {t('budgets.seeAll')}
           </Text>
         </Pressable>
       </View>
@@ -42,16 +46,14 @@ export function BudgetsCard({ fill = false }: { fill?: boolean }) {
           className={`items-center gap-1 py-4 ${fill ? 'flex-1 justify-center' : ''}`}
         >
           <Text className="text-sm font-medium text-lime-ink dark:text-lime-ink-dark">
-            + Crea tu primer presupuesto
+            {t('budgets.create')}
           </Text>
-          <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-            Ponle un límite semanal, quincenal o mensual a tus categorías
-          </Text>
+          <Text className="text-xs text-ink-3 dark:text-ink-3-dark">{t('budgets.createHint')}</Text>
         </Pressable>
       ) : (
         <>
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            {onTrack} de {rows.length} bajo control este periodo
+            {t('budgets.onTrack', { onTrack, total: rows.length })}
           </Text>
           <CardScrollView
             className={fill ? 'flex-1' : undefined}

@@ -13,7 +13,7 @@ import {
   type PanGestureHandlerStateChangeEvent,
 } from 'react-native-gesture-handler';
 
-import { WIDGET_META } from './widget-catalog';
+import { useWidgetMeta } from './widget-catalog';
 
 const ROW_HEIGHT = 72;
 const ROW_GAP = 10;
@@ -31,6 +31,7 @@ function clamp(n: number, min: number, max: number): number {
  * (shared with the web).
  */
 export function HomeOrderEditor({ profile }: { profile: Profile }) {
+  const widgetMeta = useWidgetMeta();
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const updateProfile = useUpdateProfile();
@@ -125,7 +126,7 @@ export function HomeOrderEditor({ profile }: { profile: Profile }) {
   return (
     <View style={{ height: order.length * SLOT - ROW_GAP }}>
       {order.map((key, index) => {
-        const meta = WIDGET_META[key];
+        const meta = widgetMeta(key);
         const isHidden = hiddenSet.has(key);
         const isDragging = dragKey === key;
         const { onGestureEvent, onHandlerStateChange } = makeGestureHandlers(key);

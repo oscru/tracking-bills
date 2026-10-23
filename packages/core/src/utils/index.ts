@@ -2,6 +2,7 @@
  * Currency / date / calculation helpers. UI-agnostic and pure.
  */
 import { HOME_LAYOUT_ITEMS, type HomeLayoutItem } from '../home-layout';
+import { currentLocale, i18n } from '../i18n/instance';
 import type { BudgetPeriodType, Category, CategoryNode } from '../types';
 
 export * from './errors';
@@ -67,24 +68,36 @@ export function getDateFormat(
 }
 
 /** Format a numeric amount as a localized currency string. */
-export function formatCurrency(amount: number, currency = 'MXN', locale = 'es-MX'): string {
+export function formatCurrency(amount: number, currency = 'MXN', locale = currentLocale()): string {
   return getNumberFormat(locale, { style: 'currency', currency }).format(amount);
 }
 
 /**
  * `formatCurrency`, labeled with its currency code — for places that show
  * several currencies side by side. The code is only appended when the
- * formatted amount doesn't already carry it: es-MX writes MXN as "$1,000.00"
- * (needs " MXN") but USD as "USD 1,000.00" (already labeled).
+ * formatted amount doesn't already say which currency it is: es-MX writes
+ * MXN as "$1,000.00" (needs " MXN") but USD as "USD 1,000.00", and en-US
+ * writes MXN as "MX$1,000.00" (both already labeled).
  */
-export function formatCurrencyLabeled(amount: number, currency = 'MXN', locale = 'es-MX'): string {
+export function formatCurrencyLabeled(
+  amount: number,
+  currency = 'MXN',
+  locale = currentLocale(),
+): string {
   const formatted = formatCurrency(amount, currency, locale);
-  return formatted.includes(currency) ? formatted : `${formatted} ${currency}`;
+  return currencyCodeShown(currency, locale) ? formatted : `${formatted} ${currency}`;
 }
 
-/** Whether `formatCurrency` already shows the currency code (e.g. "USD 1,000.00"), not just a symbol. */
-export function currencyCodeShown(currency = 'MXN', locale = 'es-MX'): boolean {
-  return formatCurrency(0, currency, locale).includes(currency);
+/**
+ * Whether `formatCurrency` already says which currency it is — a code or a
+ * lettered symbol ("USD 1,000.00", "MX$1,000.00"), not a bare "$" that many
+ * currencies share.
+ */
+export function currencyCodeShown(currency = 'MXN', locale = currentLocale()): boolean {
+  const symbol = getNumberFormat(locale, { style: 'currency', currency })
+    .formatToParts(0)
+    .find((part) => part.type === 'currency')?.value;
+  return /[A-Za-z]/.test(symbol ?? '');
 }
 
 /** A short "$1.8k" / "$450" form of an amount — for tight spaces (e.g. a calendar-heatmap cell) where a full `formatCurrency` string wouldn't fit. */
@@ -547,7 +560,7 @@ export function categorySpendBreakdown(transactions: SpendTx[], month: string): 
     } else {
       byCategory.set(key, {
         categoryId: t.category?.id ?? null,
-        name: t.category?.name ?? 'Sin categoría',
+        name: t.category?.name ?? i18n.t('common:noCategory'),
         color: t.category?.color ?? '#94A3B8',
         icon: t.category?.icon ?? null,
         totalCents: toCents(t.amount),
@@ -577,7 +590,7 @@ export function addDaysISO(iso: string, days: number): string {
 }
 
 /** `YYYY-MM-DD` -> a medium, localized label, e.g. "7 Sep 2026". */
-export function formatDate(iso: string, locale = 'es-MX'): string {
+export function formatDate(iso: string, locale = currentLocale()): string {
   const [y, m, d] = iso.split('-').map(Number);
   if (!y || !m || !d) return iso;
   return getDateFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(
@@ -586,7 +599,7 @@ export function formatDate(iso: string, locale = 'es-MX'): string {
 }
 
 /** A `timestamptz` ISO string -> a localized date + time label, e.g. "7 sep 2026, 10:32 a.m." */
-export function formatDateTime(iso: string, locale = 'es-MX'): string {
+export function formatDateTime(iso: string, locale = currentLocale()): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
   return getDateFormat(locale, {
@@ -599,38 +612,45 @@ export function formatDateTime(iso: string, locale = 'es-MX'): string {
 }
 
 /**
- * A `timestamptz` ISO string -> "Recién {verb}" for the first hour, "{Verb}
- * hoy/ayer/antier/hace N días" by calendar day through day 6, then "{Verb} el
- * 7 sep 2026" beyond that. `verb` is a lowercase past participle, e.g.
- * "creado" or "editado". Calendar-day based (midnight to midnight, local
- * time), not a rolling 24h window, so "ayer" holds all day even if it was
- * under 24h ago.
+ * A `timestamptz` ISO string -> when `event` happened, as a phrase in the
+ * current language (`common:activity.<event>`): "Recién creado" for the
+ * first hour, "Creado hoy/ayer/hace N días" by calendar day through day 6,
+ * then "Creado el 7 sep 2026". Calendar-day based (midnight to midnight,
+ * local time), not a rolling 24h window, so "ayer" holds all day even if it
+ * was under 24h ago.
  */
-export function formatActivityMoment(iso: string, verb: string, locale = 'es-MX'): string {
+export function formatActivityMoment(
+  iso: string,
+  event: 'created' = 'created',
+  locale = currentLocale(),
+): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
+  const t = (key: string, options?: Record<string, unknown>) =>
+    (i18n.t as (key: string, options?: Record<string, unknown>) => string)(
+      `common:activity.${event}.${key}`,
+      options,
+    );
 
   const now = new Date();
-  if (now.getTime() - date.getTime() < 60 * 60 * 1000) return `Recién ${verb}`;
+  if (now.getTime() - date.getTime() < 60 * 60 * 1000) return t('justNow');
 
-  const cap = verb.charAt(0).toUpperCase() + verb.slice(1);
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const days = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
-  if (days === 0) return `${cap} hoy`;
-  if (days === 1) return `${cap} ayer`;
-  if (days === 2) return `${cap} antier`;
-  if (days >= 3 && days <= 6) return `${cap} hace ${days} días`;
+  if (days === 0) return t('today');
+  if (days === 1) return t('yesterday');
+  if (days >= 2 && days <= 6) return t('daysAgo', { count: days });
 
   const dateLabel = getDateFormat(locale, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   }).format(date);
-  return `${cap} el ${dateLabel}`;
+  return t('onDate', { date: dateLabel });
 }
 
 /** `YYYY-MM` -> a short localized month label, e.g. "sep" (or "sep 25" outside the current year). */
-export function formatMonthShort(monthKey: string, locale = 'es-MX'): string {
+export function formatMonthShort(monthKey: string, locale = currentLocale()): string {
   const [y, m] = monthKey.split('-').map(Number);
   if (!y || !m) return monthKey;
   const label = getDateFormat(locale, { month: 'short' }).format(new Date(y, m - 1, 1));
@@ -948,7 +968,7 @@ export function previousPeriodRange(
 export function periodLabel(
   period: AnalyticsPeriod,
   referenceDate: Date,
-  locale = 'es-MX',
+  locale = currentLocale(),
 ): string {
   if (period === 'year') return String(referenceDate.getFullYear());
   if (period === 'month') {
@@ -1194,7 +1214,7 @@ export function categoryTrend(
     if (!entry) {
       entry = {
         categoryId: t.category?.id ?? null,
-        name: t.category?.name ?? 'Sin categoría',
+        name: t.category?.name ?? i18n.t('common:noCategory'),
         color: t.category?.color ?? '#94A3B8',
         icon: t.category?.icon ?? null,
         currentCents: 0,

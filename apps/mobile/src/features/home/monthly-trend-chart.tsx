@@ -2,6 +2,7 @@ import { useMonthlyCategoryTotals } from '@repo/core/hooks';
 import { formatCompactAmount, formatMonthShort, monthlyHistoryFromSummary } from '@repo/core/utils';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { ICON_COLORS } from '@repo/ui';
@@ -51,6 +52,7 @@ export function MonthlyTrendChart({
    * page back a year, instead of always showing the months ending today. */
   referenceDate?: Date;
 }) {
+  const { t } = useTranslation(['home', 'common']);
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   // Pre-summed per month by Postgres — no need for the full history here.
@@ -91,11 +93,11 @@ export function MonthlyTrendChart({
     >
       <View className="flex-row items-center justify-between">
         <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-          Tendencia mensual
+          {t('monthlyTrend.title')}
         </Text>
         <View className="flex-row items-center gap-3">
-          <Legend color={incomeColor} label="Ingresos" />
-          <Legend color={expenseColor} label="Gastos" />
+          <Legend color={incomeColor} label={t('common:income')} />
+          <Legend color={expenseColor} label={t('common:expenses')} />
         </View>
       </View>
 
@@ -171,7 +173,7 @@ export function MonthlyTrendChart({
       ) : (
         <View className="items-center justify-center py-10">
           <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-            Sin movimientos en los últimos {months} meses.
+            {t('monthlyTrend.empty', { months })}
           </Text>
         </View>
       )}

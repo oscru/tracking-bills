@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { toFriendlyMessage } from '@repo/core/utils';
 import { ErrorCard, ICON_COLORS } from '@repo/ui';
 import { useColorScheme } from 'nativewind';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { useOAuthSignIn } from './use-oauth-sign-in';
@@ -46,6 +47,7 @@ function SsoButton({
  * both just start an OAuth session, so there's nothing screen-specific to
  * configure here. */
 export function SsoButtons() {
+  const { t } = useTranslation('auth');
   const { colorScheme } = useColorScheme();
   const iconColor = colorScheme === 'dark' ? ICON_COLORS.inkDark : ICON_COLORS.ink;
   const oauth = useOAuthSignIn();
@@ -54,7 +56,7 @@ export function SsoButtons() {
     <View className="gap-4">
       <View className="flex-row items-center gap-3">
         <View className="h-px flex-1 bg-line dark:bg-line-dark" />
-        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">o</Text>
+        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">{t('sso.or')}</Text>
         <View className="h-px flex-1 bg-line dark:bg-line-dark" />
       </View>
 
@@ -78,9 +80,7 @@ export function SsoButtons() {
       </View>
 
       <ErrorCard
-        message={
-          oauth.error ? toFriendlyMessage(oauth.error, 'No se pudo iniciar sesión') : undefined
-        }
+        message={oauth.error ? toFriendlyMessage(oauth.error, t('sso.failed')) : undefined}
       />
     </View>
   );

@@ -1,3 +1,4 @@
+import { i18n } from '../i18n/instance';
 import {
   DEFAULT_IS_COMPLETED,
   FALLBACK_CATEGORY_NAME,
@@ -7,6 +8,13 @@ import {
   type HeaderKey,
 } from './constants';
 import type { MovementDraft, ParsedWorkbook, RawSheet, RowIssue, TransferDraft } from './types';
+
+/** An import issue's text in the current language (`importExport:issues`). */
+const ti = (key: string, options?: Record<string, unknown>): string =>
+  (i18n.t as (key: string, options?: Record<string, unknown>) => string)(
+    `importExport:issues.${key}`,
+    options,
+  );
 
 function normalizeHeader(cell: unknown): string {
   return String(cell ?? '')
@@ -93,7 +101,7 @@ function parseCurrencyCode(
       sheet,
       row: rowNum,
       level: 'warning',
-      message: `Divisa "${text}" no reconocida — se ignora para esta fila`,
+      message: ti('currencyUnknown', { value: text }),
     });
     return null;
   }
@@ -129,7 +137,7 @@ function parseIsCompleted(
     sheet,
     row: rowNum,
     level: 'warning',
-    message: `Estado "${text}" no reconocido — se marcará como completado`,
+    message: ti('statusUnknown', { value: text }),
   });
   return DEFAULT_IS_COMPLETED;
 }
@@ -226,7 +234,7 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
             sheet: sheet.name,
             row: rowNum,
             level: 'error',
-            message: 'Fecha faltante o inválida',
+            message: ti('dateInvalid'),
           });
           continue;
         }
@@ -235,7 +243,7 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
             sheet: sheet.name,
             row: rowNum,
             level: 'error',
-            message: 'Monto faltante o inválido',
+            message: ti('amountInvalid'),
           });
           continue;
         }
@@ -244,7 +252,7 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
             sheet: sheet.name,
             row: rowNum,
             level: 'error',
-            message: 'Cuenta de origen o destino faltante',
+            message: ti('transferAccounts'),
           });
           continue;
         }
@@ -253,7 +261,7 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
             sheet: sheet.name,
             row: rowNum,
             level: 'error',
-            message: 'La cuenta de origen y destino no pueden ser la misma',
+            message: ti('sameAccount'),
           });
           continue;
         }
@@ -292,7 +300,7 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
             sheet: sheet.name,
             row: rowNum,
             level: 'error',
-            message: 'Fecha faltante o inválida',
+            message: ti('dateInvalid'),
           });
           continue;
         }
@@ -301,7 +309,7 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
             sheet: sheet.name,
             row: rowNum,
             level: 'error',
-            message: 'Valor faltante o inválido',
+            message: ti('valueInvalid'),
           });
           continue;
         }
@@ -310,7 +318,7 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
             sheet: sheet.name,
             row: rowNum,
             level: 'error',
-            message: 'Cuenta faltante',
+            message: ti('accountMissing'),
           });
           continue;
         }
@@ -321,7 +329,7 @@ export function parseWorkbook(sheets: RawSheet[]): ParsedWorkbook {
             sheet: sheet.name,
             row: rowNum,
             level: 'warning',
-            message: `Sin categoría — se asignará "${FALLBACK_CATEGORY_NAME}"`,
+            message: ti('noCategory', { name: FALLBACK_CATEGORY_NAME }),
           });
           categoryName = FALLBACK_CATEGORY_NAME;
         }

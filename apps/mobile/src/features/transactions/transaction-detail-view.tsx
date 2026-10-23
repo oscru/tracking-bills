@@ -30,6 +30,7 @@ import {
 import { useRouter } from 'expo-router';
 import { ArrowRight, Heart, Info, Pencil } from 'lucide-react-native';
 import { useMemo, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountPicker } from '../accounts/account-picker';
@@ -77,6 +78,7 @@ export function TransactionDetailView({
   embedded?: boolean;
   onClose?: () => void;
 }) {
+  const { t } = useTranslation(['transactions', 'common']);
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const goBack = onClose ?? (() => router.back());
@@ -135,7 +137,7 @@ export function TransactionDetailView({
     !embedded && tx && !tx.is_peer_mirror
       ? {
           icon: Pencil,
-          accessibilityLabel: 'Editar movimiento',
+          accessibilityLabel: t('detail.edit'),
           onPress: () =>
             router.push({ pathname: '/(app)/transactions/[id]/edit', params: { id: tx.id } }),
         }
@@ -145,7 +147,7 @@ export function TransactionDetailView({
   if (isLoading) {
     return (
       <Shell embedded={embedded}>
-        <PageHeader title="Movimiento" onBack={goBack} />
+        <PageHeader title={t('detail.title')} onBack={goBack} />
         <TransactionDetailSkeleton />
       </Shell>
     );
@@ -153,7 +155,7 @@ export function TransactionDetailView({
   if (!tx) {
     return (
       <Shell embedded={embedded} center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Movimiento no encontrado.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Shell>
     );
   }
@@ -171,7 +173,7 @@ export function TransactionDetailView({
     ? parentCategory
       ? `${resolveCategoryLabel(parentCategory)} › ${resolveCategoryLabel(tx.category)}`
       : resolveCategoryLabel(tx.category)
-    : 'Sin categoría';
+    : t('row.noCategory');
   const description = tx.description?.trim();
   // Transfers between linked people (see peer transfers): the "account" on
   // the other side is a contact account standing for that person.
@@ -179,10 +181,10 @@ export function TransactionDetailView({
   const toPerson = tx.to_account?.type === 'contact' ? tx.to_account : null;
   const title = isTransfer
     ? fromPerson
-      ? `Recibida de ${fromPerson.name}`
+      ? t('row.receivedFrom', { name: fromPerson.name })
       : toPerson
-        ? `Enviada a ${toPerson.name}`
-        : 'Transferencia'
+        ? t('row.sentTo', { name: toPerson.name })
+        : t('row.transfer')
     : description || categoryLabel;
   const goPeople = () => router.push('/(app)/settings/peers');
 
@@ -231,12 +233,12 @@ export function TransactionDetailView({
         action={
           <View className="flex-row gap-2">
             {embedded && editable ? (
-              <IconButton icon={Pencil} onPress={goEdit} accessibilityLabel="Editar movimiento" />
+              <IconButton icon={Pencil} onPress={goEdit} accessibilityLabel={t('detail.edit')} />
             ) : null}
             <IconButton
               icon={Heart}
               onPress={goSaveFavorite}
-              accessibilityLabel="Guardar como favorito"
+              accessibilityLabel={t('detail.saveFavorite')}
             />
           </View>
         }
@@ -258,7 +260,7 @@ export function TransactionDetailView({
             </Text>
             {tx.is_completed === false ? (
               <Text className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-warning dark:text-warning-dark">
-                Pendiente
+                {t('common:pending')}
               </Text>
             ) : null}
             <Pressable
@@ -267,7 +269,7 @@ export function TransactionDetailView({
               className="mt-1 flex-row items-center gap-1"
             >
               <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                {formatActivityMoment(tx.created_at, 'creado')}
+                {formatActivityMoment(tx.created_at, 'created')}
               </Text>
               <Info size={14} color={ICON_COLORS.ink3} />
             </Pressable>
@@ -276,13 +278,15 @@ export function TransactionDetailView({
           {tx.is_peer_mirror ? (
             <Text className="px-1 text-xs text-ink-2 dark:text-ink-2-dark">
               {tx.is_completed === false
-                ? `${fromPerson?.name ?? 'Esa persona'} te la enviará el ${formatDate(tx.transaction_date)}: aún no llega a tu cuenta, y se reflejará sola cuando la realice.`
-                : `${fromPerson?.name ?? 'Esa persona'} te la envió: no cuenta como ingreso.`}{' '}
-              Solo quien la envió puede cambiar el monto, la fecha o eliminarla; tú puedes elegir a
-              qué cuenta llegó.
+                ? t('detail.mirrorPending', {
+                    name: fromPerson?.name ?? t('detail.thatPerson'),
+                    date: formatDate(tx.transaction_date),
+                  })
+                : t('detail.mirrorDone', { name: fromPerson?.name ?? t('detail.thatPerson') })}{' '}
+              {t('detail.mirrorLocked')}
             </Text>
           ) : tx.is_completed === false ? (
-            <Button label="Marcar como realizado" onPress={() => setMarkDoneOpen(true)} />
+            <Button label={t('markDone.title')} onPress={() => setMarkDoneOpen(true)} />
           ) : null}
 
           <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
@@ -290,7 +294,7 @@ export function TransactionDetailView({
               <>
                 {fromPerson ? (
                   <ListRow
-                    title="De"
+                    title={t('detail.from')}
                     subtitle={fromPerson.name}
                     icon={ACCOUNT_TYPE_ICON.contact}
                     showChevron
@@ -298,7 +302,7 @@ export function TransactionDetailView({
                   />
                 ) : (
                   <ListRow
-                    title="De"
+                    title={t('detail.from')}
                     subtitle={account?.name}
                     dotColor={account?.color}
                     icon={account ? ACCOUNT_TYPE_ICON[account.type] : undefined}
@@ -309,7 +313,7 @@ export function TransactionDetailView({
                 <View className="h-px bg-line dark:bg-line-dark" />
                 {tx.goal ? (
                   <ListRow
-                    title="A"
+                    title={t('detail.to')}
                     subtitle={tx.goal.name}
                     icon={tx.goal.icon as keyof typeof Ionicons.glyphMap}
                     showChevron
@@ -317,7 +321,7 @@ export function TransactionDetailView({
                   />
                 ) : toPerson ? (
                   <ListRow
-                    title="A"
+                    title={t('detail.to')}
                     subtitle={toPerson.name}
                     icon={ACCOUNT_TYPE_ICON.contact}
                     showChevron
@@ -325,7 +329,7 @@ export function TransactionDetailView({
                   />
                 ) : (
                   <ListRow
-                    title={tx.is_peer_mirror ? 'Llegó a' : 'A'}
+                    title={tx.is_peer_mirror ? t('detail.landedIn') : t('detail.to')}
                     subtitle={toAccount?.name}
                     dotColor={toAccount?.color}
                     icon={toAccount ? ACCOUNT_TYPE_ICON[toAccount.type] : undefined}
@@ -343,7 +347,7 @@ export function TransactionDetailView({
             ) : (
               <>
                 <ListRow
-                  title="Categoría"
+                  title={t('detail.category')}
                   subtitle={categoryLabel}
                   dotColor={tx.category?.color}
                   icon={tx.category?.icon}
@@ -352,7 +356,7 @@ export function TransactionDetailView({
                 />
                 <View className="h-px bg-line dark:bg-line-dark" />
                 <ListRow
-                  title="Cuenta"
+                  title={t('detail.account')}
                   subtitle={account?.name}
                   dotColor={account?.color}
                   icon={account ? ACCOUNT_TYPE_ICON[account.type] : undefined}
@@ -388,7 +392,7 @@ export function TransactionDetailView({
           {description ? (
             <View className="gap-1.5">
               <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-                Descripción
+                {t('detail.description')}
               </Text>
               <Text className="text-base text-ink dark:text-ink-dark">{description}</Text>
             </View>
@@ -396,15 +400,17 @@ export function TransactionDetailView({
 
           {tx.tags.length > 0 ? (
             <View className="gap-2">
-              <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Tags</Text>
+              <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+                {t('detail.tags')}
+              </Text>
               <View className="flex-row flex-wrap gap-2">
-                {tx.tags.map((t) => (
+                {tx.tags.map((tag) => (
                   <Chip
-                    key={t.id}
-                    label={t.name}
-                    dotColor={t.color}
+                    key={tag.id}
+                    label={tag.name}
+                    dotColor={tag.color}
                     selected
-                    onPress={() => goTag(t.id)}
+                    onPress={() => goTag(tag.id)}
                   />
                 ))}
               </View>
@@ -417,7 +423,7 @@ export function TransactionDetailView({
         <AccountPicker
           visible={moveOpen}
           onClose={() => setMoveOpen(false)}
-          title="¿A qué cuenta llegó?"
+          title={t('detail.whichAccount')}
           selectedId={tx.to_account_id}
           currencyFilter={currency}
           onSelect={(accountId) =>
@@ -433,17 +439,25 @@ export function TransactionDetailView({
         type={tx.type}
       />
 
-      <BottomSheet visible={activityOpen} onClose={() => setActivityOpen(false)} title="Actividad">
+      <BottomSheet
+        visible={activityOpen}
+        onClose={() => setActivityOpen(false)}
+        title={t('detail.activity')}
+      >
         <View className="gap-4 px-5 pb-8 pt-1">
           <View className="gap-1">
-            <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Creado</Text>
+            <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+              {t('detail.created')}
+            </Text>
             <Text className="text-base text-ink dark:text-ink-dark">
               {formatDateTime(tx.created_at)}
             </Text>
           </View>
           {tx.updated_at !== tx.created_at ? (
             <View className="gap-1">
-              <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Editado</Text>
+              <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+                {t('detail.edited')}
+              </Text>
               <Text className="text-base text-ink dark:text-ink-dark">
                 {formatDateTime(tx.updated_at)}
               </Text>
@@ -476,6 +490,7 @@ function BalanceCard({
   currency: string;
   projected?: boolean;
 }) {
+  const { t } = useTranslation('transactions');
   return (
     <View className="gap-2 rounded-2xl border border-line px-4 py-3.5 dark:border-line-dark">
       {title ? (
@@ -485,7 +500,9 @@ function BalanceCard({
       ) : null}
       <View className="flex-row items-center justify-between">
         <View>
-          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">Saldo anterior</Text>
+          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
+            {t('detail.balanceBefore')}
+          </Text>
           <Text className="text-base font-semibold text-ink dark:text-ink-dark">
             {formatCurrency(before, currency)}
           </Text>
@@ -493,7 +510,7 @@ function BalanceCard({
         <ArrowRight size={16} color={ICON_COLORS.ink3} />
         <View className="items-end">
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            {projected ? 'Saldo si se completa' : 'Saldo nuevo'}
+            {t(projected ? 'detail.balanceIfDone' : 'detail.balanceAfter')}
           </Text>
           <Text
             className={`text-base font-semibold ${
@@ -505,9 +522,7 @@ function BalanceCard({
         </View>
       </View>
       {projected ? (
-        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-          Movimiento pendiente — el saldo real no cambia hasta que se complete.
-        </Text>
+        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">{t('detail.pendingNote')}</Text>
       ) : null}
     </View>
   );

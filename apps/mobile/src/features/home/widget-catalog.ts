@@ -9,48 +9,34 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react-native';
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+
+const WIDGET_ICONS: Record<HomeLayoutItem, LucideIcon> = {
+  pending: Clock,
+  upcoming: Calendar,
+  budgets: Gauge,
+  categorySpend: ChartPie,
+  weeklySpend: ChartColumn,
+  monthlyTrend: TrendingUp,
+  accounts: Wallet,
+};
+
+export type WidgetMeta = { label: string; description: string; icon: LucideIcon };
 
 /**
- * Name, one-line description and icon of each of Home's optional widgets —
- * shared by Home's edit mode and Opciones › Orden del inicio.
+ * Name, one-line description (`home:widgets`) and icon of each of Home's
+ * optional widgets — shared by Home's edit mode and Opciones › Personalizar
+ * inicio.
  */
-export const WIDGET_META: Record<
-  HomeLayoutItem,
-  { label: string; description: string; icon: LucideIcon }
-> = {
-  pending: {
-    label: 'Movimientos pendientes',
-    description: 'Gastos o ingresos que ya deberían haberse realizado',
-    icon: Clock,
-  },
-  upcoming: {
-    label: 'Movimientos próximos',
-    description: 'Recordatorio de lo que tienes programado a futuro',
-    icon: Calendar,
-  },
-  budgets: {
-    label: 'Presupuestos',
-    description: 'Qué tan cerca estás del límite de tus categorías',
-    icon: Gauge,
-  },
-  categorySpend: {
-    label: 'Gastos por categoría',
-    description: 'Gráfica y tus 5 categorías con más gasto',
-    icon: ChartPie,
-  },
-  weeklySpend: {
-    label: 'Gastos semanales',
-    description: 'Vistazo rápido de lo gastado esta semana, día por día',
-    icon: ChartColumn,
-  },
-  monthlyTrend: {
-    label: 'Tendencia mensual',
-    description: 'Ingresos vs. gastos de los últimos 6 meses',
-    icon: TrendingUp,
-  },
-  accounts: {
-    label: 'Tus cuentas',
-    description: 'Lista de cuentas y su saldo',
-    icon: Wallet,
-  },
-};
+export function useWidgetMeta(): (key: HomeLayoutItem) => WidgetMeta {
+  const { t } = useTranslation('home');
+  return useCallback(
+    (key) => ({
+      label: t(`widgets.${key}.label`),
+      description: t(`widgets.${key}.description`),
+      icon: WIDGET_ICONS[key],
+    }),
+    [t],
+  );
+}

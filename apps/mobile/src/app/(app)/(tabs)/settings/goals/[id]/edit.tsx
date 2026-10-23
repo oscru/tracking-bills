@@ -1,11 +1,13 @@
 import { useFormError, useGoals, useStableRecord, useUpdateGoal } from '@repo/core/hooks';
 import { PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text } from 'react-native';
 
 import { GoalForm } from '../../../../../../features/goals/goal-form';
 
 export default function EditGoal() {
+  const { t } = useTranslation(['goals', 'common']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: goals, isLoading } = useGoals();
@@ -28,14 +30,14 @@ export default function EditGoal() {
   if (!goal) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Objetivo no encontrado.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
 
   return (
     <Screen className="gap-4">
-      <PageHeader title="Editar objetivo" onBack={() => router.back()} />
+      <PageHeader title={t('edit')} onBack={() => router.back()} />
 
       <GoalForm
         initial={{
@@ -50,7 +52,7 @@ export default function EditGoal() {
         }}
         currency={goal.currency}
         accountsLinkedElsewhere={accountsLinkedElsewhere}
-        submitLabel="Guardar cambios"
+        submitLabel={t('common:saveChanges')}
         submitting={update.isPending}
         error={error}
         onDirty={clearError}
@@ -60,7 +62,7 @@ export default function EditGoal() {
             { id: goal.id, patch: input },
             {
               onSuccess: () => router.back(),
-              onError: (e) => setError(e, 'No se pudieron guardar los cambios'),
+              onError: (e) => setError(e, t('common:saveChangesFailed')),
             },
           );
         }}

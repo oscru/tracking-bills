@@ -5,21 +5,23 @@ import { formatCurrency } from '@repo/core/utils';
 import { PageHeader, Screen, ICON_COLORS, useTabBarScrollPadding } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { favoriteTint } from '../../../../../features/favorites/favorite-colors';
 
 export default function FavoritesScreen() {
+  const { t } = useTranslation('favorites');
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { data: favorites, isLoading } = useFavoriteTransactions();
 
   return (
     <Screen edges={['top']} className="gap-4">
-      <PageHeader title="Favoritos" onBack={() => router.back()} />
+      <PageHeader title={t('title')} onBack={() => router.back()} />
 
       <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-        Tócalos en Movimientos para crear el gasto o ingreso en un toque, sin volver a escribirlo.
+        {t('intro')}
       </Text>
 
       {isLoading ? (
@@ -49,7 +51,7 @@ export default function FavoritesScreen() {
                 <Plus size={20} color={ICON_COLORS.ink3} />
               </View>
               <Text className="text-[13px] font-semibold text-ink-3 dark:text-ink-3-dark">
-                Nuevo favorito
+                {t('new')}
               </Text>
             </Pressable>
           </View>
@@ -66,6 +68,7 @@ function FavoriteCard({
   favorite: FavoriteTransactionWithRefs;
   onPress: () => void;
 }) {
+  const { t } = useTranslation('favorites');
   const isTransfer = favorite.type === 'transfer';
   const { bg, fg } = favoriteTint(favorite);
   const currency = favorite.account?.currency ?? 'MXN';
@@ -73,7 +76,7 @@ function FavoriteCard({
     ? `${favorite.account?.name ?? '—'} → ${favorite.to_account?.name ?? '—'}`
     : [
         favorite.account?.name,
-        favorite.amount != null ? formatCurrency(favorite.amount, currency) : 'monto libre',
+        favorite.amount != null ? formatCurrency(favorite.amount, currency) : t('freeAmount'),
       ]
         .filter(Boolean)
         .join(' · ');

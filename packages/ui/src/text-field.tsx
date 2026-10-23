@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Text, TextInput, View, type TextInputProps } from 'react-native';
 
+import { useTranslatedMessage } from './use-translated-message';
+
 export interface TextFieldProps extends TextInputProps {
   label?: string;
   error?: string | null;
@@ -15,7 +17,7 @@ export interface TextFieldProps extends TextInputProps {
 
 export function TextField({
   label,
-  error,
+  error: rawError,
   invalid,
   rightElement,
   leftElement,
@@ -24,6 +26,7 @@ export function TextField({
   ...props
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
+  const error = useTranslatedMessage(rawError);
 
   const borderClass =
     error || invalid

@@ -1,6 +1,7 @@
 import { useCreateCategory, useFormError } from '@repo/core/hooks';
 import type { CategoryType } from '@repo/core/types';
 import { BottomSheet } from '@repo/ui';
+import { useTranslation } from 'react-i18next';
 import { View, useWindowDimensions } from 'react-native';
 
 import { CategoryForm } from './category-form';
@@ -23,12 +24,13 @@ export function CategoryQuickCreateSheet({
   onCreated,
   initialName,
 }: Props) {
+  const { t } = useTranslation(['categories', 'common']);
   const { height: windowHeight } = useWindowDimensions();
   const create = useCreateCategory();
   const { error, setError, clearError } = useFormError();
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Nueva categoría">
+    <BottomSheet visible={visible} onClose={onClose} title={t('new')}>
       {/* A fixed height, not just a max: the form is a flex-1 ScrollView, which
       collapsed to nothing inside a container with no height of its own —
       the sheet opened showing only its title. */}
@@ -37,7 +39,7 @@ export function CategoryQuickCreateSheet({
           // Remounts per open (and per prefilled name) so it starts fresh.
           key={visible ? `open-${initialName ?? ''}` : 'closed'}
           initial={{ type, name: initialName }}
-          submitLabel="Crear"
+          submitLabel={t('common:create')}
           submitting={create.isPending}
           error={error}
           onDirty={clearError}
@@ -47,7 +49,7 @@ export function CategoryQuickCreateSheet({
               onSuccess: (category) => {
                 onCreated(category.id);
               },
-              onError: (e) => setError(e, 'No se pudo crear la categoría'),
+              onError: (e) => setError(e, t('createFailed')),
             });
           }}
         />

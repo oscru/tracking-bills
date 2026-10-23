@@ -7,6 +7,7 @@ import { ArrowRight, Plus } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useMemo } from 'react';
 import { ICON_COLORS } from '@repo/ui';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { draftTransactionStore } from '../transactions/draft-transaction-store';
@@ -24,6 +25,7 @@ import { favoriteTint } from './favorite-colors';
  * times, so it's just a normal fixed element above the search bar now.
  */
 export function FavoritesRow() {
+  const { t } = useTranslation('favorites');
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
@@ -56,7 +58,9 @@ export function FavoritesRow() {
 
   return (
     <View className="gap-2 pb-2">
-      <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">Favoritos</Text>
+      <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">
+        {t('title')}
+      </Text>
 
       <ScrollView
         horizontal
@@ -94,7 +98,9 @@ export function FavoritesRow() {
           <View className="h-[52px] w-[52px] items-center justify-center rounded-full border border-dashed border-line dark:border-line-dark">
             <Plus size={20} color={ICON_COLORS.ink3} />
           </View>
-          <Text className="text-[11px] font-medium text-ink-3 dark:text-ink-3-dark">Nuevo</Text>
+          <Text className="text-[11px] font-medium text-ink-3 dark:text-ink-3-dark">
+            {t('newShort')}
+          </Text>
         </Pressable>
 
         <Pressable
@@ -105,7 +111,7 @@ export function FavoritesRow() {
             <ArrowRight size={20} color={dark ? ICON_COLORS.surfaceDark : ICON_COLORS.surface} />
           </View>
           <Text className="text-[11px] font-medium text-ink dark:text-ink-dark" numberOfLines={1}>
-            Ver todas
+            {t('seeAll')}
           </Text>
         </Pressable>
       </ScrollView>

@@ -1,18 +1,21 @@
 import { z } from 'zod';
 
 const uuid = z.string().uuid();
-const amount = z.number().positive('Debe ser mayor a 0').finite();
+const amount = z.number().positive('validation:positive').finite();
 const description = z.string().trim().max(280).nullish();
 // income/expense favorites must be categorized — only a transfer has none,
 // same rule as `transactionCreateSchema`.
 const requiredCategoryId = z
-  .string({ required_error: 'Elige una categoría', invalid_type_error: 'Elige una categoría' })
-  .uuid('Elige una categoría');
+  .string({
+    required_error: 'validation:pickCategory',
+    invalid_type_error: 'validation:pickCategory',
+  })
+  .uuid('validation:pickCategory');
 
 const commonFields = {
-  label: z.string().trim().min(1, 'Ponle un nombre').max(40),
+  label: z.string().trim().min(1, 'validation:nameGiven').max(40),
   /** An Ionicons glyph name (`Ionicons.glyphMap` key). */
-  icon: z.string().trim().min(1, 'Elige un ícono'),
+  icon: z.string().trim().min(1, 'validation:iconRequired'),
   account_id: uuid,
   // Omitted -> "monto libre": the amount step opens empty instead of prefilled.
   amount: amount.nullish(),
@@ -35,8 +38,8 @@ export const favoriteTransactionCreateSchema = z.discriminatedUnion('type', [
  * the DB CHECK + integrity trigger enforce the real invariants.
  */
 export const favoriteTransactionUpdateSchema = z.object({
-  label: z.string().trim().min(1, 'Ponle un nombre').max(40).optional(),
-  icon: z.string().trim().min(1, 'Elige un ícono').optional(),
+  label: z.string().trim().min(1, 'validation:nameGiven').max(40).optional(),
+  icon: z.string().trim().min(1, 'validation:iconRequired').optional(),
   type: z.enum(['income', 'expense', 'transfer']).optional(),
   account_id: uuid.optional(),
   to_account_id: uuid.nullish(),

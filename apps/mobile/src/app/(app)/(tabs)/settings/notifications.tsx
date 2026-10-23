@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { BellRing, BellOff, Smartphone } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native';
 
 import {
@@ -38,6 +39,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 /** Where the OS permission stands, and the one action that moves it forward. */
 function PermissionCard({ permission }: { permission: NotificationPermission }) {
+  const { t } = useTranslation('notifications');
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
 
@@ -48,9 +50,7 @@ function PermissionCard({ permission }: { permission: NotificationPermission }) 
       <View className="flex-row gap-3 rounded-2xl bg-surface p-4 dark:bg-surface-dark">
         <Smartphone size={20} color={dark ? ICON_COLORS.ink2Dark : ICON_COLORS.ink2} />
         <Text className="flex-1 text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-          {DEVICE_NOTIFICATIONS_NEED_DEV_BUILD
-            ? 'Expo Go para Android ya no incluye notificaciones. Funcionan al correr la app como build de desarrollo (npx expo run:android). Tu centro de notificaciones funciona aquí igual.'
-            : 'Los avisos en el teléfono llegan desde la app de iOS y Android. Tu centro de notificaciones funciona aquí igual.'}
+          {DEVICE_NOTIFICATIONS_NEED_DEV_BUILD ? t('settings.devBuild') : t('settings.webOnly')}
         </Text>
       </View>
     );
@@ -79,17 +79,15 @@ function PermissionCard({ permission }: { permission: NotificationPermission }) 
                 : 'text-lime-ink dark:text-lime-ink-dark'
             }`}
           >
-            {blocked ? 'Las notificaciones están bloqueadas' : 'Activa las notificaciones'}
+            {t(blocked ? 'settings.blocked' : 'settings.enable')}
           </Text>
           <Text className="text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-            {blocked
-              ? 'Permítelas desde los ajustes del teléfono para recibir tus recordatorios.'
-              : 'Para avisarte de pagos pendientes, presupuestos y metas aunque no tengas la app abierta.'}
+            {blocked ? t('settings.blockedHint') : t('settings.enableHint')}
           </Text>
         </View>
       </View>
       <Button
-        label={blocked ? 'Abrir ajustes' : 'Permitir notificaciones'}
+        label={t(blocked ? 'settings.openSettings' : 'settings.allow')}
         onPress={() => {
           if (blocked) Linking.openSettings().catch(() => {});
           else permission.request().catch(() => {});
@@ -100,6 +98,7 @@ function PermissionCard({ permission }: { permission: NotificationPermission }) 
 }
 
 export default function NotificationSettingsScreen() {
+  const { t } = useTranslation('notifications');
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
@@ -114,7 +113,7 @@ export default function NotificationSettingsScreen() {
 
   return (
     <Screen edges={['top']} className="gap-5">
-      <PageHeader title="Notificaciones" onBack={() => router.back()} />
+      <PageHeader title={t('settings.title')} onBack={() => router.back()} />
 
       {isLoading || !profile ? (
         <ActivityIndicator className="mt-8" />
@@ -128,87 +127,87 @@ export default function NotificationSettingsScreen() {
           <PermissionCard permission={permission} />
 
           <SwitchRow
-            label="Recibir notificaciones"
-            description="En el teléfono. Tu centro de notificaciones siempre muestra todo."
+            label={t('settings.receive')}
+            description={t('settings.receiveHint')}
             value={prefs.enabled}
             onValueChange={(v) => set('enabled', v)}
           />
 
-          <Section title="Pagos pendientes">
+          <Section title={t('settings.pending')}>
             <SwitchRow
-              label="El día del pago"
+              label={t('settings.pendingToday')}
               value={prefs.pendingToday}
               onValueChange={(v) => set('pendingToday', v)}
               disabled={off}
             />
             <SwitchRow
-              label="Un día antes"
+              label={t('settings.pendingTomorrow')}
               value={prefs.pendingTomorrow}
               onValueChange={(v) => set('pendingTomorrow', v)}
               disabled={off}
             />
             <SwitchRow
-              label="Si siguen pendientes"
-              description="Hasta 3 recordatorios, cada 3 días."
+              label={t('settings.pendingOverdue')}
+              description={t('settings.pendingOverdueHint')}
               value={prefs.pendingOverdue}
               onValueChange={(v) => set('pendingOverdue', v)}
               disabled={off}
             />
           </Section>
 
-          <Section title="Presupuestos">
+          <Section title={t('settings.budgets')}>
             <SwitchRow
-              label="Avisos de presupuesto"
-              description="Cuando te acercas al límite y cuando te pasas."
+              label={t('settings.budgetAlerts')}
+              description={t('settings.budgetAlertsHint')}
               value={prefs.budgets}
               onValueChange={(v) => set('budgets', v)}
               disabled={off}
             />
             <View className="gap-2 px-1 pt-1">
               <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-                Avisarme al llegar al
+                {t('settings.budgetThreshold')}
               </Text>
               <View className="flex-row flex-wrap gap-2">
-                {BUDGET_THRESHOLDS.map((t) => (
+                {BUDGET_THRESHOLDS.map((threshold) => (
                   <Chip
-                    key={t}
-                    label={`${t}%`}
-                    selected={prefs.budgetThreshold === t}
-                    onPress={() => set('budgetThreshold', t)}
+                    key={threshold}
+                    label={`${threshold}%`}
+                    selected={prefs.budgetThreshold === threshold}
+                    onPress={() => set('budgetThreshold', threshold)}
                   />
                 ))}
               </View>
             </View>
           </Section>
 
-          <Section title="Metas de ahorro">
+          <Section title={t('settings.goals')}>
             <SwitchRow
-              label="Recordatorios de aportación"
-              description="Cuando toca aportar según tu plan, o si vas atrasado."
+              label={t('settings.goalReminders')}
+              description={t('settings.goalRemindersHint')}
               value={prefs.goalReminders}
               onValueChange={(v) => set('goalReminders', v)}
               disabled={off}
             />
             <SwitchRow
-              label="Logros"
-              description="Al llegar al 25, 50 y 75%, y al completar una meta."
+              label={t('settings.milestones')}
+              description={t('settings.milestonesHint')}
               value={prefs.goalAchievements}
               onValueChange={(v) => set('goalAchievements', v)}
               disabled={off}
             />
           </Section>
 
-          <Section title="Personas">
+          <Section title={t('settings.peers')}>
             <SwitchRow
-              label="Transferencias recibidas"
-              description="Cuando una persona vinculada te envía dinero."
+              label={t('settings.peerTransfers')}
+              description={t('settings.peerTransfersHint')}
               value={prefs.peerTransfers}
               onValueChange={(v) => set('peerTransfers', v)}
               disabled={off}
             />
           </Section>
 
-          <Section title="Hora de los recordatorios">
+          <Section title={t('settings.hour')}>
             <View
               className="flex-row flex-wrap gap-2 px-1"
               style={off ? { opacity: 0.5 } : undefined}
@@ -227,7 +226,7 @@ export default function NotificationSettingsScreen() {
 
           {permission.state === 'granted' && prefs.enabled ? (
             <Button
-              label={testSent ? 'Prueba enviada' : 'Enviar notificación de prueba'}
+              label={t(testSent ? 'settings.testSent' : 'settings.sendTest')}
               variant="secondary"
               onPress={() => {
                 sendTestNotification()

@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react';
 
 import { draftTransactionStore } from '../../features/transactions/draft-transaction-store';
 import { MovementForm } from '../../features/transactions/movement-form';
+import { useTranslation } from 'react-i18next';
 
 export default function NewTransaction() {
+  const { t } = useTranslation('common');
   const router = useRouter();
   const create = useCreateTransaction();
   const setTags = useSetTransactionTags();
@@ -41,7 +43,7 @@ export default function NewTransaction() {
           { onSuccess: done, onError: () => done() },
         );
       },
-      onError: (e) => setError(e, 'No se pudo guardar'),
+      onError: (e) => setError(e, t('saveFailed')),
     });
   };
 

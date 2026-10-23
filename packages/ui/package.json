@@ -18,6 +18,7 @@
     "lucide-react-native": "*",
     "nativewind": ">=4",
     "react": "*",
+    "react-i18next": "*",
     "react-native": "*",
     "react-native-reanimated": "*",
     "react-native-safe-area-context": "*",

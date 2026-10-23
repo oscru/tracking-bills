@@ -3,6 +3,7 @@ import { todayISODate } from '@repo/core/utils';
 import { transactionCreateSchema } from '@repo/core/validators';
 import { BottomSheet, Button, CurrencyField, ErrorCard, TextField } from '@repo/ui';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { AccountPicker } from '../accounts/account-picker';
@@ -32,6 +33,7 @@ export function AddContributionSheet({
   goalCurrency,
   goalAccountId,
 }: Props) {
+  const { t } = useTranslation(['goals', 'transactions']);
   const { data: accounts } = useAccounts();
   const create = useCreateTransaction();
 
@@ -54,7 +56,7 @@ export function AddContributionSheet({
 
   const submit = () => {
     setFieldError(null);
-    if (!accountId) return setFieldError('Elige una cuenta');
+    if (!accountId) return setFieldError('transactions:form.pickAccount');
 
     const amount = Number(amountText.replace(',', '.'));
     const parsed = transactionCreateSchema.safeParse({
@@ -66,7 +68,7 @@ export function AddContributionSheet({
       ...(goalAccountId ? { to_account_id: goalAccountId } : { goal_id: goalId }),
     });
     if (!parsed.success) {
-      setFieldError(parsed.error.issues[0]?.message ?? 'Revisa los datos');
+      setFieldError(parsed.error.issues[0]?.message ?? 'transactions:form.checkData');
       return;
     }
     create.mutate(parsed.data, {
@@ -74,16 +76,20 @@ export function AddContributionSheet({
         reset();
         onClose();
       },
-      onError: () => setFieldError('No se pudo guardar la aportación'),
+      onError: () => setFieldError(t('contribution.failed')),
     });
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={`Aportar a ${goalName}`}>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={t('contribution.title', { goal: goalName })}
+    >
       <View className="gap-4 px-5 pb-8">
         <View className="gap-2">
           <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-            Desde la cuenta
+            {t('contribution.fromAccount')}
           </Text>
           <Pressable
             onPress={() => setAccountPickerOpen(true)}
@@ -96,16 +102,16 @@ export function AddContributionSheet({
                   : 'text-base text-ink-3 dark:text-ink-3-dark'
               }
             >
-              {selectedAccount ? selectedAccount.name : 'Elige una cuenta'}
+              {selectedAccount ? selectedAccount.name : t('transactions:form.pickAccount')}
             </Text>
           </Pressable>
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            Solo se muestran cuentas en {goalCurrency} — esta meta no convierte divisas.
+            {t('contribution.onlyCurrency', { currency: goalCurrency })}
           </Text>
         </View>
 
         <CurrencyField
-          label="Monto"
+          label={t('transactions:form.amount')}
           value={amountText}
           onChangeText={(v) => {
             setAmountText(v);
@@ -115,26 +121,28 @@ export function AddContributionSheet({
         />
 
         <View className="gap-2">
-          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Fecha</Text>
+          <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+            {t('transactions:form.date')}
+          </Text>
           <DateField value={date} onChange={setDate} />
         </View>
 
         <TextField
-          label="Nota (opcional)"
+          label={t('contribution.note')}
           value={description}
           onChangeText={setDescription}
-          placeholder="Descripción"
+          placeholder={t('transactions:form.descriptionPlaceholder')}
         />
 
         <ErrorCard message={fieldError} />
 
-        <Button label="Guardar aportación" onPress={submit} loading={create.isPending} />
+        <Button label={t('contribution.save')} onPress={submit} loading={create.isPending} />
       </View>
 
       <AccountPicker
         visible={accountPickerOpen}
         onClose={() => setAccountPickerOpen(false)}
-        title="Cuenta origen"
+        title={t('transactions:form.fromAccount')}
         selectedId={accountId}
         onSelect={(id) => {
           setAccountId(id);

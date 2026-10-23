@@ -1,3 +1,4 @@
+import { i18n } from '@repo/core/i18n';
 import { useAccountBalanceEffects, useLinkedPeers, usePeerAccounts } from '@repo/core/hooks';
 import type { LinkedPeer } from '@repo/core/supabase';
 import type { Account } from '@repo/core/types';
@@ -37,7 +38,7 @@ export function usePeople() {
     for (const link of linked) {
       byPeer.set(link.peerId!, {
         peerId: link.peerId!,
-        name: link.peerName ?? 'Persona',
+        name: link.peerName ?? i18n.t('peers:person'),
         link,
         accounts: [],
         net: new Map(),

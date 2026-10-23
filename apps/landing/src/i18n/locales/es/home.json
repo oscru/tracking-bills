@@ -1,0 +1,49 @@
+{
+  "devices": {
+    "eyebrow": "En el navegador de tu compu, tablet o celular",
+    "title": "Una cuenta. Todas tus pantallas.",
+    "body": "Revisa el mes en la compu, registra el café desde el celular. Todo se sincroniza solo.",
+    "browser": "o úsala en el navegador →"
+  },
+  "details": {
+    "title": "Y los detalles ",
+    "titleMuted": "que hacen que te quedes.",
+    "items": [
+      {
+        "title": "Análisis",
+        "body": "Tendencia, calendario y gasto por categoría, sin tablas dinámicas."
+      },
+      {
+        "title": "Favoritos",
+        "body": "Tus gastos de siempre, registrados en un toque."
+      },
+      {
+        "title": "Etiquetas",
+        "body": "Cruza categorías: ¿cuánto costó el viaje completo?"
+      },
+      {
+        "title": "Pesos y dólares",
+        "body": "Cada cuenta en su moneda, sin conversiones a mano."
+      },
+      {
+        "title": "Importa y exporta",
+        "body": "Trae tu historial desde Excel y llévatelo cuando quieras."
+      },
+      {
+        "title": "Avisos a tiempo",
+        "body": "Pagos pendientes, presupuestos y metas, antes de que se te pasen."
+      }
+    ]
+  },
+  "promises": [
+    "Sin anuncios.",
+    "Sin pedirte la contraseña de tu banco.",
+    "Tus datos se exportan cuando quieras."
+  ],
+  "cta": {
+    "title": "Que la próxima quincena sí rinda.",
+    "body": "Crea tu cuenta gratis y empieza a registrar tus movimientos hoy.",
+    "signUp": "Crear cuenta gratis",
+    "signIn": "Ya tengo cuenta"
+  }
+}

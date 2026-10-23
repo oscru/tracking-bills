@@ -1,0 +1,21 @@
+{
+  "documents": {
+    "terms": "Términos y condiciones",
+    "privacy": "Aviso de privacidad",
+    "cookies": "Política de cookies"
+  },
+  "consent": "Acepto los <terms>Términos y condiciones</terms> y el <privacy>Aviso de privacidad</privacy>. Tengo 18 años o más, o tengo entre 13 y 17 y cuento con el consentimiento de mi madre, padre o tutor.",
+  "consentA11y": "Acepto los Términos y condiciones y el Aviso de privacidad. Tengo 18 años o más, o tengo entre 13 y 17 y cuento con el consentimiento de mi madre, padre o tutor.",
+  "ssoNotice": "Al continuar aceptas los <terms>Términos</terms> y el <privacy>Aviso de privacidad</privacy>.",
+  "gate": {
+    "updatedTitle": "Actualizamos nuestros documentos",
+    "firstTitle": "Antes de continuar",
+    "updatedBody": "Cambiamos nuestros términos o nuestro aviso de privacidad. Revísalos y acéptalos para seguir usando Genobills.",
+    "firstBody": "Para usar Genobills necesitamos que aceptes nuestros términos y nuestro aviso de privacidad. En resumen: solo guardamos lo necesario para que la app funcione, no vendemos tus datos y no mostramos anuncios.",
+    "read": "Leer ›",
+    "mustCheck": "Marca la casilla para continuar",
+    "saveFailed": "No se pudo guardar. Intenta de nuevo.",
+    "accept": "Aceptar y continuar",
+    "decline": "No acepto, cerrar sesión"
+  }
+}

@@ -1,5 +1,6 @@
 import type { CategorySpend } from '@repo/core/utils';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { CardScrollView } from '../design/card-scroll-view';
@@ -43,6 +44,7 @@ export function CategorySpendCard({
   onSelectCategory,
   fill = false,
 }: Props) {
+  const { t } = useTranslation('home');
   const total = breakdown.reduce((sum, c) => sum + c.total, 0);
   const top = fill ? breakdown : breakdown.slice(0, TOP_N);
   const hasData = total > 0;
@@ -124,12 +126,12 @@ export function CategorySpendCard({
     >
       <View className="flex-row items-center justify-between">
         <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-          Gastos por categoría
+          {t('categorySpend.title')}
         </Text>
         {hasData ? (
           <Pressable onPress={onSeeAll} hitSlop={8}>
             <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Ver todas ›
+              {t('categorySpend.seeAll')}
             </Text>
           </Pressable>
         ) : null}
@@ -158,7 +160,7 @@ export function CategorySpendCard({
         </View>
       ) : (
         <Text className="py-6 text-center text-sm text-ink-2 dark:text-ink-2-dark">
-          Sin gastos este mes todavía.
+          {t('categorySpend.empty')}
         </Text>
       )}
     </View>

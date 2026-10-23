@@ -1,0 +1,38 @@
+{
+  "title": "Perfil",
+  "edit": "Editar perfil",
+  "unset": "No especificado",
+  "name": "Nombre",
+  "namePlaceholder": "Ej. Ana García",
+  "birthDate": "Fecha de nacimiento",
+  "birthDateOptional": "Fecha de nacimiento (opcional)",
+  "gender": "Género",
+  "genderOptional": "Género (opcional)",
+  "genders": {
+    "female": "Femenino",
+    "male": "Masculino",
+    "other": "Otro",
+    "prefer_not_to_say": "Prefiero no decir"
+  },
+  "pickOption": "Selecciona una opción",
+  "legal": "Legal",
+  "signOut": "Cerrar sesión",
+  "deleteAccount": "Eliminar cuenta",
+  "optional": "Opcional",
+  "clear": "Borrar",
+  "clearGender": "Borrar género",
+  "optionalNote": "Tu fecha de nacimiento y tu género no son necesarios para usar Genobills. Si los compartes, solo los usamos para estadísticas generales y anónimas sobre quién usa la app — nunca para publicidad ni para decidir algo sobre ti. Puedes borrarlos cuando quieras. Más detalles en el <privacy>Aviso de privacidad</privacy>.",
+  "delete": {
+    "warning": "Esto elimina tu cuenta<email> (<b>{{email}}</b>)</email> y <b>todos</b> tus datos de forma permanente — cuentas, movimientos, presupuestos, metas, categorías y tags. No se puede deshacer.",
+    "warningNoEmail": "Esto elimina tu cuenta y <b>todos</b> tus datos de forma permanente — cuentas, movimientos, presupuestos, metas, categorías y tags. No se puede deshacer.",
+    "password": "Confirma tu contraseña",
+    "typeEmail": "Escribe tu correo para confirmar",
+    "ssoNote": "Iniciaste sesión con Google/Apple, así que no tienes una contraseña que confirmar — escribe el correo con el que creaste tu cuenta ({{email}}) en su lugar.",
+    "confirmWord": "ELIMINAR",
+    "typeWord": "Escribe \"{{word}}\" para confirmar",
+    "submit": "Eliminar mi cuenta permanentemente",
+    "failed": "No se pudo eliminar la cuenta",
+    "wrongPassword": "Contraseña incorrecta"
+  },
+  "acceptedVersion": "Aceptaste la versión {{version}} el {{date}}."
+}

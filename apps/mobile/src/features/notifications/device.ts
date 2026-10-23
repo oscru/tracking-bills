@@ -1,3 +1,4 @@
+import { i18n } from '@repo/core/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { TransactionWithRefs, BudgetWithCategories } from '@repo/core/supabase';
 import type { Account, Goal } from '@repo/core/types';
@@ -55,7 +56,7 @@ let channelReady: Promise<unknown> | null = null;
 function ensureAndroidChannel() {
   if (!Notifications || Platform.OS !== 'android') return Promise.resolve();
   channelReady ??= Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-    name: 'Recordatorios y avisos',
+    name: i18n.t('notifications:device.channel'),
     importance: Notifications.AndroidImportance.DEFAULT,
   });
   return channelReady;
@@ -235,8 +236,8 @@ export async function sendTestNotification(): Promise<void> {
   await ensureAndroidChannel();
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'Así se verán tus avisos',
-      body: 'Te avisaremos de pagos pendientes, presupuestos y tus metas de ahorro.',
+      title: i18n.t('notifications:device.testTitle'),
+      body: i18n.t('notifications:device.testBody'),
       // Tapping it opens the notification center — so it also tests taps.
       data: { open: 'center' },
     },

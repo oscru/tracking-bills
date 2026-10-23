@@ -1,0 +1,111 @@
+{
+  "greeting": {
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening"
+  },
+  "summaryTitle": "Your overview",
+  "balanceTotal": "Total balance",
+  "hideBalance": "Hide balances",
+  "showBalance": "Show balances",
+  "pending": {
+    "title_one": "{{count}} pending transaction",
+    "title_other": "{{count}} pending transactions",
+    "body": "They haven't happened yet — tap to review them"
+  },
+  "upcoming": {
+    "today_one": "{{count}} transaction due today",
+    "today_other": "{{count}} transactions due today",
+    "title_one": "{{count}} upcoming transaction",
+    "title_other": "{{count}} upcoming transactions",
+    "todayBody": "Scheduled for today — tap to review it",
+    "nearest_one": "The next one is in {{count}} day",
+    "nearest_other": "The next one is in {{count}} days"
+  },
+  "accounts": {
+    "title": "Your accounts",
+    "none": "You don't have any accounts yet.",
+    "noneVisible": "No accounts shown here — turn them on from Account › Show on Home.",
+    "seeAll": "See all ›"
+  },
+  "budgets": {
+    "title": "Budgets",
+    "create": "+ Create your first budget",
+    "createHint": "Set a weekly, biweekly or monthly limit for your categories",
+    "onTrack": "{{onTrack}} of {{total}} on track this period",
+    "seeAll": "See all ›"
+  },
+  "categorySpend": {
+    "title": "Spending by category",
+    "empty": "No spending this month yet.",
+    "share": "{{percent}}% of the month",
+    "seeAll": "See all ›"
+  },
+  "weeklySpend": {
+    "title": "This week's spending",
+    "seeInsights": "See insights ›",
+    "vsLastWeek": "{{change}}% vs. last week",
+    "empty": "No spending this week yet."
+  },
+  "monthlyTrend": {
+    "title": "Monthly trend",
+    "empty": "No transactions in the last {{months}} months."
+  },
+  "editor": {
+    "title": "Customizing your Home",
+    "hintTouch": "Press and hold to drag · tap − to remove",
+    "hintMouse": "Drag to move · tap − to remove",
+    "addA11y": "Add widgets ({{count}} available)",
+    "reset": "Reset",
+    "saveFailed": "Couldn't save your Home. Try again.",
+    "empty": "Your Home is empty",
+    "emptyHint": "Tap Add to bring widgets in.",
+    "addTitle": "Add widgets",
+    "addHint": "They go into the first free spot on your Home.",
+    "allAdded": "You've got them all 🙌",
+    "allAddedHint": "Remove one with − and it'll show up here.",
+    "addWidget": "Add {{name}}",
+    "dropHere": "Drop here",
+    "resize": "Resize {{name}}",
+    "dormant": "Shows up when there's something here"
+  },
+  "layout": {
+    "appTitle": "Customize Home",
+    "appBody": "Drag by the handle to reorder, or switch a card off to remove it from your Home. The month picker, total balance and this month's income/expenses always stay at the top.",
+    "webTitle": "Home widgets",
+    "webBody": "To move widgets and resize them, open Customize on your Home. Here you pick which ones show.",
+    "arrange": "Arrange on Home",
+    "settingsRowApp": "Order of the cards on your main screen",
+    "settingsRowWeb": "Which ones show — arrange them from Customize"
+  },
+  "widgets": {
+    "pending": {
+      "label": "Pending transactions",
+      "description": "Expenses or income that should have happened already"
+    },
+    "upcoming": {
+      "label": "Upcoming transactions",
+      "description": "A heads-up on what you have scheduled"
+    },
+    "budgets": {
+      "label": "Budgets",
+      "description": "How close you are to your categories' limits"
+    },
+    "categorySpend": {
+      "label": "Spending by category",
+      "description": "A chart and your top 5 categories"
+    },
+    "weeklySpend": {
+      "label": "Weekly spending",
+      "description": "A quick look at this week, day by day"
+    },
+    "monthlyTrend": {
+      "label": "Monthly trend",
+      "description": "Income vs. expenses over the last 6 months"
+    },
+    "accounts": {
+      "label": "Your accounts",
+      "description": "Your accounts and their balances"
+    }
+  }
+}

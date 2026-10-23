@@ -1,3 +1,4 @@
+import { i18n } from '@repo/core/i18n';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
@@ -15,23 +16,35 @@ import { Platform } from 'react-native';
  */
 export const BIOMETRICS_PLATFORM = Platform.OS === 'ios' || Platform.OS === 'android';
 
+export type BiometricKind = 'faceId' | 'touchId' | 'fingerprint' | 'face' | 'generic';
+
+/** A biometric method's name in the current language — "Face ID", "huella"… */
+export function biometricLabel(kind: BiometricKind): string {
+  return i18n.t(`security:biometric.${kind}`);
+}
+
 export interface BiometricSupport {
   /** Hardware present and at least one fingerprint/face enrolled. */
   available: boolean;
   /** Hardware present but nothing enrolled — the user has to set it up in the phone's settings first. */
   needsEnrollment: boolean;
-  /** How to call it in the UI: "Face ID", "huella", … */
+  /** Which method it is (its name for people: `label`). */
+  kind: BiometricKind;
+  /** How to call it in the UI, in the current language: "Face ID", "huella", … */
   label: string;
 }
 
-const UNSUPPORTED: BiometricSupport = {
-  available: false,
-  needsEnrollment: false,
-  label: 'biometría',
-};
+function unsupported(): BiometricSupport {
+  return {
+    available: false,
+    needsEnrollment: false,
+    kind: 'generic',
+    label: biometricLabel('generic'),
+  };
+}
 
 async function readSupport(): Promise<BiometricSupport> {
-  if (!BIOMETRICS_PLATFORM) return UNSUPPORTED;
+  if (!BIOMETRICS_PLATFORM) return unsupported();
   const [hasHardware, enrolled, types] = await Promise.all([
     LocalAuthentication.hasHardwareAsync(),
     LocalAuthentication.isEnrolledAsync(),
@@ -39,17 +52,22 @@ async function readSupport(): Promise<BiometricSupport> {
   ]);
   const face = types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
   const finger = types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT);
-  const label =
+  const kind: BiometricKind =
     Platform.OS === 'ios' && face
-      ? 'Face ID'
+      ? 'faceId'
       : Platform.OS === 'ios' && finger
-        ? 'Touch ID'
+        ? 'touchId'
         : finger
-          ? 'huella'
+          ? 'fingerprint'
           : face
-            ? 'reconocimiento facial'
-            : 'biometría';
-  return { available: hasHardware && enrolled, needsEnrollment: hasHardware && !enrolled, label };
+            ? 'face'
+            : 'generic';
+  return {
+    available: hasHardware && enrolled,
+    needsEnrollment: hasHardware && !enrolled,
+    kind,
+    label: biometricLabel(kind),
+  };
 }
 
 export function useBiometricSupport(): BiometricSupport | null {
@@ -58,7 +76,7 @@ export function useBiometricSupport(): BiometricSupport | null {
     let alive = true;
     readSupport()
       .then((s) => alive && setSupport(s))
-      .catch(() => alive && setSupport(UNSUPPORTED));
+      .catch(() => alive && setSupport(unsupported()));
     return () => {
       alive = false;
     };
@@ -76,8 +94,8 @@ export async function authenticate(promptMessage: string): Promise<AuthOutcome> 
   if (!BIOMETRICS_PLATFORM) return 'failed';
   const result = await LocalAuthentication.authenticateAsync({
     promptMessage,
-    cancelLabel: 'Cancelar',
-    fallbackLabel: 'Usar código',
+    cancelLabel: i18n.t('security:prompt.cancel'),
+    fallbackLabel: i18n.t('security:prompt.fallback'),
     disableDeviceFallback: false,
   });
   if (result.success) return 'success';

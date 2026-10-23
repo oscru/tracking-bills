@@ -1,0 +1,146 @@
+---
+/** The landing itself, in the page's language (`pages/index.astro`, `pages/en/index.astro`). */
+import { langOf, PAGES, texts } from '../i18n';
+import Base from '../layouts/Base.astro';
+import Devices from './Devices.astro';
+import Icon from './Icon.astro';
+import ScrollStory from './ScrollStory.astro';
+import StoreButtons from './StoreButtons.astro';
+
+const appUrl = (import.meta.env.PUBLIC_APP_URL ?? 'https://tracking-bills-mobile.vercel.app').replace(/\/$/, '');
+const signUpUrl = `${appUrl}/sign-up`;
+const signInUrl = `${appUrl}/sign-in`;
+
+const lang = langOf(Astro);
+const other = lang === 'es' ? 'en' : 'es';
+const { common, home } = texts(lang);
+// One per detail, in order (insights, favorites, tags, currencies, import/export, reminders).
+const detailIcons = ['chart', 'star', 'tag', 'coins', 'file', 'bell'] as const;
+---
+
+
+<Base page="home">
+  <header class="fixed inset-x-0 top-0 z-30 border-b border-white/5 bg-canvas-dark/70 backdrop-blur-xl">
+    <nav class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <a href={PAGES.home[lang]} class="flex items-center gap-2 font-bold tracking-tight">
+        <img src="/favicon-48.png" alt="" width="28" height="28" class="rounded-lg" />
+        Genobills
+      </a>
+      <div class="flex items-center gap-1 text-sm">
+        <a
+          href={PAGES.home[other]}
+          hreflang={other}
+          lang={other}
+          aria-label={common.nav.languageLabel}
+          class="btn-ghost hidden sm:inline-flex"
+        >
+          {common.nav.language}
+        </a>
+        <a href={PAGES.home[other]} hreflang={other} lang={other} aria-label={common.nav.languageLabel} class="btn-ghost sm:hidden">
+          {other.toUpperCase()}
+        </a>
+        <a href={signInUrl} class="btn-ghost">{common.nav.signIn}</a>
+        <a href={signUpUrl} class="btn-lime px-4 py-2.5">{common.nav.signUp}</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <ScrollStory signUpUrl={signUpUrl} />
+
+    <!-- Devices -->
+    <section class="relative overflow-hidden py-20 md:py-28">
+      <div
+        class="pointer-events-none absolute left-1/2 top-2/3 h-[520px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-3xl"
+        style="background: radial-gradient(ellipse, rgb(185 242 39 / 0.22), transparent 65%)"
+        aria-hidden="true"
+      >
+      </div>
+      <div class="relative mx-auto max-w-6xl px-4 sm:px-6">
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="eyebrow">{home.devices.eyebrow}</p>
+          <h2 class="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">{home.devices.title}</h2>
+          <p class="mt-4 text-ink-2-dark sm:text-lg">
+            {home.devices.body}
+          </p>
+        </div>
+        <div class="mx-auto mt-12 max-w-5xl md:mt-16">
+          <Devices />
+        </div>
+        <div class="mt-10 flex flex-col items-center gap-4 sm:mt-12">
+          <StoreButtons class="justify-center" />
+          <a href={appUrl} class="text-sm font-medium text-ink-2-dark underline-offset-4 hover:text-ink-dark hover:underline">
+            {home.devices.browser}
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Details -->
+    <section class="pb-20 md:pb-28">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+        <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">
+          {home.details.title}<span class="text-ink-3-dark">{home.details.titleMuted}</span>
+        </h2>
+        <ul class="mt-10 grid gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+          {
+            home.details.items.map((d, i) => (
+              <li class="border-t border-line-dark pt-6">
+                <Icon name={detailIcons[i] ?? 'check'} class="h-5 w-5 text-lime" />
+                <h3 class="mt-4 font-semibold">{d.title}</h3>
+                <p class="mt-1.5 text-sm leading-relaxed text-ink-2-dark">{d.body}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    <!-- Promises -->
+    <section class="border-y border-line-dark py-16 md:py-24">
+      <ul class="mx-auto max-w-6xl space-y-3 px-4 sm:px-6">
+        {
+          home.promises.map((p) => (
+            <li class="flex items-start gap-4 text-3xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+              <span class="mt-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-lime text-ink sm:mt-3 sm:h-9 sm:w-9 md:mt-4">
+                <Icon name="check" class="h-4 w-4 sm:h-5 sm:w-5" />
+              </span>
+              {p}
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="px-4 py-20 sm:px-6 md:py-28">
+      <div class="lime-fill relative mx-auto max-w-6xl overflow-hidden rounded-[28px] px-6 py-16 text-center text-ink sm:px-12 md:py-24">
+        <h2 class="mx-auto max-w-3xl text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">
+          {home.cta.title}
+        </h2>
+        <p class="mx-auto mt-5 max-w-lg text-lg text-ink/70">
+          {home.cta.body}
+        </p>
+        <div class="mt-8 flex flex-wrap justify-center gap-3">
+          <a href={signUpUrl} class="btn-ink px-6 py-3.5 text-base">{home.cta.signUp} <Icon name="arrowRight" /></a>
+          <a href={signInUrl} class="inline-flex items-center rounded-ctl px-5 py-3.5 font-semibold text-ink hover:bg-ink/10">{home.cta.signIn}</a>
+        </div>
+        <StoreButtons tone="onLime" class="mt-6 justify-center" />
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-line-dark">
+    <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-ink-2-dark sm:flex-row sm:px-6">
+      <p>© {new Date().getFullYear()} Genobills</p>
+      <nav class="flex flex-wrap justify-center gap-x-4 gap-y-2">
+        <a href={signInUrl} class="hover:text-ink-dark">{common.nav.signIn}</a>
+        <a href={signUpUrl} class="hover:text-ink-dark">{common.nav.signUp}</a>
+        <a href={PAGES.terms[lang]} class="hover:text-ink-dark">{common.footer.terms}</a>
+        <a href={PAGES.privacy[lang]} class="hover:text-ink-dark">{common.footer.privacy}</a>
+        <a href={PAGES.cookies[lang]} class="hover:text-ink-dark">{common.footer.cookies}</a>
+        <a href={PAGES.home[other]} hreflang={other} lang={other} class="hover:text-ink-dark">{common.nav.language}</a>
+      </nav>
+    </div>
+  </footer>
+</Base>

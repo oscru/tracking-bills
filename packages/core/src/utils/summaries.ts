@@ -1,3 +1,4 @@
+import { i18n } from '../i18n/instance';
 /**
  * Derivations from the server-side summaries (`account_balance_effects`,
  * `monthly_category_totals`) — the same numbers `accountBalances`,
@@ -129,7 +130,7 @@ export function categorySpendFromSummary(
           const category = key === '__none__' ? undefined : byId.get(key);
           return {
             categoryId: category?.id ?? null,
-            name: category?.name ?? 'Sin categoría',
+            name: category?.name ?? i18n.t('common:noCategory'),
             color: category?.color ?? '#94A3B8',
             icon: category?.icon ?? null,
             total: fromCents(c),

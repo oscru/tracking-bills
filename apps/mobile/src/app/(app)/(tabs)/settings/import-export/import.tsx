@@ -16,6 +16,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import { CircleAlert, CircleCheck, Paperclip, type LucideIcon } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
 import {
@@ -40,6 +41,7 @@ type Step =
   | { name: 'error'; message: string };
 
 export default function ImportScreen() {
+  const { t } = useTranslation(['importExport', 'common']);
   const router = useRouter();
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
@@ -56,7 +58,7 @@ export default function ImportScreen() {
     setStep({ name: 'reading' });
     try {
       if (!accounts || !categories || !tags || !profile) {
-        throw new Error('Aún se están cargando tus datos, intenta de nuevo.');
+        throw new Error(t('stillLoading'));
       }
       const base64 = await readPickedFileAsBase64(asset);
       const sheets = await readWorkbookFromBase64(base64);
@@ -79,20 +81,15 @@ export default function ImportScreen() {
 
   return (
     <Screen edges={['top']} className="gap-6">
-      <PageHeader title="Importar Excel" onBack={() => router.back()} />
+      <PageHeader title={t('importScreen')} onBack={() => router.back()} />
 
       {step.name === 'pick' ? (
-        <StatusView
-          icon={Paperclip}
-          tint="neutral"
-          title="Elige un archivo"
-          subtitle="Sube un .xlsx con tus movimientos — podrás revisar todo antes de confirmar."
-        >
-          <Button label="Elegir archivo" onPress={pickFile} />
+        <StatusView icon={Paperclip} tint="neutral" title={t('pickTitle')} subtitle={t('pickHint')}>
+          <Button label={t('pickFile')} onPress={pickFile} />
         </StatusView>
       ) : null}
 
-      {step.name === 'reading' ? <StatusView spinner title="Leyendo el archivo…" /> : null}
+      {step.name === 'reading' ? <StatusView spinner title={t('reading')} /> : null}
 
       {step.name === 'preview' ? (
         <PreviewStep
@@ -104,25 +101,25 @@ export default function ImportScreen() {
       ) : null}
 
       {step.name === 'importing' ? (
-        <StatusView spinner title="Importando…" subtitle="Esto puede tardar unos segundos." />
+        <StatusView spinner title={t('importing')} subtitle={t('importingHint')} />
       ) : null}
 
       {step.name === 'done' ? (
-        <StatusView icon={CircleCheck} tint="lime" title="¡Importación completa!">
+        <StatusView icon={CircleCheck} tint="lime" title={t('done')}>
           <SummaryCard>
-            <SummaryLine label="Movimientos creados" value={step.result.transactionsCreated} />
-            <SummaryLine label="Cuentas nuevas" value={step.result.accountsCreated} />
-            <SummaryLine label="Categorías nuevas" value={step.result.categoriesCreated} />
-            <SummaryLine label="Tags nuevos" value={step.result.tagsCreated} />
+            <SummaryLine label={t('created')} value={step.result.transactionsCreated} />
+            <SummaryLine label={t('newAccounts')} value={step.result.accountsCreated} />
+            <SummaryLine label={t('newCategories')} value={step.result.categoriesCreated} />
+            <SummaryLine label={t('newTags')} value={step.result.tagsCreated} />
           </SummaryCard>
-          <Button label="Listo" onPress={() => router.back()} />
+          <Button label={t('common:done')} onPress={() => router.back()} />
         </StatusView>
       ) : null}
 
       {step.name === 'error' ? (
-        <StatusView icon={CircleAlert} tint="danger" title="Algo salió mal" subtitle={step.message}>
+        <StatusView icon={CircleAlert} tint="danger" title={t('failed')} subtitle={step.message}>
           <Button
-            label="Reintentar"
+            label={t('retry')}
             variant="secondary"
             onPress={() => setStep({ name: 'pick' })}
           />
@@ -207,6 +204,7 @@ function PreviewStep({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation(['importExport', 'common']);
   const { summary, issues } = plan;
   const errors = issues.filter((i) => i.level === 'error');
   const warnings = issues.filter((i) => i.level === 'warning');
@@ -219,20 +217,16 @@ function PreviewStep({
       </Text>
 
       <View className="gap-2 rounded-2xl border border-line p-4 dark:border-line-dark">
-        <SummaryLine
-          label="Movimientos y transferencias a crear"
-          value={summary.transactionsToCreate}
-        />
-        <SummaryLine label="Cuentas nuevas" value={summary.accountsToCreate} />
-        <SummaryLine label="Categorías/subcategorías nuevas" value={summary.categoriesToCreate} />
-        <SummaryLine label="Tags nuevos" value={summary.tagsToCreate} />
+        <SummaryLine label={t('toCreate')} value={summary.transactionsToCreate} />
+        <SummaryLine label={t('newAccounts')} value={summary.accountsToCreate} />
+        <SummaryLine label={t('newCategoriesFull')} value={summary.categoriesToCreate} />
+        <SummaryLine label={t('newTags')} value={summary.tagsToCreate} />
       </View>
 
       {errors.length > 0 ? (
         <View className="gap-2">
           <Text className="text-sm font-semibold text-danger dark:text-danger-dark">
-            {errors.length} fila{errors.length === 1 ? '' : 's'} con error — no se{' '}
-            {errors.length === 1 ? 'importará' : 'importarán'}
+            {t('errorRows', { count: errors.length })}
           </Text>
           <IssueList issues={errors} />
         </View>
@@ -241,24 +235,22 @@ function PreviewStep({
       {warnings.length > 0 ? (
         <View className="gap-2">
           <Text className="text-sm font-semibold text-warning dark:text-warning-dark">
-            {warnings.length} advertencia{warnings.length === 1 ? '' : 's'}
+            {t('warnings', { count: warnings.length })}
           </Text>
           <IssueList issues={warnings} />
         </View>
       ) : null}
 
       {!canImport ? (
-        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-          No hay movimientos válidos para importar en este archivo.
-        </Text>
+        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{t('nothing')}</Text>
       ) : null}
 
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <Button label="Cancelar" variant="secondary" onPress={onCancel} />
+          <Button label={t('common:cancel')} variant="secondary" onPress={onCancel} />
         </View>
         <View className="flex-1">
-          <Button label="Confirmar" onPress={onConfirm} disabled={!canImport} />
+          <Button label={t('confirm')} onPress={onConfirm} disabled={!canImport} />
         </View>
       </View>
     </ScrollView>
@@ -266,15 +258,18 @@ function PreviewStep({
 }
 
 function IssueList({ issues }: { issues: ImportPlan['issues'] }) {
+  const { t } = useTranslation('importExport');
   return (
     <View className="gap-1.5 rounded-2xl border border-line p-3 dark:border-line-dark">
       {issues.slice(0, 30).map((issue, i) => (
         <Text key={i} className="text-xs text-ink-2 dark:text-ink-2-dark">
-          {issue.sheet} · fila {issue.row}: {issue.message}
+          {t('issue', { sheet: issue.sheet, row: issue.row, message: issue.message })}
         </Text>
       ))}
       {issues.length > 30 ? (
-        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">y {issues.length - 30} más…</Text>
+        <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
+          {t('more', { count: issues.length - 30 })}
+        </Text>
       ) : null}
     </View>
   );

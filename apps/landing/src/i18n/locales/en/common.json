@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "title": "Genobills — Your money, in order",
+    "description": "Track income and expenses, keep your accounts, budgets and goals in check, and log what you send the people in your life. Free, from your computer's browser or your phone.",
+    "ogLocale": "en_US"
+  },
+  "nav": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "language": "Español",
+    "languageLabel": "Ver el sitio en español"
+  },
+  "footer": {
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "cookies": "Cookies"
+  },
+  "stores": {
+    "downloadOn": "Download on the",
+    "availableOn": "Get it on",
+    "comingSoon": "Coming soon to",
+    "comingSoonLabel": "{name}: coming soon"
+  }
+}

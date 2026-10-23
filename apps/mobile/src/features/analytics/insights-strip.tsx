@@ -10,6 +10,7 @@ import {
 } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { ICON_COLORS, useIsDesktop } from '@repo/ui';
 
@@ -59,6 +60,7 @@ function Chip({
 /** Four at-a-glance stat chips computed from `periodInsights` — the tab's
  * "so what" layer on top of the calendar/trend visuals. */
 export function InsightsStrip({ insights, currency, metric = 'expense' }: Props) {
+  const { t } = useTranslation('analytics');
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const posColor = dark ? ICON_COLORS.posDark : ICON_COLORS.pos;
@@ -93,8 +95,8 @@ export function InsightsStrip({ insights, currency, metric = 'expense' }: Props)
   const projectionValue = isCurrentPeriod
     ? formatCurrency(projectedAmount ?? 0, currency)
     : formatCurrency(currentAmount, currency);
-  const totalLabel = metric === 'income' ? 'recibido en total' : 'gastado en total';
-  const projectionLabel = isCurrentPeriod ? 'proyectado a fin de periodo' : totalLabel;
+  const totalLabel = t(metric === 'income' ? 'insights.totalReceived' : 'insights.totalSpent');
+  const projectionLabel = isCurrentPeriod ? t('insights.projected') : totalLabel;
 
   // Desktop: a 2×2 grid — the column is wide enough to show all four at
   // once, where a horizontal strip would cut the last one off.
@@ -108,14 +110,14 @@ export function InsightsStrip({ insights, currency, metric = 'expense' }: Props)
         iconColor={changeColor}
         value={changeValue}
         valueColor={changeColor}
-        label="vs. periodo anterior"
+        label={t('insights.vsPrevious')}
       />
       <Chip
         icon={CircleCheck}
         iconColor={savingsColor}
         value={savingsValue}
         valueColor={savingsColor}
-        label="tasa de ahorro"
+        label={t('insights.savingsRate')}
       />
       <Chip
         icon={ChartNoAxesColumn}
@@ -127,9 +129,9 @@ export function InsightsStrip({ insights, currency, metric = 'expense' }: Props)
       <Chip
         icon={Flame}
         iconColor={warningColor}
-        value={`${noSpendStreakDays} día${noSpendStreakDays === 1 ? '' : 's'} sin gastar`}
+        value={t('insights.noSpendDays', { count: noSpendStreakDays })}
         valueColor={warningColor}
-        label={`Mejor racha: ${bestNoSpendStreakDays} día${bestNoSpendStreakDays === 1 ? '' : 's'}`}
+        label={t('insights.bestStreak', { count: bestNoSpendStreakDays })}
         muted={noSpendStreakDays === 0}
       />
     </Container>

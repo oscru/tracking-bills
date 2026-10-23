@@ -1,3 +1,4 @@
+import { translateMessage } from '@repo/core/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import type { AccountType } from '@repo/core/types';
 import { accountCreateSchema, type AccountCreateInput } from '@repo/core/validators';
@@ -12,12 +13,13 @@ import {
 } from '@repo/ui';
 import { Check, ChevronDown } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CurrencyPicker } from '../settings/currency-picker';
 import { ACCOUNT_COLORS } from './account-colors';
 import { AccountIcon } from './account-icon';
-import { ACCOUNT_TYPES, ACCOUNT_TYPE_ICON, ACCOUNT_TYPE_LABEL } from './account-types';
+import { ACCOUNT_TYPES, ACCOUNT_TYPE_ICON, accountTypeLabel } from './account-types';
 
 export interface AccountFormInitial {
   name?: string;
@@ -52,6 +54,7 @@ export function AccountForm({
   onDirty,
   footer,
 }: Props) {
+  const { t } = useTranslation('accounts');
   const editing = initial != null;
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState<AccountType>(initial?.type ?? 'debit');
@@ -106,30 +109,30 @@ export function AccountForm({
       <View className="items-center gap-2">
         <Pressable
           onPress={() => setTypePickerOpen(true)}
-          accessibilityLabel="Cambiar tipo de cuenta"
+          accessibilityLabel={t('form.changeType')}
         >
           <AccountIcon account={{ type, color }} size={64} />
         </Pressable>
-        <Text className="text-[13px] text-ink-3 dark:text-ink-3-dark">
-          El ícono depende del tipo de cuenta
-        </Text>
+        <Text className="text-[13px] text-ink-3 dark:text-ink-3-dark">{t('form.iconHint')}</Text>
       </View>
 
       <TextField
-        label="Nombre"
+        label={t('form.name')}
         value={name}
         onChangeText={(text) => {
           setName(text);
           setErrors((prev) => ({ ...prev, name: undefined }));
           onDirty?.();
         }}
-        placeholder="Ej. Cuenta de nómina"
+        placeholder={t('form.namePlaceholder')}
         error={errors.name}
         invalid={Boolean(error)}
       />
 
       <View className="gap-2">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Tipo</Text>
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+          {t('form.type')}
+        </Text>
         <Pressable
           onPress={() => setTypePickerOpen(true)}
           className="flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 py-3 dark:border-line-dark dark:bg-surface-dark"
@@ -137,7 +140,7 @@ export function AccountForm({
           <View className="flex-row items-center gap-2.5">
             <Ionicons name={ACCOUNT_TYPE_ICON[type]} size={18} color={color} />
             <Text className="text-[15px] font-medium text-ink dark:text-ink-dark">
-              {ACCOUNT_TYPE_LABEL[type]}
+              {accountTypeLabel(type)}
             </Text>
           </View>
           <ChevronDown size={18} color={ICON_COLORS.ink3} />
@@ -145,7 +148,9 @@ export function AccountForm({
       </View>
 
       <View className="gap-2">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Moneda</Text>
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+          {t('form.currency')}
+        </Text>
         {editing ? (
           <>
             <View className="h-[52px] flex-row items-center rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark">
@@ -154,7 +159,7 @@ export function AccountForm({
               </Text>
             </View>
             <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-              No se puede cambiar después de crear la cuenta.
+              {t('form.currencyLocked')}
             </Text>
           </>
         ) : (
@@ -167,13 +172,15 @@ export function AccountForm({
           </Pressable>
         )}
         {errors.currency ? (
-          <Text className="text-sm text-danger dark:text-danger-dark">{errors.currency}</Text>
+          <Text className="text-sm text-danger dark:text-danger-dark">
+            {translateMessage(errors.currency)}
+          </Text>
         ) : null}
       </View>
 
       {editing ? null : (
         <CurrencyField
-          label="Saldo inicial"
+          label={t('form.initialBalance')}
           value={balance}
           onChangeText={setBalance}
           currency={currency.trim() || 'MXN'}
@@ -182,7 +189,9 @@ export function AccountForm({
       )}
 
       <View className="gap-2">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Color</Text>
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+          {t('form.color')}
+        </Text>
         <ColorPicker value={color} onChange={setColor} colors={ACCOUNT_COLORS} />
       </View>
 
@@ -195,23 +204,23 @@ export function AccountForm({
       <BottomSheet
         visible={typePickerOpen}
         onClose={() => setTypePickerOpen(false)}
-        title="Tipo de cuenta"
+        title={t('form.typeTitle')}
       >
         <ScrollView contentContainerClassName="pb-4">
-          {ACCOUNT_TYPES.map((t) => (
+          {ACCOUNT_TYPES.map((option) => (
             <Pressable
-              key={t.value}
+              key={option.value}
               onPress={() => {
-                setType(t.value);
+                setType(option.value);
                 setTypePickerOpen(false);
               }}
               className="flex-row items-center gap-3 border-t border-line px-5 py-3.5 dark:border-line-dark"
             >
-              <AccountIcon account={{ type: t.value, color }} />
+              <AccountIcon account={{ type: option.value, color }} />
               <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
-                {t.label}
+                {accountTypeLabel(option.value)}
               </Text>
-              {type === t.value ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
+              {type === option.value ? <Check size={18} color={ICON_COLORS.limeInk} /> : null}
             </Pressable>
           ))}
         </ScrollView>

@@ -1,0 +1,24 @@
+{
+  "title": "Favorites",
+  "intro": "Tap them in Transactions to create the expense or income in one go, without typing it again.",
+  "new": "New favorite",
+  "newShort": "New",
+  "seeAll": "See all",
+  "freeAmount": "any amount",
+  "edit": "Edit favorite",
+  "notFound": "Favorite not found.",
+  "delete": "Delete favorite",
+  "saveFailed": "Couldn't save the favorite",
+  "form": {
+    "nameRequired": "Give it a name",
+    "iconRequired": "Pick an icon",
+    "changeIcon": "Change icon",
+    "pickIcon": "Pick an icon",
+    "name": "Name",
+    "namePlaceholder": "e.g. Coffee",
+    "fixedAmount": "Fixed amount",
+    "fixedOn": "It's filled in, but you can adjust it before saving",
+    "fixedOff": "Any amount — you type it each time you use it",
+    "saveAsTitle": "Save as favorite"
+  }
+}

@@ -18,6 +18,7 @@ import {
 } from '@repo/ui';
 import { ArrowLeftRight, CircleArrowDown, CircleArrowUp } from 'lucide-react-native';
 import { useMemo, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountPicker } from '../accounts/account-picker';
@@ -46,10 +47,10 @@ interface Props {
   footer?: ReactNode;
 }
 
-const TYPE_OPTIONS = [
-  { value: 'expense' as const, label: 'Gasto', icon: CircleArrowUp },
-  { value: 'income' as const, label: 'Ingreso', icon: CircleArrowDown },
-  { value: 'transfer' as const, label: 'Transferencia', icon: ArrowLeftRight },
+const TYPE_ICONS = [
+  { value: 'expense' as const, icon: CircleArrowUp },
+  { value: 'income' as const, icon: CircleArrowDown },
+  { value: 'transfer' as const, icon: ArrowLeftRight },
 ];
 
 export function FavoriteForm({
@@ -61,6 +62,7 @@ export function FavoriteForm({
   onDirty,
   footer,
 }: Props) {
+  const { t } = useTranslation(['favorites', 'transactions']);
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
   const activeAccounts = useMemo(() => (accounts ?? []).filter((a) => !a.archived), [accounts]);
@@ -102,15 +104,15 @@ export function FavoriteForm({
 
   const submit = () => {
     setFieldError(null);
-    if (!label.trim()) return setFieldError('Ponle un nombre');
-    if (!icon) return setFieldError('Elige un ícono');
-    if (!accountId) return setFieldError('Elige una cuenta');
+    if (!label.trim()) return setFieldError('favorites:form.nameRequired');
+    if (!icon) return setFieldError('favorites:form.iconRequired');
+    if (!accountId) return setFieldError('transactions:form.pickAccount');
 
     let amount: number | null = null;
     if (fixedAmount) {
       amount = Number(amountText.replace(',', '.'));
       if (!Number.isFinite(amount) || amount <= 0) {
-        return setFieldError('El monto debe ser mayor a 0');
+        return setFieldError('transactions:form.amountPositive');
       }
     }
 
@@ -130,8 +132,8 @@ export function FavoriteForm({
     if (!parsed.success) {
       setFieldError(
         type === 'transfer' && !toAccountId
-          ? 'Elige la cuenta destino'
-          : (parsed.error.issues[0]?.message ?? 'Revisa los datos'),
+          ? 'transactions:form.pickTarget'
+          : (parsed.error.issues[0]?.message ?? 'transactions:form.checkData'),
       );
       return;
     }
@@ -157,28 +159,36 @@ export function FavoriteForm({
         </Pressable>
         <Pressable onPress={() => setIconPickerOpen(true)} hitSlop={8}>
           <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-            {icon ? 'Cambiar ícono' : 'Elegir ícono'}
+            {t(icon ? 'form.changeIcon' : 'form.pickIcon')}
           </Text>
         </Pressable>
       </View>
 
       <TextField
-        label="Nombre"
+        label={t('form.name')}
         value={label}
         onChangeText={(text) => {
           setLabel(text);
           dirty();
         }}
-        placeholder="Ej. Café"
+        placeholder={t('form.namePlaceholder')}
         maxLength={40}
       />
 
       <View className="gap-2">
-        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Tipo</Text>
-        <SegmentedControl options={TYPE_OPTIONS} value={type} onChange={changeType} />
+        <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+          {t('transactions:form.typeLabel')}
+        </Text>
+        <SegmentedControl
+          options={TYPE_ICONS.map((o) => ({ ...o, label: t(`transactions:form.type.${o.value}`) }))}
+          value={type}
+          onChange={changeType}
+        />
       </View>
 
-      <Field label={type === 'transfer' ? 'De' : 'Cuenta'}>
+      <Field
+        label={t(type === 'transfer' ? 'transactions:form.from' : 'transactions:form.account')}
+      >
         <Pressable
           onPress={() => setAccountPickerOpen(true)}
           className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
@@ -190,16 +200,16 @@ export function FavoriteForm({
                 : 'text-base text-ink-3 dark:text-ink-3-dark'
             }
           >
-            {selectedAccount ? selectedAccount.name : 'Elige una cuenta'}
+            {selectedAccount ? selectedAccount.name : t('transactions:form.pickAccount')}
           </Text>
           <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-            Ver todas ›
+            {t('transactions:form.seeAll')}
           </Text>
         </Pressable>
       </Field>
 
       {type === 'transfer' ? (
-        <Field label="A">
+        <Field label={t('transactions:form.to')}>
           <Pressable
             onPress={() => setToAccountPickerOpen(true)}
             className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
@@ -211,15 +221,15 @@ export function FavoriteForm({
                   : 'text-base text-ink-3 dark:text-ink-3-dark'
               }
             >
-              {selectedToAccount ? selectedToAccount.name : 'Elige una cuenta'}
+              {selectedToAccount ? selectedToAccount.name : t('transactions:form.pickAccount')}
             </Text>
             <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Ver todas ›
+              {t('transactions:form.seeAll')}
             </Text>
           </Pressable>
         </Field>
       ) : (
-        <Field label="Categoría">
+        <Field label={t('transactions:form.category')}>
           <Pressable
             onPress={() => setCategoryPickerOpen(true)}
             className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
@@ -239,23 +249,21 @@ export function FavoriteForm({
                     : 'text-base text-ink-3 dark:text-ink-3-dark'
                 }
               >
-                {selectedCategory ? resolveCategoryLabel(selectedCategory) : 'Elige una categoría'}
+                {selectedCategory
+                  ? resolveCategoryLabel(selectedCategory)
+                  : t('transactions:form.pickCategory')}
               </Text>
             </View>
             <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Ver todas ›
+              {t('transactions:form.seeAll')}
             </Text>
           </Pressable>
         </Field>
       )}
 
       <SwitchRow
-        label="Monto fijo"
-        description={
-          fixedAmount
-            ? 'Se prellena, pero puedes ajustarlo antes de guardar'
-            : 'Monto libre — lo escribes cada vez que lo uses'
-        }
+        label={t('form.fixedAmount')}
+        description={fixedAmount ? t('form.fixedOn') : t('form.fixedOff')}
         value={fixedAmount}
         onValueChange={(v) => {
           setFixedAmount(v);
@@ -265,10 +273,10 @@ export function FavoriteForm({
 
       {fixedAmount ? (
         <CurrencyField
-          label="Monto"
+          label={t('transactions:form.amount')}
           value={amountText}
-          onChangeText={(t) => {
-            setAmountText(t);
+          onChangeText={(text) => {
+            setAmountText(text);
             dirty();
           }}
           currency={selectedAccount?.currency ?? 'MXN'}
@@ -276,13 +284,13 @@ export function FavoriteForm({
       ) : null}
 
       <TextField
-        label="Descripción (opcional)"
+        label={t('transactions:form.description')}
         value={description}
-        onChangeText={(t) => {
-          setDescription(t);
+        onChangeText={(text) => {
+          setDescription(text);
           dirty();
         }}
-        placeholder="Descripción"
+        placeholder={t('transactions:form.descriptionPlaceholder')}
       />
 
       <ErrorCard message={fieldError ?? error} />
@@ -303,7 +311,9 @@ export function FavoriteForm({
       <AccountPicker
         visible={accountPickerOpen}
         onClose={() => setAccountPickerOpen(false)}
-        title={type === 'transfer' ? 'Cuenta origen' : 'Cuenta'}
+        title={t(
+          type === 'transfer' ? 'transactions:form.fromAccount' : 'transactions:form.account',
+        )}
         selectedId={accountId}
         onSelect={(id) => {
           setPickedAccount(id);
@@ -313,7 +323,7 @@ export function FavoriteForm({
       <AccountPicker
         visible={toAccountPickerOpen}
         onClose={() => setToAccountPickerOpen(false)}
-        title="Cuenta destino"
+        title={t('transactions:form.toAccount')}
         selectedId={toAccountId}
         onSelect={(id) => {
           setToAccountId(id);

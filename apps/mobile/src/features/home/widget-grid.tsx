@@ -12,6 +12,7 @@ import { ICON_COLORS } from '@repo/ui';
 import { GripVertical, Minus, MoveDiagonal2 } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -28,7 +29,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { WIDGET_META } from './widget-catalog';
+import { useWidgetMeta } from './widget-catalog';
 
 /**
  * Home's widget matrix (see `home-grid.ts` in @repo/core for the rules).
@@ -72,6 +73,7 @@ export function WidgetGrid({
   /** So the screen can stop scrolling while a widget is being dragged. */
   onDraggingChange?: (dragging: boolean) => void;
 }) {
+  const { t } = useTranslation('home');
   const cols = GRID_COLUMNS[device];
   const gap = GAP[device];
   const [width, setWidth] = useState(0);
@@ -165,7 +167,7 @@ export function WidgetGrid({
       {active && cellW > 0 ? (
         <DropSlot
           rect={rectOf(active)}
-          label={preview?.mode === 'resize' ? `${active.w} × ${active.h}` : 'Suelta aquí'}
+          label={preview?.mode === 'resize' ? `${active.w} × ${active.h}` : t('editor.dropHere')}
         />
       ) : null}
 
@@ -223,7 +225,8 @@ function GridCell({
   onRemove: () => void;
   children: ReactNode;
 }) {
-  const meta = WIDGET_META[item.id];
+  const { t } = useTranslation(['common', 'home']);
+  const meta = useWidgetMeta()(item.id);
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
 
@@ -393,7 +396,7 @@ function GridCell({
             onPress={onRemove}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={`Quitar ${meta.label}`}
+            accessibilityLabel={t('remove', { name: meta.label })}
             className="absolute -left-2 -top-2 h-7 w-7 items-center justify-center rounded-full bg-danger active:opacity-80 dark:bg-danger-dark"
           >
             <Minus size={16} color="#FFFFFF" strokeWidth={3} />
@@ -402,7 +405,7 @@ function GridCell({
 
         <GestureDetector gesture={resizeGesture}>
           <View
-            accessibilityLabel={`Cambiar tamaño de ${meta.label}`}
+            accessibilityLabel={t('home:editor.resize', { name: meta.label })}
             className="absolute -bottom-2 -right-2 h-8 w-8 items-center justify-center rounded-full bg-lime"
             style={Platform.OS === 'web' ? ({ cursor: 'nwse-resize' } as object) : undefined}
           >
@@ -461,15 +464,14 @@ function DropSlot({ rect, label }: { rect: Rect; label: string }) {
 
 /** Stand-in for a widget that only shows up when it has something (the pending/upcoming reminders). */
 export function DormantWidget({ itemKey }: { itemKey: HomeLayoutItem }) {
-  const meta = WIDGET_META[itemKey];
+  const { t } = useTranslation('home');
+  const meta = useWidgetMeta()(itemKey);
   return (
     <View className="flex-1 flex-row items-center gap-3 p-4">
       <View className="h-10 w-10 items-center justify-center rounded-full bg-lime-tint dark:bg-lime-tint-dark">
         <meta.icon size={18} color={ICON_COLORS.limeInk} />
       </View>
-      <Text className="flex-1 text-xs text-ink-2 dark:text-ink-2-dark">
-        Aparece cuando tengas algo aquí
-      </Text>
+      <Text className="flex-1 text-xs text-ink-2 dark:text-ink-2-dark">{t('editor.dormant')}</Text>
     </View>
   );
 }

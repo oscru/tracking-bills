@@ -16,6 +16,7 @@ import {
   type KeypadKey,
 } from '@repo/ui';
 import { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 interface Props {
@@ -42,6 +43,7 @@ export function AdjustBalanceSheet({
   currency,
   currentBalance,
 }: Props) {
+  const { t } = useTranslation(['accounts', 'common']);
   const createTransaction = useCreateTransaction();
   const { data: categories } = useCategories();
   const [amount, setAmount] = useState(String(round2(currentBalance)));
@@ -72,7 +74,7 @@ export function AdjustBalanceSheet({
     diff === 0 ? null : diff > 0 ? 'income' : 'expense';
 
   const askConfirm = () => {
-    if (value == null) return setError('Monto inválido');
+    if (value == null) return setError(t('adjust.invalid'));
     // Target already matches the current balance — nothing to book, but
     // that's not a failure, so just close instead of surfacing an error.
     if (diff === 0) return onClose();
@@ -85,13 +87,13 @@ export function AdjustBalanceSheet({
     const adjustmentSlug =
       adjustmentType === 'income' ? 'balance_adjustment_income' : 'balance_adjustment_expense';
     const categoryId = (categories ?? []).find((c) => c.slug === adjustmentSlug)?.id;
-    if (!categoryId) return setError('No se encontró la categoría de ajuste de saldo');
+    if (!categoryId) return setError(t('adjust.noCategory'));
     const payload: TransactionCreateInput = {
       type: adjustmentType,
       account_id: accountId,
       amount: Math.abs(diff),
       category_id: categoryId,
-      description: 'Ajuste de saldo',
+      description: t('adjust.description'),
       transaction_date: todayISODate(),
       is_completed: true,
     };
@@ -103,16 +105,16 @@ export function AdjustBalanceSheet({
       },
       onError: (e) => {
         setConfirmOpen(false);
-        setError(toFriendlyMessage(e, 'No se pudo ajustar el saldo'));
+        setError(toFriendlyMessage(e, t('adjust.failed')));
       },
     });
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Ajustar saldo">
+    <BottomSheet visible={visible} onClose={onClose} title={t('adjust.title')}>
       <View className="gap-4 px-5 pb-8 pt-2">
         <Text className="text-center text-[13px] text-ink-2 dark:text-ink-2-dark">
-          Saldo actual: {formatCurrency(currentBalance, currency)}
+          {t('adjust.current', { amount: formatCurrency(currentBalance, currency) })}
         </Text>
 
         <AmountDisplay display={display} invalid={Boolean(error)} />
@@ -123,42 +125,47 @@ export function AdjustBalanceSheet({
               diff > 0 ? 'text-pos dark:text-pos-dark' : 'text-danger dark:text-danger-dark'
             }`}
           >
-            {diff > 0 ? 'Se registrará un ingreso de ' : 'Se registrará un gasto de '}
-            {formatCurrency(Math.abs(diff), currency)}
+            {t(diff > 0 ? 'adjust.willIncome' : 'adjust.willExpense', {
+              amount: formatCurrency(Math.abs(diff), currency),
+            })}
           </Text>
         ) : null}
 
         <ErrorCard message={error} />
 
         <NumericKeypad onKey={onKey} />
-        <Button label="Guardar" onPress={askConfirm} />
+        <Button label={t('common:save')} onPress={askConfirm} />
       </View>
 
       <BottomSheet
         visible={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        title="Confirmar ajuste"
+        title={t('adjust.confirmTitle')}
       >
         <View className="gap-3 px-5 pb-4 pt-2">
           <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-            Cambiar el saldo de{' '}
-            <Text className="font-semibold text-ink dark:text-ink-dark">
-              {formatCurrency(currentBalance, currency)}
-            </Text>{' '}
-            a <Text className="font-semibold text-ink dark:text-ink-dark">{display}</Text> creará un
-            nuevo{' '}
-            <Text className="font-semibold text-ink dark:text-ink-dark">
-              {adjustmentType === 'income' ? 'ingreso' : 'gasto'}
-            </Text>{' '}
-            de {formatCurrency(Math.abs(diff), currency)} en esta cuenta.
+            <Trans
+              t={t}
+              i18nKey={
+                adjustmentType === 'income' ? 'adjust.confirmIncome' : 'adjust.confirmExpense'
+              }
+              values={{
+                from: formatCurrency(currentBalance, currency),
+                to: display,
+                amount: formatCurrency(Math.abs(diff), currency),
+              }}
+              components={{ b: <Text className="font-semibold text-ink dark:text-ink-dark" /> }}
+            />
           </Text>
           <Button
-            label="Confirmar ajuste"
+            label={t('adjust.confirmTitle')}
             onPress={confirmAndSave}
             loading={createTransaction.isPending}
           />
           <Pressable onPress={() => setConfirmOpen(false)} className="items-center py-2">
-            <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Cancelar</Text>
+            <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+              {t('common:cancel')}
+            </Text>
           </Pressable>
         </View>
       </BottomSheet>

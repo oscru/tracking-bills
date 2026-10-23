@@ -1,37 +1,63 @@
 /**
- * Translates raw Supabase/Postgres/Auth errors into user-facing Spanish
- * text, so forms never leak things like `duplicate key value violates
- * unique constraint "tags_user_name_key"` to the screen.
+ * Translates raw Supabase/Postgres/Auth errors into user-facing text (in the
+ * current language — `errors` namespace), so forms never leak things like
+ * `duplicate key value violates unique constraint "tags_user_name_key"` to
+ * the screen.
  */
+import type { ParseKeys } from 'i18next';
+
+import { i18n } from '../i18n/instance';
 import { AuthCallError, SupabaseError } from '../supabase';
 
-/** Friendly text for unique-constraint violations, keyed by Postgres constraint name. */
-const UNIQUE_CONSTRAINT_MESSAGES: Record<string, string> = {
-  tags_user_name_key: 'Ya tienes una tag con ese nombre.',
-  categories_user_slug_key: 'Ya existe una categoría con ese identificador.',
+type ErrorKey = ParseKeys<'errors'>;
+const t = (key: ErrorKey, options?: Record<string, string>) =>
+  i18n.t(key, { ns: 'errors', ...options });
+
+/** Unique-constraint violations, keyed by Postgres constraint name. */
+const UNIQUE_CONSTRAINT_MESSAGES: Record<string, ErrorKey> = {
+  tags_user_name_key: 'db.tagNameTaken',
+  categories_user_slug_key: 'db.categorySlugTaken',
 };
 
-/** Friendly text for FK-restrict violations, keyed by the referencing constraint name. */
-const FK_CONSTRAINT_MESSAGES: Record<string, string> = {
-  transactions_account_id_fkey:
-    'No puedes eliminar esta cuenta porque tiene movimientos asociados. Archívala en su lugar.',
-  transactions_to_account_id_fkey:
-    'No puedes eliminar esta cuenta porque tiene movimientos asociados. Archívala en su lugar.',
+/** FK-restrict violations, keyed by the referencing constraint name. */
+const FK_CONSTRAINT_MESSAGES: Record<string, ErrorKey> = {
+  transactions_account_id_fkey: 'db.accountHasTransactions',
+  transactions_to_account_id_fkey: 'db.accountHasTransactions',
 };
 
-/** Friendly text for known Supabase Auth error codes. */
-const AUTH_ERROR_MESSAGES: Record<string, string> = {
-  invalid_credentials: 'Correo o contraseña incorrectos.',
-  user_already_exists: 'Ya existe una cuenta con ese correo.',
-  email_exists: 'Ya existe una cuenta con ese correo.',
-  weak_password: 'La contraseña es muy débil. Usa al menos 8 caracteres.',
-  email_not_confirmed: 'Confirma tu correo antes de iniciar sesión.',
-  over_email_send_rate_limit: 'Demasiados intentos. Espera un momento e intenta de nuevo.',
-  same_password: 'La nueva contraseña debe ser distinta a la actual.',
-  user_not_found: 'No encontramos una cuenta con ese correo.',
-  otp_expired: 'El código no es válido o ya venció. Pide uno nuevo.',
-  otp_disabled: 'Por ahora no se pueden enviar códigos. Intenta más tarde.',
+/** Known Supabase Auth error codes. */
+const AUTH_ERROR_MESSAGES: Record<string, ErrorKey> = {
+  invalid_credentials: 'auth.invalidCredentials',
+  user_already_exists: 'auth.userExists',
+  email_exists: 'auth.userExists',
+  weak_password: 'auth.weakPassword',
+  email_not_confirmed: 'auth.emailNotConfirmed',
+  over_email_send_rate_limit: 'tooManyAttempts',
+  same_password: 'auth.samePassword',
+  user_not_found: 'auth.userNotFound',
+  otp_expired: 'auth.otpExpired',
+  otp_disabled: 'auth.otpDisabled',
 };
+
+/** `check_violation` messages raised by our triggers, matched by their text. */
+const CHECK_MESSAGES: [RegExp, ErrorKey][] = [
+  [/peer_invite_invalid/, 'db.peerInviteInvalid'],
+  [/peer_invite_own/, 'db.peerInviteOwn'],
+  [/peer_already_linked/, 'db.peerAlreadyLinked'],
+  [/no longer linked with this person|not linked with this person/, 'db.peerNotLinked'],
+  [/received transfer can only be (changed|removed)/, 'db.peerTransferLocked'],
+  [/arrives on its own/, 'db.peerArrivesOnItsOwn'],
+  [/non-zero balance/, 'db.archiveNonZeroBalance'],
+  [/cannot change type of a category that has subcategories/, 'db.categoryTypeWithChildren'],
+  [/cannot disable currency .+ still in use/, 'db.currencyInUse'],
+  [/cannot delete a system category/, 'db.systemCategory'],
+  [/cannot delete a category that is not archived/, 'db.categoryNotArchived'],
+  [/cannot delete a category that has transactions/, 'db.categoryHasTransactions'],
+  [/cannot delete a category used by a favorite movement/, 'db.categoryInFavorite'],
+  [/cannot delete a category assigned to a budget/, 'db.categoryInBudget'],
+  [/is not usable by user .+ for a .+ transaction/, 'db.categoryWrongType'],
+  [/cannot change (currency|initial_balance) after account creation/, 'db.accountLockedFields'],
+];
 
 function constraintNameFrom(message: string): string | null {
   return /constraint "([^"]+)"/.exec(message)?.[1] ?? null;
@@ -41,76 +67,25 @@ function fromSupabaseError(error: SupabaseError): string | null {
   const constraint = constraintNameFrom(error.message);
   switch (error.code) {
     case '23505': // unique_violation
-      return (
-        (constraint && UNIQUE_CONSTRAINT_MESSAGES[constraint]) ||
-        'Ya existe un registro con esos datos.'
-      );
+      return t((constraint && UNIQUE_CONSTRAINT_MESSAGES[constraint]) || 'db.duplicate');
     case '23503': // foreign_key_violation
-      return (
-        (constraint && FK_CONSTRAINT_MESSAGES[constraint]) ||
-        'No se puede completar la acción porque hay datos relacionados.'
-      );
+      return t((constraint && FK_CONSTRAINT_MESSAGES[constraint]) || 'db.related');
     case '23502': // not_null_violation
-      return 'Falta completar un campo requerido.';
-    case '23514': // check_violation
-      {
-        const noReceive = /peer_no_receive_account:([A-Z]{3}):(.*)$/.exec(error.message);
-        if (noReceive) {
-          const who = noReceive[2]?.trim() || 'Esa persona';
-          return `${who} no tiene una cuenta en ${noReceive[1]} para recibir. Pídele que elija una en Opciones › Personas.`;
-        }
+      return t('db.missingField');
+    case '23514': {
+      // check_violation
+      const noReceive = /peer_no_receive_account:([A-Z]{3}):(.*)$/.exec(error.message);
+      if (noReceive) {
+        return t('db.peerNoReceiveAccount', {
+          who: noReceive[2]?.trim() || t('db.peerSomeone'),
+          currency: noReceive[1] ?? '',
+        });
       }
-      if (/peer_invite_invalid/.test(error.message)) {
-        return 'Ese código no es válido o ya expiró. Pide uno nuevo.';
-      }
-      if (/peer_invite_own/.test(error.message)) {
-        return 'Ese código es tuyo — compártelo con la otra persona para que lo use ella.';
-      }
-      if (/peer_already_linked/.test(error.message)) {
-        return 'Ya estás vinculado con esa persona.';
-      }
-      if (/no longer linked with this person|not linked with this person/.test(error.message)) {
-        return 'Ya no estás vinculado con esa persona.';
-      }
-      if (/received transfer can only be (changed|removed)/.test(error.message)) {
-        return 'Esta transferencia la registró quien te la envió: solo esa persona puede cambiarla o eliminarla.';
-      }
-      if (/arrives on its own/.test(error.message)) {
-        return 'El dinero que te envía una persona vinculada llega solo; no se registra a mano.';
-      }
-      if (/non-zero balance/.test(error.message)) {
-        return 'No puedes archivar una cuenta con saldo distinto de cero. Ajusta el saldo a 0 antes de archivarla.';
-      }
-      if (/cannot change type of a category that has subcategories/.test(error.message)) {
-        return 'No puedes cambiar el tipo de una categoría que tiene subcategorías. Muévelas o elimínalas primero.';
-      }
-      if (/cannot disable currency .+ still in use/.test(error.message)) {
-        return 'No puedes deshabilitar esa divisa: todavía tienes cuentas, presupuestos o metas en ella.';
-      }
-      if (/cannot delete a system category/.test(error.message)) {
-        return 'Esta es una categoría del sistema y no se puede eliminar.';
-      }
-      if (/cannot delete a category that is not archived/.test(error.message)) {
-        return 'Primero archiva la categoría para poder eliminarla.';
-      }
-      if (/cannot delete a category that has transactions/.test(error.message)) {
-        return 'Tiene movimientos asociados — no se puede eliminar mientras los conserve.';
-      }
-      if (/cannot delete a category used by a favorite movement/.test(error.message)) {
-        return 'Está asignada a un movimiento favorito — quítala de ahí primero.';
-      }
-      if (/cannot delete a category assigned to a budget/.test(error.message)) {
-        return 'Está asignada a un presupuesto — quítala de ahí primero.';
-      }
-      if (/is not usable by user .+ for a .+ transaction/.test(error.message)) {
-        return 'Esa categoría no es válida para este tipo de movimiento. Elige otra.';
-      }
-      if (/cannot change (currency|initial_balance) after account creation/.test(error.message)) {
-        return 'La divisa y el saldo inicial no se pueden cambiar después de crear la cuenta.';
-      }
-      return 'Revisa los datos ingresados.';
+      const known = CHECK_MESSAGES.find(([pattern]) => pattern.test(error.message));
+      return t(known?.[1] ?? 'db.checkData');
+    }
     case '42501': // insufficient_privilege (RLS)
-      return 'No tienes permiso para hacer esto.';
+      return t('db.forbidden');
     default:
       return null;
   }
@@ -118,8 +93,8 @@ function fromSupabaseError(error: SupabaseError): string | null {
 
 function fromAuthError(error: AuthCallError): string | null {
   const mapped = error.code ? AUTH_ERROR_MESSAGES[error.code] : undefined;
-  if (mapped) return mapped;
-  if (error.status === 429) return 'Demasiados intentos. Espera un momento e intenta de nuevo.';
+  if (mapped) return t(mapped);
+  if (error.status === 429) return t('tooManyAttempts');
   return null;
 }
 
@@ -132,7 +107,7 @@ export function toFriendlyMessage(error: unknown, fallback: string): string {
   if (error instanceof SupabaseError) return fromSupabaseError(error) ?? fallback;
   if (error instanceof AuthCallError) return fromAuthError(error) ?? fallback;
   if (error instanceof Error && /network request failed|failed to fetch/i.test(error.message)) {
-    return 'No hay conexión a internet. Revisa tu conexión e intenta de nuevo.';
+    return t('noConnection');
   }
   return fallback;
 }

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { HOME_LAYOUT_ITEMS } from '../home-layout';
+import { LANGUAGES } from '../i18n/instance';
 import { notificationPrefsSchema } from '../notifications/prefs';
 import { currencyCodeSchema } from './account';
 
@@ -24,7 +25,7 @@ export const themePreferenceSchema = z.enum(['system', 'light', 'dark']);
 
 export const genderSchema = z.enum(['female', 'male', 'other', 'prefer_not_to_say']);
 
-const fullName = z.string().trim().min(1, 'Ingresa tu nombre').max(120);
+const fullName = z.string().trim().min(1, 'validation:nameRequired').max(120);
 
 /** `YYYY-MM-DD` — not before 120 years ago (nobody using this app is that
  * old) or after today. Mirrors `birthDateSchema` in `validators/auth.ts`
@@ -32,13 +33,13 @@ const fullName = z.string().trim().min(1, 'Ingresa tu nombre').max(120);
  * imports `genderSchema` from this file). */
 const birthDate = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida')
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'validation:dateInvalid')
   .refine((iso) => {
     const date = new Date(iso);
     const now = new Date();
     const minYear = now.getFullYear() - 120;
     return date.getFullYear() >= minYear && date <= now;
-  }, 'Fecha inválida');
+  }, 'validation:dateInvalid');
 
 export const profileUpdateSchema = z.object({
   /** Null only for an OAuth sign-in that's never completed this — see
@@ -61,8 +62,10 @@ export const profileUpdateSchema = z.object({
   /** Preselected by default when creating a new account — must stay one of `enabled_currencies`. */
   currency: currencyCodeSchema.optional(),
   /** The currency "pack" offered when picking an account's currency — a user-curated subset of ISO 4217. */
-  enabled_currencies: z.array(currencyCodeSchema).min(1, 'Elige al menos una divisa').optional(),
+  enabled_currencies: z.array(currencyCodeSchema).min(1, 'validation:currencyRequired').optional(),
   theme_preference: themePreferenceSchema.optional(),
+  /** Interface language; `null` follows the device/browser. */
+  language: z.enum(LANGUAGES).nullable().optional(),
   /** Auto-tags new expenses/income/transfers with `travel_trip_tag_id` while on. */
   travel_mode: z.boolean().optional(),
   /** The tag applied by default while `travel_mode` is on. `null` clears it. */

@@ -1,3 +1,4 @@
+import { i18n } from '@repo/core/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useAccounts,
@@ -30,6 +31,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AddContributionSheet } from '../../../../../../features/goals/add-contribution-sheet';
@@ -38,14 +40,15 @@ import { SplitColumns } from '../../../../../../features/design/split-columns';
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 function deadlineLabel(deadline: string | null): string {
-  if (!deadline) return 'Sin fecha límite';
+  if (!deadline) return i18n.t('goals:deadline.none');
   const diff = daysUntil(deadline, todayISODate());
-  if (diff === 0) return 'Vence hoy';
-  if (diff > 0) return `Quedan ${diff} día${diff === 1 ? '' : 's'}`;
-  return `Venció hace ${Math.abs(diff)} día${Math.abs(diff) === 1 ? '' : 's'}`;
+  if (diff === 0) return i18n.t('goals:deadline.today');
+  if (diff > 0) return i18n.t('goals:deadline.left', { count: diff });
+  return i18n.t('goals:deadline.overdue', { count: Math.abs(diff) });
 }
 
 export default function GoalDetail() {
+  const { t } = useTranslation(['goals', 'common']);
   const scrollPadding = useTabBarScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -79,7 +82,7 @@ export default function GoalDetail() {
     goal
       ? {
           icon: Pencil,
-          accessibilityLabel: 'Editar objetivo',
+          accessibilityLabel: t('edit'),
           onPress: () =>
             router.push({ pathname: '/(app)/settings/goals/[id]/edit', params: { id: goal.id } }),
         }
@@ -96,7 +99,7 @@ export default function GoalDetail() {
   if (!goal) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Objetivo no encontrado.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
@@ -148,8 +151,10 @@ export default function GoalDetail() {
     pace == null
       ? null
       : pace.status === 'on-track'
-        ? 'Vas exactamente al ritmo planeado'
-        : `Vas ${formatCurrency(Math.abs(pace.difference), goal.currency)} ${pace.status === 'ahead' ? 'adelantado' : 'atrasado'} de tu ritmo planeado`;
+        ? t('paceOnTrack')
+        : t(pace.status === 'ahead' ? 'paceAhead' : 'paceBehind', {
+            amount: formatCurrency(Math.abs(pace.difference), goal.currency),
+          });
 
   return (
     <Screen edges={['top']} className="gap-5" width={desktop ? 'wide' : undefined}>
@@ -169,14 +174,14 @@ export default function GoalDetail() {
                     {goal.is_completed ? (
                       <View className="self-start rounded-full bg-lime-tint px-3 py-1 dark:bg-lime-tint-dark">
                         <Text className="text-xs font-semibold text-lime-ink dark:text-lime-ink-dark">
-                          Completada
+                          {t('completed')}
                         </Text>
                       </View>
                     ) : null}
                     {goal.archived ? (
                       <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
                         <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-                          Archivado
+                          {t('archivedBadge')}
                         </Text>
                       </View>
                     ) : null}
@@ -196,20 +201,20 @@ export default function GoalDetail() {
                     <View className="flex-1">
                       <Text className="text-sm font-semibold text-white">
                         {goal.is_completed
-                          ? '¡Meta completada!'
+                          ? t('goalDone')
                           : progress.isComplete
-                            ? '¡Monto alcanzado! Márcala como completada'
+                            ? t('reachedMark')
                             : deadlineLabel(goal.deadline)}{' '}
                         · {goal.currency}
                       </Text>
                       {goal.deadline ? (
                         <Text className="text-xs text-white/55">
-                          Fecha límite: {formatDate(goal.deadline)}
+                          {t('deadlineOn', { date: formatDate(goal.deadline) })}
                         </Text>
                       ) : null}
                       {linkedAccount ? (
                         <Text className="text-xs text-white/55">
-                          Cuenta de ahorro: {linkedAccount.name}
+                          {t('savingsAccountIs', { name: linkedAccount.name })}
                         </Text>
                       ) : null}
                     </View>
@@ -227,9 +232,10 @@ export default function GoalDetail() {
                   {pace ? (
                     <View className="gap-0.5 border-t border-white/10 pt-3">
                       <Text className="text-xs text-white/55">
-                        Ritmo planeado:{' '}
-                        {formatCurrency(Number(goal.contribution_amount), goal.currency)} cada{' '}
-                        {goal.contribution_interval_days} días
+                        {t('planned', {
+                          amount: formatCurrency(Number(goal.contribution_amount), goal.currency),
+                          days: goal.contribution_interval_days,
+                        })}
                       </Text>
                       <Text className={`text-xs font-semibold ${paceColor}`}>{paceText}</Text>
                     </View>
@@ -238,7 +244,7 @@ export default function GoalDetail() {
 
                 {progress.isComplete && !goal.is_completed && !goal.archived ? (
                   <Button
-                    label="Marcar como completada"
+                    label={t('markDone')}
                     loading={updateGoal.isPending}
                     onPress={() => markCompleted(true)}
                   />
@@ -251,29 +257,29 @@ export default function GoalDetail() {
                     hitSlop={8}
                   >
                     <Text className="text-xs font-medium text-ink-2 dark:text-ink-2-dark">
-                      Marcar como no completada
+                      {t('markNotDone')}
                     </Text>
                   </Pressable>
                 ) : null}
 
-                <Button label="Agregar aportación" onPress={() => setContributeOpen(true)} />
+                <Button label={t('addContribution')} onPress={() => setContributeOpen(true)} />
               </>
             }
             right={
               <>
                 <View className="gap-2">
                   <Text className="px-1 text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                    Aportaciones ({contributions.length})
+                    {t('contributions', { count: contributions.length })}
                   </Text>
                   {contributions.length === 0 ? (
                     <Text className="px-1 text-sm text-ink-2 dark:text-ink-2-dark">
-                      Sin aportaciones todavía.
+                      {t('noContributions')}
                     </Text>
                   ) : (
                     <View className="rounded-2xl border border-line dark:border-line-dark">
-                      {contributions.map((t, i) => (
+                      {contributions.map((tx, i) => (
                         <View
-                          key={t.id}
+                          key={tx.id}
                           className={`flex-row items-center gap-3 px-4 py-3.5 ${
                             i > 0 ? 'border-t border-line dark:border-line-dark' : ''
                           }`}
@@ -283,14 +289,14 @@ export default function GoalDetail() {
                               className="text-[15px] text-ink dark:text-ink-dark"
                               numberOfLines={1}
                             >
-                              {t.account?.name ?? 'Cuenta'}
+                              {tx.account?.name ?? t('account')}
                             </Text>
                             <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                              {formatDate(t.transaction_date)}
+                              {formatDate(tx.transaction_date)}
                             </Text>
                           </View>
                           <Text className="text-[15px] font-semibold text-pos dark:text-pos-dark">
-                            +{formatCurrency(t.amount, goal.currency)}
+                            +{formatCurrency(tx.amount, goal.currency)}
                           </Text>
                         </View>
                       ))}
@@ -300,7 +306,7 @@ export default function GoalDetail() {
 
                 <View className="gap-2 border-t border-line pt-5 dark:border-line-dark">
                   <Button
-                    label={goal.archived ? 'Desarchivar' : 'Archivar objetivo'}
+                    label={goal.archived ? t('common:unarchive') : t('archive')}
                     variant={goal.archived ? 'secondary' : 'ghost-danger'}
                     loading={updateGoal.isPending}
                     onPress={() => (goal.archived ? toggleArchive() : setConfirmArchive(true))}
@@ -308,7 +314,7 @@ export default function GoalDetail() {
                   {goal.archived ? (
                     <Pressable onPress={() => setConfirmDelete(true)} className="items-center py-2">
                       <Text className="text-sm font-medium text-danger dark:text-danger-dark">
-                        Eliminar definitivamente
+                        {t('deleteForever')}
                       </Text>
                     </Pressable>
                   ) : null}
@@ -332,13 +338,13 @@ export default function GoalDetail() {
 
       <ConfirmSheet
         visible={confirmArchive}
-        title="¿Archivar objetivo?"
+        title={t('archiveTitle')}
         description={
           linkedAccount && !goal.is_completed
-            ? `Deja de aparecer entre tus objetivos activos. Como no está marcada como completada, se desvinculará de "${linkedAccount.name}" (esa cuenta queda libre para ligarla a otra meta). Puedes desarchivarlo cuando quieras.`
-            : 'Deja de aparecer entre tus objetivos activos, pero conserva su historial de aportaciones. Puedes desarchivarlo cuando quieras.'
+            ? t('archiveBodyLinked', { account: linkedAccount.name })
+            : t('archiveBody')
         }
-        confirmLabel="Archivar"
+        confirmLabel={t('common:archive')}
         onCancel={() => setConfirmArchive(false)}
         onConfirm={() => {
           setConfirmArchive(false);
@@ -348,20 +354,18 @@ export default function GoalDetail() {
 
       <ConfirmSheet
         visible={confirmDelete}
-        title="¿Eliminar objetivo?"
+        title={t('deleteTitle')}
         description={
-          linkedAccount
-            ? `Se elimina la meta y su vínculo con "${linkedAccount.name}" — el dinero se queda intacto en esa cuenta, tenga o no aportaciones registradas. No afecta tus movimientos.`
-            : 'Solo se puede eliminar si no tiene aportaciones registradas. No afecta tus movimientos.'
+          linkedAccount ? t('deleteBodyLinked', { account: linkedAccount.name }) : t('deleteBody')
         }
-        confirmLabel="Eliminar"
+        confirmLabel={t('common:delete')}
         destructive
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() => {
           setConfirmDelete(false);
           remove.mutate(goal.id, {
             onSuccess: () => router.replace('/(app)/settings/goals'),
-            onError: (e) => setError(e, 'No se pudo eliminar'),
+            onError: (e) => setError(e, t('common:deleteFailed')),
           });
         }}
       />

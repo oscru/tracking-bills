@@ -1,0 +1,68 @@
+{
+  "progress": {
+    "of": "of {{amount}}",
+    "noCategories": "No categories assigned — this budget isn't counting any spending."
+  },
+  "title": "Budgets",
+  "budget": "Budget",
+  "new": "New budget",
+  "edit": "Edit budget",
+  "notFound": "Budget not found.",
+  "period": {
+    "weekly": "Weekly",
+    "biweekly": "Biweekly",
+    "monthly": "Monthly",
+    "custom": "Custom"
+  },
+  "repeatsSuffix": " · repeats",
+  "tabs": {
+    "active": "Active",
+    "archived": "Archived"
+  },
+  "loadFailed": "Couldn't load your budgets",
+  "emptyArchived": "No archived budgets",
+  "empty": "No budgets yet",
+  "emptyHint": "Create one to keep your spending by category in check.",
+  "categoriesCount_one": "{{count}} category",
+  "categoriesCount_other": "{{count}} categories",
+  "categoriesTitle": "Categories ({{count}})",
+  "archive": "Archive budget",
+  "deleteForever": "Delete permanently",
+  "archiveTitle": "Archive this budget?",
+  "archiveBody": "It no longer shows on Home and Insights, but keeps its history. You can unarchive it anytime.",
+  "deleteTitle": "Delete this budget?",
+  "deleteBody": "The budget and its links to its categories are deleted, and it can't be undone. Transactions you've recorded aren't affected.",
+  "saveFailed": "Couldn't save the budget",
+  "pickCategories": "Pick its categories",
+  "create": "Create budget",
+  "next": "Next",
+  "pickRange": "Pick the date range",
+  "nameRequired": "Give it a name",
+  "basics": {
+    "name": "Name",
+    "namePlaceholder": "e.g. Food and fun",
+    "amount": "Amount",
+    "period": "Budget period",
+    "dates": "Date range",
+    "repeat": "Repeat automatically",
+    "repeatHint": {
+      "weekly": "When the week ends, a new one starts automatically",
+      "biweekly": "When the two weeks end, new ones start automatically",
+      "monthly": "When the month ends, a new one starts automatically"
+    },
+    "starts": "Starts",
+    "currencyLocked": "Currency: {{currency}} — it can't be changed after the budget is created."
+  },
+  "editor": {
+    "remaining": "Left to allocate",
+    "over": "You allocated {{over}} more than your {{total}} budget — over the 10% tolerance. You can create it like this, but consider adjusting the amounts.",
+    "empty": "No categories yet. Add at least one.",
+    "add": "Add category"
+  },
+  "amountSheet": {
+    "title": "Assign amount",
+    "amount": "Assigned amount",
+    "useRemaining": "Use what's left ({{amount}})"
+  },
+  "archivedBadge": "Archived"
+}

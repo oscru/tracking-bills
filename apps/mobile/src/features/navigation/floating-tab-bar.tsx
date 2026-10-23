@@ -5,6 +5,7 @@ import { Plus, type LucideIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -214,8 +215,9 @@ function TabBarActionButton() {
   const action = useContext(TabBarActionContext);
   const scale = useSharedValue(1);
 
+  const { t } = useTranslation('navigation');
   const Icon = action?.icon ?? Plus;
-  const accessibilityLabel = action?.accessibilityLabel ?? 'Nuevo movimiento';
+  const accessibilityLabel = action?.accessibilityLabel ?? t('newMovement');
   const handleAction = action?.onPress ?? (() => router.push('/(app)/new-transaction'));
 
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));

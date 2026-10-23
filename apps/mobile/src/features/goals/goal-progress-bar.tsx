@@ -1,5 +1,6 @@
 import { formatCurrency } from '@repo/core/utils';
 import { useColorScheme } from 'nativewind';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { ICON_COLORS } from '@repo/ui';
 
@@ -22,6 +23,7 @@ export function GoalProgressBar({
   currency,
   tone = 'default',
 }: Props) {
+  const { t } = useTranslation('budgets');
   const { colorScheme } = useColorScheme();
   const onDark = tone === 'onDark';
   const dark = onDark || colorScheme === 'dark';
@@ -34,7 +36,7 @@ export function GoalProgressBar({
         <Text className={`text-sm ${onDark ? 'text-white' : 'text-ink dark:text-ink-dark'}`}>
           {formatCurrency(saved, currency)}{' '}
           <Text className={onDark ? 'text-white/50' : 'text-ink-3 dark:text-ink-3-dark'}>
-            de {formatCurrency(target, currency)}
+            {t('progress.of', { amount: formatCurrency(target, currency) })}
           </Text>
         </Text>
         <Text

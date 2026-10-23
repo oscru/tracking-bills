@@ -8,11 +8,13 @@ import {
 import { Button, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { FavoriteForm } from '../../../../../../features/favorites/favorite-form';
 
 export default function EditFavorite() {
+  const { t } = useTranslation(['favorites', 'common']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: favorites, isLoading } = useFavoriteTransactions();
@@ -33,14 +35,14 @@ export default function EditFavorite() {
   if (!favorite) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Favorito no encontrado.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
 
   return (
     <Screen className="gap-4">
-      <PageHeader title="Editar favorito" onBack={() => router.back()} />
+      <PageHeader title={t('edit')} onBack={() => router.back()} />
 
       <FavoriteForm
         initial={{
@@ -53,7 +55,7 @@ export default function EditFavorite() {
           amount: favorite.amount,
           description: favorite.description,
         }}
-        submitLabel="Guardar cambios"
+        submitLabel={t('common:saveChanges')}
         submitting={update.isPending}
         error={error}
         onDirty={clearError}
@@ -63,7 +65,7 @@ export default function EditFavorite() {
             { id, patch: input },
             {
               onSuccess: () => router.back(),
-              onError: (e) => setError(e, 'No se pudieron guardar los cambios'),
+              onError: (e) => setError(e, t('common:saveChangesFailed')),
             },
           );
         }}
@@ -73,20 +75,20 @@ export default function EditFavorite() {
               <View className="flex-row gap-2">
                 <View className="flex-1">
                   <Button
-                    label="Conservar"
+                    label={t('common:keep')}
                     variant="secondary"
                     onPress={() => setConfirming(false)}
                   />
                 </View>
                 <View className="flex-1">
                   <Button
-                    label="Eliminar"
+                    label={t('common:delete')}
                     variant="danger"
                     loading={remove.isPending}
                     onPress={() =>
                       remove.mutate(id, {
                         onSuccess: () => router.back(),
-                        onError: (e) => setError(e, 'No se pudo eliminar'),
+                        onError: (e) => setError(e, t('common:deleteFailed')),
                       })
                     }
                   />
@@ -95,7 +97,7 @@ export default function EditFavorite() {
             ) : (
               <Pressable onPress={() => setConfirming(true)} className="items-center py-2">
                 <Text className="text-sm font-medium text-danger dark:text-danger-dark">
-                  Eliminar favorito
+                  {t('delete')}
                 </Text>
               </Pressable>
             )}

@@ -1,0 +1,12 @@
+{
+  "eyebrow": "Legal",
+  "updated": "Last updated: {date} · Version {version}",
+  "updatedDate": "October 22, 2026",
+  "home": "← Home",
+  "documents": {
+    "terms": "Terms and conditions",
+    "privacy": "Privacy notice",
+    "cookies": "Cookie policy"
+  },
+  "translation": "This is an English translation provided for convenience. The <a href=\"{href}\">Spanish version</a> is the legally binding one; if they differ, the Spanish version prevails."
+}

@@ -1,3 +1,4 @@
+import { i18n } from '../i18n/instance';
 import type { AuthError, Session } from '@supabase/supabase-js';
 
 import {
@@ -96,7 +97,7 @@ export async function completeOAuthSignIn(callbackUrl: string): Promise<Session>
   if (errorDescription) throw new Error(errorDescription);
 
   const code = searchParams.get('code');
-  if (!code) throw new Error('No se recibió un código de autenticación.');
+  if (!code) throw new Error(i18n.t('errors:auth.noCode'));
 
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) throw new AuthCallError(error);
@@ -122,7 +123,7 @@ export async function resetPasswordWithCode(input: PasswordResetInput): Promise<
   const { email, code, password } = passwordResetSchema.parse(input);
   const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
   if (error) throw new AuthCallError(error);
-  if (!data.session) throw new Error('No se pudo verificar el código.');
+  if (!data.session) throw new Error(i18n.t('errors:auth.codeNotVerified'));
   const { error: updateError } = await supabase.auth.updateUser({ password });
   if (updateError) throw new AuthCallError(updateError);
   return data.session;

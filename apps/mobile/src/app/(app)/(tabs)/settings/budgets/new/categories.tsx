@@ -4,6 +4,7 @@ import { formatCurrency } from '@repo/core/utils';
 import { Button, ErrorCard, PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 
 import { BudgetCategoriesEditor } from '../../../../../../features/budgets/budget-categories-editor';
@@ -13,6 +14,7 @@ import { useBudgetDraft } from '../../../../../../features/budgets/budget-draft-
  * and currency are both locked here — going back to step 1 is the only way
  * to change them. */
 export default function NewBudgetCategories() {
+  const { t } = useTranslation('budgets');
   const router = useRouter();
   const { draft, setDraft } = useBudgetDraft();
   const create = useCreateBudget();
@@ -51,25 +53,25 @@ export default function NewBudgetCategories() {
 
     const parsed = budgetCreateSchema.safeParse(payload);
     if (!parsed.success) {
-      setFieldError(parsed.error.issues[0]?.message ?? 'Revisa los datos');
+      setFieldError(parsed.error.issues[0]?.message ?? 'transactions:form.checkData');
       return;
     }
     create.mutate(parsed.data, {
       onSuccess: () => router.replace('/(app)/settings/budgets'),
-      onError: (e) => setError(e, 'No se pudo guardar el presupuesto'),
+      onError: (e) => setError(e, t('saveFailed')),
     });
   };
 
   return (
     <Screen className="gap-4">
-      <PageHeader title="Elige sus categorías" onBack={() => router.back()} />
+      <PageHeader title={t('pickCategories')} onBack={() => router.back()} />
 
       <View className="gap-1 rounded-2xl bg-lime-tint px-4 py-3 dark:bg-lime-tint-dark">
         <Text
           className="text-xs font-semibold text-lime-ink dark:text-lime-ink-dark"
           numberOfLines={1}
         >
-          {draft.name || 'Presupuesto'}
+          {draft.name || t('budget')}
         </Text>
         <Text className="text-lg font-bold text-ink dark:text-ink-dark">
           {formatCurrency(totalAmount, draft.currency)}
@@ -87,7 +89,7 @@ export default function NewBudgetCategories() {
         <ErrorCard message={fieldError ?? error} />
 
         <Button
-          label="Crear presupuesto"
+          label={t('create')}
           onPress={submit}
           loading={create.isPending}
           disabled={draft.categories.length === 0}

@@ -1,0 +1,53 @@
+{
+  "done": "Done",
+  "cancel": "Cancel",
+  "income": "Income",
+  "expenses": "Expenses",
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "changeMonth": "{{month}} {{year}}, change month",
+  "fixed": "Fixed",
+  "remove": "Remove {{name}}",
+  "add": "Add",
+  "save": "Save",
+  "saveChanges": "Save changes",
+  "delete": "Delete",
+  "keep": "Keep",
+  "discard": "Discard",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "all": "All",
+  "noResults": "No results.",
+  "saveFailed": "Couldn't save",
+  "saveChangesFailed": "Couldn't save the changes",
+  "deleteFailed": "Couldn't delete",
+  "tomorrow": "Tomorrow",
+  "activity": {
+    "created": {
+      "justNow": "Created just now",
+      "today": "Created today",
+      "yesterday": "Created yesterday",
+      "daysAgo_one": "Created {{count}} day ago",
+      "daysAgo_other": "Created {{count}} days ago",
+      "onDate": "Created on {{date}}"
+    }
+  },
+  "archive": "Archive",
+  "unarchive": "Unarchive",
+  "create": "Create",
+  "info": {
+    "created": "Created",
+    "updated": "Last modified",
+    "archived": "Archived",
+    "title": "Details"
+  },
+  "total": "Total",
+  "pending": "Pending",
+  "new": "New",
+  "skip": "Skip",
+  "start": "Get started",
+  "next": "Next",
+  "back": "Back",
+  "close": "Close",
+  "noCategory": "No category"
+}

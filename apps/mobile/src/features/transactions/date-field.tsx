@@ -1,14 +1,16 @@
+import { currentLocale } from '@repo/core/i18n';
 import { addDaysISO, formatDate, getDateFormat, todayISODate } from '@repo/core/utils';
 import { BottomSheet, Chip, GradientFill, ICON_COLORS } from '@repo/ui';
 import * as Haptics from 'expo-haptics';
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeInLeft, FadeInRight } from 'react-native-reanimated';
 
-import { capitalize, monthGrid, WEEKDAYS } from './calendar-grid';
+import { capitalize, monthGrid, weekdayInitials } from './calendar-grid';
 
 interface DateFieldProps {
   value: string;
@@ -44,7 +46,7 @@ function parseISO(value: string): Date | null {
 /** "Lunes 12 de octubre" — the sheet's headline for the chosen day. */
 function longLabel(date: Date): string {
   return capitalize(
-    getDateFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }).format(date),
+    getDateFormat(currentLocale(), { weekday: 'long', day: 'numeric', month: 'long' }).format(date),
   );
 }
 
@@ -91,6 +93,7 @@ function QuickPill({
 }
 
 export function DateField({ value, onChange, showQuickChips = true, placeholder }: DateFieldProps) {
+  const { t } = useTranslation(['transactions', 'common']);
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
 
@@ -133,11 +136,11 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
   }, []);
 
   const monthNames = useMemo(() => {
-    const format = getDateFormat('es-MX', { month: 'long' });
+    const format = getDateFormat(currentLocale(), { month: 'long' });
     return Array.from({ length: 12 }, (_, i) => capitalize(format.format(new Date(2000, i, 1))));
   }, []);
   const shortMonthNames = useMemo(() => {
-    const format = getDateFormat('es-MX', { month: 'short' });
+    const format = getDateFormat(currentLocale(), { month: 'short' });
     return Array.from({ length: 12 }, (_, i) =>
       capitalize(format.format(new Date(2000, i, 1)).replace('.', '')),
     );
@@ -172,20 +175,24 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
   );
 
   const isQuick = value === today || value === yesterday;
-  const fieldLabel = value ? formatDate(value) : (placeholder ?? 'Elegir fecha');
+  const fieldLabel = value ? formatDate(value) : (placeholder ?? t('date.pick'));
 
   return (
     <>
       {showQuickChips ? (
         <View className="flex-row gap-2">
-          <QuickPill label="Hoy" selected={value === today} onPress={() => onChange(today)} />
           <QuickPill
-            label="Ayer"
+            label={t('common:today')}
+            selected={value === today}
+            onPress={() => onChange(today)}
+          />
+          <QuickPill
+            label={t('common:yesterday')}
             selected={value === yesterday}
             onPress={() => onChange(yesterday)}
           />
           <QuickPill
-            label={value && !isQuick ? formatDate(value) : 'Otra fecha'}
+            label={value && !isQuick ? formatDate(value) : t('date.other')}
             selected={Boolean(value) && !isQuick}
             onPress={openPicker}
             icon
@@ -218,18 +225,30 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
           {/* Headline: the chosen day, big — what you're about to change. */}
           <View className="gap-0.5">
             <Text className="text-xs font-semibold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
-              {selectedDate ? selectedDate.getFullYear() : 'Fecha'}
+              {selectedDate ? selectedDate.getFullYear() : t('date.title')}
             </Text>
             <Text className="text-[24px] font-bold tracking-tight text-ink dark:text-ink-dark">
-              {selectedDate ? longLabel(selectedDate) : 'Sin fecha'}
+              {selectedDate ? longLabel(selectedDate) : t('date.none')}
             </Text>
           </View>
 
           {showQuickChips && view === 'calendar' ? (
             <View className="flex-row gap-2">
-              <Chip label="Hoy" selected={value === today} onPress={() => pick(today)} />
-              <Chip label="Ayer" selected={value === yesterday} onPress={() => pick(yesterday)} />
-              <Chip label="Mañana" selected={value === tomorrow} onPress={() => pick(tomorrow)} />
+              <Chip
+                label={t('common:today')}
+                selected={value === today}
+                onPress={() => pick(today)}
+              />
+              <Chip
+                label={t('common:yesterday')}
+                selected={value === yesterday}
+                onPress={() => pick(yesterday)}
+              />
+              <Chip
+                label={t('common:tomorrow')}
+                selected={value === tomorrow}
+                onPress={() => pick(tomorrow)}
+              />
             </View>
           ) : null}
 
@@ -239,7 +258,7 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
               <Pressable
                 onPress={() => setView(view === 'months' ? 'calendar' : 'months')}
                 hitSlop={6}
-                accessibilityLabel="Elegir mes"
+                accessibilityLabel={t('date.pickMonth')}
                 className={`flex-row items-center gap-1 rounded-full px-3 py-1.5 active:opacity-70 ${
                   view === 'months' ? 'bg-ink dark:bg-lime' : 'bg-canvas dark:bg-canvas-dark'
                 }`}
@@ -265,7 +284,7 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
               <Pressable
                 onPress={() => setView(view === 'years' ? 'calendar' : 'years')}
                 hitSlop={6}
-                accessibilityLabel="Elegir año"
+                accessibilityLabel={t('date.pickYear')}
                 className={`flex-row items-center gap-1 rounded-full px-3 py-1.5 active:opacity-70 ${
                   view === 'years' ? 'bg-ink dark:bg-lime' : 'bg-canvas dark:bg-canvas-dark'
                 }`}
@@ -295,7 +314,7 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
                 <Pressable
                   onPress={() => shiftMonth(-1)}
                   hitSlop={6}
-                  accessibilityLabel="Mes anterior"
+                  accessibilityLabel={t('common:previousMonth')}
                   className="h-9 w-9 items-center justify-center rounded-full border border-line active:opacity-60 dark:border-line-dark"
                 >
                   <ChevronLeft size={18} color={dark ? ICON_COLORS.inkDark : ICON_COLORS.ink} />
@@ -303,7 +322,7 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
                 <Pressable
                   onPress={() => shiftMonth(1)}
                   hitSlop={6}
-                  accessibilityLabel="Mes siguiente"
+                  accessibilityLabel={t('common:nextMonth')}
                   className="h-9 w-9 items-center justify-center rounded-full border border-line active:opacity-60 dark:border-line-dark"
                 >
                   <ChevronRight size={18} color={dark ? ICON_COLORS.inkDark : ICON_COLORS.ink} />
@@ -316,8 +335,8 @@ export function DateField({ value, onChange, showQuickChips = true, placeholder 
             <GestureDetector gesture={swipe}>
               <View className="gap-1">
                 <View className="flex-row">
-                  {WEEKDAYS.map((w) => (
-                    <View key={w} className="flex-1 items-center pb-1">
+                  {weekdayInitials().map((w, i) => (
+                    <View key={i} className="flex-1 items-center pb-1">
                       <Text className="text-[11px] font-semibold uppercase text-ink-3 dark:text-ink-3-dark">
                         {w}
                       </Text>

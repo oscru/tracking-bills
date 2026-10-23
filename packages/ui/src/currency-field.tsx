@@ -1,5 +1,8 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, TextInput, View, type TextInputProps } from 'react-native';
+
+import { useTranslatedMessage } from './use-translated-message';
 
 export interface CurrencyFieldProps extends Omit<
   TextInputProps,
@@ -63,14 +66,18 @@ export function CurrencyField({
   value,
   onChangeText,
   currency = 'MXN',
-  locale = 'es-MX',
-  error,
+  locale: localeProp,
+  error: rawError,
   invalid,
   onFocus,
   onBlur,
   ...props
 }: CurrencyFieldProps) {
   const [focused, setFocused] = useState(false);
+  const { i18n } = useTranslation();
+  // The app's formatting locale for its language (see `LOCALE_BY_LANGUAGE` in @repo/core).
+  const locale = localeProp ?? (i18n.language === 'en' ? 'en-US' : 'es-MX');
+  const error = useTranslatedMessage(rawError);
   const symbol = currencySymbol(currency, locale);
 
   const borderClass =

@@ -1,3 +1,4 @@
+import { i18n } from '@repo/core/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccounts, useGoals, useGoalTransactions } from '@repo/core/hooks';
 import {
@@ -21,25 +22,28 @@ import {
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { GoalProgressBar } from '../../../../../features/goals/goal-progress-bar';
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
 
 const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
-  { value: 'active', label: 'Activos' },
-  { value: 'archived', label: 'Archivados' },
+  { value: 'active', label: 'active' },
+  { value: 'archived', label: 'archived' },
 ];
 
 function deadlineLabel(deadline: string | null): string {
-  if (!deadline) return 'Sin fecha límite';
+  if (!deadline) return i18n.t('goals:deadline.none');
   const diff = daysUntil(deadline, todayISODate());
-  if (diff === 0) return 'Vence hoy';
-  if (diff > 0) return `Quedan ${diff} día${diff === 1 ? '' : 's'} · ${formatDate(deadline)}`;
-  return `Venció hace ${Math.abs(diff)} día${Math.abs(diff) === 1 ? '' : 's'} · ${formatDate(deadline)}`;
+  if (diff === 0) return i18n.t('goals:deadline.today');
+  if (diff > 0)
+    return `${i18n.t('goals:deadline.left', { count: diff })} · ${formatDate(deadline)}`;
+  return `${i18n.t('goals:deadline.overdue', { count: Math.abs(diff) })} · ${formatDate(deadline)}`;
 }
 
 export default function GoalsScreen() {
+  const { t } = useTranslation('goals');
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const [status, setStatus] = useState<'active' | 'archived'>('active');
@@ -64,29 +68,31 @@ export default function GoalsScreen() {
 
   useTabBarAction({
     icon: Plus,
-    accessibilityLabel: 'Nuevo objetivo',
+    accessibilityLabel: t('new'),
     onPress: () => router.push('/(app)/settings/goals/new'),
   });
 
   return (
     <Screen edges={['top']} className="gap-4">
-      <PageHeader title="Objetivos" onBack={() => router.back()} />
+      <PageHeader title={t('title')} onBack={() => router.back()} />
 
-      <SegmentedControl options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+      <SegmentedControl
+        options={STATUS_OPTIONS.map((o) => ({ ...o, label: t(`tabs.${o.value}`) }))}
+        value={status}
+        onChange={setStatus}
+      />
 
       {isLoading ? (
         <ActivityIndicator className="mt-8" />
       ) : error ? (
         <View className="mt-8">
-          <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar los objetivos')} />
+          <ErrorCard message={toFriendlyMessage(error, t('loadFailed'))} />
         </View>
       ) : visible.length === 0 ? (
         <EmptyState
           illustration={<GoalsEmptyIllustration />}
-          title={status === 'archived' ? 'Sin objetivos archivados' : 'Sin objetivos todavía'}
-          description={
-            status === 'archived' ? undefined : 'Crea uno para empezar a ahorrar para una meta.'
-          }
+          title={t(status === 'archived' ? 'emptyArchived' : 'empty')}
+          description={status === 'archived' ? undefined : t('emptyHint')}
         />
       ) : (
         <ScrollView
@@ -131,9 +137,9 @@ export default function GoalsScreen() {
                       </Text>
                       <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
                         {g.is_completed
-                          ? 'Completada'
+                          ? t('completed')
                           : progress.isComplete
-                            ? '¡Monto alcanzado!'
+                            ? t('reached')
                             : deadlineLabel(g.deadline)}
                       </Text>
                     </View>

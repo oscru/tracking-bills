@@ -1,6 +1,7 @@
 import type { CategorySpend } from '@repo/core/utils';
 import { formatCurrency } from '@repo/core/utils';
 import { CategoryDot } from '@repo/ui';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
  * the donut chart above it rather than a separate table.
  */
 export function CategorySpendRow({ entry, total, currency, onPress }: Props) {
+  const { t } = useTranslation('home');
   const pct = total > 0 ? entry.total / total : 0;
   const Wrapper = onPress ? Pressable : View;
 
@@ -30,7 +32,7 @@ export function CategorySpendRow({ entry, total, currency, onPress }: Props) {
             {entry.name}
           </Text>
           <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-            {Math.round(pct * 100)}% del mes
+            {t('categorySpend.share', { percent: Math.round(pct * 100) })}
           </Text>
         </View>
         <Text className="text-[15px] font-semibold text-ink dark:text-ink-dark">

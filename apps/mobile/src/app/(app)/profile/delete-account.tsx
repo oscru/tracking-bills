@@ -4,11 +4,11 @@ import { Button, ErrorCard, ICON_COLORS, PageHeader, Screen, TextField } from '@
 import { useRouter } from 'expo-router';
 import { TriangleAlert } from 'lucide-react-native';
 import { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-const CONFIRM_WORD = 'ELIMINAR';
-
 export default function DeleteAccount() {
+  const { t } = useTranslation('profile');
   const router = useRouter();
   const { user } = useSession();
   const signIn = useSignIn();
@@ -28,14 +28,14 @@ export default function DeleteAccount() {
     ? password.length > 0
     : emailConfirm.trim().toLowerCase() === (user?.email ?? '').toLowerCase() &&
       emailConfirm.trim().length > 0;
-  const confirmMatches = confirmText.trim().toUpperCase() === CONFIRM_WORD;
+  const confirmMatches = confirmText.trim().toUpperCase() === t('delete.confirmWord');
   const canSubmit = identityConfirmed && confirmMatches && Boolean(user?.email);
   const submitting = signIn.isPending || deleteAccount.isPending;
 
   const runDelete = () => {
     deleteAccount.mutate(undefined, {
       onSuccess: () => router.replace('/(auth)/sign-in'),
-      onError: (e) => setError(toFriendlyMessage(e, 'No se pudo eliminar la cuenta')),
+      onError: (e) => setError(toFriendlyMessage(e, t('delete.failed'))),
     });
   };
 
@@ -57,33 +57,30 @@ export default function DeleteAccount() {
       { email: user.email, password },
       {
         onSuccess: runDelete,
-        onError: (e) => setError(toFriendlyMessage(e, 'Contraseña incorrecta')),
+        onError: (e) => setError(toFriendlyMessage(e, t('delete.wrongPassword'))),
       },
     );
   };
 
   return (
     <Screen edges={['top', 'bottom']} scroll className="gap-5">
-      <PageHeader title="Eliminar cuenta" onBack={() => router.back()} />
+      <PageHeader title={t('deleteAccount')} onBack={() => router.back()} />
 
       <View className="flex-row gap-3 rounded-2xl bg-danger-tint p-4 dark:bg-danger-tint-dark">
         <TriangleAlert size={20} color={ICON_COLORS.danger} />
         <Text className="flex-1 text-[13px] leading-[18px] text-danger dark:text-danger-dark">
-          Esto elimina tu cuenta
-          {user?.email ? (
-            <>
-              {' '}
-              (<Text className="font-bold">{user.email}</Text>)
-            </>
-          ) : null}{' '}
-          y <Text className="font-bold">todos</Text> tus datos de forma permanente — cuentas,
-          movimientos, presupuestos, metas, categorías y tags. No se puede deshacer.
+          <Trans
+            t={t}
+            i18nKey={user?.email ? 'delete.warning' : 'delete.warningNoEmail'}
+            values={{ email: user?.email ?? '' }}
+            components={{ b: <Text className="font-bold" />, email: <Text /> }}
+          />
         </Text>
       </View>
 
       {hasPassword ? (
         <TextField
-          label="Confirma tu contraseña"
+          label={t('delete.password')}
           value={password}
           onChangeText={(v) => {
             setPassword(v);
@@ -96,7 +93,7 @@ export default function DeleteAccount() {
       ) : (
         <View className="gap-1.5">
           <TextField
-            label="Escribe tu correo para confirmar"
+            label={t('delete.typeEmail')}
             value={emailConfirm}
             onChangeText={(v) => {
               setEmailConfirm(v);
@@ -107,14 +104,13 @@ export default function DeleteAccount() {
             keyboardType="email-address"
           />
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            Iniciaste sesión con Google/Apple, así que no tienes una contraseña que confirmar —
-            escribe el correo con el que creaste tu cuenta ({user?.email}) en su lugar.
+            {t('delete.ssoNote', { email: user?.email ?? '' })}
           </Text>
         </View>
       )}
 
       <TextField
-        label={`Escribe "${CONFIRM_WORD}" para confirmar`}
+        label={t('delete.typeWord', { word: t('delete.confirmWord') })}
         value={confirmText}
         onChangeText={(v) => {
           setConfirmText(v);
@@ -127,7 +123,7 @@ export default function DeleteAccount() {
       <ErrorCard message={error} />
 
       <Button
-        label="Eliminar mi cuenta permanentemente"
+        label={t('delete.submit')}
         variant="ghost-danger"
         disabled={!canSubmit}
         loading={submitting}

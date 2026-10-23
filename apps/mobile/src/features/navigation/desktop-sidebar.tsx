@@ -1,6 +1,7 @@
 import { useNotifications, useProfile, useSession, useSignOut } from '@repo/core/hooks';
 import { GradientFill, ICON_COLORS, useIsWideDesktop } from '@repo/ui';
 import { useRouter, useSegments, type Href } from 'expo-router';
+import type { ParseKeys } from 'i18next';
 import {
   Bell,
   BellRing,
@@ -24,6 +25,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Extrapolation,
@@ -96,27 +98,31 @@ function writeCollapsed(collapsed: boolean) {
  */
 const SETTINGS_ITEMS: {
   segment: string;
-  label: string;
+  labelKey: ParseKeys<'navigation'>;
   icon: LucideIcon;
   /** Somewhere other than its settings screen. */
   href?: Href;
 }[] = [
-  { segment: 'accounts', label: 'Cuentas', icon: WalletCards },
-  { segment: 'categories', label: 'Categorías', icon: Shapes },
-  { segment: 'tags', label: 'Tags', icon: Tag },
-  { segment: 'budgets', label: 'Presupuestos', icon: Gauge },
-  { segment: 'goals', label: 'Objetivos', icon: Target },
-  { segment: 'peers', label: 'Personas', icon: UsersRound },
+  { segment: 'accounts', labelKey: 'settingsItems.accounts', icon: WalletCards },
+  { segment: 'categories', labelKey: 'settingsItems.categories', icon: Shapes },
+  { segment: 'tags', labelKey: 'settingsItems.tags', icon: Tag },
+  { segment: 'budgets', labelKey: 'settingsItems.budgets', icon: Gauge },
+  { segment: 'goals', labelKey: 'settingsItems.goals', icon: Target },
+  { segment: 'peers', labelKey: 'settingsItems.peers', icon: UsersRound },
   // Opens the dashboard's own edit mode (move, resize, add, remove widgets)
   // rather than the phone's widgets-on/off settings screen.
   {
     segment: 'home-layout',
-    label: 'Personalizar dashboard',
+    labelKey: 'settingsItems.homeLayout',
     icon: LayoutTemplate,
     href: { pathname: '/(app)', params: { edit: '1' } },
   },
-  { segment: 'notifications', label: 'Avisos y recordatorios', icon: BellRing },
-  { segment: 'import-export', label: 'Importar y exportar', icon: FileSpreadsheet },
+  { segment: 'notifications', labelKey: 'settingsItems.notifications', icon: BellRing },
+  {
+    segment: 'import-export',
+    labelKey: 'settingsItems.importExport',
+    icon: FileSpreadsheet,
+  },
 ];
 
 const hoverBg =
@@ -127,8 +133,8 @@ const hoverBg =
 type LabelStyle = ComponentProps<typeof Animated.View>['style'];
 
 /** On desktop, Inicio reads as what it is there: the dashboard. */
-function desktopTab(t: AppTab): AppTab {
-  return t.name === 'index' ? { ...t, title: 'Dashboard', icon: LayoutDashboard } : t;
+function desktopTab(tab: AppTab, dashboardTitle: string): AppTab {
+  return tab.name === 'index' ? { ...tab, title: dashboardTitle, icon: LayoutDashboard } : tab;
 }
 
 /** A section inside an expanded group — indented, quieter than a top-level item. */
@@ -363,6 +369,7 @@ function MenuItem({
  * (perfil, preferencias, cerrar sesión). Collapses to an icon rail.
  */
 export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
+  const { t } = useTranslation('navigation');
   const router = useRouter();
   const segments = useSegments() as string[];
   const action = useCurrentTabBarAction();
@@ -481,7 +488,9 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
   const bellButton = (
     <HeaderIconButton
       icon={Bell}
-      label={unreadCount > 0 ? `Notificaciones, ${unreadCount} sin leer` : 'Notificaciones'}
+      label={
+        unreadCount > 0 ? t('notificationsUnread', { count: unreadCount }) : t('notifications')
+      }
       active={onNotifications}
       badge={unreadCount}
       onPress={() => router.push('/(app)/notifications' as Href)}
@@ -489,10 +498,10 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
   );
 
   const ActionIcon = action?.icon ?? Plus;
-  const actionLabel = action?.accessibilityLabel ?? 'Nuevo movimiento';
+  const actionLabel = action?.accessibilityLabel ?? t('newMovement');
   const runAction = action?.onPress ?? (() => router.push('/(app)/new-transaction'));
 
-  const name = profile?.full_name?.trim() || user?.email?.split('@')[0] || 'Tu cuenta';
+  const name = profile?.full_name?.trim() || user?.email?.split('@')[0] || t('yourAccount');
   const go = (href: Href) => {
     setMenuOpen(false);
     router.push(href);
@@ -525,16 +534,20 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
             },
       ]}
     >
-      <MenuItem icon={UserRound} label="Mi perfil" onPress={() => go('/(app)/profile' as Href)} />
+      <MenuItem
+        icon={UserRound}
+        label={t('menu.profile')}
+        onPress={() => go('/(app)/profile' as Href)}
+      />
       <MenuItem
         icon={SlidersHorizontal}
-        label="Preferencias"
+        label={t('menu.preferences')}
         onPress={() => go('/(app)/settings/preferences' as Href)}
       />
       <View className="mx-2 my-1 h-px" style={{ backgroundColor: DIVIDER }} />
       <MenuItem
         icon={LogOut}
-        label="Cerrar sesión"
+        label={t('menu.signOut')}
         danger
         onPress={() => {
           setMenuOpen(false);
@@ -570,7 +583,7 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
               <Pressable
                 onPress={() => router.navigate('/(app)')}
                 accessibilityRole="link"
-                accessibilityLabel="Ir a Inicio"
+                accessibilityLabel={t('goHome')}
                 className={`items-center gap-2.5 active:opacity-70 ${rail ? '' : 'flex-1 flex-row'}`}
               >
                 <View className="h-9 w-9 items-center justify-center overflow-hidden rounded-[11px]">
@@ -633,52 +646,54 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
           {/* Scrolls when the Opciones group makes the list taller than the window. */}
           <ScrollView className="-mx-1 flex-1 px-1" showsVerticalScrollIndicator={false}>
             <View className="gap-1">
-              {tabs.map(desktopTab).map((t) =>
-                t.name === 'settings' ? (
-                  <View key={t.name} className="gap-0.5">
-                    <View ref={optionsRef}>
-                      <NavItem
-                        icon={t.icon}
-                        label={t.title}
-                        collapsed={rail}
-                        labelStyle={labelStyle}
-                        active={inSettings && (rail || settingsSection == null)}
-                        expanded={settingsOpen}
-                        // Only opens/closes the list — pick a section from it. On
-                        // the rail, the list opens as a flyout beside it.
-                        onPress={() => (rail ? toggleFlyout() : setSettingsOpen((open) => !open))}
-                      />
+              {tabs
+                .map((tab) => desktopTab(tab, t('dashboard')))
+                .map((tab) =>
+                  tab.name === 'settings' ? (
+                    <View key={tab.name} className="gap-0.5">
+                      <View ref={optionsRef}>
+                        <NavItem
+                          icon={tab.icon}
+                          label={tab.title}
+                          collapsed={rail}
+                          labelStyle={labelStyle}
+                          active={inSettings && (rail || settingsSection == null)}
+                          expanded={settingsOpen}
+                          // Only opens/closes the list — pick a section from it. On
+                          // the rail, the list opens as a flyout beside it.
+                          onPress={() => (rail ? toggleFlyout() : setSettingsOpen((open) => !open))}
+                        />
+                      </View>
+                      {settingsOpen && !rail ? (
+                        <Animated.View style={labelStyle} className="gap-0.5 pb-1 pt-0.5">
+                          {SETTINGS_ITEMS.map((item) => (
+                            <SubItem
+                              key={item.segment}
+                              icon={item.icon}
+                              label={t(item.labelKey)}
+                              active={settingsSection === item.segment}
+                              onPress={() =>
+                                router.navigate(
+                                  item.href ?? (`/(app)/settings/${item.segment}` as Href),
+                                )
+                              }
+                            />
+                          ))}
+                        </Animated.View>
+                      ) : null}
                     </View>
-                    {settingsOpen && !rail ? (
-                      <Animated.View style={labelStyle} className="gap-0.5 pb-1 pt-0.5">
-                        {SETTINGS_ITEMS.map((item) => (
-                          <SubItem
-                            key={item.segment}
-                            icon={item.icon}
-                            label={item.label}
-                            active={settingsSection === item.segment}
-                            onPress={() =>
-                              router.navigate(
-                                item.href ?? (`/(app)/settings/${item.segment}` as Href),
-                              )
-                            }
-                          />
-                        ))}
-                      </Animated.View>
-                    ) : null}
-                  </View>
-                ) : (
-                  <NavItem
-                    key={t.name}
-                    icon={t.icon}
-                    label={t.title}
-                    collapsed={rail}
-                    labelStyle={labelStyle}
-                    active={!onNotifications && shownTab === t.name}
-                    onPress={() => router.navigate(t.href)}
-                  />
-                ),
-              )}
+                  ) : (
+                    <NavItem
+                      key={tab.name}
+                      icon={tab.icon}
+                      label={tab.title}
+                      collapsed={rail}
+                      labelStyle={labelStyle}
+                      active={!onNotifications && shownTab === tab.name}
+                      onPress={() => router.navigate(tab.href)}
+                    />
+                  ),
+                )}
             </View>
           </ScrollView>
 
@@ -692,7 +707,7 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
               ref={userButtonRef}
               onPress={() => setMenuOpen((open) => !open)}
               accessibilityRole="button"
-              accessibilityLabel="Tu cuenta"
+              accessibilityLabel={t('yourAccount')}
               accessibilityState={{ expanded: menuOpen }}
               style={({ hovered }: { hovered?: boolean }) => ({
                 backgroundColor: menuOpen ? SUB_ACTIVE : hovered ? HOVER : 'transparent',
@@ -754,7 +769,7 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
         <Pressable
           onPress={toggleCollapsed}
           accessibilityRole="button"
-          accessibilityLabel={collapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+          accessibilityLabel={t(collapsed ? 'expandSidebar' : 'collapseSidebar')}
           style={({ hovered }: { hovered?: boolean }) => ({
             width: 24,
             height: 24,
@@ -792,13 +807,13 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
             style={{ color: ON_INK_MUTED }}
             className="px-3 pb-1 pt-1.5 text-[11px] font-bold uppercase tracking-wider"
           >
-            Opciones
+            {t('tabs.settings')}
           </Text>
           {SETTINGS_ITEMS.map((item) => (
             <MenuItem
               key={item.segment}
               icon={item.icon}
-              label={item.label}
+              label={t(item.labelKey)}
               active={settingsSection === item.segment}
               onPress={() => {
                 closeFlyout();

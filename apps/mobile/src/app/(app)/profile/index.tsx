@@ -4,21 +4,14 @@ import { formatDate } from '@repo/core/utils';
 import { Avatar, Button, Fab, PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
-import { LEGAL_LABELS, openLegal } from '../../../features/legal/legal';
+import { openLegal } from '../../../features/legal/legal';
 import { ProfileSkeleton } from '../../../features/profile/profile-skeleton';
 
-const GENDER_LABEL: Record<Gender, string> = {
-  female: 'Femenino',
-  male: 'Masculino',
-  other: 'Otro',
-  prefer_not_to_say: 'Prefiero no decir',
-};
-
-const UNSET_LABEL = 'No especificado';
-
 export default function ProfileScreen() {
+  const { t } = useTranslation(['profile', 'legal']);
   const router = useRouter();
   const { user, loading: loadingSession } = useSession();
   const { data: profile, isLoading: loadingProfile } = useProfile();
@@ -27,20 +20,20 @@ export default function ProfileScreen() {
   const loading = loadingSession || loadingProfile;
 
   const rows = [
-    { label: 'Nombre', value: profile?.full_name ?? UNSET_LABEL },
+    { label: t('name'), value: profile?.full_name ?? t('unset') },
     {
-      label: 'Fecha de nacimiento (opcional)',
-      value: profile?.birth_date ? formatDate(profile.birth_date) : UNSET_LABEL,
+      label: t('birthDateOptional'),
+      value: profile?.birth_date ? formatDate(profile.birth_date) : t('unset'),
     },
     {
-      label: 'Género (opcional)',
-      value: profile?.gender ? GENDER_LABEL[profile.gender] : UNSET_LABEL,
+      label: t('genderOptional'),
+      value: profile?.gender ? t(`genders.${profile.gender as Gender}`) : t('unset'),
     },
   ];
 
   return (
     <Screen edges={['top', 'bottom']} className="gap-5">
-      <PageHeader title="Perfil" onBack={() => router.back()} />
+      <PageHeader title={t('title')} onBack={() => router.back()} />
 
       <View className="flex-1">
         {loading ? (
@@ -68,7 +61,7 @@ export default function ProfileScreen() {
 
             <View className="gap-2">
               <Text className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
-                Legal
+                {t('legal')}
               </Text>
               <View className="overflow-hidden rounded-2xl border border-line dark:border-line-dark">
                 {(['terms', 'privacy', 'cookies'] as const).map((doc, i) => (
@@ -81,7 +74,7 @@ export default function ProfileScreen() {
                     }`}
                   >
                     <Text className="text-base text-ink dark:text-ink-dark">
-                      {LEGAL_LABELS[doc]}
+                      {t(`legal:documents.${doc}`)}
                     </Text>
                     <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text>
                   </Pressable>
@@ -89,8 +82,10 @@ export default function ProfileScreen() {
               </View>
               {profile?.legal_accepted_at ? (
                 <Text className="px-1 text-xs text-ink-3 dark:text-ink-3-dark">
-                  Aceptaste la versión {profile.legal_version} el{' '}
-                  {formatDate(profile.legal_accepted_at.slice(0, 10))}.
+                  {t('acceptedVersion', {
+                    version: profile.legal_version,
+                    date: formatDate(profile.legal_accepted_at.slice(0, 10)),
+                  })}
                 </Text>
               ) : null}
             </View>
@@ -101,7 +96,7 @@ export default function ProfileScreen() {
           <View className="absolute bottom-6 right-5">
             <Fab
               icon={Pencil}
-              accessibilityLabel="Editar perfil"
+              accessibilityLabel={t('edit')}
               onPress={() => router.push('/(app)/profile/edit')}
             />
           </View>
@@ -110,7 +105,7 @@ export default function ProfileScreen() {
 
       <View className="gap-3">
         <Button
-          label="Cerrar sesión"
+          label={t('signOut')}
           variant="secondary"
           loading={signOut.isPending}
           onPress={() => signOut.mutate()}
@@ -120,7 +115,7 @@ export default function ProfileScreen() {
           className="items-center py-2"
         >
           <Text className="text-sm font-medium text-danger dark:text-danger-dark">
-            Eliminar cuenta
+            {t('deleteAccount')}
           </Text>
         </Pressable>
       </View>

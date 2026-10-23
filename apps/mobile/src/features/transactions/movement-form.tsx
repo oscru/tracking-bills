@@ -45,6 +45,7 @@ import {
 } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -110,7 +111,8 @@ const KEYBOARD_TO_KEYPAD: Record<string, KeypadKey> = {
   C: 'clear',
 };
 
-const AMOUNT_ERROR = 'El monto no puede ser cero';
+// A translation key — `ErrorCard` shows it in the current language.
+const AMOUNT_ERROR = 'transactions:form.amountZero';
 
 interface Props {
   mode: 'create' | 'edit';
@@ -126,10 +128,10 @@ interface Props {
   onMinimize?: (snapshot: TransactionDraftSnapshot) => void;
 }
 
-const TYPE_OPTIONS = [
-  { value: 'expense' as const, label: 'Gasto', icon: CircleArrowUp },
-  { value: 'income' as const, label: 'Ingreso', icon: CircleArrowDown },
-  { value: 'transfer' as const, label: 'Transferencia', icon: ArrowLeftRight },
+const TYPE_ICONS = [
+  { value: 'expense' as const, icon: CircleArrowUp },
+  { value: 'income' as const, icon: CircleArrowDown },
+  { value: 'transfer' as const, icon: ArrowLeftRight },
 ];
 
 function prettyExpr(s: string): string {
@@ -152,6 +154,7 @@ export function MovementForm({
   draft,
   onMinimize,
 }: Props) {
+  const { t } = useTranslation(['transactions', 'common']);
   const insets = useSafeAreaInsets();
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
@@ -342,7 +345,7 @@ export function MovementForm({
   const submit = () => {
     setFormError(null);
     if (value == null || value <= 0) return setFormError(AMOUNT_ERROR);
-    if (!fromId) return setFormError('Elige una cuenta');
+    if (!fromId) return setFormError('transactions:form.pickAccount');
 
     const common = {
       account_id: fromId,
@@ -362,8 +365,8 @@ export function MovementForm({
     if (!parsed.success) {
       setFormError(
         type === 'transfer' && !toId && !goalId
-          ? 'Elige la cuenta destino'
-          : (parsed.error.issues[0]?.message ?? 'Revisa los datos'),
+          ? 'transactions:form.pickTarget'
+          : (parsed.error.issues[0]?.message ?? 'transactions:form.checkData'),
       );
       return;
     }
@@ -450,26 +453,29 @@ export function MovementForm({
   // details) and desktop's single two-column screen.
   const header = (
     <View className="flex-row items-center gap-3">
-      <IconButton icon={X} onPress={tryCancel} accessibilityLabel="Cancelar" />
+      <IconButton icon={X} onPress={tryCancel} accessibilityLabel={t('common:cancel')} />
       <Text className="flex-1 text-xl font-bold text-ink dark:text-ink-dark">
-        {mode === 'create' ? 'Nuevo movimiento' : 'Editar movimiento'}
+        {t(mode === 'create' ? 'form.new' : 'form.edit')}
       </Text>
       <IconButton
         icon={Heart}
         filled={saveAsFavorite}
         onPress={() => setSaveAsFavorite((v) => !v)}
-        accessibilityLabel={saveAsFavorite ? 'No guardar como favorito' : 'Guardar como favorito'}
+        accessibilityLabel={t(saveAsFavorite ? 'form.favoriteOff' : 'form.favoriteOn')}
       />
       {onMinimize ? (
-        <IconButton icon={Minus} onPress={minimize} accessibilityLabel="Minimizar" />
+        <IconButton icon={Minus} onPress={minimize} accessibilityLabel={t('form.minimize')} />
       ) : null}
     </View>
   );
-  const typeSwitch = <SegmentedControl options={TYPE_OPTIONS} value={type} onChange={changeType} />;
+  const typeOptions = TYPE_ICONS.map((o) => ({ ...o, label: t(`form.type.${o.value}`) }));
+  const typeSwitch = <SegmentedControl options={typeOptions} value={type} onChange={changeType} />;
   const calculator = (
     <>
       <View className="flex-1 items-center justify-center gap-2">
-        <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">Monto</Text>
+        <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">
+          {t('form.amount')}
+        </Text>
         <AmountDisplay
           display={display}
           hint={hasOp ? prettyExpr(amount) : null}
@@ -477,7 +483,7 @@ export function MovementForm({
         />
         {twoColumns ? (
           <Text className="mt-3 text-xs text-ink-3 dark:text-ink-3-dark">
-            También puedes escribir con tu teclado · Enter para guardar
+            {t('form.keyboardHint')}
           </Text>
         ) : null}
       </View>
@@ -522,26 +528,26 @@ export function MovementForm({
   );
   const fields = (
     <>
-      <Field label="Fecha">
+      <Field label={t('form.date')}>
         <DateField value={date} onChange={setDate} />
       </Field>
 
       {type === 'transfer' ? (
         <>
-          <Field label="De">
+          <Field label={t('form.from')}>
             <Pressable
               onPress={() => setAccountPickerOpen(true)}
               className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
             >
               <Text className="text-base text-ink dark:text-ink-dark">
-                {selectedFromAccount ? selectedFromAccount.name : 'Elige una cuenta'}
+                {selectedFromAccount ? selectedFromAccount.name : t('form.pickAccount')}
               </Text>
               <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                Ver todas ›
+                {t('form.seeAll')}
               </Text>
             </Pressable>
           </Field>
-          <Field label="A">
+          <Field label={t('form.to')}>
             <Pressable
               onPress={() => setToAccountPickerOpen(true)}
               className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
@@ -558,41 +564,41 @@ export function MovementForm({
                   : selectedToPeer
                     ? selectedToPeer.name
                     : goalId
-                      ? `Aportación a “${goalName ?? 'tu meta'}”`
-                      : 'Elige una cuenta'}
+                      ? t('form.goalContribution', { goal: goalName ?? t('form.yourGoal') })
+                      : t('form.pickAccount')}
               </Text>
               <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                Ver todas ›
+                {t('form.seeAll')}
               </Text>
             </Pressable>
           </Field>
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
             {selectedToPeer
-              ? `No cuenta como gasto para ti ni como ingreso para ${selectedToPeer.name}: le llega directo a su cuenta.`
+              ? t('form.peerNote', { name: selectedToPeer.name })
               : goalId && !selectedToAccount
-                ? 'Esta transferencia va hacia una meta de ahorro, no a otra cuenta — elige una cuenta aquí si quieres redirigirla.'
+                ? t('form.goalNote')
                 : selectedFromAccount
-                  ? `No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas en ${selectedFromAccount.currency} (esta app no convierte divisas).`
-                  : 'No cuenta como ingreso ni gasto — solo mueve saldo entre tus cuentas.'}
+                  ? t('form.transferNoteCurrency', { currency: selectedFromAccount.currency })
+                  : t('form.transferNote')}
           </Text>
         </>
       ) : (
         <>
-          <Field label="Cuenta">
+          <Field label={t('form.account')}>
             <Pressable
               onPress={() => setAccountPickerOpen(true)}
               className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
             >
               <Text className="text-base text-ink dark:text-ink-dark">
-                {selectedFromAccount ? selectedFromAccount.name : 'Elige una cuenta'}
+                {selectedFromAccount ? selectedFromAccount.name : t('form.pickAccount')}
               </Text>
               <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                Ver todas ›
+                {t('form.seeAll')}
               </Text>
             </Pressable>
           </Field>
 
-          <Field label="Categoría">
+          <Field label={t('form.category')}>
             <Pressable
               onPress={() => setPickerOpen(true)}
               className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
@@ -614,55 +620,53 @@ export function MovementForm({
                 >
                   {selectedCategory
                     ? resolveCategoryLabel(selectedCategory)
-                    : 'Elige una categoría'}
+                    : t('form.pickCategory')}
                 </Text>
               </View>
               <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                Ver todas ›
+                {t('form.seeAll')}
               </Text>
             </Pressable>
           </Field>
         </>
       )}
 
-      <Field label="Tags">
+      <Field label={t('form.tags')}>
         <Pressable
           onPress={() => setTagPickerOpen(true)}
           className="h-[52px] flex-row items-center justify-between rounded-ctl border border-line bg-surface px-3.5 dark:border-line-dark dark:bg-surface-dark"
         >
           <Text className="text-base text-ink dark:text-ink-dark">
             {tagIds.length === 0
-              ? 'Sin tags'
-              : `${tagIds.length} tag${tagIds.length === 1 ? '' : 's'} seleccionada${tagIds.length === 1 ? '' : 's'}`}
+              ? t('form.noTags')
+              : t('form.tagsSelected', { count: tagIds.length })}
           </Text>
           <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-            Ver todas ›
+            {t('form.seeAll')}
           </Text>
         </Pressable>
         {profile?.travel_mode &&
         profile.travel_trip_tag_id &&
         tagIds.includes(profile.travel_trip_tag_id) ? (
-          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            Se añadió la tag de tu viaje automáticamente — modo viaje está activo.
-          </Text>
+          <Text className="text-xs text-ink-2 dark:text-ink-2-dark">{t('form.travelTag')}</Text>
         ) : null}
       </Field>
 
       <TextField
-        label="Descripción (opcional)"
+        label={t('form.description')}
         value={description}
         onChangeText={setDescription}
-        placeholder="Descripción"
+        placeholder={t('form.descriptionPlaceholder')}
       />
 
       <SwitchRow
-        label="Completada"
+        label={t('form.completed')}
         description={
           isFutureDate
-            ? 'No puede estar completada — la fecha es futura'
+            ? t('form.futureCantComplete')
             : effectiveCompleted
-              ? 'Ya se realizó'
-              : 'Pendiente por realizarse'
+              ? t('form.done')
+              : t('form.pending')
         }
         value={effectiveCompleted}
         onValueChange={setIsCompleted}
@@ -674,19 +678,19 @@ export function MovementForm({
           <View className="flex-row gap-2">
             <View className="flex-1">
               <Button
-                label="Conservar"
+                label={t('common:keep')}
                 variant="secondary"
                 onPress={() => setConfirmDelete(false)}
               />
             </View>
             <View className="flex-1">
-              <Button label="Eliminar" variant="danger" onPress={onDelete} />
+              <Button label={t('common:delete')} variant="danger" onPress={onDelete} />
             </View>
           </View>
         ) : (
           <Pressable onPress={() => setConfirmDelete(true)} className="items-center py-2">
             <Text className="text-sm font-semibold text-danger dark:text-danger-dark">
-              Eliminar movimiento
+              {t('form.delete')}
             </Text>
           </Pressable>
         )
@@ -699,7 +703,7 @@ export function MovementForm({
       style={{ paddingBottom: Math.max(insets.bottom, 12) }}
     >
       <ErrorCard message={formError ?? error} />
-      <Button label="Guardar" onPress={submit} loading={submitting} />
+      <Button label={t('common:save')} onPress={submit} loading={submitting} />
     </View>
   );
   const detailSheets = (
@@ -719,14 +723,14 @@ export function MovementForm({
       <AccountPicker
         visible={accountPickerOpen}
         onClose={() => setAccountPickerOpen(false)}
-        title={type === 'transfer' ? 'Cuenta origen' : 'Cuenta'}
+        title={t(type === 'transfer' ? 'form.fromAccount' : 'form.account')}
         selectedId={fromId}
         onSelect={selectFrom}
       />
       <AccountPicker
         visible={toAccountPickerOpen}
         onClose={() => setToAccountPickerOpen(false)}
-        title="Cuenta destino"
+        title={t('form.toAccount')}
         selectedId={toId}
         onSelect={(id) => {
           setTo(id);
@@ -736,7 +740,7 @@ export function MovementForm({
         currencyFilter={selectedFromAccount?.currency ?? null}
         selectedPeerId={selectedToPeer?.peer_user_id ?? null}
         onSelectPeer={(peerId) => {
-          if (!selectedFromAccount) return setFormError('Elige primero la cuenta origen');
+          if (!selectedFromAccount) return setFormError('transactions:form.pickFromFirst');
           resolvePeerAccount.mutate(
             { peerId, currency: selectedFromAccount.currency },
             {
@@ -744,7 +748,7 @@ export function MovementForm({
                 setTo(id);
                 setGoalId(null);
               },
-              onError: (e) => setFormError(toFriendlyMessage(e, 'No se pudo elegir a esa persona')),
+              onError: (e) => setFormError(toFriendlyMessage(e, t('form.peerFailed'))),
             },
           );
         }}
@@ -752,12 +756,12 @@ export function MovementForm({
       <MultiSelectSheet
         visible={tagPickerOpen}
         onClose={() => setTagPickerOpen(false)}
-        title="Tags"
+        title={t('form.tags')}
         options={tagOptions}
         values={tagIds}
         onChange={setTagIds}
-        searchPlaceholder="Buscar tag…"
-        createLabel="Nueva tag"
+        searchPlaceholder={t('form.searchTag')}
+        createLabel={t('form.newTag')}
         onCreateNew={(name) => {
           setTagCreateName(name);
           setTagQuickCreateOpen(true);
@@ -836,7 +840,7 @@ export function MovementForm({
         {calculator}
         <ErrorCard message={formError} />
         <NumericKeypad onKey={onKey} />
-        <Button label="Continuar" onPress={goToDetails} />
+        <Button label={t('form.continue')} onPress={goToDetails} />
         {amountSheets}
       </Screen>
     );
@@ -851,7 +855,9 @@ export function MovementForm({
         onPress={() => setView('amount')}
         className="items-center rounded-card bg-surface py-4 dark:bg-surface-dark"
       >
-        <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">Monto</Text>
+        <Text className="text-[13px] font-semibold text-ink-2 dark:text-ink-2-dark">
+          {t('form.amount')}
+        </Text>
         <Text className="mt-1 text-3xl font-bold tracking-tight text-ink dark:text-ink-dark">
           {display}
         </Text>

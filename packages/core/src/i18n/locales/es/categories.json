@@ -1,0 +1,106 @@
+{
+  "history": {
+    "title": "Historial",
+    "range": {
+      "all": "Todo",
+      "year": "1 año",
+      "half": "6 meses",
+      "month": "1 mes"
+    },
+    "vsRange": {
+      "year": "vs. los 12 meses anteriores",
+      "half": "vs. los 6 meses anteriores",
+      "month": "vs. los 30 días anteriores"
+    },
+    "chart": {
+      "bar": "Barras",
+      "line": "Línea"
+    },
+    "allChip": "Todas",
+    "empty": "Sin movimientos en este periodo.",
+    "averagePer": {
+      "day": "Promedio por día",
+      "month": "Promedio por mes",
+      "year": "Promedio por año"
+    },
+    "peak": "Más alto · {{label}}",
+    "bySubcategory": "Por subcategoría",
+    "trend": "Tendencia"
+  },
+  "title": "Categorías",
+  "category": "Categoría",
+  "new": "Nueva categoría",
+  "edit": "Editar categoría",
+  "notFound": "Categoría no encontrada.",
+  "search": "Buscar categoría…",
+  "loadFailed": "No se pudieron cargar las categorías",
+  "empty": "Sin categorías todavía",
+  "emptyHint": "Crea una categoría para empezar a clasificar tus movimientos.",
+  "pickTitle": "Elige una categoría",
+  "pickHint": "Su historial de gasto y sus subcategorías aparecen aquí, junto a la lista.",
+  "saveFailed": "No se pudo guardar la categoría",
+  "createFailed": "No se pudo crear la categoría",
+  "type": {
+    "expense": "Gasto",
+    "income": "Ingreso"
+  },
+  "archivedSuffix": " · archivada",
+  "subcategories": "Subcategorías",
+  "deleteForever": "Eliminar definitivamente",
+  "deleteBlocked": {
+    "system": "No puedes eliminarla: es una categoría del sistema.",
+    "notArchived": "No puedes eliminarla: no está archivada.",
+    "hasTransactions": "No puedes eliminarla: tiene movimientos asociados.",
+    "inFavorite": "No puedes eliminarla: está asignada a un movimiento favorito.",
+    "inBudget": "No puedes eliminarla: está asignada a un presupuesto."
+  },
+  "deleteBlockedSub": {
+    "system": "No puedes eliminarla: su subcategoría \"{{name}}\" es una categoría del sistema.",
+    "notArchived": "No puedes eliminarla: su subcategoría \"{{name}}\" no está archivada.",
+    "hasTransactions": "No puedes eliminarla: su subcategoría \"{{name}}\" tiene movimientos asociados.",
+    "inFavorite": "No puedes eliminarla: su subcategoría \"{{name}}\" está asignada a un movimiento favorito.",
+    "inBudget": "No puedes eliminarla: su subcategoría \"{{name}}\" está asignada a un presupuesto."
+  },
+  "info": {
+    "title": "Información de la categoría",
+    "type": "Tipo",
+    "parent": "Categoría principal",
+    "subcategories": "Subcategorías",
+    "origin": "Origen",
+    "system": "Del sistema",
+    "yours": "Creada por ti",
+    "first": "Primer movimiento",
+    "last": "Último movimiento",
+    "none": "Ninguno"
+  },
+  "archiveTitle": "¿Archivar categoría?",
+  "archiveBody": "Dejará de aparecer para elegirla en movimientos nuevos, pero los movimientos que ya la tienen la conservan. Puedes desarchivarla cuando quieras.",
+  "archiveBodySubs_one": "Dejará de aparecer para elegirla en movimientos nuevos. Esto también archivará {{count}} subcategoría: {{names}}. Los movimientos que ya las tienen las conservan. Puedes desarchivar cada una cuando quieras.",
+  "archiveBodySubs_other": "Dejará de aparecer para elegirla en movimientos nuevos. Esto también archivará {{count}} subcategorías: {{names}}. Los movimientos que ya las tienen las conservan. Puedes desarchivar cada una cuando quieras.",
+  "deleteTitle": "¿Eliminar categoría?",
+  "deleteBody": "Esta acción no se puede deshacer.",
+  "deleteBodySubs_one": "Esto también eliminará {{count}} subcategoría: {{names}}. Esta acción no se puede deshacer.",
+  "deleteBodySubs_other": "Esto también eliminará {{count}} subcategorías: {{names}}. Esta acción no se puede deshacer.",
+  "form": {
+    "name": "Nombre",
+    "namePlaceholder": "Ej. Mascota",
+    "type": "Tipo",
+    "typeLocked": "No puedes cambiar el tipo mientras tenga subcategorías. Muévelas o elimínalas primero.",
+    "parent": "Categoría superior",
+    "none": "Ninguna",
+    "pick": "Elegir ›",
+    "color": "Color",
+    "parentOptional": "Categoría superior (opcional)",
+    "subcategoryNote": "Se creará como subcategoría (hereda el tipo)."
+  },
+  "picker": {
+    "parentTitle": "Categoría superior",
+    "topLevel": "Ninguna (categoría de primer nivel)",
+    "none": "Sin categoría",
+    "createTyped": "Crear «{{name}}»",
+    "frequent": "Frecuentes"
+  },
+  "noResultsFor": "Sin resultados para “{{query}}”.",
+  "subcategoriesCount_one": "{{count}} subcategoría",
+  "subcategoriesCount_other": "{{count}} subcategorías"
+}

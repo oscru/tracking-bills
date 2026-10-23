@@ -12,14 +12,16 @@ import {
   type HomeGrid,
   type HomeLayoutItem,
 } from '@repo/core/utils';
+import { i18n } from '@repo/core/i18n';
 import { BottomSheet, Button, ErrorCard, ICON_COLORS } from '@repo/ui';
 import { Lock, Plus, RotateCcw } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { WIDGET_META } from './widget-catalog';
+import { useWidgetMeta } from './widget-catalog';
 
 /**
  * Home's edit mode — the phone-home-screen way of customizing it, on the
@@ -90,7 +92,7 @@ export function useHomeEditor(profile: Profile | undefined, device: GridDevice) 
           {
             onError: (e) => {
               setDraft(attempted);
-              setSaveError(toFriendlyMessage(e, 'No se pudo guardar tu inicio. Intenta de nuevo.'));
+              setSaveError(toFriendlyMessage(e, i18n.t('home:editor.saveFailed')));
             },
           },
         );
@@ -144,6 +146,7 @@ export function useHomeEditor(profile: Profile | undefined, device: GridDevice) 
 
 /** Wraps the balance and month cards in edit mode: they can't move or go away. */
 export function FixedInEdit({ editing, children }: { editing: boolean; children: ReactNode }) {
+  const { t } = useTranslation();
   if (!editing) return <>{children}</>;
   return (
     <View>
@@ -153,7 +156,9 @@ export function FixedInEdit({ editing, children }: { editing: boolean; children:
       <View pointerEvents="none" className="absolute -top-2.5 right-4">
         <View className="flex-row items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-1 dark:border-line-dark dark:bg-surface-dark">
           <Lock size={11} color={ICON_COLORS.ink3} />
-          <Text className="text-[11px] font-semibold text-ink-2 dark:text-ink-2-dark">Fijo</Text>
+          <Text className="text-[11px] font-semibold text-ink-2 dark:text-ink-2-dark">
+            {t('fixed')}
+          </Text>
         </View>
       </View>
     </View>
@@ -181,6 +186,7 @@ export function EditToolbar({
   /** The last save failed — shown under the bar. */
   error?: string | null;
 }) {
+  const { t } = useTranslation(['home', 'common']);
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   return (
@@ -189,26 +195,26 @@ export function EditToolbar({
       <View className="flex-row items-center gap-3 rounded-card border-2 border-dashed border-lime-ink/40 bg-lime-tint/60 px-4 py-3 dark:border-lime-ink-dark/40 dark:bg-lime-tint-dark/60">
         <View className="flex-1">
           <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
-            Personalizando tu inicio
+            {t('editor.title')}
           </Text>
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            {compact
-              ? 'Mantén presionado y arrastra · toca − para quitar'
-              : 'Arrastra para mover · toca − para quitar'}
+            {compact ? t('editor.hintTouch') : t('editor.hintMouse')}
           </Text>
         </View>
         <Pressable
           onPress={onOpenAdd}
           hitSlop={6}
           accessibilityRole="button"
-          accessibilityLabel={`Agregar widgets (${addCount} disponibles)`}
+          accessibilityLabel={t('editor.addA11y', { count: addCount })}
           className={`flex-row items-center gap-1.5 rounded-full bg-ink py-2 active:opacity-80 dark:bg-lime ${
             compact ? 'px-2.5' : 'px-3.5'
           }`}
         >
           <Plus size={15} color={dark ? ICON_COLORS.ink : ICON_COLORS.lime} strokeWidth={2.5} />
           {compact ? null : (
-            <Text className="text-sm font-semibold text-white dark:text-ink">Agregar</Text>
+            <Text className="text-sm font-semibold text-white dark:text-ink">
+              {t('common:add')}
+            </Text>
           )}
           {addCount > 0 ? (
             <View className="min-w-[18px] items-center rounded-full bg-lime px-1 dark:bg-ink">
@@ -225,7 +231,7 @@ export function EditToolbar({
           >
             <RotateCcw size={14} color={dark ? ICON_COLORS.ink2Dark : ICON_COLORS.ink2} />
             <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-              Restablecer
+              {t('editor.reset')}
             </Text>
           </Pressable>
         )}
@@ -235,10 +241,12 @@ export function EditToolbar({
           accessibilityRole="button"
           className="rounded-full px-3 py-2 active:opacity-70"
         >
-          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Cancelar</Text>
+          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
+            {t('common:cancel')}
+          </Text>
         </Pressable>
         <View style={{ width: compact ? 92 : 110 }}>
-          <Button label="Listo" onPress={onDone} />
+          <Button label={t('common:done')} onPress={onDone} />
         </View>
       </View>
       {error ? (
@@ -266,26 +274,26 @@ export function AddWidgetsSheet({
   available: HomeLayoutItem[];
   onAdd: (key: HomeLayoutItem) => void;
 }) {
+  const widgetMeta = useWidgetMeta();
+  const { t } = useTranslation('home');
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Agregar widgets">
+    <BottomSheet visible={visible} onClose={onClose} title={t('editor.addTitle')}>
       <View className="gap-3 px-5 pb-6">
-        <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-          Se colocan en el primer espacio libre de tu inicio.
-        </Text>
+        <Text className="text-xs text-ink-2 dark:text-ink-2-dark">{t('editor.addHint')}</Text>
         {available.length === 0 ? (
           <View className="items-center rounded-2xl border-2 border-dashed border-line px-4 py-6 dark:border-line-dark">
             <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-              Ya tienes todos 🙌
+              {t('editor.allAdded')}
             </Text>
             <Text className="mt-0.5 text-center text-xs text-ink-3 dark:text-ink-3-dark">
-              Quita uno con − y aparecerá aquí.
+              {t('editor.allAddedHint')}
             </Text>
           </View>
         ) : (
           available.map((key) => {
-            const meta = WIDGET_META[key];
+            const meta = widgetMeta(key);
             return (
               <Pressable
                 key={key}
@@ -294,7 +302,7 @@ export function AddWidgetsSheet({
                   onClose();
                 }}
                 accessibilityRole="button"
-                accessibilityLabel={`Agregar ${meta.label}`}
+                accessibilityLabel={t('editor.addWidget', { name: meta.label })}
                 className="flex-row items-center gap-3 rounded-2xl border border-line p-3 active:opacity-70 dark:border-line-dark"
               >
                 <View className="h-10 w-10 items-center justify-center rounded-xl bg-lime-tint dark:bg-lime-tint-dark">

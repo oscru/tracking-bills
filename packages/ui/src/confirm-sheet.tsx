@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { BottomSheet } from './bottom-sheet';
@@ -25,16 +26,17 @@ export function ConfirmSheet({
   title,
   description,
   confirmLabel,
-  cancelLabel = 'Cancelar',
+  cancelLabel,
   onCancel,
   onConfirm,
   destructive = true,
 }: ConfirmSheetProps) {
+  const { t } = useTranslation('common');
   return (
     <BottomSheet visible={visible} onClose={onCancel} title={title}>
       <View className="gap-3 px-5 pb-4 pt-2">
         <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{description}</Text>
-        <Button label={cancelLabel} variant="secondary" onPress={onCancel} />
+        <Button label={cancelLabel ?? t('cancel')} variant="secondary" onPress={onCancel} />
         <Pressable onPress={onConfirm} className="items-center py-2">
           <Text
             className={`text-sm font-semibold ${

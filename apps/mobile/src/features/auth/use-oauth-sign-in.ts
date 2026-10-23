@@ -1,3 +1,4 @@
+import { i18n } from '@repo/core/i18n';
 import { completeOAuthSignIn, startOAuthSignIn, type OAuthProvider } from '@repo/core/supabase';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
@@ -19,7 +20,7 @@ export function useOAuthSignIn() {
       const authUrl = await startOAuthSignIn(provider, redirectTo);
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectTo);
       if (result.type !== 'success') {
-        throw new Error('Inicio de sesión cancelado');
+        throw new Error(i18n.t('auth:sso.cancelled'));
       }
       return completeOAuthSignIn(result.url);
     },

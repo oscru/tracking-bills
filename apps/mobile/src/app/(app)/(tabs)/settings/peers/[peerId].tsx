@@ -1,3 +1,4 @@
+import { currentLocale } from '@repo/core/i18n';
 import {
   useAccounts,
   useSetPeerReceiveAccount,
@@ -5,7 +6,7 @@ import {
   useUnlinkPeer,
 } from '@repo/core/hooks';
 import type { TransactionWithRefs } from '@repo/core/supabase';
-import { formatCurrency, formatDate, toFriendlyMessage } from '@repo/core/utils';
+import { getDateFormat, formatCurrency, formatDate, toFriendlyMessage } from '@repo/core/utils';
 import {
   Button,
   Chip,
@@ -18,14 +19,13 @@ import {
 } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountPicker } from '../../../../../features/accounts/account-picker';
 import { SplitColumns } from '../../../../../features/design/split-columns';
 import { PersonAvatar, netLabel } from '../../../../../features/peers/person-ui';
 import { usePeople } from '../../../../../features/peers/use-people';
-
-const MONTH = new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric' });
 
 /** One transfer between you: which way it went, through which of your accounts. */
 function TransferRow({
@@ -37,11 +37,12 @@ function TransferRow({
   contactIds: Set<string>;
   onPress: () => void;
 }) {
+  const { t } = useTranslation('peers');
   // Sent: your account → their contact account. Received: the reverse.
   const sent = tx.to_account_id != null && contactIds.has(tx.to_account_id);
   const mine = sent ? tx.account : tx.to_account;
   const currency = tx.account?.currency ?? tx.to_account?.currency ?? 'MXN';
-  const title = tx.description?.trim() || (sent ? 'Le enviaste' : 'Te envió');
+  const title = tx.description?.trim() || t(sent ? 'detail.youSent' : 'detail.theySent');
   return (
     <Pressable onPress={onPress} className="flex-row items-center gap-3 py-3 active:opacity-60">
       <View
@@ -60,8 +61,11 @@ function TransferRow({
           {title}
         </Text>
         <Text className="text-xs text-ink-3 dark:text-ink-3-dark" numberOfLines={1}>
-          {sent ? 'Desde' : 'A'} {mine?.name ?? 'una cuenta'} · {formatDate(tx.transaction_date)}
-          {tx.is_completed ? '' : ' · pendiente'}
+          {t(sent ? 'detail.fromAccount' : 'detail.toAccount', {
+            account: mine?.name ?? t('detail.anAccount'),
+          })}{' '}
+          · {formatDate(tx.transaction_date)}
+          {tx.is_completed ? '' : t('detail.pendingSuffix')}
         </Text>
       </View>
       <Text
@@ -83,6 +87,7 @@ function TransferRow({
  * unlinking.
  */
 export default function PersonDetail() {
+  const { t } = useTranslation('peers');
   const { peerId } = useLocalSearchParams<{ peerId: string }>();
   const router = useRouter();
   const scrollPadding = useTabBarScrollPadding();
@@ -137,7 +142,9 @@ export default function PersonDetail() {
       let group = groups.at(-1);
       if (!group || group.key !== key) {
         const [y, m] = key.split('-').map(Number);
-        const label = MONTH.format(new Date(y!, m! - 1, 1));
+        const label = getDateFormat(currentLocale(), { month: 'long', year: 'numeric' }).format(
+          new Date(y!, m! - 1, 1),
+        );
         group = { key, label: label[0]!.toUpperCase() + label.slice(1), items: [] };
         groups.push(group);
       }
@@ -156,7 +163,7 @@ export default function PersonDetail() {
   if (!person) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Persona no encontrada.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
@@ -172,12 +179,10 @@ export default function PersonDetail() {
         <PersonAvatar name={person.name} muted={!person.link} size={52} />
         <View className="flex-1">
           <Text className="text-sm font-semibold text-ink dark:text-ink-dark">
-            {person.link ? 'Vinculada' : 'Ya no vinculada'}
+            {t(person.link ? 'detail.linkedStatus' : 'detail.unlinkedStatus')}
           </Text>
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            {person.link
-              ? 'Pueden enviarse transferencias.'
-              : 'Ya no pueden enviarse transferencias; su historial se conserva.'}
+            {person.link ? t('detail.canSend') : t('detail.cantSend')}
           </Text>
         </View>
       </View>
@@ -185,12 +190,12 @@ export default function PersonDetail() {
       {/* One headline per currency: who has sent the other more. */}
       {person.accounts.length === 0 ? (
         <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-          Aún no se han enviado nada. Haz una transferencia y elige a {person.name} como destino.
+          {t('detail.nothingYet', { name: person.name })}
         </Text>
       ) : (
         person.accounts.map((a) => {
           const net = person.net.get(a.currency) ?? 0;
-          const t = totals.get(a.currency) ?? { sent: 0, received: 0 };
+          const total = totals.get(a.currency) ?? { sent: 0, received: 0 };
           return (
             <HeroCard key={a.id} contentStyle={{ gap: 6 }}>
               <Text className="text-[13px] font-semibold text-white/60">
@@ -200,8 +205,10 @@ export default function PersonDetail() {
                 {formatCurrency(Math.abs(net), a.currency)}
               </Text>
               <Text className="text-xs text-white/60">
-                Enviado {formatCurrency(t.sent, a.currency)} · Recibido{' '}
-                {formatCurrency(t.received, a.currency)}
+                {t('detail.sentReceived', {
+                  sent: formatCurrency(total.sent, a.currency),
+                  received: formatCurrency(total.received, a.currency),
+                })}
               </Text>
             </HeroCard>
           );
@@ -211,24 +218,23 @@ export default function PersonDetail() {
       {person.link ? (
         <View className="gap-2 rounded-card bg-surface p-4 dark:bg-surface-dark">
           <Text className="text-xs font-semibold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
-            Lo que te envía llega a
+            {t('detail.receivesIn')}
           </Text>
           {person.accounts.filter((a) => a.receive_into_account_id).length === 0 ? (
-            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-              Aún no eliges dónde recibir.
-            </Text>
+            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{t('detail.noReceive')}</Text>
           ) : (
             person.accounts
               .filter((a) => a.receive_into_account_id)
               .map((a) => (
                 <Text key={a.id} className="text-sm text-ink dark:text-ink-dark">
-                  {accountName(a.receive_into_account_id) ?? 'Cuenta archivada'} · {a.currency}
+                  {accountName(a.receive_into_account_id) ?? t('detail.archivedAccount')} ·{' '}
+                  {a.currency}
                 </Text>
               ))
           )}
           <Pressable onPress={() => setReceiveOpen(true)} hitSlop={6} className="self-start">
             <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Cambiar o agregar otra divisa ›
+              {t('detail.changeCurrency')}
             </Text>
           </Pressable>
         </View>
@@ -238,7 +244,7 @@ export default function PersonDetail() {
 
       {person.link ? (
         <Button
-          label="Desvincular"
+          label={t('detail.unlink')}
           variant="ghost-danger"
           loading={unlink.isPending}
           onPress={() => setConfirmUnlink(true)}
@@ -249,10 +255,14 @@ export default function PersonDetail() {
 
   const history = (
     <View className="gap-3">
-      <Text className="text-base font-bold text-ink dark:text-ink-dark">Historial</Text>
+      <Text className="text-base font-bold text-ink dark:text-ink-dark">{t('detail.history')}</Text>
       {currencies.length > 1 ? (
         <View className="flex-row flex-wrap gap-2">
-          <Chip label="Todas" selected={currency == null} onPress={() => setCurrency(null)} />
+          <Chip
+            label={t('detail.all')}
+            selected={currency == null}
+            onPress={() => setCurrency(null)}
+          />
           {currencies.map((c) => (
             <Chip key={c} label={c} selected={currency === c} onPress={() => setCurrency(c)} />
           ))}
@@ -261,7 +271,7 @@ export default function PersonDetail() {
       {loadingTx ? (
         <ActivityIndicator className="mt-4" />
       ) : months.length === 0 ? (
-        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">Sin transferencias todavía.</Text>
+        <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{t('noTransfers')}.</Text>
       ) : (
         months.map((m) => (
           <View key={m.key} className="gap-1">
@@ -303,22 +313,22 @@ export default function PersonDetail() {
       <AccountPicker
         visible={receiveOpen}
         onClose={() => setReceiveOpen(false)}
-        title="¿En qué cuenta recibes?"
+        title={t('whichAccount')}
         selectedId={null}
         onSelect={(accountId) => {
           setError(null);
           setReceive.mutate(
             { peerId: person.peerId, accountId },
-            { onError: (e) => setError(toFriendlyMessage(e, 'No se pudo guardar')) },
+            { onError: (e) => setError(toFriendlyMessage(e, t('detail.saveFailed'))) },
           );
         }}
       />
 
       <ConfirmSheet
         visible={confirmUnlink}
-        title={`¿Desvincularte de ${person.name}?`}
-        description="Ya no podrán enviarse transferencias. Las que ya se hicieron se conservan en las cuentas de los dos, y aquí seguirás viendo su historial."
-        confirmLabel="Desvincular"
+        title={t('detail.unlinkTitle', { name: person.name })}
+        description={t('detail.unlinkBody')}
+        confirmLabel={t('detail.unlink')}
         destructive
         onCancel={() => setConfirmUnlink(false)}
         onConfirm={() => {
@@ -326,7 +336,7 @@ export default function PersonDetail() {
           if (!person.link) return;
           setError(null);
           unlink.mutate(person.link.linkId, {
-            onError: (e) => setError(toFriendlyMessage(e, 'No se pudo desvincular')),
+            onError: (e) => setError(toFriendlyMessage(e, t('detail.unlinkFailed'))),
           });
         }}
       />

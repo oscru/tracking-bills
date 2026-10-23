@@ -27,6 +27,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Calendar, ChevronDown, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AnalyticsSkeleton } from '../../../features/analytics/analytics-skeleton';
@@ -42,28 +43,30 @@ import { DayDetailCard } from '../../../features/analytics/day-detail-card';
 import { InsightsStrip } from '../../../features/analytics/insights-strip';
 import { MonthPickerSheet } from '../../../features/home/month-picker-sheet';
 import { MonthlyTrendChart } from '../../../features/home/monthly-trend-chart';
+import { weekdayInitials } from '../../../features/transactions/calendar-grid';
 
-const WEEKDAY_HEADER = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-
-const PERIOD_OPTIONS: SegmentedOption<AnalyticsPeriod>[] = [
-  { value: 'week', label: 'Semana' },
-  { value: 'month', label: 'Mes' },
-  { value: 'year', label: 'Año' },
-];
+const PERIODS: AnalyticsPeriod[] = ['week', 'month', 'year'];
 
 type ViewMode = 'calendar' | 'trend';
 
-const VIEW_OPTIONS: SegmentedOption<ViewMode>[] = [
-  { value: 'calendar', label: 'Calendario', icon: Calendar },
-  { value: 'trend', label: 'Tendencia', icon: TrendingUp },
-];
+const VIEW_ICONS = { calendar: Calendar, trend: TrendingUp } as const;
 
-const METRIC_OPTIONS: SegmentedOption<HeatmapVariant>[] = [
-  { value: 'expense', label: 'Gastos' },
-  { value: 'income', label: 'Ingresos' },
-];
+const METRICS: HeatmapVariant[] = ['expense', 'income'];
 
 export default function AnalyticsScreen() {
+  const { t } = useTranslation(['analytics', 'common']);
+  const weekdays = weekdayInitials();
+  const PERIOD_OPTIONS: SegmentedOption<AnalyticsPeriod>[] = PERIODS.map((value) => ({
+    value,
+    label: t(`period.${value}`),
+  }));
+  const VIEW_OPTIONS: SegmentedOption<ViewMode>[] = (['calendar', 'trend'] as const).map(
+    (value) => ({ value, label: t(`view.${value}`), icon: VIEW_ICONS[value] }),
+  );
+  const METRIC_OPTIONS: SegmentedOption<HeatmapVariant>[] = METRICS.map((value) => ({
+    value,
+    label: t(value === 'income' ? 'common:income' : 'common:expenses'),
+  }));
   const scrollPadding = useTabBarScrollPadding();
   // Wide desktop: two columns (below). Compact desktop stacks them, as on phones.
   const twoColumns = useIsWideDesktop();
@@ -219,7 +222,7 @@ export default function AnalyticsScreen() {
 
   return (
     <Screen edges={['top']} className="gap-5" width="wide">
-      <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Análisis</Text>
+      <Text className="text-2xl font-bold text-ink dark:text-ink-dark">{t('title')}</Text>
 
       <SegmentedControl
         options={PERIOD_OPTIONS}
@@ -248,7 +251,7 @@ export default function AnalyticsScreen() {
       ) : null}
 
       <View className="flex-row items-center justify-center gap-4">
-        <Pressable onPress={() => shift(-1)} hitSlop={10} accessibilityLabel="Periodo anterior">
+        <Pressable onPress={() => shift(-1)} hitSlop={10} accessibilityLabel={t('previousPeriod')}>
           <ChevronLeft size={22} color={ICON_COLORS.ink3} />
         </Pressable>
         {period === 'month' ? (
@@ -271,7 +274,7 @@ export default function AnalyticsScreen() {
           onPress={() => shift(1)}
           hitSlop={10}
           disabled={insights.isCurrentPeriod}
-          accessibilityLabel="Periodo siguiente"
+          accessibilityLabel={t('nextPeriod')}
         >
           <ChevronRight size={22} color={insights.isCurrentPeriod ? '#D1D5DB' : ICON_COLORS.ink3} />
         </Pressable>
@@ -329,7 +332,7 @@ export default function AnalyticsScreen() {
                     <CalendarHeatmap
                       cells={heatmapCells}
                       columns={columns}
-                      weekdayHeader={period === 'year' ? undefined : WEEKDAY_HEADER}
+                      weekdayHeader={period === 'year' ? undefined : weekdays}
                       selectedKey={selectedDate}
                       onSelect={handleSelectCell}
                       variant={heatmapMetric}
@@ -393,7 +396,7 @@ export default function AnalyticsScreen() {
                   <CalendarHeatmap
                     cells={heatmapCells}
                     columns={columns}
-                    weekdayHeader={period === 'year' ? undefined : WEEKDAY_HEADER}
+                    weekdayHeader={period === 'year' ? undefined : weekdays}
                     selectedKey={selectedDate}
                     onSelect={handleSelectCell}
                     variant={heatmapMetric}

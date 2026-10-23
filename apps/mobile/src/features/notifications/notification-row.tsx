@@ -1,3 +1,4 @@
+import { i18n } from '@repo/core/i18n';
 import type { NotificationItem } from '@repo/core/hooks';
 import type { NotificationCategory, NotificationSeverity } from '@repo/core/notifications';
 import { daysUntil, formatDate, todayISODate } from '@repo/core/utils';
@@ -13,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 const CATEGORY_ICON: Record<NotificationCategory, LucideIcon> = {
@@ -50,9 +52,9 @@ function severityStyle(severity: NotificationSeverity, dark: boolean) {
 
 function relativeDay(iso: string): string {
   const days = daysUntil(todayISODate(), iso);
-  if (days <= 0) return 'Hoy';
-  if (days === 1) return 'Ayer';
-  if (days < 7) return `Hace ${days} días`;
+  if (days <= 0) return i18n.t('common:today');
+  if (days === 1) return i18n.t('common:yesterday');
+  if (days < 7) return i18n.t('notifications:center.daysAgo', { count: days });
   return formatDate(iso);
 }
 
@@ -65,6 +67,7 @@ export function NotificationRow({
   onPress: () => void;
   onDismiss: () => void;
 }) {
+  const { t } = useTranslation('notifications');
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const style = severityStyle(item.severity, dark);
@@ -79,7 +82,7 @@ export function NotificationRow({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityHint={item.read ? undefined : 'Sin leer'}
+      accessibilityHint={item.read ? undefined : t('center.unread')}
       className="flex-row gap-3 px-4 py-3.5 active:opacity-70"
     >
       <View className={`h-10 w-10 items-center justify-center rounded-full ${style.tile}`}>
@@ -110,7 +113,7 @@ export function NotificationRow({
         onPress={onDismiss}
         hitSlop={10}
         accessibilityRole="button"
-        accessibilityLabel="Descartar notificación"
+        accessibilityLabel={t('center.dismiss')}
         className="h-6 w-6 items-center justify-center rounded-full active:opacity-60"
       >
         <X size={16} color={ICON_COLORS.ink3} />

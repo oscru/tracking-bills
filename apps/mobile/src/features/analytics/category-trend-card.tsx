@@ -1,5 +1,6 @@
 import type { CategoryTrend } from '@repo/core/utils';
 import { CategoryDot } from '@repo/ui';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 const TOP_N = 3;
@@ -12,8 +13,11 @@ interface Props {
 }
 
 export function TrendBadge({ pct, metric }: { pct: number | null; metric: 'expense' | 'income' }) {
+  const { t } = useTranslation('common');
   if (pct == null) {
-    return <Text className="text-[13px] font-semibold text-ink-3 dark:text-ink-3-dark">Nuevo</Text>;
+    return (
+      <Text className="text-[13px] font-semibold text-ink-3 dark:text-ink-3-dark">{t('new')}</Text>
+    );
   }
   const rounded = Math.round(pct);
   if (rounded === 0) {
@@ -35,20 +39,18 @@ export function TrendBadge({ pct, metric }: { pct: number | null; metric: 'expen
 /** Which categories are climbing or shrinking vs. the previous period —
  * `categoryTrend`'s top 3, biggest current amount first. */
 export function CategoryTrendCard({ trend, onSeeAll, metric = 'expense' }: Props) {
+  const { t } = useTranslation('analytics');
   const top = trend.slice(0, TOP_N);
-  const emptyLabel =
-    metric === 'income' ? 'Sin ingresos en este periodo.' : 'Sin gastos en este periodo.';
+  const emptyLabel = t(`emptyPeriod.${metric}`);
 
   return (
     <View className="gap-3 rounded-card bg-surface p-5 dark:bg-surface-dark">
       <View className="flex-row items-center justify-between">
-        <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
-          Categorías en tendencia
-        </Text>
+        <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">{t('trending')}</Text>
         {onSeeAll ? (
           <Pressable onPress={onSeeAll} hitSlop={8}>
             <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Ver todas ›
+              {t('seeAll')}
             </Text>
           </Pressable>
         ) : null}

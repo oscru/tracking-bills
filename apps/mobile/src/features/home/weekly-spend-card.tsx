@@ -9,9 +9,11 @@ import {
   todayISODate,
 } from '@repo/core/utils';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
-const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+import { weekdayInitials } from '../transactions/calendar-grid';
+
 const BAR_MAX_HEIGHT = 40;
 // `fill`: the weekday letters under the bars, and the shortest bars may get.
 const DAY_LABEL_HEIGHT = 20;
@@ -30,6 +32,8 @@ interface Props {
  * and a Mon–Sun mini bar chart. Taps through to the full Análisis tab. One
  * section per currency present, never blended together. */
 export function WeeklySpendCard({ onPress, fill = false }: Props) {
+  const { t } = useTranslation('home');
+  const weekdays = weekdayInitials();
   // `fill`: the height left for the bars (one currency; several stack at the fixed height).
   const [barsArea, setBarsArea] = useState(0);
   const now = useMemo(() => new Date(), []);
@@ -63,10 +67,10 @@ export function WeeklySpendCard({ onPress, fill = false }: Props) {
     >
       <View className="flex-row items-center justify-between">
         <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-          Gastos de la semana
+          {t('weeklySpend.title')}
         </Text>
         <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-          Ver análisis ›
+          {t('weeklySpend.seeInsights')}
         </Text>
       </View>
 
@@ -103,8 +107,9 @@ export function WeeklySpendCard({ onPress, fill = false }: Props) {
                   </Text>
                   {changeColorClass ? (
                     <Text className={`text-[13px] font-semibold ${changeColorClass}`}>
-                      {changeUp ? '+' : ''}
-                      {Math.round(insights.pctChangeVsPrevious ?? 0)}% vs. semana pasada
+                      {t('weeklySpend.vsLastWeek', {
+                        change: `${changeUp ? '+' : ''}${Math.round(insights.pctChangeVsPrevious ?? 0)}`,
+                      })}
                     </Text>
                   ) : null}
                 </View>
@@ -135,7 +140,7 @@ export function WeeklySpendCard({ onPress, fill = false }: Props) {
                               : 'text-ink-3 dark:text-ink-3-dark'
                           }`}
                         >
-                          {WEEKDAY_LABELS[i]}
+                          {weekdays[i]}
                         </Text>
                       </View>
                     );
@@ -147,7 +152,7 @@ export function WeeklySpendCard({ onPress, fill = false }: Props) {
         </View>
       ) : (
         <Text className="py-2 text-sm text-ink-2 dark:text-ink-2-dark">
-          Sin gastos esta semana todavía.
+          {t('weeklySpend.empty')}
         </Text>
       )}
     </Pressable>

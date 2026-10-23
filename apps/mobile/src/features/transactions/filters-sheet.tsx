@@ -2,27 +2,14 @@ import type { TransactionType } from '@repo/core/types';
 import { BottomSheet, ICON_COLORS } from '@repo/ui';
 import { ChevronRight } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { DateRangeField } from './date-range-field';
 import { FilterOptionSheet, type FilterOption } from './filter-option-sheet';
 import { MultiSelectSheet } from './multi-select-sheet';
 
-const TITLE: Record<TransactionType, string> = {
-  income: 'Ingresos',
-  expense: 'Gastos',
-  transfer: 'Transferencias',
-};
-
-const TYPE_OPTIONS = [
-  { value: 'income', label: 'Ingresos' },
-  { value: 'expense', label: 'Gastos' },
-  { value: 'transfer', label: 'Transferencias' },
-];
-
-function pluralLabel(count: number, noun: string, pluralNoun: string): string {
-  return `${count} ${count === 1 ? noun : pluralNoun} seleccionada${count === 1 ? '' : 's'}`;
-}
+const TYPES: TransactionType[] = ['income', 'expense', 'transfer'];
 
 /** Roomier row than the shared `ListRow` — this sheet only ever holds four of these. */
 function FilterRow({
@@ -94,33 +81,37 @@ export function FiltersSheet({
   filtered,
   onClearAll,
 }: Props) {
+  const { t } = useTranslation(['transactions', 'common']);
   const [typeSheetOpen, setTypeSheetOpen] = useState(false);
   const [categorySheetOpen, setCategorySheetOpen] = useState(false);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
   const [tagSheetOpen, setTagSheetOpen] = useState(false);
 
+  const typeOptions = TYPES.map((value) => ({ value, label: t(`types.${value}`) }));
   const categoryLabel =
     categoryIds.length === 0
-      ? 'Todas las categorías'
-      : pluralLabel(categoryIds.length, 'categoría', 'categorías');
+      ? t('filters.allCategories')
+      : t('filters.categoriesSelected', { count: categoryIds.length });
   const accountLabel =
     accountIds.length === 0
-      ? 'Todas las cuentas'
-      : pluralLabel(accountIds.length, 'cuenta', 'cuentas');
+      ? t('filters.allAccounts')
+      : t('filters.accountsSelected', { count: accountIds.length });
   const tagLabel =
-    tagIds.length === 0 ? 'Todas las tags' : pluralLabel(tagIds.length, 'tag', 'tags');
+    tagIds.length === 0
+      ? t('filters.allTags')
+      : t('filters.tagsSelected', { count: tagIds.length });
 
   return (
     <>
       <BottomSheet
         visible={visible}
         onClose={onClose}
-        title="Filtros"
+        title={t('filters.title')}
         headerAction={
           filtered ? (
             <Pressable onPress={onClearAll} hitSlop={8}>
               <Text className="text-[13px] font-semibold text-danger dark:text-danger-dark">
-                Limpiar
+                {t('filters.clear')}
               </Text>
             </Pressable>
           ) : undefined
@@ -128,27 +119,31 @@ export function FiltersSheet({
       >
         <View className="divide-y divide-line px-5 pb-10 pt-1 dark:divide-line-dark">
           <FilterRow
-            title="Tipo"
-            value={type ? TITLE[type] : 'Todos'}
+            title={t('filters.type')}
+            value={type ? t(`types.${type}`) : t('common:all')}
             onPress={() => setTypeSheetOpen(true)}
           />
           <FilterRow
-            title="Categoría"
+            title={t('filters.category')}
             value={categoryLabel}
             onPress={() => setCategorySheetOpen(true)}
           />
           <FilterRow
-            title="Cuenta"
+            title={t('filters.account')}
             value={accountLabel}
             onPress={() => setAccountSheetOpen(true)}
           />
-          <FilterRow title="Tag" value={tagLabel} onPress={() => setTagSheetOpen(true)} />
+          <FilterRow
+            title={t('filters.tag')}
+            value={tagLabel}
+            onPress={() => setTagSheetOpen(true)}
+          />
           <DateRangeField
             from={from}
             to={to}
             onChange={onDateChange}
             renderTrigger={({ label, onPress }) => (
-              <FilterRow title="Fecha" value={label} onPress={onPress} />
+              <FilterRow title={t('filters.date')} value={label} onPress={onPress} />
             )}
           />
         </View>
@@ -157,16 +152,16 @@ export function FiltersSheet({
       <FilterOptionSheet
         visible={typeSheetOpen}
         onClose={() => setTypeSheetOpen(false)}
-        title="Tipo de movimiento"
-        allLabel="Todos los tipos"
-        options={TYPE_OPTIONS}
+        title={t('filters.typeTitle')}
+        allLabel={t('filters.allTypes')}
+        options={typeOptions}
         value={type}
         onSelect={(v) => onTypeChange(v as TransactionType | null)}
       />
       <MultiSelectSheet
         visible={categorySheetOpen}
         onClose={() => setCategorySheetOpen(false)}
-        title="Categoría"
+        title={t('filters.category')}
         options={categoryOptions}
         values={categoryIds}
         onChange={onCategoryIdsChange}
@@ -174,7 +169,7 @@ export function FiltersSheet({
       <MultiSelectSheet
         visible={accountSheetOpen}
         onClose={() => setAccountSheetOpen(false)}
-        title="Cuenta"
+        title={t('filters.account')}
         options={accountOptions}
         values={accountIds}
         onChange={onAccountIdsChange}
@@ -182,7 +177,7 @@ export function FiltersSheet({
       <MultiSelectSheet
         visible={tagSheetOpen}
         onClose={() => setTagSheetOpen(false)}
-        title="Tag"
+        title={t('filters.tag')}
         options={tagOptions}
         values={tagIds}
         onChange={onTagIdsChange}

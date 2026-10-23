@@ -1,0 +1,24 @@
+{
+  "title": "Favoritos",
+  "intro": "Tócalos en Movimientos para crear el gasto o ingreso en un toque, sin volver a escribirlo.",
+  "new": "Nuevo favorito",
+  "newShort": "Nuevo",
+  "seeAll": "Ver todas",
+  "freeAmount": "monto libre",
+  "edit": "Editar favorito",
+  "notFound": "Favorito no encontrado.",
+  "delete": "Eliminar favorito",
+  "saveFailed": "No se pudo guardar el favorito",
+  "form": {
+    "nameRequired": "Ponle un nombre",
+    "iconRequired": "Elige un ícono",
+    "changeIcon": "Cambiar ícono",
+    "pickIcon": "Elegir ícono",
+    "name": "Nombre",
+    "namePlaceholder": "Ej. Café",
+    "fixedAmount": "Monto fijo",
+    "fixedOn": "Se prellena, pero puedes ajustarlo antes de guardar",
+    "fixedOff": "Monto libre — lo escribes cada vez que lo uses",
+    "saveAsTitle": "Guardar como favorito"
+  }
+}

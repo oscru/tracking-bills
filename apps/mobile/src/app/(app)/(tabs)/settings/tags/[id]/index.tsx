@@ -11,6 +11,7 @@ import { formatDateTime } from '@repo/core/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowUpDown, Pencil } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { RecordInfoButton } from '../../../../../../features/design/record-info';
@@ -18,6 +19,7 @@ import { useTabBarAction } from '../../../../../../features/navigation/floating-
 import { TagDetailSkeleton } from '../../../../../../features/tags/tag-detail-skeleton';
 
 export default function TagDetail() {
+  const { t } = useTranslation(['tags', 'common']);
   const scrollPadding = useTabBarScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -39,7 +41,7 @@ export default function TagDetail() {
     tag
       ? {
           icon: Pencil,
-          accessibilityLabel: 'Editar tag',
+          accessibilityLabel: t('edit'),
           onPress: () =>
             router.push({
               pathname: '/(app)/settings/tags/[id]/edit',
@@ -52,7 +54,7 @@ export default function TagDetail() {
   if (loadingTags || loadingTx) {
     return (
       <Screen edges={['top']} className="gap-5">
-        <PageHeader title="Tag" onBack={() => router.back()} />
+        <PageHeader title={t('tag')} onBack={() => router.back()} />
         <TagDetailSkeleton />
       </Screen>
     );
@@ -60,7 +62,7 @@ export default function TagDetail() {
   if (!tag) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Tag no encontrada.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
@@ -74,12 +76,15 @@ export default function TagDetail() {
         onBack={() => router.back()}
         action={
           <RecordInfoButton
-            title="Información de la tag"
+            title={t('info')}
             rows={[
-              { label: 'Movimientos', value: String(total) },
-              { label: 'Creada', value: formatDateTime(tag.created_at) },
-              { label: 'Última modificación', value: formatDateTime(tag.updated_at) },
-              { label: 'Archivada', value: tag.archived_at ? formatDateTime(tag.archived_at) : '' },
+              { label: t('transactions'), value: String(total) },
+              { label: t('common:info.created'), value: formatDateTime(tag.created_at) },
+              { label: t('common:info.updated'), value: formatDateTime(tag.updated_at) },
+              {
+                label: t('common:info.archived'),
+                value: tag.archived_at ? formatDateTime(tag.archived_at) : '',
+              },
             ]}
           />
         }
@@ -97,7 +102,7 @@ export default function TagDetail() {
               style={{ backgroundColor: tag.color ?? '#94A3B8' }}
             />
             <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-              {tag.archived ? 'Archivada' : 'Tag'}
+              {tag.archived ? t('archivedBadge') : t('tag')}
             </Text>
           </View>
 
@@ -110,18 +115,18 @@ export default function TagDetail() {
             <View className="flex-row items-center gap-1.5">
               <ArrowUpDown size={16} color={tag.color ?? ICON_COLORS.limeInk} />
               <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-                Transacciones
+                {t('transactionsCard')}
               </Text>
             </View>
             <Text className="mt-1 text-2xl font-bold text-ink dark:text-ink-dark">{total}</Text>
             <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-              {total === 1 ? 'movimiento asociado' : 'movimientos asociados'} · toca para verlos
+              {t('linked', { count: total })}
             </Text>
           </Pressable>
 
           <View className="border-t border-line pt-5 dark:border-line-dark">
             <Button
-              label={tag.archived ? 'Desarchivar' : 'Archivar'}
+              label={t(tag.archived ? 'common:unarchive' : 'common:archive')}
               variant={tag.archived ? 'secondary' : 'ghost-danger'}
               loading={updateTag.isPending}
               onPress={() => (tag.archived ? toggleArchive() : setConfirmArchive(true))}
@@ -132,9 +137,9 @@ export default function TagDetail() {
 
       <ConfirmSheet
         visible={confirmArchive}
-        title="¿Archivar tag?"
-        description="Dejará de aparecer para elegirla en movimientos nuevos, pero seguirá visible en los gastos e ingresos que ya la tienen. Puedes desarchivarla cuando quieras."
-        confirmLabel="Archivar"
+        title={t('archiveTitle')}
+        description={t('archiveBody')}
+        confirmLabel={t('common:archive')}
         onCancel={() => setConfirmArchive(false)}
         onConfirm={() => {
           setConfirmArchive(false);

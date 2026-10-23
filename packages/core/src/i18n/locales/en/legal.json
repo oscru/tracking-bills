@@ -1,0 +1,21 @@
+{
+  "documents": {
+    "terms": "Terms and conditions",
+    "privacy": "Privacy notice",
+    "cookies": "Cookie policy"
+  },
+  "consent": "I accept the <terms>Terms and conditions</terms> and the <privacy>Privacy notice</privacy>. I'm 18 or older, or I'm between 13 and 17 and have my parent's or guardian's consent.",
+  "consentA11y": "I accept the Terms and conditions and the Privacy notice. I'm 18 or older, or I'm between 13 and 17 and have my parent's or guardian's consent.",
+  "ssoNotice": "By continuing you accept the <terms>Terms</terms> and the <privacy>Privacy notice</privacy>.",
+  "gate": {
+    "updatedTitle": "We've updated our documents",
+    "firstTitle": "Before you continue",
+    "updatedBody": "We changed our terms or our privacy notice. Review and accept them to keep using Genobills.",
+    "firstBody": "To use Genobills we need you to accept our terms and privacy notice. In short: we only keep what the app needs to work, we don't sell your data and we don't show ads.",
+    "read": "Read ›",
+    "mustCheck": "Check the box to continue",
+    "saveFailed": "Couldn't save. Try again.",
+    "accept": "Accept and continue",
+    "decline": "I don't accept, sign out"
+  }
+}

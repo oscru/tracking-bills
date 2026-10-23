@@ -6,6 +6,7 @@ import { Link } from 'expo-router';
 import { Eye, EyeOff, MailCheck } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { AuthShell } from '../../features/auth/auth-shell';
@@ -28,6 +29,7 @@ type Errors = {
  * are optional and live in the profile (see the Aviso de privacidad).
  */
 export default function SignUp() {
+  const { t } = useTranslation('auth');
   const signUp = useSignUp();
   const dark = useColorScheme().colorScheme === 'dark';
   const iconColor = dark ? ICON_COLORS.ink3Dark : ICON_COLORS.ink3;
@@ -57,7 +59,7 @@ export default function SignUp() {
       return;
     }
     if (password !== confirm) {
-      setErrors({ confirm: 'Las contraseñas no coinciden' });
+      setErrors({ confirm: 'validation:passwordsDontMatch' });
       return;
     }
     if (signUp.isPending) return;
@@ -65,7 +67,7 @@ export default function SignUp() {
       onSuccess: (res) => {
         if (res.needsEmailConfirmation) setConfirmationSent(true);
       },
-      onError: (e) => setErrors({ form: toFriendlyMessage(e, 'No se pudo crear la cuenta') }),
+      onError: (e) => setErrors({ form: toFriendlyMessage(e, t('signUp.failed')) }),
     });
   };
 
@@ -77,15 +79,15 @@ export default function SignUp() {
             <MailCheck size={24} color={ICON_COLORS.limeInk} />
           </View>
           <Text className="text-[28px] font-bold tracking-tight text-ink dark:text-ink-dark">
-            Revisa tu correo
+            {t('signUp.checkEmailTitle')}
           </Text>
           <Text className="text-base text-ink-2 dark:text-ink-2-dark">
-            Te enviamos un enlace de confirmación a {email}. Confírmalo y luego inicia sesión.
+            {t('signUp.checkEmailBody', { email })}
           </Text>
           <Link href="/(auth)/sign-in" asChild>
             <Pressable hitSlop={8}>
               <Text className="text-sm font-semibold text-lime-ink dark:text-lime-ink-dark">
-                Volver a iniciar sesión
+                {t('signUp.backToSignIn')}
               </Text>
             </Pressable>
           </Link>
@@ -99,19 +101,17 @@ export default function SignUp() {
       <StaggerItem index={2}>
         <View className="gap-1.5">
           <Text className="text-[28px] font-bold tracking-tight text-ink dark:text-ink-dark">
-            Crea tu cuenta
+            {t('signUp.title')}
           </Text>
-          <Text className="text-base text-ink-2 dark:text-ink-2-dark">
-            Solo te pedimos lo necesario para entrar.
-          </Text>
+          <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('signUp.subtitle')}</Text>
         </View>
       </StaggerItem>
 
       <StaggerItem index={3}>
         <View className="gap-4">
           <TextField
-            placeholder="Nombre"
-            accessibilityLabel="Nombre"
+            placeholder={t('fields.name')}
+            accessibilityLabel={t('fields.name')}
             value={fullName}
             onChangeText={setFullName}
             autoCapitalize="words"
@@ -124,8 +124,8 @@ export default function SignUp() {
           />
           <TextField
             ref={emailRef}
-            placeholder="Correo"
-            accessibilityLabel="Correo"
+            placeholder={t('fields.email')}
+            accessibilityLabel={t('fields.email')}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -140,8 +140,8 @@ export default function SignUp() {
           />
           <TextField
             ref={passwordRef}
-            placeholder="Contraseña"
-            accessibilityLabel="Contraseña"
+            placeholder={t('fields.password')}
+            accessibilityLabel={t('fields.password')}
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
@@ -156,7 +156,7 @@ export default function SignUp() {
                 onPress={() => setShowPassword((v) => !v)}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                accessibilityLabel={t(showPassword ? 'fields.hidePassword' : 'fields.showPassword')}
               >
                 {showPassword ? (
                   <EyeOff size={20} color={iconColor} />
@@ -169,8 +169,8 @@ export default function SignUp() {
           {password ? <PasswordChecklist password={password} /> : null}
           <TextField
             ref={confirmRef}
-            placeholder="Confirma tu contraseña"
-            accessibilityLabel="Confirma tu contraseña"
+            placeholder={t('fields.confirmPassword')}
+            accessibilityLabel={t('fields.confirmPassword')}
             value={confirm}
             onChangeText={setConfirm}
             secureTextEntry={!showPassword}
@@ -191,7 +191,7 @@ export default function SignUp() {
 
           <ErrorCard message={errors.form} />
 
-          <Button label="Crear cuenta" onPress={onSubmit} loading={signUp.isPending} />
+          <Button label={t('signUp.submit')} onPress={onSubmit} loading={signUp.isPending} />
         </View>
       </StaggerItem>
 
@@ -203,11 +203,13 @@ export default function SignUp() {
           </View>
 
           <View className="flex-row items-center justify-center gap-1.5">
-            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">¿Ya tienes cuenta?</Text>
+            <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
+              {t('signUp.haveAccount')}
+            </Text>
             <Link href="/(auth)/sign-in" asChild>
               <Pressable hitSlop={8}>
                 <Text className="text-sm font-semibold text-ink underline dark:text-ink-dark">
-                  Inicia sesión
+                  {t('signUp.signIn')}
                 </Text>
               </Pressable>
             </Link>

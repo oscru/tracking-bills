@@ -3,6 +3,8 @@ import { CircleAlert } from 'lucide-react-native';
 import { useEffect, useRef } from 'react';
 import { Animated, Platform, Text, View, useColorScheme } from 'react-native';
 
+import { useTranslatedMessage } from './use-translated-message';
+
 export interface ErrorCardProps {
   message: string | null | undefined;
 }
@@ -14,7 +16,8 @@ export interface ErrorCardProps {
  * an error. Announces itself with a haptic tap + matching shake, the same
  * "shake" idiom `Fab` already uses for its press feedback.
  */
-export function ErrorCard({ message }: ErrorCardProps) {
+export function ErrorCard({ message: raw }: ErrorCardProps) {
+  const message = useTranslatedMessage(raw);
   const dark = useColorScheme() === 'dark';
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-10)).current;

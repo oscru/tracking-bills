@@ -4,20 +4,22 @@ import { useRouter } from 'expo-router';
 import { Fingerprint, ScanFace, ShieldAlert, Smartphone } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
 import {
   authenticate,
   BIOMETRICS_PLATFORM,
+  biometricLabel,
   useAppLockSettings,
   useBiometricSupport,
 } from '../../../../features/security/biometric';
 
-const TIMEOUTS: { seconds: number; label: string }[] = [
-  { seconds: 0, label: 'Al salir' },
-  { seconds: 60, label: '1 min' },
-  { seconds: 300, label: '5 min' },
-  { seconds: 900, label: '15 min' },
+const TIMEOUTS: { seconds: 0 | 60 | 300 | 900 }[] = [
+  { seconds: 0 },
+  { seconds: 60 },
+  { seconds: 300 },
+  { seconds: 900 },
 ];
 
 function InfoCard({
@@ -49,6 +51,7 @@ function InfoCard({
 }
 
 export default function SecuritySettingsScreen() {
+  const { t } = useTranslation('security');
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const { colorScheme } = useColorScheme();
@@ -58,8 +61,8 @@ export default function SecuritySettingsScreen() {
   const { settings, update } = useAppLockSettings(user?.id ?? null);
   const [error, setError] = useState<string | null>(null);
 
-  const label = support?.label ?? 'biometría';
-  const Icon = label === 'Face ID' || label === 'reconocimiento facial' ? ScanFace : Fingerprint;
+  const label = support?.label ?? biometricLabel('generic');
+  const Icon = support?.kind === 'faceId' || support?.kind === 'face' ? ScanFace : Fingerprint;
   const iconColor = dark ? ICON_COLORS.limeInkDark : ICON_COLORS.limeInk;
 
   // Turning it on proves it works first — never lock someone out with a
@@ -68,17 +71,15 @@ export default function SecuritySettingsScreen() {
   const toggle = async (next: boolean) => {
     setError(null);
     const outcome = await authenticate(
-      next
-        ? `Confirma para activar el bloqueo con ${label}`
-        : 'Confirma para desactivar el bloqueo',
+      next ? t('prompt.enable', { method: label }) : t('prompt.disable'),
     );
     if (outcome === 'success') await update({ enabled: next });
-    else if (outcome === 'failed') setError('No pudimos verificar tu identidad.');
+    else if (outcome === 'failed') setError(t('verifyFailed'));
   };
 
   return (
     <Screen edges={['top']} className="gap-5">
-      <PageHeader title="Seguridad" onBack={() => router.back()} />
+      <PageHeader title={t('title')} onBack={() => router.back()} />
 
       {!support || (BIOMETRICS_PLATFORM && !settings) ? (
         <ActivityIndicator className="mt-8" />
@@ -92,8 +93,8 @@ export default function SecuritySettingsScreen() {
           {!BIOMETRICS_PLATFORM ? (
             <InfoCard
               icon={<Smartphone size={20} color={dark ? ICON_COLORS.ink2Dark : ICON_COLORS.ink2} />}
-              title="Disponible en la app móvil"
-              body="El bloqueo con huella o Face ID se activa desde la app de iOS o Android."
+              title={t('mobileOnly')}
+              body={t('mobileOnlyHint')}
             />
           ) : !support.available ? (
             <InfoCard
@@ -104,16 +105,8 @@ export default function SecuritySettingsScreen() {
                   color={dark ? ICON_COLORS.warningDark : ICON_COLORS.warning}
                 />
               }
-              title={
-                support.needsEnrollment
-                  ? 'Configura tu huella o rostro'
-                  : 'Tu teléfono no tiene biometría'
-              }
-              body={
-                support.needsEnrollment
-                  ? 'Registra una huella o tu rostro en los ajustes del teléfono para poder usarlos aquí.'
-                  : 'Este dispositivo no tiene lector de huella ni reconocimiento facial.'
-              }
+              title={support.needsEnrollment ? t('enroll') : t('noHardware')}
+              body={support.needsEnrollment ? t('enrollHint') : t('noHardwareHint')}
             />
           ) : (
             <>
@@ -122,13 +115,12 @@ export default function SecuritySettingsScreen() {
                   <Icon size={30} color={iconColor} />
                 </View>
                 <Text className="text-center text-[13px] leading-[18px] text-ink-2 dark:text-ink-2-dark">
-                  Pide tu {label} al abrir la app, para que nadie más vea tus saldos y movimientos.
-                  Si falla, puedes usar el código de tu teléfono.
+                  {t('intro', { method: label })}
                 </Text>
               </View>
 
               <SwitchRow
-                label={`Bloquear con ${label}`}
+                label={t('lockWith', { method: label })}
                 value={settings?.enabled === true}
                 onValueChange={(v) => {
                   toggle(v).catch(() => {});
@@ -140,29 +132,28 @@ export default function SecuritySettingsScreen() {
 
               <View className="gap-2" style={settings?.enabled ? undefined : { opacity: 0.5 }}>
                 <Text className="px-1 text-[13px] font-bold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
-                  Volver a bloquear
+                  {t('relock')}
                 </Text>
                 <View className="flex-row flex-wrap gap-2 px-1">
-                  {TIMEOUTS.map((t) => (
+                  {TIMEOUTS.map((timeout) => (
                     <Chip
-                      key={t.seconds}
-                      label={t.label}
-                      selected={settings?.timeoutSeconds === t.seconds}
+                      key={timeout.seconds}
+                      label={t(`timeouts.${timeout.seconds}` as 'timeouts.0')}
+                      selected={settings?.timeoutSeconds === timeout.seconds}
                       disabled={!settings?.enabled}
                       onPress={() => {
-                        update({ timeoutSeconds: t.seconds }).catch(() => {});
+                        update({ timeoutSeconds: timeout.seconds }).catch(() => {});
                       }}
                     />
                   ))}
                 </View>
                 <Text className="px-1 text-xs text-ink-3 dark:text-ink-3-dark">
-                  Tiempo que la app puede estar en segundo plano antes de pedirte tu {label} otra
-                  vez.
+                  {t('relockHint', { method: label })}
                 </Text>
               </View>
 
               <Text className="px-1 text-xs leading-[17px] text-ink-3 dark:text-ink-3-dark">
-                Esta opción se guarda solo en este dispositivo.
+                {t('deviceOnly')}
               </Text>
             </>
           )}

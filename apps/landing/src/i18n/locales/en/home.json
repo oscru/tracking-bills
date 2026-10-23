@@ -1,0 +1,49 @@
+{
+  "devices": {
+    "eyebrow": "In the browser on your computer, tablet or phone",
+    "title": "One account. All your screens.",
+    "body": "Review the month on your computer, log the coffee from your phone. Everything syncs on its own.",
+    "browser": "or use it in your browser →"
+  },
+  "details": {
+    "title": "And the details ",
+    "titleMuted": "that make you stay.",
+    "items": [
+      {
+        "title": "Insights",
+        "body": "Trends, a calendar and spending by category, no pivot tables."
+      },
+      {
+        "title": "Favorites",
+        "body": "Your usual expenses, logged in one tap."
+      },
+      {
+        "title": "Tags",
+        "body": "Cut across categories: how much did the whole trip cost?"
+      },
+      {
+        "title": "Pesos and dollars",
+        "body": "Each account in its own currency, no converting by hand."
+      },
+      {
+        "title": "Import and export",
+        "body": "Bring your history from Excel and take it with you whenever you want."
+      },
+      {
+        "title": "Timely reminders",
+        "body": "Pending payments, budgets and goals, before they slip by."
+      }
+    ]
+  },
+  "promises": [
+    "No ads.",
+    "Never asks for your bank password.",
+    "Export your data whenever you want."
+  ],
+  "cta": {
+    "title": "Make the next paycheck go further.",
+    "body": "Create your free account and start tracking your money today.",
+    "signUp": "Create a free account",
+    "signIn": "I already have an account"
+  }
+}

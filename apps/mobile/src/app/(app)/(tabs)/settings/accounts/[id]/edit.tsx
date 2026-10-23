@@ -8,11 +8,13 @@ import {
 import { Button, PageHeader, Screen } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AccountForm } from '../../../../../../features/accounts/account-form';
 
 export default function EditAccount() {
+  const { t } = useTranslation(['accounts', 'common']);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: accounts, isLoading } = useAccounts();
@@ -33,14 +35,14 @@ export default function EditAccount() {
   if (!account) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Cuenta no encontrada.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
 
   return (
     <Screen className="gap-4">
-      <PageHeader title="Editar cuenta" onBack={() => router.back()} />
+      <PageHeader title={t('edit')} onBack={() => router.back()} />
 
       <AccountForm
         initial={{
@@ -51,7 +53,7 @@ export default function EditAccount() {
           color: account.color,
         }}
         enabledCurrencies={[account.currency]}
-        submitLabel="Guardar cambios"
+        submitLabel={t('common:saveChanges')}
         submitting={update.isPending}
         error={error}
         onDirty={clearError}
@@ -61,7 +63,7 @@ export default function EditAccount() {
             { id, patch: input },
             {
               onSuccess: () => router.back(),
-              onError: (e) => setError(e, 'No se pudieron guardar los cambios'),
+              onError: (e) => setError(e, t('common:saveChangesFailed')),
             },
           );
         }}
@@ -71,19 +73,19 @@ export default function EditAccount() {
               <View className="flex-row gap-2">
                 <View className="flex-1">
                   <Button
-                    label="Conservar"
+                    label={t('common:keep')}
                     variant="secondary"
                     onPress={() => setConfirming(false)}
                   />
                 </View>
                 <View className="flex-1">
                   <Button
-                    label="Eliminar"
+                    label={t('common:delete')}
                     loading={remove.isPending}
                     onPress={() =>
                       remove.mutate(id, {
                         onSuccess: () => router.replace('/(app)/settings/accounts'),
-                        onError: (e) => setError(e, 'No se pudo eliminar'),
+                        onError: (e) => setError(e, t('common:deleteFailed')),
                       })
                     }
                   />
@@ -92,7 +94,7 @@ export default function EditAccount() {
             ) : (
               <Pressable onPress={() => setConfirming(true)} className="items-center py-2">
                 <Text className="text-sm font-medium text-danger dark:text-danger-dark">
-                  Eliminar cuenta
+                  {t('delete')}
                 </Text>
               </Pressable>
             )}

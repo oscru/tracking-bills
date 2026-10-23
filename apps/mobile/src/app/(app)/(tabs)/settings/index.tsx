@@ -9,6 +9,7 @@ import {
 } from '@repo/core/hooks';
 import { Avatar, ListRow, Screen, useIsDesktop, useTabBarScrollPadding } from '@repo/ui';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { SettingsSkeleton } from '../../../../features/settings/settings-skeleton';
@@ -17,6 +18,7 @@ export default function SettingsScreen() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   const desktop = useIsDesktop();
+  const { t } = useTranslation(['settings', 'home']);
   const { user } = useSession();
   const updateProfile = useUpdateProfile();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
@@ -35,7 +37,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen edges={['top']} className="gap-6">
-      <Text className="text-2xl font-bold text-ink dark:text-ink-dark">Opciones</Text>
+      <Text className="text-2xl font-bold text-ink dark:text-ink-dark">{t('title')}</Text>
 
       {loading ? (
         <SettingsSkeleton />
@@ -53,7 +55,7 @@ export default function SettingsScreen() {
             <Avatar name={user?.email} size={48} />
             <View className="flex-1">
               <Text className="text-base font-semibold text-ink dark:text-ink-dark">
-                {user?.email?.split('@')[0] ?? 'Bienvenido'}
+                {user?.email?.split('@')[0] ?? t('welcome')}
               </Text>
               {user?.email ? (
                 <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{user.email}</Text>
@@ -64,43 +66,43 @@ export default function SettingsScreen() {
 
           <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
             <ListRow
-              title="Cuentas"
-              subtitle={`${activeAccounts} activa${activeAccounts === 1 ? '' : 's'}`}
+              title={t('rows.accounts')}
+              subtitle={t('rows.accountsCount', { count: activeAccounts })}
               showChevron
               onPress={() => router.push('/(app)/settings/accounts')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
-              title="Categorías"
-              subtitle={`${customCategories} categorías`}
+              title={t('rows.categories')}
+              subtitle={t('rows.categoriesCount', { count: customCategories })}
               showChevron
               onPress={() => router.push('/(app)/settings/categories')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
-              title="Tags"
-              subtitle={`${activeTags} activa${activeTags === 1 ? '' : 's'}`}
+              title={t('rows.tags')}
+              subtitle={t('rows.tagsCount', { count: activeTags })}
               showChevron
               onPress={() => router.push('/(app)/settings/tags')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
-              title="Presupuestos"
-              subtitle={`${activeBudgets} presupuesto${activeBudgets === 1 ? '' : 's'}`}
+              title={t('rows.budgets')}
+              subtitle={t('rows.budgetsCount', { count: activeBudgets })}
               showChevron
               onPress={() => router.push('/(app)/settings/budgets')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
-              title="Objetivos"
-              subtitle={`${activeGoals} objetivo${activeGoals === 1 ? '' : 's'}`}
+              title={t('rows.goals')}
+              subtitle={t('rows.goalsCount', { count: activeGoals })}
               showChevron
               onPress={() => router.push('/(app)/settings/goals')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
-              title="Personas"
-              subtitle="Pásale dinero a tu pareja sin que cuente como gasto"
+              title={t('rows.peers')}
+              subtitle={t('rows.peersHint')}
               showChevron
               onPress={() => router.push('/(app)/settings/peers')}
             />
@@ -110,47 +112,43 @@ export default function SettingsScreen() {
             <ListRow
               // The web dashboard arranges and resizes its widgets on Inicio
               // itself; the app orders them here (see `home-layout`).
-              title={desktop ? 'Widgets del inicio' : 'Personalizar inicio'}
-              subtitle={
-                desktop
-                  ? 'Cuáles se muestran — acomódalos desde Personalizar'
-                  : 'Orden de las tarjetas de la pantalla principal'
-              }
+              title={t(desktop ? 'home:layout.webTitle' : 'home:layout.appTitle')}
+              subtitle={t(desktop ? 'home:layout.settingsRowWeb' : 'home:layout.settingsRowApp')}
               showChevron
               onPress={() => router.push('/(app)/settings/home-layout')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
-              title="Seguridad"
-              subtitle="Desbloqueo con huella o Face ID"
+              title={t('rows.security')}
+              subtitle={t('rows.securityHint')}
               showChevron
               onPress={() => router.push('/(app)/settings/security')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
-              title="Notificaciones"
-              subtitle="Recordatorios de pagos, presupuestos y metas"
+              title={t('rows.notifications')}
+              subtitle={t('rows.notificationsHint')}
               showChevron
               onPress={() => router.push('/(app)/settings/notifications')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
-              title="Preferencias"
-              subtitle="Moneda, tema e idioma"
+              title={t('rows.preferences')}
+              subtitle={t('rows.preferencesHint')}
               showChevron
               onPress={() => router.push('/(app)/settings/preferences')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
-              title="Importar y exportar"
-              subtitle="Comparte o migra tus movimientos vía Excel"
+              title={t('rows.importExport')}
+              subtitle={t('rows.importExportHint')}
               showChevron
               onPress={() => router.push('/(app)/settings/import-export')}
             />
             <View className="h-px bg-line dark:bg-line-dark" />
             <ListRow
-              title="Ver tour de nuevo"
-              subtitle="Repite la introducción a la app"
+              title={t('rows.tour')}
+              subtitle={t('rows.tourHint')}
               onPress={() => updateProfile.mutate({ has_seen_tour: false })}
             />
           </View>

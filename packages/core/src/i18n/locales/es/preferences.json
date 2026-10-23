@@ -1,0 +1,43 @@
+{
+  "language": {
+    "title": "Idioma",
+    "system": "Automático",
+    "systemHint": "El idioma de tu dispositivo",
+    "es": "Español",
+    "en": "English"
+  },
+  "title": "Preferencias",
+  "theme": {
+    "title": "Tema",
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Oscuro"
+  },
+  "currency": {
+    "title": "Moneda por defecto",
+    "hint": "Se preselecciona al crear una cuenta, presupuesto u objetivo nuevo — cada uno conserva su propia divisa después, no se mezclan en un solo total."
+  },
+  "enabled": {
+    "title": "Divisas habilitadas",
+    "hint": "Como elegir idiomas en un traductor: busca y marca las que realmente usas — son las únicas que vas a poder elegir al crear una cuenta, un presupuesto o un objetivo.",
+    "inUse": "No puedes deshabilitar {{code}}: todavía tienes cuentas, presupuestos o metas en esa divisa.",
+    "updateFailed": "No se pudo actualizar"
+  },
+  "travel": {
+    "title": "Modo viaje",
+    "hint": "Mientras esté activo, cada gasto, ingreso y transferencia que registres se etiqueta automáticamente con la tag de tu viaje, para que puedas verlos todos juntos después.",
+    "nameQuestion": "¿Cómo se llama tu viaje?",
+    "namePlaceholder": "Ej. Viaje a Cancún",
+    "activate": "Activar",
+    "name": "Nombre del viaje",
+    "active": "Viaje activo: tus movimientos nuevos se están etiquetando con “{{name}}”.",
+    "createFailed": "No se pudo crear la tag del viaje"
+  },
+  "currencyPicker": {
+    "title": "Moneda",
+    "search": "Buscar moneda o código…",
+    "noMatches": "No hay monedas que coincidan.",
+    "enabledTitle": "Divisas habilitadas",
+    "inUse": "en uso"
+  }
+}

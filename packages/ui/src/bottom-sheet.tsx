@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   BackHandler,
@@ -42,6 +43,7 @@ function SheetBody({
   children,
   desktop,
 }: Omit<BottomSheetProps, 'visible'> & { desktop: boolean }) {
+  const { t } = useTranslation('common');
   const insets = useSafeAreaInsets();
   // Android only (0 on iOS) — see `useKeyboardHeight`'s doc comment for why
   // `KeyboardAvoidingView`'s own behaviors aren't used there.
@@ -113,7 +115,7 @@ function SheetBody({
       <Pressable
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
         onPress={onClose}
-        accessibilityLabel="Cerrar"
+        accessibilityLabel={t('close')}
       />
       {/* iOS: KeyboardAvoidingView's own "padding" behavior (reliable there).
           Android: manual paddingBottom from `useKeyboardHeight` — see the

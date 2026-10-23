@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Dimensions,
@@ -62,6 +63,7 @@ function Dots({
 }
 
 function CarouselBody({ slides, onDone }: Omit<WelcomeCarouselProps, 'visible'>) {
+  const { t } = useTranslation('common');
   const insets = useSafeAreaInsets();
   const scrollX = useRef(new Animated.Value(0)).current;
   const [index, setIndex] = useState(0);
@@ -90,11 +92,11 @@ function CarouselBody({ slides, onDone }: Omit<WelcomeCarouselProps, 'visible'>)
         <Pressable
           onPress={onDone}
           accessibilityRole="button"
-          accessibilityLabel="Omitir"
+          accessibilityLabel={t('skip')}
           className="absolute right-5 z-10 px-3 py-2"
           style={{ top: insets.top + 8 }}
         >
-          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">Omitir</Text>
+          <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">{t('skip')}</Text>
         </Pressable>
 
         <ScrollView
@@ -133,7 +135,7 @@ function CarouselBody({ slides, onDone }: Omit<WelcomeCarouselProps, 'visible'>)
               outputRange: [0, 1],
             })}
           />
-          <Button label={isLast ? 'Comenzar' : 'Siguiente'} onPress={goNext} />
+          <Button label={t(isLast ? 'start' : 'next')} onPress={goNext} />
         </View>
       </View>
     </View>

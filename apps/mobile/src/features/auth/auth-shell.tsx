@@ -2,6 +2,7 @@ import { ICON_COLORS, Screen, StaggerItem, useIsDesktop } from '@repo/ui';
 import { Moon, Sun } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Image,
   Platform,
@@ -74,6 +75,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
 /** Sun/moon switch between light and dark, remembered while signed out. */
 function ThemeToggle() {
+  const { t } = useTranslation('auth');
   const dark = useColorScheme().colorScheme === 'dark';
   return (
     <Pressable
@@ -85,7 +87,7 @@ function ThemeToggle() {
       }
       hitSlop={8}
       accessibilityRole="button"
-      accessibilityLabel={dark ? 'Usar tema claro' : 'Usar tema oscuro'}
+      accessibilityLabel={t(dark ? 'theme.useLight' : 'theme.useDark')}
       className="h-11 w-11 items-center justify-center rounded-full border border-line bg-surface active:opacity-70 dark:border-line-dark dark:bg-surface-dark"
     >
       {dark ? (
@@ -206,36 +208,37 @@ function Rings({ size, style }: { size: number; style: ViewStyle }) {
  * spins away. Desktop poster only.
  * ------------------------------------------------------------------------- */
 
-type StickerData = Omit<StickerProps, 'rotate' | 'style'>;
+type StickerLook = Pick<StickerProps, 'emoji' | 'income' | 'tone'>;
 
-const STICKER_SETS: Record<string, StickerData[]> = {
-  Gastos: [
-    { emoji: '🌮', label: 'Tacos El Güero', amount: '−$185.00' },
-    { emoji: '💸', label: 'Quincena', amount: '+$9,500.00', income: true },
-    { emoji: '🛒', label: 'Súper de la semana', amount: '−$1,320.00', tone: 'white' },
-    { emoji: '⛽', label: 'Gasolina', amount: '−$650.00' },
+/**
+ * Each feature tag's four stickers: their look here, their text (label and
+ * amount — amounts in the language's own currency and wording) in
+ * `auth:poster.stickers`, in the same order.
+ */
+const STICKER_LOOKS = {
+  expenses: [
+    { emoji: '🌮' },
+    { emoji: '💸', income: true },
+    { emoji: '🛒', tone: 'white' },
+    { emoji: '⛽' },
   ],
-  Presupuestos: [
-    { emoji: '🍽️', label: 'Comida', amount: '$2,720 de $4,000' },
-    { emoji: '🚌', label: 'Transporte', amount: '40% usado' },
-    { emoji: '🎬', label: 'Salidas', amount: '92% · ¡aguas!', tone: 'white' },
-    { emoji: '🏠', label: 'Hogar', amount: '$3,100 de $5,500' },
+  budgets: [{ emoji: '🍽️' }, { emoji: '🚌' }, { emoji: '🎬', tone: 'white' }, { emoji: '🏠' }],
+  goals: [
+    { emoji: '🎯' },
+    { emoji: '🛟', income: true },
+    { emoji: '💻', tone: 'white' },
+    { emoji: '🎁', income: true },
   ],
-  Metas: [
-    { emoji: '🎯', label: 'Viaje a Oaxaca', amount: '72% ahorrado' },
-    { emoji: '🛟', label: 'Fondo de emergencia', amount: '$18,000', income: true },
-    { emoji: '💻', label: 'Laptop nueva', amount: '30% ahorrado', tone: 'white' },
-    { emoji: '🎁', label: 'Regalo de mamá', amount: '¡Listo! 🎉', income: true },
+  shared: [
+    { emoji: '🏡' },
+    { emoji: '🍕', income: true },
+    { emoji: '✈️', tone: 'white' },
+    { emoji: '🧾' },
   ],
-  'Cuentas compartidas': [
-    { emoji: '🏡', label: 'Depa con Ana', amount: '−$4,500 renta' },
-    { emoji: '🍕', label: 'Cena con amigos', amount: 'Te deben $350', income: true },
-    { emoji: '✈️', label: 'Viaje en grupo', amount: '4 personas', tone: 'white' },
-    { emoji: '🧾', label: 'Súper compartido', amount: '−$860 c/u' },
-  ],
-};
+} satisfies Record<string, StickerLook[]>;
 
-const FEATURES = Object.keys(STICKER_SETS);
+type Feature = keyof typeof STICKER_LOOKS;
+const FEATURES = Object.keys(STICKER_LOOKS) as Feature[];
 
 /** Where each of a set's four stickers sits, and its tilt. */
 const SLOTS: { pos: ViewStyle; rotate: number }[] = [
@@ -247,6 +250,7 @@ const SLOTS: { pos: ViewStyle; rotate: number }[] = [
 
 /** A sticker that, when tapped, spins away — shrinking and fading as it turns. */
 function SpinAwaySticker({ onGone, ...sticker }: StickerProps & { onGone: () => void }) {
+  const { t } = useTranslation('auth');
   const progress = useSharedValue(0);
   const [gone, setGone] = useState(false);
   const animated = useAnimatedStyle(() => ({
@@ -258,7 +262,7 @@ function SpinAwaySticker({ onGone, ...sticker }: StickerProps & { onGone: () => 
     <Animated.View style={animated} pointerEvents={gone ? 'none' : 'auto'}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Quitar ${sticker.label}`}
+        accessibilityLabel={t('poster.remove', { label: sticker.label })}
         disabled={gone}
         onPress={() => {
           setGone(true);
@@ -280,6 +284,7 @@ function SpinAwaySticker({ onGone, ...sticker }: StickerProps & { onGone: () => 
 const WEB_CLIP = (Platform.OS === 'web' ? { overflow: 'clip' } : {}) as unknown as ViewStyle;
 
 function PosterPanel() {
+  const { t } = useTranslation('auth');
   // Scales down on short windows so the poster never outgrows the viewport.
   const { height } = useWindowDimensions();
   const roomy = height >= 860;
@@ -291,7 +296,8 @@ function PosterPanel() {
   // stickers back (they remount, keyed by it).
   const [round, setRound] = useState(0);
   const [goneCount, setGoneCount] = useState(0);
-  const stickers = STICKER_SETS[feature]!;
+  const texts = t(`poster.stickers.${feature}`, { returnObjects: true });
+  const stickers = STICKER_LOOKS[feature].map((look, i) => ({ ...look, ...texts[i]! }));
 
   return (
     <View
@@ -308,10 +314,10 @@ function PosterPanel() {
           className="font-black text-ink"
           style={{ fontSize: headline, lineHeight: headline * 0.98, letterSpacing: -2.5 }}
         >
-          Que la{'\n'}quincena{'\n'}sí rinda.
+          {t('poster.headline')}
         </Text>
         <Text className="max-w-[400px] text-lg font-medium leading-7 text-ink/70">
-          Anota cada gasto en segundos y entiende, por fin, a dónde se va tu dinero.
+          {t('poster.body')}
         </Text>
       </View>
 
@@ -333,10 +339,8 @@ function PosterPanel() {
               entering={FadeIn.delay(450).duration(400)}
               style={{ position: 'absolute', top: 70, left: 0, right: 0, alignItems: 'center' }}
             >
-              <Text className="text-xl font-bold text-ink">Quincena limpia 🧹</Text>
-              <Text className="text-sm font-medium text-ink/60">
-                Toca una etiqueta para traerlas de vuelta.
-              </Text>
+              <Text className="text-xl font-bold text-ink">{t('poster.cleared')}</Text>
+              <Text className="text-sm font-medium text-ink/60">{t('poster.clearedHint')}</Text>
             </Animated.View>
           ) : null}
         </View>
@@ -358,7 +362,7 @@ function PosterPanel() {
               className={`rounded-full border px-3.5 py-1.5 active:opacity-70 ${active ? 'border-ink bg-ink' : 'border-ink/15'}`}
             >
               <Text className={`text-sm font-semibold ${active ? 'text-lime' : 'text-ink/80'}`}>
-                {f}
+                {t(`poster.features.${f}`)}
               </Text>
             </Pressable>
           );

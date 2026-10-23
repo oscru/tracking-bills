@@ -17,6 +17,7 @@ import {
 import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
@@ -30,10 +31,7 @@ import {
 // should see or pick from here.
 const HIDDEN_SLUGS = new Set(['balance_adjustment_expense', 'balance_adjustment_income']);
 
-const TYPE_OPTIONS: { value: CategoryType; label: string }[] = [
-  { value: 'expense', label: 'Gastos' },
-  { value: 'income', label: 'Ingresos' },
-];
+const TYPES: CategoryType[] = ['expense', 'income'];
 
 function Group({
   type,
@@ -46,6 +44,7 @@ function Group({
   onEdit: (id: string) => void;
   selectedId?: string;
 }) {
+  const { t } = useTranslation('categories');
   const { data: nodes } = useCategoryTree(type);
   const visible = (nodes ?? []).filter((n) => !HIDDEN_SLUGS.has(n.slug ?? ''));
 
@@ -66,8 +65,8 @@ function Group({
     return (
       <EmptyState
         illustration={<CategoriesEmptyIllustration />}
-        title="Sin categorías todavía"
-        description="Crea una categoría para empezar a clasificar tus movimientos."
+        title={t('empty')}
+        description={t('emptyHint')}
       />
     );
   }
@@ -75,7 +74,7 @@ function Group({
   if (filtered.length === 0) {
     return (
       <Text className="mt-8 text-center text-sm text-ink-2 dark:text-ink-2-dark">
-        Sin resultados para “{search.trim()}”.
+        {t('noResultsFor', { query: search.trim() })}
       </Text>
     );
   }
@@ -97,11 +96,11 @@ function Group({
             <View className="flex-1">
               <Text className="text-base text-ink dark:text-ink-dark">
                 {resolveCategoryLabel(p)}
-                {p.archived ? ' · archivada' : ''}
+                {p.archived ? t('archivedSuffix') : ''}
               </Text>
               {p.children.length > 0 ? (
                 <Text className="text-xs text-ink-3 dark:text-ink-3-dark">
-                  {p.children.length} subcategorías
+                  {t('subcategoriesCount', { count: p.children.length })}
                 </Text>
               ) : null}
             </View>
@@ -118,7 +117,7 @@ function Group({
               <CategoryDot color={c.color ?? p.color} icon={c.icon} size={13} />
               <Text className="flex-1 text-sm text-ink-2 dark:text-ink-2-dark">
                 {resolveCategoryLabel(c)}
-                {c.archived ? ' · archivada' : ''}
+                {c.archived ? t('archivedSuffix') : ''}
               </Text>
               <Text className="text-lg text-ink-3 dark:text-ink-3-dark">›</Text>
             </Pressable>
@@ -134,6 +133,7 @@ const SELECTED_ROW = '-mx-2 rounded-xl bg-lime-tint px-2 dark:bg-lime-tint-dark'
 
 /** The section's list — on a wide desktop, also drawn beside the open record (see `_layout`). */
 export function CategoriesList() {
+  const { t } = useTranslation(['categories', 'common']);
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
   // Desktop: the record open in the pane beside this list.
@@ -151,19 +151,26 @@ export function CategoriesList() {
       ? false
       : {
           icon: Plus,
-          accessibilityLabel: 'Nueva categoría',
+          accessibilityLabel: t('new'),
           onPress: () => router.push('/(app)/settings/categories/new'),
         },
   );
 
   return (
     <Screen edges={['top']} className="gap-4">
-      <PageHeader title="Categorías" onBack={() => router.back()} />
-      <SegmentedControl options={TYPE_OPTIONS} value={type} onChange={setType} />
+      <PageHeader title={t('title')} onBack={() => router.back()} />
+      <SegmentedControl
+        options={TYPES.map((value) => ({
+          value,
+          label: t(value === 'income' ? 'common:income' : 'common:expenses'),
+        }))}
+        value={type}
+        onChange={setType}
+      />
       <TextField
         value={search}
         onChangeText={setSearch}
-        placeholder="Buscar categoría…"
+        placeholder={t('search')}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
@@ -173,7 +180,7 @@ export function CategoriesList() {
         <ActivityIndicator className="mt-8" />
       ) : error ? (
         <View className="mt-8">
-          <ErrorCard message={toFriendlyMessage(error, 'No se pudieron cargar las categorías')} />
+          <ErrorCard message={toFriendlyMessage(error, t('loadFailed'))} />
         </View>
       ) : (
         <ScrollView
@@ -200,17 +207,18 @@ export function CategoriesList() {
  * list itself.
  */
 export default function CategoriesScreen() {
+  const { t } = useTranslation('categories');
   const panes = useMasterDetailPanes();
   const router = useRouter();
   if (!panes) return <CategoriesList />;
   return (
     <MasterDetailEmpty
       illustration={<CategoriesEmptyIllustration />}
-      title="Elige una categoría"
-      description="Su historial de gasto y sus subcategorías aparecen aquí, junto a la lista."
+      title={t('pickTitle')}
+      description={t('pickHint')}
       action={{
         icon: Plus,
-        accessibilityLabel: 'Nueva categoría',
+        accessibilityLabel: t('new'),
         onPress: () => router.push('/(app)/settings/categories/new'),
       }}
     />

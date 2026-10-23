@@ -1,0 +1,106 @@
+{
+  "history": {
+    "title": "History",
+    "range": {
+      "all": "All",
+      "year": "1 year",
+      "half": "6 months",
+      "month": "1 month"
+    },
+    "vsRange": {
+      "year": "vs. the previous 12 months",
+      "half": "vs. the previous 6 months",
+      "month": "vs. the previous 30 days"
+    },
+    "chart": {
+      "bar": "Bars",
+      "line": "Line"
+    },
+    "allChip": "All",
+    "empty": "No transactions in this period.",
+    "averagePer": {
+      "day": "Average per day",
+      "month": "Average per month",
+      "year": "Average per year"
+    },
+    "peak": "Highest · {{label}}",
+    "bySubcategory": "By subcategory",
+    "trend": "Trend"
+  },
+  "title": "Categories",
+  "category": "Category",
+  "new": "New category",
+  "edit": "Edit category",
+  "notFound": "Category not found.",
+  "search": "Search categories…",
+  "loadFailed": "Couldn't load your categories",
+  "empty": "No categories yet",
+  "emptyHint": "Create a category to start sorting your transactions.",
+  "pickTitle": "Pick a category",
+  "pickHint": "Its spending history and subcategories show up here, next to the list.",
+  "saveFailed": "Couldn't save the category",
+  "createFailed": "Couldn't create the category",
+  "type": {
+    "expense": "Expense",
+    "income": "Income"
+  },
+  "archivedSuffix": " · archived",
+  "subcategories": "Subcategories",
+  "deleteForever": "Delete permanently",
+  "deleteBlocked": {
+    "system": "You can't delete it: it's a system category.",
+    "notArchived": "You can't delete it: it isn't archived.",
+    "hasTransactions": "You can't delete it: it has transactions.",
+    "inFavorite": "You can't delete it: it's used by a favorite.",
+    "inBudget": "You can't delete it: it's assigned to a budget."
+  },
+  "deleteBlockedSub": {
+    "system": "You can't delete it: its subcategory \"{{name}}\" is a system category.",
+    "notArchived": "You can't delete it: its subcategory \"{{name}}\" isn't archived.",
+    "hasTransactions": "You can't delete it: its subcategory \"{{name}}\" has transactions.",
+    "inFavorite": "You can't delete it: its subcategory \"{{name}}\" is used by a favorite.",
+    "inBudget": "You can't delete it: its subcategory \"{{name}}\" is assigned to a budget."
+  },
+  "info": {
+    "title": "Category details",
+    "type": "Type",
+    "parent": "Parent category",
+    "subcategories": "Subcategories",
+    "origin": "Origin",
+    "system": "System",
+    "yours": "Created by you",
+    "first": "First transaction",
+    "last": "Last transaction",
+    "none": "None"
+  },
+  "archiveTitle": "Archive this category?",
+  "archiveBody": "You won't be able to pick it for new transactions, but the ones that already have it keep it. You can unarchive it anytime.",
+  "archiveBodySubs_one": "You won't be able to pick it for new transactions. This also archives {{count}} subcategory: {{names}}. Transactions that already have them keep them. You can unarchive each one anytime.",
+  "archiveBodySubs_other": "You won't be able to pick it for new transactions. This also archives {{count}} subcategories: {{names}}. Transactions that already have them keep them. You can unarchive each one anytime.",
+  "deleteTitle": "Delete this category?",
+  "deleteBody": "This can't be undone.",
+  "deleteBodySubs_one": "This also deletes {{count}} subcategory: {{names}}. This can't be undone.",
+  "deleteBodySubs_other": "This also deletes {{count}} subcategories: {{names}}. This can't be undone.",
+  "form": {
+    "name": "Name",
+    "namePlaceholder": "e.g. Pets",
+    "type": "Type",
+    "typeLocked": "You can't change the type while it has subcategories. Move or delete them first.",
+    "parent": "Parent category",
+    "none": "None",
+    "pick": "Pick ›",
+    "color": "Color",
+    "parentOptional": "Parent category (optional)",
+    "subcategoryNote": "It'll be created as a subcategory (it inherits the type)."
+  },
+  "picker": {
+    "parentTitle": "Parent category",
+    "topLevel": "None (top-level category)",
+    "none": "No category",
+    "createTyped": "Create “{{name}}”",
+    "frequent": "Frequent"
+  },
+  "noResultsFor": "No results for “{{query}}”.",
+  "subcategoriesCount_one": "{{count}} subcategory",
+  "subcategoriesCount_other": "{{count}} subcategories"
+}

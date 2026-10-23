@@ -19,11 +19,14 @@
   "scripts": {
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "gen:types": "../../scripts/supabase.sh gen types typescript --local > src/types/database.ts"
+    "gen:types": "../../scripts/supabase.sh gen types typescript --local > src/types/database.ts",
+    "gen:i18n": "node scripts/gen-i18n-resources.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
     "@tanstack/react-query": "^5.102.8",
+    "i18next": "^25.6.0",
+    "react-i18next": "^16.1.0",
     "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },

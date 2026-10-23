@@ -1,14 +1,18 @@
+import { i18n } from '@repo/core/i18n';
 import { useSession, useSignOut } from '@repo/core/hooks';
 import { Button, ICON_COLORS } from '@repo/ui';
 import { Fingerprint, ScanFace, Lock } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppState, Pressable, StyleSheet, Text, View, type AppStateStatus } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   authenticate,
   BIOMETRICS_PLATFORM,
+  biometricLabel,
+  type BiometricKind,
   useAppLockSettings,
   useBiometricSupport,
 } from './biometric';
@@ -69,7 +73,7 @@ function AppLockGate({ userId }: { userId: string }) {
     return () => sub.remove();
   }, [enabled, settings?.timeoutSeconds]);
 
-  const label = support?.label ?? 'biometría';
+  const label = support?.label ?? biometricLabel('generic');
   // Only refs and state setters inside — stable, so the auto-prompt effect
   // below can depend on it honestly.
   const unlock = useCallback(() => {
@@ -78,13 +82,12 @@ function AppLockGate({ userId }: { userId: string }) {
     setError(null);
     // A promise chain rather than try/catch/finally: the React Compiler
     // can't optimize a component containing `finally`.
-    return authenticate('Desbloquea tu app de finanzas')
+    return authenticate(i18n.t('security:prompt.unlock'))
       .then((outcome) => {
         if (outcome === 'success') setLocked(false);
-        else if (outcome === 'failed')
-          setError('No pudimos verificar tu identidad. Intenta de nuevo.');
+        else if (outcome === 'failed') setError(i18n.t('security:verifyFailedRetry'));
       })
-      .catch(() => setError('No pudimos verificar tu identidad. Intenta de nuevo.'))
+      .catch(() => setError(i18n.t('security:verifyFailedRetry')))
       .then(() => {
         authenticating.current = false;
       });
@@ -104,7 +107,14 @@ function AppLockGate({ userId }: { userId: string }) {
   if (!settings || (enabled && appState !== 'active' && !showLock)) return <Cover />;
   if (!showLock) return null;
 
-  return <LockScreen label={label} error={error} onUnlock={() => unlock().catch(() => {})} />;
+  return (
+    <LockScreen
+      label={label}
+      kind={support?.kind ?? 'generic'}
+      error={error}
+      onUnlock={() => unlock().catch(() => {})}
+    />
+  );
 }
 
 function Cover() {
@@ -119,18 +129,21 @@ function Cover() {
 
 function LockScreen({
   label,
+  kind,
   error,
   onUnlock,
 }: {
   label: string;
+  kind: BiometricKind;
   error: string | null;
   onUnlock: () => void;
 }) {
+  const { t } = useTranslation('security');
   const { colorScheme } = useColorScheme();
   const dark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
   const signOut = useSignOut();
-  const Icon = label === 'Face ID' || label === 'reconocimiento facial' ? ScanFace : Fingerprint;
+  const Icon = kind === 'faceId' || kind === 'face' ? ScanFace : Fingerprint;
 
   return (
     <View
@@ -152,9 +165,9 @@ function LockScreen({
           <Lock size={34} color={dark ? ICON_COLORS.ink : ICON_COLORS.lime} />
         </View>
         <View className="items-center gap-1.5">
-          <Text className="text-[22px] font-bold text-ink dark:text-ink-dark">App bloqueada</Text>
+          <Text className="text-[22px] font-bold text-ink dark:text-ink-dark">{t('locked')}</Text>
           <Text className="text-center text-[15px] leading-[21px] text-ink-2 dark:text-ink-2-dark">
-            Usa tu {label} para ver tu información.
+            {t('useToSee', { method: label })}
           </Text>
         </View>
         {error ? (
@@ -166,13 +179,13 @@ function LockScreen({
         <Pressable
           onPress={onUnlock}
           accessibilityRole="button"
-          accessibilityLabel={`Desbloquear con ${label}`}
+          accessibilityLabel={t('unlockWith', { method: label })}
           className="h-16 w-16 items-center justify-center rounded-full bg-lime active:opacity-80"
         >
           <Icon size={30} color={ICON_COLORS.ink} />
         </Pressable>
         <View className="w-full">
-          <Button label={`Desbloquear con ${label}`} onPress={onUnlock} />
+          <Button label={t('unlockWith', { method: label })} onPress={onUnlock} />
         </View>
         <Pressable
           onPress={() => signOut.mutate()}
@@ -181,7 +194,7 @@ function LockScreen({
           className="py-2 active:opacity-60"
         >
           <Text className="text-[14px] font-semibold text-ink-2 dark:text-ink-2-dark">
-            Cerrar sesión e ingresar con contraseña
+            {t('signOutPassword')}
           </Text>
         </Pressable>
       </View>

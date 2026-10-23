@@ -1,0 +1,111 @@
+{
+  "greeting": {
+    "morning": "Buenos días",
+    "afternoon": "Buenas tardes",
+    "evening": "Buenas noches"
+  },
+  "summaryTitle": "Tu resumen",
+  "balanceTotal": "Balance total",
+  "hideBalance": "Ocultar saldos",
+  "showBalance": "Mostrar saldos",
+  "pending": {
+    "title_one": "{{count}} movimiento pendiente",
+    "title_other": "{{count}} movimientos pendientes",
+    "body": "Aún no se han realizado, toca para revisarlos"
+  },
+  "upcoming": {
+    "today_one": "{{count}} movimiento por realizar hoy",
+    "today_other": "{{count}} movimientos por realizar hoy",
+    "title_one": "{{count}} movimiento próximo",
+    "title_other": "{{count}} movimientos próximos",
+    "todayBody": "Programado para hoy, toca para revisarlo",
+    "nearest_one": "El más cercano en {{count}} día",
+    "nearest_other": "El más cercano en {{count}} días"
+  },
+  "accounts": {
+    "title": "Tus cuentas",
+    "none": "Aún no tienes cuentas.",
+    "noneVisible": "No tienes cuentas visibles aquí — actívalas desde Cuenta › Mostrar en inicio.",
+    "seeAll": "Ver todas ›"
+  },
+  "budgets": {
+    "title": "Presupuestos",
+    "create": "+ Crea tu primer presupuesto",
+    "createHint": "Ponle un límite semanal, quincenal o mensual a tus categorías",
+    "onTrack": "{{onTrack}} de {{total}} bajo control este periodo",
+    "seeAll": "Ver todos ›"
+  },
+  "categorySpend": {
+    "title": "Gastos por categoría",
+    "empty": "Sin gastos este mes todavía.",
+    "share": "{{percent}}% del mes",
+    "seeAll": "Ver todas ›"
+  },
+  "weeklySpend": {
+    "title": "Gastos de la semana",
+    "seeInsights": "Ver análisis ›",
+    "vsLastWeek": "{{change}}% vs. semana pasada",
+    "empty": "Sin gastos esta semana todavía."
+  },
+  "monthlyTrend": {
+    "title": "Tendencia mensual",
+    "empty": "Sin movimientos en los últimos {{months}} meses."
+  },
+  "editor": {
+    "title": "Personalizando tu inicio",
+    "hintTouch": "Mantén presionado y arrastra · toca − para quitar",
+    "hintMouse": "Arrastra para mover · toca − para quitar",
+    "addA11y": "Agregar widgets ({{count}} disponibles)",
+    "reset": "Restablecer",
+    "saveFailed": "No se pudo guardar tu inicio. Intenta de nuevo.",
+    "empty": "Tu inicio está vacío",
+    "emptyHint": "Toca Agregar para sumar widgets.",
+    "addTitle": "Agregar widgets",
+    "addHint": "Se colocan en el primer espacio libre de tu inicio.",
+    "allAdded": "Ya tienes todos 🙌",
+    "allAddedHint": "Quita uno con − y aparecerá aquí.",
+    "addWidget": "Agregar {{name}}",
+    "dropHere": "Suelta aquí",
+    "resize": "Cambiar tamaño de {{name}}",
+    "dormant": "Aparece cuando tengas algo aquí"
+  },
+  "layout": {
+    "appTitle": "Personalizar inicio",
+    "appBody": "Arrastra del ícono para reordenar, o apaga una tarjeta para quitarla de tu inicio. El selector de mes, el balance total y los ingresos/gastos del mes siempre se quedan fijos arriba.",
+    "webTitle": "Widgets del inicio",
+    "webBody": "Para mover los widgets y cambiar su tamaño, entra a Personalizar en tu inicio. Aquí eliges cuáles se muestran.",
+    "arrange": "Acomodar en Inicio",
+    "settingsRowApp": "Orden de las tarjetas de la pantalla principal",
+    "settingsRowWeb": "Cuáles se muestran — acomódalos desde Personalizar"
+  },
+  "widgets": {
+    "pending": {
+      "label": "Movimientos pendientes",
+      "description": "Gastos o ingresos que ya deberían haberse realizado"
+    },
+    "upcoming": {
+      "label": "Movimientos próximos",
+      "description": "Recordatorio de lo que tienes programado a futuro"
+    },
+    "budgets": {
+      "label": "Presupuestos",
+      "description": "Qué tan cerca estás del límite de tus categorías"
+    },
+    "categorySpend": {
+      "label": "Gastos por categoría",
+      "description": "Gráfica y tus 5 categorías con más gasto"
+    },
+    "weeklySpend": {
+      "label": "Gastos semanales",
+      "description": "Vistazo rápido de lo gastado esta semana, día por día"
+    },
+    "monthlyTrend": {
+      "label": "Tendencia mensual",
+      "description": "Ingresos vs. gastos de los últimos 6 meses"
+    },
+    "accounts": {
+      "label": "Tus cuentas",
+      "description": "Lista de cuentas y su saldo"
+    }
+  }
+}

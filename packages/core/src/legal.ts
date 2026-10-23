@@ -9,11 +9,10 @@
  */
 export const LEGAL_VERSION = '2026-10-22';
 
-/** Paths on the landing site (`apps/landing/src/pages/…`). */
+/** Paths on the landing site (`apps/landing/src/pages/…`), per language. */
 export const LEGAL_PATHS = {
-  privacy: '/privacidad',
-  cookies: '/cookies',
-  terms: '/terminos',
+  es: { privacy: '/privacidad', cookies: '/cookies', terms: '/terminos' },
+  en: { privacy: '/en/privacy', cookies: '/en/cookies', terms: '/en/terms' },
 } as const;
 
-export type LegalDocument = keyof typeof LEGAL_PATHS;
+export type LegalDocument = keyof (typeof LEGAL_PATHS)['es'];

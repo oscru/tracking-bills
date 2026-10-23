@@ -28,17 +28,19 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleArrowDown, CircleArrowUp, Pencil } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountDetailSkeleton } from '../../../../../../features/accounts/account-detail-skeleton';
 import { AdjustBalanceSheet } from '../../../../../../features/accounts/adjust-balance-sheet';
 import { AccountIcon } from '../../../../../../features/accounts/account-icon';
-import { ACCOUNT_TYPE_LABEL } from '../../../../../../features/accounts/account-types';
+import { accountTypeLabel } from '../../../../../../features/accounts/account-types';
 import { RecordInfoButton } from '../../../../../../features/design/record-info';
 import { SplitColumns } from '../../../../../../features/design/split-columns';
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
 export default function AccountDetail() {
+  const { t } = useTranslation(['accounts', 'common']);
   const tabBarInset = useFloatingTabBarInset();
   const desktop = useIsDesktop();
   const { colorScheme } = useColorScheme();
@@ -78,7 +80,7 @@ export default function AccountDetail() {
     account
       ? {
           icon: Pencil,
-          accessibilityLabel: 'Editar cuenta',
+          accessibilityLabel: t('edit'),
           onPress: () =>
             router.push({
               pathname: '/(app)/settings/accounts/[id]/edit',
@@ -91,7 +93,7 @@ export default function AccountDetail() {
   if (loadingAccounts || loadingBalance || loadingCounts) {
     return (
       <Screen edges={['top']} className="gap-5" width={desktop ? 'wide' : undefined}>
-        <PageHeader title="Cuenta" onBack={() => router.back()} />
+        <PageHeader title={t('account')} onBack={() => router.back()} />
         <AccountDetailSkeleton />
       </Screen>
     );
@@ -99,7 +101,7 @@ export default function AccountDetail() {
   if (!account) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Cuenta no encontrada.</Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
@@ -117,8 +119,7 @@ export default function AccountDetail() {
         // confirm sheet, but a concurrent edit from another device could
         // still make the DB-level check (`check_account_archive_zero_balance`)
         // the one that actually catches it.
-        onError: (e) =>
-          setArchiveBlockedMessage(toFriendlyMessage(e, 'No se pudo archivar la cuenta')),
+        onError: (e) => setArchiveBlockedMessage(toFriendlyMessage(e, t('archiveFailed'))),
       },
     );
   };
@@ -130,19 +131,19 @@ export default function AccountDetail() {
         onBack={() => router.back()}
         action={
           <RecordInfoButton
-            title="Información de la cuenta"
+            title={t('info.title')}
             rows={[
-              { label: 'Tipo', value: ACCOUNT_TYPE_LABEL[account.type] },
-              { label: 'Moneda', value: account.currency },
+              { label: t('info.type'), value: accountTypeLabel(account.type) },
+              { label: t('info.currency'), value: account.currency },
               {
-                label: 'Saldo inicial',
+                label: t('info.initialBalance'),
                 value: formatCurrency(Number(account.initial_balance), account.currency),
               },
-              { label: 'Movimientos', value: String(incomeCount + expenseCount) },
-              { label: 'Creada', value: formatDateTime(account.created_at) },
-              { label: 'Última modificación', value: formatDateTime(account.updated_at) },
+              { label: t('info.transactions'), value: String(incomeCount + expenseCount) },
+              { label: t('common:info.created'), value: formatDateTime(account.created_at) },
+              { label: t('common:info.updated'), value: formatDateTime(account.updated_at) },
               {
-                label: 'Archivada',
+                label: t('common:info.archived'),
                 value: account.archived_at ? formatDateTime(account.archived_at) : '',
               },
             ]}
@@ -166,10 +167,12 @@ export default function AccountDetail() {
                     <AccountIcon account={account} size={42} />
                     <View>
                       <Text className="text-[13px] text-white/60">
-                        {ACCOUNT_TYPE_LABEL[account.type]} · {account.currency}
-                        {account.archived ? ' · archivada' : ''}
+                        {accountTypeLabel(account.type)} · {account.currency}
+                        {account.archived ? t('archivedSuffix') : ''}
                       </Text>
-                      <Text className="text-sm font-semibold text-white">Saldo actual</Text>
+                      <Text className="text-sm font-semibold text-white">
+                        {t('currentBalance')}
+                      </Text>
                     </View>
                   </View>
                   <Text className="mt-4 text-4xl font-extrabold tracking-tight text-white">
@@ -179,7 +182,7 @@ export default function AccountDetail() {
 
                 {/* Secondary on purpose: the navbar's lime "editar" is this screen's action. */}
                 <Button
-                  label="Ajustar saldo"
+                  label={t('adjustBalance')}
                   variant="secondary"
                   onPress={() => setAdjustOpen(true)}
                 />
@@ -195,14 +198,14 @@ export default function AccountDetail() {
                     <View className="flex-row items-center gap-1.5">
                       <CircleArrowDown size={16} color={ICON_COLORS.pos} />
                       <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-                        Ingresos
+                        {t('common:income')}
                       </Text>
                     </View>
                     <Text className="mt-1 text-2xl font-bold text-pos dark:text-pos-dark">
                       {incomeCount}
                     </Text>
                     <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-                      {incomeCount === 1 ? 'movimiento' : 'movimientos'}
+                      {t('movements', { count: incomeCount })}
                     </Text>
                   </Pressable>
                   <Pressable
@@ -215,21 +218,21 @@ export default function AccountDetail() {
                         color={dark ? ICON_COLORS.inkDark : ICON_COLORS.ink}
                       />
                       <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-                        Gastos
+                        {t('common:expenses')}
                       </Text>
                     </View>
                     <Text className="mt-1 text-2xl font-bold text-ink dark:text-ink-dark">
                       {expenseCount}
                     </Text>
                     <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-                      {expenseCount === 1 ? 'movimiento' : 'movimientos'}
+                      {t('movements', { count: expenseCount })}
                     </Text>
                   </Pressable>
                 </View>
 
                 <SwitchRow
-                  label="Mostrar en Inicio"
-                  description="Aparece en la lista de cuentas de la pantalla principal"
+                  label={t('showOnHome')}
+                  description={t('showOnHomeHint')}
                   value={account.show_on_home}
                   onValueChange={(v) =>
                     updateAccount.mutate({ id: account.id, patch: { show_on_home: v } })
@@ -237,8 +240,8 @@ export default function AccountDetail() {
                 />
 
                 <SwitchRow
-                  label="Incluir en balance total"
-                  description="Se suma al «Balance total» de la pantalla principal"
+                  label={t('includeInTotal')}
+                  description={t('includeInTotalHint')}
                   value={account.include_in_total}
                   onValueChange={(v) =>
                     updateAccount.mutate({ id: account.id, patch: { include_in_total: v } })
@@ -255,7 +258,7 @@ export default function AccountDetail() {
           style={{ paddingBottom: tabBarInset + 4 }}
         >
           <Button
-            label={account.archived ? 'Desarchivar' : 'Archivar'}
+            label={t(account.archived ? 'common:unarchive' : 'common:archive')}
             variant={account.archived ? 'secondary' : 'ghost-danger'}
             loading={updateAccount.isPending}
             onPress={() => {
@@ -265,9 +268,7 @@ export default function AccountDetail() {
               // pickers (see `accountBalance`, which ignores `archived`),
               // it doesn't zero it out. Require settling it first.
               if (Math.round(balance * 100) !== 0) {
-                setArchiveBlockedMessage(
-                  'No puedes archivar una cuenta con saldo distinto de cero. Transfiere el saldo a otra cuenta o ajústalo a 0 primero.',
-                );
+                setArchiveBlockedMessage(t('archiveNonZero'));
                 return;
               }
               setArchiveBlockedMessage(null);
@@ -288,13 +289,11 @@ export default function AccountDetail() {
 
       <ConfirmSheet
         visible={confirmArchive}
-        title="¿Archivar cuenta?"
+        title={t('archiveTitle')}
         description={
-          linkedGoal
-            ? `Dejará de aparecer para elegirla en movimientos nuevos, pero conserva todo su historial. Como está vinculada a la meta "${linkedGoal.name}", esa meta se desvinculará y volverá a llevar su progreso de forma manual. Puedes desarchivar la cuenta y volver a vincularla cuando quieras.`
-            : 'Dejará de aparecer para elegirla en movimientos nuevos, pero conserva todo su historial. Puedes desarchivarla cuando quieras.'
+          linkedGoal ? t('archiveBodyGoal', { goal: linkedGoal.name }) : t('archiveBody')
         }
-        confirmLabel="Archivar"
+        confirmLabel={t('common:archive')}
         onCancel={() => setConfirmArchive(false)}
         onConfirm={() => {
           setConfirmArchive(false);

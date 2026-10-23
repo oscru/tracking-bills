@@ -1,6 +1,7 @@
 import { BottomSheet, IconButton } from '@repo/ui';
 import { Info } from 'lucide-react-native';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 export interface RecordInfoRow {
@@ -15,11 +16,12 @@ export interface RecordInfoRow {
  * archived…). Rows with an empty value are left out.
  */
 export function RecordInfoButton({ title, rows }: { title: string; rows: RecordInfoRow[] }) {
+  const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
   const shown = rows.filter((r) => r.value !== '');
   return (
     <>
-      <IconButton icon={Info} onPress={() => setOpen(true)} accessibilityLabel="Información" />
+      <IconButton icon={Info} onPress={() => setOpen(true)} accessibilityLabel={t('info.title')} />
       <BottomSheet visible={open} onClose={() => setOpen(false)} title={title}>
         <View className="mx-5 mb-4 rounded-2xl border border-line px-4 dark:border-line-dark">
           {shown.map((row, i) => (

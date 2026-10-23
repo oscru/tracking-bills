@@ -2,6 +2,7 @@ import { ICON_COLORS } from '@repo/ui';
 import * as Haptics from 'expo-haptics';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -56,6 +57,7 @@ export function MonthSwiper({
   onShift,
   onOpenPicker,
 }: Props) {
+  const { t } = useTranslation();
   const tx = useSharedValue(0);
   const canGoNext = useSharedValue(!isCurrentMonth);
   useEffect(() => {
@@ -129,7 +131,7 @@ export function MonthSwiper({
   return (
     <GestureDetector gesture={pan}>
       <View className="flex-row items-center justify-center gap-4">
-        <Pressable onPress={() => go(-1)} hitSlop={10} accessibilityLabel="Mes anterior">
+        <Pressable onPress={() => go(-1)} hitSlop={10} accessibilityLabel={t('previousMonth')}>
           <ChevronLeft size={22} color={ICON_COLORS.ink3} />
         </Pressable>
         <View className="min-w-[110px] items-center overflow-hidden">
@@ -137,7 +139,7 @@ export function MonthSwiper({
             <Pressable
               onPress={onOpenPicker}
               hitSlop={8}
-              accessibilityLabel={`${monthLabel} ${yearLabel}, cambiar mes`}
+              accessibilityLabel={t('changeMonth', { month: monthLabel, year: yearLabel })}
               className="items-center active:opacity-60"
             >
               <Text className="text-xs font-medium text-ink-3 dark:text-ink-3-dark">
@@ -153,7 +155,7 @@ export function MonthSwiper({
           onPress={() => go(1)}
           hitSlop={10}
           disabled={isCurrentMonth}
-          accessibilityLabel="Mes siguiente"
+          accessibilityLabel={t('nextMonth')}
         >
           <ChevronRight size={22} color={isCurrentMonth ? '#D1D5DB' : ICON_COLORS.ink3} />
         </Pressable>

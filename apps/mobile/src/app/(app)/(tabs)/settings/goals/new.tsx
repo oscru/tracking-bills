@@ -2,11 +2,13 @@ import { useCreateGoal, useFormError, useGoals, useProfile } from '@repo/core/ho
 import { PageHeader, Screen } from '@repo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator } from 'react-native';
 
 import { GoalForm } from '../../../../../features/goals/goal-form';
 
 export default function NewGoal() {
+  const { t } = useTranslation(['goals', 'common']);
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
   const { data: goals } = useGoals();
@@ -29,14 +31,14 @@ export default function NewGoal() {
 
   return (
     <Screen className="gap-4">
-      <PageHeader title="Nuevo objetivo" onBack={() => router.back()} />
+      <PageHeader title={t('new')} onBack={() => router.back()} />
 
       <GoalForm
         currency={currency ?? profile.currency}
         currencyOptions={profile.enabled_currencies}
         onChangeCurrency={setCurrency}
         accountsLinkedElsewhere={accountsLinkedElsewhere}
-        submitLabel="Guardar"
+        submitLabel={t('common:save')}
         submitting={create.isPending}
         error={error}
         onDirty={clearError}
@@ -44,7 +46,7 @@ export default function NewGoal() {
           clearError();
           create.mutate(input, {
             onSuccess: () => router.back(),
-            onError: (e) => setError(e, 'No se pudo guardar el objetivo'),
+            onError: (e) => setError(e, t('saveFailed')),
           });
         }}
       />

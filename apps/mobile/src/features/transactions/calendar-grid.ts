@@ -1,6 +1,16 @@
 /** Shared month-grid math for the movement-entry date field and the filter date range field. */
+import { currentLocale } from '@repo/core/i18n';
+import { getDateFormat } from '@repo/core/utils';
 
-export const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+/**
+ * Monday…Sunday as one-letter initials in the current language ("L M M J V
+ * S D", "M T W T F S S") — letters repeat, so key them by index.
+ */
+export function weekdayInitials(): string[] {
+  const format = getDateFormat(currentLocale(), { weekday: 'narrow' });
+  // 2024-01-01 was a Monday.
+  return Array.from({ length: 7 }, (_, i) => format.format(new Date(2024, 0, 1 + i)));
+}
 
 export function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);

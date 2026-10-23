@@ -18,6 +18,7 @@ import {
 } from '@repo/ui';
 import { Plus } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AccountPicker } from '../accounts/account-picker';
@@ -55,11 +56,11 @@ interface Props {
 
 type PacePeriod = 'weekly' | 'biweekly' | 'monthly' | 'custom';
 
-const PACE_OPTIONS: { value: PacePeriod; label: string; days: number | null }[] = [
-  { value: 'weekly', label: 'Semanal', days: 7 },
-  { value: 'biweekly', label: 'Quincenal', days: 15 },
-  { value: 'monthly', label: 'Mensual', days: 30 },
-  { value: 'custom', label: 'Personalizado', days: null },
+const PACE_OPTIONS: { value: PacePeriod; days: number | null }[] = [
+  { value: 'weekly', days: 7 },
+  { value: 'biweekly', days: 15 },
+  { value: 'monthly', days: 30 },
+  { value: 'custom', days: null },
 ];
 
 /** The pace preset (if any) whose fixed day count matches `days` — used to
@@ -82,6 +83,7 @@ export function GoalForm({
   footer,
   accountsLinkedElsewhere,
 }: Props) {
+  const { t } = useTranslation(['goals', 'favorites', 'transactions']);
   const [name, setName] = useState(initial?.name ?? '');
   const [icon, setIcon] = useState<string | null>(initial?.icon ?? null);
   const [amountText, setAmountText] = useState(
@@ -136,8 +138,8 @@ export function GoalForm({
 
   const submit = () => {
     setFieldError(null);
-    if (!icon) return setFieldError('Elige un ícono');
-    if (hasLinkedAccount && !accountId) return setFieldError('Elige una cuenta de ahorro');
+    if (!icon) return setFieldError('favorites:form.iconRequired');
+    if (hasLinkedAccount && !accountId) return setFieldError(t('form.savingsRequired'));
 
     const payload = {
       name: name.trim(),
@@ -152,7 +154,7 @@ export function GoalForm({
 
     const parsed = goalCreateSchema.safeParse(payload);
     if (!parsed.success) {
-      setFieldError(parsed.error.issues[0]?.message ?? 'Revisa los datos');
+      setFieldError(parsed.error.issues[0]?.message ?? 'transactions:form.checkData');
       return;
     }
     onSubmit(parsed.data);
@@ -177,25 +179,25 @@ export function GoalForm({
         </Pressable>
         <Pressable onPress={() => setIconPickerOpen(true)} hitSlop={8}>
           <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-            {icon ? 'Cambiar ícono' : 'Elegir ícono'}
+            {t(icon ? 'favorites:form.changeIcon' : 'favorites:form.pickIcon')}
           </Text>
         </Pressable>
       </View>
 
       <TextField
-        label="Nombre"
+        label={t('form.name')}
         value={name}
         onChangeText={(v) => {
           setName(v);
           dirty();
         }}
-        placeholder="Ej. Vacaciones"
+        placeholder={t('form.namePlaceholder')}
         maxLength={60}
       />
 
       <View className="gap-2">
         <CurrencyField
-          label="Monto a alcanzar"
+          label={t('form.target')}
           value={amountText}
           onChangeText={(v) => {
             setAmountText(v);
@@ -220,14 +222,14 @@ export function GoalForm({
           </View>
         ) : (
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            Divisa: {currency} — no se puede cambiar después de crear el objetivo.
+            {t('form.currencyLocked', { currency })}
           </Text>
         )}
       </View>
 
       <View className="gap-2">
         <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-          Fecha límite (opcional)
+          {t('form.deadline')}
         </Text>
         {deadline ? (
           <View className="gap-2">
@@ -248,7 +250,7 @@ export function GoalForm({
               className="self-start"
             >
               <Text className="text-xs font-semibold text-danger dark:text-danger-dark">
-                Quitar fecha límite
+                {t('form.removeDeadline')}
               </Text>
             </Pressable>
           </View>
@@ -262,15 +264,15 @@ export function GoalForm({
           >
             <Plus size={18} color={ICON_COLORS.limeInk} />
             <Text className="text-[14px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-              Agregar fecha límite
+              {t('form.addDeadline')}
             </Text>
           </Pressable>
         )}
       </View>
 
       <SwitchRow
-        label="Definir ritmo de ahorro"
-        description="Un monto sugerido cada cierto número de días, para ver si vas a tiempo"
+        label={t('form.pace')}
+        description={t('form.paceHint')}
         value={hasPace}
         onValueChange={(v) => {
           setHasPace(v);
@@ -281,12 +283,14 @@ export function GoalForm({
       {hasPace ? (
         <View className="gap-4">
           <View className="gap-2">
-            <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">Se repite</Text>
+            <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
+              {t('form.repeats')}
+            </Text>
             <View className="flex-row flex-wrap gap-2">
               {PACE_OPTIONS.map((opt) => (
                 <Chip
                   key={opt.value}
-                  label={opt.label}
+                  label={t(`form.paceOptions.${opt.value}`)}
                   selected={pacePeriod === opt.value}
                   onPress={() => {
                     setPacePeriod(opt.value);
@@ -299,7 +303,7 @@ export function GoalForm({
 
           {pacePeriod === 'custom' ? (
             <TextField
-              label="Cada cuántos días"
+              label={t('form.everyDays')}
               value={customDaysText}
               onChangeText={(v) => {
                 setCustomDaysText(v.replace(/[^0-9]/g, ''));
@@ -312,7 +316,7 @@ export function GoalForm({
 
           <View className="gap-2">
             <CurrencyField
-              label="Monto"
+              label={t('transactions:form.amount')}
               value={contributionAmountText}
               onChangeText={(v) => {
                 setContributionAmountText(v);
@@ -330,7 +334,7 @@ export function GoalForm({
                 className="self-start"
               >
                 <Text className="text-[13px] font-semibold text-lime-ink dark:text-lime-ink-dark">
-                  Usar sugerido ({formatCurrency(suggestion, currency)})
+                  {t('form.useSuggested', { amount: formatCurrency(suggestion, currency) })}
                 </Text>
               </Pressable>
             ) : null}
@@ -339,14 +343,15 @@ export function GoalForm({
           {showShortfallWarning ? (
             <View className="rounded-xl bg-warning-tint p-3.5 dark:bg-warning-tint-dark">
               <Text className="text-xs leading-[17px] text-warning dark:text-warning-dark">
-                Con este monto es probable que no alcances tu objetivo antes de la fecha límite —
-                necesitarías {formatCurrency(suggestion ?? 0, currency)} cada{' '}
-                {intervalDays === 7
-                  ? 'semana'
-                  : intervalDays === 15
-                    ? 'quincena'
-                    : `${intervalDays} días`}
-                .
+                {t('form.shortfall', {
+                  amount: formatCurrency(suggestion ?? 0, currency),
+                  interval:
+                    intervalDays === 7
+                      ? t('form.intervalWeek')
+                      : intervalDays === 15
+                        ? t('form.intervalBiweek')
+                        : t('form.intervalDays', { count: intervalDays ?? 0 }),
+                })}
               </Text>
             </View>
           ) : null}
@@ -354,8 +359,8 @@ export function GoalForm({
       ) : null}
 
       <SwitchRow
-        label="Vincular una cuenta de ahorro"
-        description="Las aportaciones serán transferencias reales a esa cuenta, y el progreso será su saldo — en vez de un sobre virtual"
+        label={t('form.linkAccount')}
+        description={t('form.linkAccountHint')}
         value={hasLinkedAccount}
         onValueChange={(v) => {
           setHasLinkedAccount(v);
@@ -367,7 +372,7 @@ export function GoalForm({
       {hasLinkedAccount ? (
         <View className="gap-2">
           <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-            Cuenta de ahorro
+            {t('form.savingsAccount')}
           </Text>
           <Pressable
             onPress={() => setAccountPickerOpen(true)}
@@ -380,11 +385,11 @@ export function GoalForm({
                   : 'text-base text-ink-3 dark:text-ink-3-dark'
               }
             >
-              {selectedAccount ? selectedAccount.name : 'Elige una cuenta'}
+              {selectedAccount ? selectedAccount.name : t('transactions:form.pickAccount')}
             </Text>
           </Pressable>
           <Text className="text-xs text-ink-2 dark:text-ink-2-dark">
-            Solo se muestran cuentas en {currency} que no estén ya ligadas a otra meta.
+            {t('form.onlyFree', { currency })}
           </Text>
         </View>
       ) : null}
@@ -408,7 +413,7 @@ export function GoalForm({
       <AccountPicker
         visible={accountPickerOpen}
         onClose={() => setAccountPickerOpen(false)}
-        title="Cuenta de ahorro"
+        title={t('form.savingsAccount')}
         selectedId={accountId}
         onSelect={(id) => {
           setAccountId(id);

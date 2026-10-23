@@ -4,6 +4,7 @@ import type { Category, CategoryType } from '@repo/core/types';
 import { BottomSheet, CategoryDot, Chip, ICON_COLORS } from '@repo/ui';
 import { Check, Plus } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 
 interface Props {
@@ -37,6 +38,7 @@ export function CategoryPicker({
   excludeIds,
   allowNone = true,
 }: Props) {
+  const { t } = useTranslation('categories');
   const { height: windowHeight } = useWindowDimensions();
   const [q, setQ] = useState('');
   const { data: tree } = useCategoryTree(type);
@@ -111,13 +113,13 @@ export function CategoryPicker({
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      title={parentOnly ? 'Categoría superior' : 'Categoría'}
+      title={t(parentOnly ? 'picker.parentTitle' : 'category')}
     >
       <View className="px-5 pb-3">
         <TextInput
           value={q}
           onChangeText={setQ}
-          placeholder="Buscar categoría…"
+          placeholder={t('search')}
           placeholderTextColor={ICON_COLORS.ink3}
           className="h-11 rounded-ctl border border-line bg-surface px-3 text-[15px] text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark"
         />
@@ -126,7 +128,7 @@ export function CategoryPicker({
       {!parentOnly && recents.length > 0 && !q ? (
         <View className="gap-2 px-5 pb-3">
           <Text className="text-xs font-bold uppercase tracking-wide text-ink-3 dark:text-ink-3-dark">
-            Frecuentes
+            {t('picker.frequent')}
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {recents.map((c) => (
@@ -161,7 +163,7 @@ export function CategoryPicker({
               className="flex-1 text-[15px] font-semibold text-lime-ink dark:text-lime-ink-dark"
               numberOfLines={1}
             >
-              {typedName ? `Crear «${typedName}»` : 'Nueva categoría'}
+              {typedName ? t('picker.createTyped', { name: typedName }) : t('new')}
             </Text>
           </Pressable>
         ) : null}
@@ -172,7 +174,7 @@ export function CategoryPicker({
             className="border-t border-line px-5 py-5 dark:border-line-dark"
           >
             <Text className="text-[15px] text-ink-2 dark:text-ink-2-dark">
-              {parentOnly ? 'Ninguna (categoría de primer nivel)' : 'Sin categoría'}
+              {t(parentOnly ? 'picker.topLevel' : 'picker.none')}
             </Text>
           </Pressable>
         ) : null}

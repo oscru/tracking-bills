@@ -7,7 +7,6 @@ import {
   useUpdateBudget,
 } from '@repo/core/hooks';
 import { resolveCategoryLabel } from '@repo/core/i18n';
-import type { BudgetPeriodType } from '@repo/core/types';
 import { budgetProgress, formatDate } from '@repo/core/utils';
 import {
   Button,
@@ -23,20 +22,15 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { BudgetProgressBar } from '../../../../../../features/budgets/budget-progress-bar';
 import { SplitColumns } from '../../../../../../features/design/split-columns';
 import { useTabBarAction } from '../../../../../../features/navigation/floating-tab-bar';
 
-const PERIOD_LABEL: Record<BudgetPeriodType, string> = {
-  weekly: 'Semanal',
-  biweekly: 'Quincenal',
-  monthly: 'Mensual',
-  custom: 'Personalizado',
-};
-
 export default function BudgetDetail() {
+  const { t } = useTranslation(['budgets', 'common']);
   const scrollPadding = useTabBarScrollPadding();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -58,7 +52,7 @@ export default function BudgetDetail() {
     budget
       ? {
           icon: Pencil,
-          accessibilityLabel: 'Editar presupuesto',
+          accessibilityLabel: t('edit'),
           onPress: () =>
             router.push({
               pathname: '/(app)/settings/budgets/[id]/edit',
@@ -78,9 +72,7 @@ export default function BudgetDetail() {
   if (!budget) {
     return (
       <Screen center>
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">
-          Presupuesto no encontrado.
-        </Text>
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
@@ -98,7 +90,7 @@ export default function BudgetDetail() {
   const periodLabel =
     (budget.period_type === 'custom'
       ? rangeLabel
-      : `${PERIOD_LABEL[budget.period_type]}${budget.repeats ? ' · se repite' : ''} · ${rangeLabel}`) +
+      : `${t(`period.${budget.period_type}`)}${budget.repeats ? t('repeatsSuffix') : ''} · ${rangeLabel}`) +
     ` · ${budget.currency}`;
 
   const toggleArchive = () =>
@@ -120,7 +112,7 @@ export default function BudgetDetail() {
                 {budget.archived ? (
                   <View className="self-start rounded-full bg-line px-3 py-1 dark:bg-line-dark">
                     <Text className="text-xs font-semibold text-ink-2 dark:text-ink-2-dark">
-                      Archivado
+                      {t('archivedBadge')}
                     </Text>
                   </View>
                 ) : null}
@@ -144,7 +136,7 @@ export default function BudgetDetail() {
               <>
                 <View className="gap-2">
                   <Text className="px-1 text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                    Categorías ({budget.categories.length})
+                    {t('categoriesTitle', { count: budget.categories.length })}
                   </Text>
                   <View className="gap-3 rounded-2xl border border-line p-4 dark:border-line-dark">
                     {budget.categories.map(({ category: c, amount: allocated }, i) => {
@@ -189,7 +181,7 @@ export default function BudgetDetail() {
 
                 <View className="gap-2 border-t border-line pt-5 dark:border-line-dark">
                   <Button
-                    label={budget.archived ? 'Desarchivar' : 'Archivar presupuesto'}
+                    label={budget.archived ? t('common:unarchive') : t('archive')}
                     variant={budget.archived ? 'secondary' : 'ghost-danger'}
                     loading={updateBudget.isPending}
                     onPress={() => (budget.archived ? toggleArchive() : setConfirmArchive(true))}
@@ -197,7 +189,7 @@ export default function BudgetDetail() {
                   {budget.archived ? (
                     <Pressable onPress={() => setConfirmDelete(true)} className="items-center py-2">
                       <Text className="text-sm font-medium text-danger dark:text-danger-dark">
-                        Eliminar definitivamente
+                        {t('deleteForever')}
                       </Text>
                     </Pressable>
                   ) : null}
@@ -212,9 +204,9 @@ export default function BudgetDetail() {
 
       <ConfirmSheet
         visible={confirmArchive}
-        title="¿Archivar presupuesto?"
-        description="Deja de aparecer en Inicio y Análisis, pero conserva su historial. Puedes desarchivarlo cuando quieras."
-        confirmLabel="Archivar"
+        title={t('archiveTitle')}
+        description={t('archiveBody')}
+        confirmLabel={t('common:archive')}
         onCancel={() => setConfirmArchive(false)}
         onConfirm={() => {
           setConfirmArchive(false);
@@ -224,16 +216,16 @@ export default function BudgetDetail() {
 
       <ConfirmSheet
         visible={confirmDelete}
-        title="¿Eliminar presupuesto?"
-        description="Se elimina el presupuesto y su relación con sus categorías, sin poder deshacerlo. No afecta los movimientos ya registrados."
-        confirmLabel="Eliminar"
+        title={t('deleteTitle')}
+        description={t('deleteBody')}
+        confirmLabel={t('common:delete')}
         destructive
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() => {
           setConfirmDelete(false);
           remove.mutate(budget.id, {
             onSuccess: () => router.replace('/(app)/settings/budgets'),
-            onError: (e) => setError(e, 'No se pudo eliminar'),
+            onError: (e) => setError(e, t('common:deleteFailed')),
           });
         }}
       />

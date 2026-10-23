@@ -12,6 +12,7 @@ import { CategoryDot, PageHeader, Screen, ICON_COLORS, useIsWideDesktop } from '
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChartPie } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CategorySpendDonut } from '../../features/home/category-spend-donut';
@@ -21,8 +22,9 @@ import { CategorySpendSkeleton } from '../../features/home/category-spend-skelet
 /** One actual expense in the list below the subcategory breakdown — always
  * formatted in its own account's currency, never a shared default. */
 function ExpenseRow({ tx, onPress }: { tx: TransactionWithRefs; onPress: () => void }) {
+  const { t } = useTranslation('transactions');
   const description = tx.description?.trim();
-  const categoryLabel = tx.category ? resolveCategoryLabel(tx.category) : 'Sin categoría';
+  const categoryLabel = tx.category ? resolveCategoryLabel(tx.category) : t('row.noCategory');
 
   return (
     <Pressable onPress={onPress} className="flex-row items-center gap-3 py-3 active:opacity-60">
@@ -44,6 +46,7 @@ function ExpenseRow({ tx, onPress }: { tx: TransactionWithRefs; onPress: () => v
 }
 
 export default function CategoryMonthSpendingScreen() {
+  const { t } = useTranslation('analytics');
   const router = useRouter();
   // Two columns only on a wide desktop; a compact one stacks them, as on phones.
   const twoColumns = useIsWideDesktop();
@@ -125,7 +128,7 @@ export default function CategoryMonthSpendingScreen() {
       params: { month, label: params.label },
     });
 
-  const title = category ? resolveCategoryLabel(category) : 'Categoría';
+  const title = category ? resolveCategoryLabel(category) : t('category.fallbackTitle');
 
   // Desktop: the donut as big as its column allows, within reason.
   const [chartWidth, setChartWidth] = useState<number | null>(null);
@@ -155,7 +158,7 @@ export default function CategoryMonthSpendingScreen() {
           {g.breakdown.length > 1 ? (
             <View className="gap-1">
               <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                Por subcategoría
+                {t('category.bySubcategory')}
               </Text>
               <View className="rounded-card border border-line px-4 dark:border-line-dark">
                 {g.breakdown.map((c, i) => (
@@ -178,7 +181,7 @@ export default function CategoryMonthSpendingScreen() {
   const movements = (
     <View className="gap-1">
       <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-        Movimientos · {categoryTx.length}
+        {t('category.movements', { count: categoryTx.length })}
       </Text>
       <View className="rounded-card border border-line px-4 dark:border-line-dark">
         {categoryTx.map((tx, i) => (
@@ -236,10 +239,10 @@ export default function CategoryMonthSpendingScreen() {
       ) : (
         <View className="mt-16 items-center gap-2">
           <ChartPie size={28} color={ICON_COLORS.ink3} />
-          <Text className="text-base font-semibold text-ink dark:text-ink-dark">Sin gastos</Text>
-          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">
-            Sin movimientos en esta categoría este mes.
+          <Text className="text-base font-semibold text-ink dark:text-ink-dark">
+            {t('monthly.empty')}
           </Text>
+          <Text className="text-sm text-ink-2 dark:text-ink-2-dark">{t('category.emptyBody')}</Text>
         </View>
       )}
     </Screen>

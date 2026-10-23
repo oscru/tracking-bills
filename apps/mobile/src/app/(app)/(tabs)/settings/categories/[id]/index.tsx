@@ -24,6 +24,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { CategoryDetailSkeleton } from '../../../../../../features/categories/category-detail-skeleton';
@@ -37,24 +38,26 @@ import { useTabBarAction } from '../../../../../../features/navigation/floating-
  * `categories` resolves destructively on delete (set-null or cascade, never
  * restrict), so this is the one place that's allowed to be lenient without
  * risking silently losing history, a favorite, or a budget's assignment. */
+type BlockReason = 'system' | 'notArchived' | 'hasTransactions' | 'inFavorite' | 'inBudget';
+
 function categoryBlockReason(
   category: Category,
   transactions: { category_id: string | null }[],
   favorites: { category_id: string | null }[],
   budgets: { categories: { category: { id: string } }[] }[],
-): string | null {
-  if (category.slug) return 'es una categoría del sistema';
-  if (!category.archived) return 'no está archivada';
-  if (transactions.some((t) => t.category_id === category.id)) return 'tiene movimientos asociados';
-  if (favorites.some((f) => f.category_id === category.id))
-    return 'está asignada a un movimiento favorito';
+): BlockReason | null {
+  if (category.slug) return 'system';
+  if (!category.archived) return 'notArchived';
+  if (transactions.some((tx) => tx.category_id === category.id)) return 'hasTransactions';
+  if (favorites.some((f) => f.category_id === category.id)) return 'inFavorite';
   if (budgets.some((b) => b.categories.some((c) => c.category.id === category.id))) {
-    return 'está asignada a un presupuesto';
+    return 'inBudget';
   }
   return null;
 }
 
 export default function CategoryDetail() {
+  const { t } = useTranslation(['categories', 'common']);
   const scrollPadding = useTabBarScrollPadding();
   const { id, fromTransactionId } = useLocalSearchParams<{
     id: string;
@@ -97,7 +100,7 @@ export default function CategoryDetail() {
     category
       ? {
           icon: Pencil,
-          accessibilityLabel: 'Editar categoría',
+          accessibilityLabel: t('edit'),
           onPress: () =>
             router.push({
               pathname: '/(app)/settings/categories/[id]/edit',
@@ -110,7 +113,7 @@ export default function CategoryDetail() {
   if (isLoading) {
     return (
       <Screen edges={['top']} className="gap-5" width={desktop ? 'wide' : undefined}>
-        <PageHeader title="Categoría" onBack={goBack} />
+        <PageHeader title={t('category')} onBack={goBack} />
         <CategoryDetailSkeleton />
       </Screen>
     );
@@ -118,8 +121,8 @@ export default function CategoryDetail() {
   if (!category) {
     return (
       <Screen className="gap-4">
-        <PageHeader title="Categoría" onBack={goBack} />
-        <Text className="text-base text-ink-2 dark:text-ink-2-dark">Categoría no encontrada.</Text>
+        <PageHeader title={t('category')} onBack={goBack} />
+        <Text className="text-base text-ink-2 dark:text-ink-2-dark">{t('notFound')}</Text>
       </Screen>
     );
   }
@@ -144,9 +147,11 @@ export default function CategoryDetail() {
     }))
     .find((x) => x.reason != null);
   const deleteBlockedReason = ownBlockReason
-    ? `No puedes eliminarla: ${ownBlockReason}.`
-    : blockedSubcategory
-      ? `No puedes eliminarla: su subcategoría "${resolveCategoryLabel(blockedSubcategory.s)}" ${blockedSubcategory.reason}.`
+    ? t(`deleteBlocked.${ownBlockReason}`)
+    : blockedSubcategory?.reason
+      ? t(`deleteBlockedSub.${blockedSubcategory.reason}`, {
+          name: resolveCategoryLabel(blockedSubcategory.s),
+        })
       : null;
 
   // Its first and last movement (this category and its subcategories),
@@ -156,19 +161,19 @@ export default function CategoryDetail() {
     ? (categories ?? []).find((c) => c.id === category.parent_id)
     : undefined;
   const infoRows = [
-    { label: 'Tipo', value: category.type === 'income' ? 'Ingreso' : 'Gasto' },
-    { label: 'Categoría principal', value: parent ? resolveCategoryLabel(parent) : '' },
+    { label: t('info.type'), value: t(`type.${category.type}`) },
+    { label: t('info.parent'), value: parent ? resolveCategoryLabel(parent) : '' },
     {
-      label: 'Subcategorías',
+      label: t('info.subcategories'),
       value: category.parent_id ? '' : String(subcategories.length),
     },
-    { label: 'Origen', value: category.slug ? 'Del sistema' : 'Creada por ti' },
-    { label: 'Primer movimiento', value: usedDays[0] ? formatDate(usedDays[0]) : 'Ninguno' },
-    { label: 'Último movimiento', value: usedDays.at(-1) ? formatDate(usedDays.at(-1)!) : '' },
-    { label: 'Creada', value: formatDateTime(category.created_at) },
-    { label: 'Última modificación', value: formatDateTime(category.updated_at) },
+    { label: t('info.origin'), value: t(category.slug ? 'info.system' : 'info.yours') },
+    { label: t('info.first'), value: usedDays[0] ? formatDate(usedDays[0]) : t('info.none') },
+    { label: t('info.last'), value: usedDays.at(-1) ? formatDate(usedDays.at(-1)!) : '' },
+    { label: t('common:info.created'), value: formatDateTime(category.created_at) },
+    { label: t('common:info.updated'), value: formatDateTime(category.updated_at) },
     {
-      label: 'Archivada',
+      label: t('common:info.archived'),
       value: category.archived_at ? formatDateTime(category.archived_at) : '',
     },
   ];
@@ -178,7 +183,7 @@ export default function CategoryDetail() {
       <PageHeader
         title={resolveCategoryLabel(category)}
         onBack={goBack}
-        action={<RecordInfoButton title="Información de la categoría" rows={infoRows} />}
+        action={<RecordInfoButton title={t('info.title')} rows={infoRows} />}
       />
 
       <View className="flex-1">
@@ -197,8 +202,8 @@ export default function CategoryDetail() {
                 <View className="flex-row items-center gap-2">
                   <CategoryDot color={category.color} icon={category.icon} size={17} />
                   <Text className="text-sm font-semibold text-ink-2 dark:text-ink-2-dark">
-                    {category.type === 'income' ? 'Ingreso' : 'Gasto'}
-                    {category.archived ? ' · archivada' : ''}
+                    {t(`type.${category.type}`)}
+                    {category.archived ? t('archivedSuffix') : ''}
                   </Text>
                 </View>
 
@@ -210,7 +215,7 @@ export default function CategoryDetail() {
                 {subcategories.length > 0 ? (
                   <View className="gap-2">
                     <Text className="text-sm font-medium text-ink-2 dark:text-ink-2-dark">
-                      Subcategorías
+                      {t('subcategories')}
                     </Text>
                     <View className="rounded-2xl border border-line px-4 dark:border-line-dark">
                       {subcategories.map((s, i) => (
@@ -240,7 +245,7 @@ export default function CategoryDetail() {
 
                 <View className="gap-3 border-t border-line pt-5 dark:border-line-dark">
                   <Button
-                    label={category.archived ? 'Desarchivar' : 'Archivar'}
+                    label={t(category.archived ? 'common:unarchive' : 'common:archive')}
                     variant={category.archived ? 'secondary' : 'ghost-danger'}
                     loading={updateCategory.isPending}
                     onPress={() => (category.archived ? toggleArchive() : setConfirmArchive(true))}
@@ -255,7 +260,7 @@ export default function CategoryDetail() {
                         style={deleteBlockedReason ? { opacity: 0.4 } : undefined}
                       >
                         <Text className="text-sm font-medium text-danger dark:text-danger-dark">
-                          Eliminar definitivamente
+                          {t('deleteForever')}
                         </Text>
                       </Pressable>
                       {deleteBlockedReason ? (
@@ -276,13 +281,16 @@ export default function CategoryDetail() {
 
       <ConfirmSheet
         visible={confirmArchive}
-        title="¿Archivar categoría?"
+        title={t('archiveTitle')}
         description={
           activeSubcategories.length > 0
-            ? `Dejará de aparecer para elegirla en movimientos nuevos. Esto también archivará ${activeSubcategories.length} subcategoría${activeSubcategories.length === 1 ? '' : 's'}: ${activeSubcategories.map((s) => resolveCategoryLabel(s)).join(', ')}. Los movimientos que ya las tienen las conservan. Puedes desarchivar cada una cuando quieras.`
-            : 'Dejará de aparecer para elegirla en movimientos nuevos, pero los movimientos que ya la tienen la conservan. Puedes desarchivarla cuando quieras.'
+            ? t('archiveBodySubs', {
+                count: activeSubcategories.length,
+                names: activeSubcategories.map((s) => resolveCategoryLabel(s)).join(', '),
+              })
+            : t('archiveBody')
         }
-        confirmLabel="Archivar"
+        confirmLabel={t('common:archive')}
         onCancel={() => setConfirmArchive(false)}
         onConfirm={() => {
           setConfirmArchive(false);
@@ -292,20 +300,23 @@ export default function CategoryDetail() {
 
       <ConfirmSheet
         visible={confirmDelete}
-        title="¿Eliminar categoría?"
+        title={t('deleteTitle')}
         description={
           subcategories.length > 0
-            ? `Esto también eliminará ${subcategories.length} subcategoría${subcategories.length === 1 ? '' : 's'}: ${subcategories.map((s) => resolveCategoryLabel(s)).join(', ')}. Esta acción no se puede deshacer.`
-            : 'Esta acción no se puede deshacer.'
+            ? t('deleteBodySubs', {
+                count: subcategories.length,
+                names: subcategories.map((s) => resolveCategoryLabel(s)).join(', '),
+              })
+            : t('deleteBody')
         }
-        confirmLabel="Eliminar"
+        confirmLabel={t('common:delete')}
         destructive
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() => {
           setConfirmDelete(false);
           removeCategory.mutate(category.id, {
             onSuccess: goBack,
-            onError: (e) => setError(e, 'No se pudo eliminar'),
+            onError: (e) => setError(e, t('common:deleteFailed')),
           });
         }}
       />
