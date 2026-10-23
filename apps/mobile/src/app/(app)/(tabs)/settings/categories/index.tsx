@@ -13,7 +13,6 @@ import {
   StaggerItem,
   TextField,
   useTabBarScrollPadding,
-  useIsDesktop,
 } from '@repo/ui';
 import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
@@ -21,7 +20,11 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
-import { MasterDetailEmpty, useInListPane } from '../../../../../features/settings/master-detail';
+import {
+  MasterDetailEmpty,
+  useInListPane,
+  useMasterDetailPanes,
+} from '../../../../../features/settings/master-detail';
 
 // Booked automatically by the "Ajustar saldo" flow — not a category a user
 // should see or pick from here.
@@ -129,7 +132,7 @@ function Group({
 // Same highlight as `ListRow`'s `selected`.
 const SELECTED_ROW = '-mx-2 rounded-xl bg-lime-tint px-2 dark:bg-lime-tint-dark';
 
-/** The section's list — on desktop, also drawn beside the open record (see `_layout`). */
+/** The section's list — on a wide desktop, also drawn beside the open record (see `_layout`). */
 export function CategoriesList() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
@@ -197,9 +200,9 @@ export function CategoriesList() {
  * list itself.
  */
 export default function CategoriesScreen() {
-  const desktop = useIsDesktop();
+  const panes = useMasterDetailPanes();
   const router = useRouter();
-  if (!desktop) return <CategoriesList />;
+  if (!panes) return <CategoriesList />;
   return (
     <MasterDetailEmpty
       illustration={<CategoriesEmptyIllustration />}

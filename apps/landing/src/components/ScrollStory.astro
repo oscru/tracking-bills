@@ -4,15 +4,18 @@
  * sticks to the viewport, and scroll progress turns the 3D phone, swaps the
  * app screen and swaps the copy. Step 0 doubles as the hero.
  */
+import { Image } from 'astro:assets';
+
+import inicio from '../assets/app-screens/story-inicio.webp';
+import monto from '../assets/app-screens/story-monto.webp';
+import analisis from '../assets/app-screens/story-analisis.webp';
+import movimientos from '../assets/app-screens/story-movimientos.webp';
+import objetivo from '../assets/app-screens/story-objetivo.webp';
+import personas from '../assets/app-screens/story-personas.webp';
+import presupuestos from '../assets/app-screens/story-presupuestos.webp';
 import Icon from './Icon.astro';
 import Phone3D from './Phone3D.astro';
 import StoreButtons from './StoreButtons.astro';
-import Inicio from './screens/Inicio.astro';
-import Monto from './screens/Monto.astro';
-import Movimientos from './screens/Movimientos.astro';
-import Objetivo from './screens/Objetivo.astro';
-import Personas from './screens/Personas.astro';
-import Presupuestos from './screens/Presupuestos.astro';
 
 interface Props {
   signUpUrl: string;
@@ -31,6 +34,11 @@ const chapters = [
     body: 'Categorías y subcategorías, agrupado por día. Y pasar dinero a tu ahorro es una transferencia, no un gasto: tus números no se inflan.',
   },
   {
+    tag: 'Análisis',
+    title: 'Tu mes, de un vistazo.',
+    body: 'Un calendario que te dice qué días se te fue la lana, tendencias mes a mes y en qué categoría se va cada peso. Sin una sola hoja de cálculo.',
+  },
+  {
     tag: 'Presupuestos',
     title: 'Te avisa antes, no después.',
     body: 'Mensuales, quincenales o semanales. Cuando una categoría se acerca al tope lo ves a tiempo, no en el estado de cuenta.',
@@ -47,6 +55,10 @@ const chapters = [
   },
 ];
 const steps = chapters.length + 2; // hero + chapters + outro
+
+// Real screenshots of the app (demo data: supabase/snippets/demo-seed.sql),
+// one per step — hero first; the outro shows the phone's back.
+const screens = [inicio, monto, movimientos, analisis, presupuestos, objetivo, personas];
 ---
 
 <section data-story class="relative" style={`height: calc(${steps} * 85svh + 15svh)`}>
@@ -109,12 +121,20 @@ const steps = chapters.length + 2; // hero + chapters + outro
       <!-- phone -->
       <div data-phone-box class="relative min-h-0 lg:h-[680px]">
         <Phone3D>
-          <div data-screen class="story-screen is-active"><Inicio /></div>
-          <div data-screen class="story-screen"><Monto /></div>
-          <div data-screen class="story-screen"><Movimientos /></div>
-          <div data-screen class="story-screen"><Presupuestos /></div>
-          <div data-screen class="story-screen"><Objetivo /></div>
-          <div data-screen class="story-screen"><Personas /></div>
+          {
+            screens.map((src, i) => (
+              <div data-screen class:list={['story-screen', i === 0 && 'is-active']}>
+                <Image
+                  src={src}
+                  alt=""
+                  widths={[278, 556, 834]}
+                  sizes="278px"
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  class="h-full w-full object-cover object-top"
+                />
+              </div>
+            ))
+          }
         </Phone3D>
       </div>
     </div>
@@ -182,14 +202,15 @@ const steps = chapters.length + 2; // hero + chapters + outro
 <script>
   type Pose = { ry: number; rx: number; rz: number; s: number };
 
-  // One pose per step: hero, five chapters, outro (turned around to the back).
+  // One pose per step: hero, six chapters, outro (turned around to the back).
   const POSES: Pose[] = [
     { ry: -28, rx: 10, rz: -6, s: 1 },
     { ry: 18, rx: 4, rz: 3, s: 1.02 },
     { ry: -16, rx: 6, rz: -2, s: 1 },
-    { ry: 16, rx: 3, rz: 2, s: 1.02 },
-    { ry: -14, rx: 6, rz: -3, s: 1 },
-    { ry: 12, rx: 4, rz: 2, s: 1 },
+    { ry: 15, rx: 4, rz: 2, s: 1.02 },
+    { ry: -15, rx: 5, rz: -2, s: 1 },
+    { ry: 14, rx: 3, rz: 2, s: 1.02 },
+    { ry: -12, rx: 6, rz: -3, s: 1 },
     { ry: -164, rx: 8, rz: -5, s: 0.94 },
   ];
 
@@ -214,6 +235,7 @@ const steps = chapters.length + 2; // hero + chapters + outro
     };
 
     let active = -1;
+    let progress = 0; // last rendered scroll progress, kept across resizes
     let intro = reduced ? 1 : 0;
     const introStart = performance.now();
 
@@ -225,6 +247,7 @@ const steps = chapters.length + 2; // hero + chapters + outro
     const render = () => {
       const travel = story.offsetHeight - innerHeight;
       const p = clamp(-story.getBoundingClientRect().top / travel);
+      progress = p;
       const t = p * last;
       const i = Math.min(Math.floor(t), last - 1);
       const e = settle(t - i);
@@ -272,12 +295,105 @@ const steps = chapters.length + 2; // hero + chapters + outro
       if (x < 1) requestAnimationFrame(animateIntro);
     };
 
+    // Stepping: while the stage is pinned, one wheel gesture (or arrow key) plays
+    // one whole step on a timer, so a notchy mouse wheel doesn't crawl through
+    // the poses. Native scroll (scrollbar, touch) still works through settle.
+    const STEP_MS = 850;
+    const unsettle = (e: number) => 0.5 - Math.sin(Math.asin(1 - 2 * e) / 3); // inverse smoothstep
+    const easeInOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+    const geometry = () => {
+      const top = story.getBoundingClientRect().top + scrollY;
+      const travel = story.offsetHeight - innerHeight;
+      return { top, travel, t: clamp((scrollY - top) / travel) * last };
+    };
+    // Where the phone visibly is (integer = resting on a pose), and back.
+    const visual = (t: number) => {
+      const i = Math.min(Math.floor(t), last - 1);
+      return i + settle(t - i);
+    };
+    const fromVisual = (v: number) => {
+      const i = Math.min(Math.floor(v), last - 1);
+      const e = v - i;
+      return e <= 0 ? i : e >= 1 ? i + 1 : i + 0.28 + 0.44 * unsettle(e);
+    };
+
+    let animating = false;
+    let lastWheel = 0;
+    let lastAbs = 0;
+
+    const go = (dir: 1 | -1) => {
+      const { top, travel, t } = geometry();
+      const v0 = visual(t);
+      const target = dir > 0 ? Math.floor(v0 + 1e-3) + 1 : Math.ceil(v0 - 1e-3) - 1;
+      if (target < 0 || target > last) return false;
+      animating = true;
+      const start = performance.now();
+      const frame = (now: number) => {
+        const x = reduced ? 1 : clamp((now - start) / STEP_MS);
+        const v = v0 + (target - v0) * easeInOut(x);
+        scrollTo({ top: top + (fromVisual(v) / last) * travel, behavior: 'instant' });
+        render();
+        if (x < 1) requestAnimationFrame(frame);
+        else animating = false;
+      };
+      requestAnimationFrame(frame);
+      return true;
+    };
+
+    const pinned = () => {
+      const { travel } = geometry();
+      const top = story.getBoundingClientRect().top;
+      return top <= 1 && top >= -travel - 1;
+    };
+    const atEdge = (dir: 1 | -1) => {
+      const v = visual(geometry().t);
+      return dir > 0 ? v >= last - 1e-3 : v <= 1e-3;
+    };
+
+    const onWheel = (ev: WheelEvent) => {
+      if (ev.ctrlKey || Math.abs(ev.deltaX) > Math.abs(ev.deltaY) || ev.deltaY === 0) return;
+      const now = performance.now();
+      const abs = Math.abs(ev.deltaY);
+      // A new gesture: a pause, or a fresh swipe rising over trackpad inertia.
+      const fresh = now - lastWheel > 180 || abs > lastAbs * 1.6 + 4;
+      lastWheel = now;
+      lastAbs = abs;
+      if (!pinned()) return;
+      const dir = ev.deltaY > 0 ? 1 : -1;
+      if (animating || !fresh) {
+        ev.preventDefault();
+        return;
+      }
+      if (atEdge(dir)) return; // leave the story natively
+      ev.preventDefault();
+      go(dir);
+    };
+
+    const KEYS: Record<string, 1 | -1> = { ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1 };
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
+      if ((ev.target as HTMLElement).closest?.('input, textarea, select, [contenteditable]')) return;
+      const dir = ev.key === ' ' ? (ev.shiftKey ? -1 : 1) : KEYS[ev.key];
+      if (!dir || !pinned()) return;
+      if (animating) return ev.preventDefault();
+      if (atEdge(dir)) return;
+      ev.preventDefault();
+      go(dir);
+    };
+
     fit();
     render();
     if (!reduced) requestAnimationFrame(animateIntro);
+    addEventListener('wheel', onWheel, { passive: false });
+    addEventListener('keydown', onKey);
     addEventListener('scroll', queue, { passive: true });
     addEventListener('resize', () => {
       fit();
+      // The story's height follows the viewport, so hold the same spot in it.
+      if (!animating && progress > 0 && progress < 1) {
+        const { top, travel } = geometry();
+        scrollTo({ top: top + progress * travel, behavior: 'instant' });
+      }
       queue();
     });
   }

@@ -3,7 +3,12 @@ import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView, type Edge, type Edges } from 'react-native-safe-area-context';
 
 import { useFloatingTabBarInset } from './floating-tab-bar-inset';
-import { DESKTOP_CONTENT_WIDTH, useIsDesktop, type ScreenWidth } from './layout-mode';
+import {
+  DESKTOP_CONTENT_WIDTH,
+  useIsDesktop,
+  useIsWideDesktop,
+  type ScreenWidth,
+} from './layout-mode';
 import { useKeyboardHeight } from './use-keyboard-height';
 
 function includesBottomEdge(edges: Edges): boolean {
@@ -48,6 +53,7 @@ export function Screen({
   scrollEnabled = true,
 }: ScreenProps) {
   const desktop = useIsDesktop();
+  const wide = useIsWideDesktop();
   // Android only (0 on iOS) — see `useKeyboardHeight`'s doc comment for why
   // `KeyboardAvoidingView`'s own behaviors aren't used there.
   const keyboardHeight = useKeyboardHeight();
@@ -56,13 +62,18 @@ export function Screen({
   const tabBarInset = useFloatingTabBarInset();
 
   // Web: a centered column — the phone-width one, or on desktop a wider one
-  // (set as a style: the width is dynamic) with roomier padding.
+  // (set as a style: the width is dynamic) with roomier padding — a bit less
+  // of it on a compact (tablet) desktop, where every pixel of width counts.
   const web = Platform.OS === 'web' ? 'mx-auto w-full' : '';
   const columnStyle =
     Platform.OS !== 'web'
       ? undefined
       : desktop
-        ? { maxWidth: DESKTOP_CONTENT_WIDTH[width], paddingHorizontal: 40, paddingTop: 32 }
+        ? {
+            maxWidth: DESKTOP_CONTENT_WIDTH[width],
+            paddingHorizontal: wide ? 40 : 24,
+            paddingTop: wide ? 32 : 24,
+          }
         : { maxWidth: 480 };
 
   // Decorative breathing room, separate from `SafeAreaView`'s `edges`

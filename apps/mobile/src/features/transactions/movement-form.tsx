@@ -33,7 +33,7 @@ import {
   SwitchRow,
   TextField,
   type KeypadKey,
-  useIsDesktop,
+  useIsWideDesktop,
 } from '@repo/ui';
 import {
   ArrowLeftRight,
@@ -390,10 +390,11 @@ export function MovementForm({
   // + - * x / =, Backspace, C/Delete to clear, Enter to continue (desktop:
   // to save), Esc to cancel. Refs keep the listener (subscribed once per view) calling the
   // latest handlers without re-subscribing every render.
-  const desktop = useIsDesktop();
-  const keyHandlers = useRef({ onKey, goToDetails, tryCancel, submit, desktop });
+  // Wide desktop gets the single two-column screen (below); elsewhere the two steps.
+  const twoColumns = useIsWideDesktop();
+  const keyHandlers = useRef({ onKey, goToDetails, tryCancel, submit, twoColumns });
   useEffect(() => {
-    keyHandlers.current = { onKey, goToDetails, tryCancel, submit, desktop };
+    keyHandlers.current = { onKey, goToDetails, tryCancel, submit, twoColumns };
   });
   // Only while this screen is focused: "Nuevo movimiento" can stay mounted
   // under another screen (e.g. after jumping to Movimientos from the
@@ -403,7 +404,7 @@ export function MovementForm({
     useCallback(() => {
       // Desktop shows the calculator and the details together: always on.
       if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-      if (view !== 'amount' && !desktop) return;
+      if (view !== 'amount' && !twoColumns) return;
       const onKeyDown = (e: KeyboardEvent) => {
         // A sheet (category picker…) already handled it.
         if (e.defaultPrevented) return;
@@ -417,7 +418,7 @@ export function MovementForm({
           h.onKey(key);
         } else if (e.key === 'Enter') {
           e.preventDefault();
-          if (h.desktop) h.submit();
+          if (h.twoColumns) h.submit();
           else h.goToDetails();
         } else if (e.key === 'Escape') {
           e.preventDefault();
@@ -426,7 +427,7 @@ export function MovementForm({
       };
       window.addEventListener('keydown', onKeyDown);
       return () => window.removeEventListener('keydown', onKeyDown);
-    }, [view, desktop]),
+    }, [view, twoColumns]),
   );
 
   const minimize = () => {
@@ -474,7 +475,7 @@ export function MovementForm({
           hint={hasOp ? prettyExpr(amount) : null}
           invalid={amountInvalid}
         />
-        {desktop ? (
+        {twoColumns ? (
           <Text className="mt-3 text-xs text-ink-3 dark:text-ink-3-dark">
             También puedes escribir con tu teclado · Enter para guardar
           </Text>
@@ -799,7 +800,7 @@ export function MovementForm({
   // Desktop web: one screen, calculator on the left and the details on the
   // right — no "Continuar" step. Typing still goes to the calculator (unless
   // a field has focus) and Enter saves.
-  if (desktop) {
+  if (twoColumns) {
     return (
       <Screen edges={['top']} className="gap-4" width="wide">
         {header}

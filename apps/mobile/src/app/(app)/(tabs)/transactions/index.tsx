@@ -11,7 +11,7 @@ import {
   TextField,
   TransactionsEmptyIllustration,
   ICON_COLORS,
-  useIsDesktop,
+  useIsWideDesktop,
   useTabBarScrollPadding,
 } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -142,15 +142,15 @@ export default function TransactionsScreen() {
   // rebuilding its native gesture event binding on every re-render (search
   // typing, a refetch on focus, etc. — see its own comments for the chain
   // this feeds into).
-  // Desktop opens the movement in the side pane instead of a new screen.
-  const desktop = useIsDesktop();
+  // A wide desktop opens the movement in the side pane instead of a new screen.
+  const sidePane = useIsWideDesktop();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const goToTransaction = useCallback(
     (id: string) =>
-      desktop
+      sidePane
         ? setSelectedId(id)
         : router.push({ pathname: '/(app)/transactions/[id]', params: { id } }),
-    [router, desktop],
+    [router, sidePane],
   );
   const goToEditTransaction = useCallback(
     (id: string) => router.push({ pathname: '/(app)/transactions/[id]/edit', params: { id } }),
@@ -446,8 +446,8 @@ export default function TransactionsScreen() {
         </Pressable>
       </View>
 
-      {desktop ? (
-        // Desktop: master-detail — the list, and the selected movement beside it.
+      {sidePane ? (
+        // Wide desktop: master-detail — the list, and the selected movement beside it.
         <View className="flex-1 flex-row gap-6">
           <View className="flex-1">{listArea}</View>
           <View

@@ -1,4 +1,4 @@
-import { EmptyState, PageHeaderBackContext, Screen, useIsDesktop } from '@repo/ui';
+import { EmptyState, PageHeaderBackContext, Screen, useIsWideDesktop } from '@repo/ui';
 import { Stack } from 'expo-router';
 import { createContext, useContext, type ReactNode } from 'react';
 import { View } from 'react-native';
@@ -6,6 +6,11 @@ import { View } from 'react-native';
 import { useTabBarAction, type TabBarAction } from '../navigation/floating-tab-bar';
 
 const InListPaneContext = createContext(false);
+
+/** True where `MasterDetailLayout` shows the list and the record side by side (a wide desktop). */
+export function useMasterDetailPanes(): boolean {
+  return useIsWideDesktop();
+}
 
 /**
  * True for a list drawn in the left pane of `MasterDetailLayout` (desktop):
@@ -19,18 +24,17 @@ export function useInListPane(): boolean {
 /**
  * Layout for a settings section with a list and its records (cuentas,
  * categorías, tags). On phones, the usual stack: list, then the record
- * pushed over it. On desktop web, the list stays on the left (~1/3) and the
+ * pushed over it (also on a compact desktop — no room for two panes). On a
+ * wide desktop, the list stays on the left (~1/3) and the
  * section's routes — detail, edit, new, or an empty pane — open on the
  * right (~2/3), using the wide screen instead of one narrow column.
  */
 export function MasterDetailLayout({ list }: { list: ReactNode }) {
-  const desktop = useIsDesktop();
+  const panes = useMasterDetailPanes();
   const stack = (
-    <Stack
-      screenOptions={{ headerShown: false, animation: desktop ? 'none' : 'slide_from_right' }}
-    />
+    <Stack screenOptions={{ headerShown: false, animation: panes ? 'none' : 'slide_from_right' }} />
   );
-  if (!desktop) return stack;
+  if (!panes) return stack;
   // Same overall width as the other desktop screens (`Screen`'s `wide`),
   // centered — not stretched edge to edge on a big monitor. The pane's
   // screens have no back arrow: the list beside them is how you move.

@@ -12,7 +12,6 @@ import {
   SegmentedControl,
   StaggerItem,
   TextField,
-  useIsDesktop,
   useTabBarScrollPadding,
 } from '@repo/ui';
 import * as Clipboard from 'expo-clipboard';
@@ -24,7 +23,11 @@ import { ActivityIndicator, Pressable, ScrollView, Share, Text, View } from 'rea
 import { AccountPicker } from '../../../../../features/accounts/account-picker';
 import { PersonAvatar, netLabel } from '../../../../../features/peers/person-ui';
 import { usePeople, type Person } from '../../../../../features/peers/use-people';
-import { MasterDetailEmpty, useInListPane } from '../../../../../features/settings/master-detail';
+import {
+  MasterDetailEmpty,
+  useInListPane,
+  useMasterDetailPanes,
+} from '../../../../../features/settings/master-detail';
 
 type Tab = 'people' | 'link';
 const TABS: { value: Tab; label: string }[] = [
@@ -343,8 +346,8 @@ export function PeersList() {
  * list itself.
  */
 export default function PeersScreen() {
-  const desktop = useIsDesktop();
-  if (!desktop) return <PeersList />;
+  const panes = useMasterDetailPanes();
+  if (!panes) return <PeersList />;
   return (
     <MasterDetailEmpty
       illustration={<PeersEmptyIllustration />}

@@ -21,7 +21,7 @@ import {
   type HomeLayoutItem,
   getDateFormat,
 } from '@repo/core/utils';
-import { Screen, ICON_COLORS, useIsDesktop } from '@repo/ui';
+import { Screen, ICON_COLORS, useIsDesktop, useIsWideDesktop } from '@repo/ui';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Calendar, Check, ChevronRight, Clock, Eye, EyeOff, LayoutGrid } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
@@ -87,9 +87,11 @@ export default function HomeScreen() {
   // Bumped each time Inicio comes into view — replays the balance's roll.
   const [rollKey, setRollKey] = useState(0);
   useFocusEffect(useCallback(() => setRollKey((k) => k + 1), []));
-  // The widget matrix — its own layout per device (4 columns on desktop, 2
-  // on phones). Edit mode ("Personalizar") works on a draft, saved on "Listo".
-  const device = desktop ? 'desktop' : 'mobile';
+  // The widget matrix — its own layout per device (4 columns on a wide
+  // desktop, 2 on phones and tablets, where 4 would be too narrow). Edit mode
+  // ("Personalizar") works on a draft, saved on "Listo".
+  const wide = useIsWideDesktop();
+  const device = wide ? 'desktop' : 'mobile';
   const editor = useHomeEditor(profile ?? undefined, device);
   const editing = editor.editing;
   const [dragging, setDragging] = useState(false);

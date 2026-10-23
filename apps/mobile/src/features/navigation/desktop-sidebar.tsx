@@ -1,5 +1,5 @@
 import { useNotifications, useProfile, useSession, useSignOut } from '@repo/core/hooks';
-import { GradientFill, ICON_COLORS } from '@repo/ui';
+import { GradientFill, ICON_COLORS, useIsWideDesktop } from '@repo/ui';
 import { useRouter, useSegments, type Href } from 'expo-router';
 import {
   Bell,
@@ -52,6 +52,8 @@ const FLYOUT_HEIGHT = 470;
 
 // The collapsed/expanded choice is a per-browser convenience — remembered in
 // localStorage, and the sidebar works fine (expanded) when that's unavailable.
+// It only applies on a wide desktop: a compact one (tablets) starts as the
+// rail, and expanding it there lasts until the window changes size class.
 const COLLAPSED_KEY = 'genobills.sidebar.collapsed';
 const TOGGLE_MS = 220;
 // Header heights: one row (logo · name · bell) when expanded; the rail
@@ -369,7 +371,9 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
   const { user } = useSession();
   const signOut = useSignOut();
 
-  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const wide = useIsWideDesktop();
+  const [collapsed, setCollapsed] = useState(() => !wide || readCollapsed());
+  const [wasWide, setWasWide] = useState(wide);
   // `collapsed` is where the sidebar is going; `rail` is the layout it
   // draws. The content is always laid out at its full width and the
   // animated width only clips it — so expanding switches to the full layout
@@ -377,6 +381,12 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
   // keeps them until the edge has covered them, then switches to the rail.
   // Icons sit at the same x in both layouts, so the switch doesn't jump.
   const [rail, setRail] = useState(collapsed);
+  if (wide !== wasWide) {
+    setWasWide(wide);
+    const next = !wide || readCollapsed();
+    setCollapsed(next);
+    if (!next) setRail(false);
+  }
   const width = useSharedValue(collapsed ? DESKTOP_SIDEBAR_COLLAPSED_WIDTH : DESKTOP_SIDEBAR_WIDTH);
   useEffect(() => {
     width.set(
@@ -441,7 +451,7 @@ export function DesktopSidebar({ tabs }: { tabs: AppTab[] }) {
   };
   const toggleCollapsed = () => {
     const next = !collapsed;
-    writeCollapsed(next);
+    if (wide) writeCollapsed(next);
     setCollapsed(next);
     if (!next) setRail(false);
     setMenuOpen(false);

@@ -8,7 +8,7 @@ import {
   groupByAccountCurrency,
   todayISODate,
 } from '@repo/core/utils';
-import { CategoryDot, PageHeader, Screen, ICON_COLORS, useIsDesktop } from '@repo/ui';
+import { CategoryDot, PageHeader, Screen, ICON_COLORS, useIsWideDesktop } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChartPie } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -45,7 +45,8 @@ function ExpenseRow({ tx, onPress }: { tx: TransactionWithRefs; onPress: () => v
 
 export default function CategoryMonthSpendingScreen() {
   const router = useRouter();
-  const desktop = useIsDesktop();
+  // Two columns only on a wide desktop; a compact one stacks them, as on phones.
+  const twoColumns = useIsWideDesktop();
   const params = useLocalSearchParams<{ categoryId: string; month?: string; label?: string }>();
   const month = params.month ?? todayISODate().slice(0, 7);
 
@@ -147,7 +148,7 @@ export default function CategoryMonthSpendingScreen() {
               breakdown={g.breakdown}
               total={g.breakdown.reduce((sum, c) => sum + c.total, 0)}
               currency={g.currency}
-              radius={desktop ? chartRadius : 100}
+              radius={twoColumns ? chartRadius : 100}
             />
           </View>
 
@@ -191,7 +192,7 @@ export default function CategoryMonthSpendingScreen() {
   );
 
   return (
-    <Screen className="gap-5" width={desktop ? 'wide' : undefined}>
+    <Screen className="gap-5" width={twoColumns ? 'wide' : undefined}>
       <PageHeader
         title={params.label ? `${title} · ${params.label}` : title}
         onBack={goBackToMonth}
@@ -205,7 +206,7 @@ export default function CategoryMonthSpendingScreen() {
           ]}
         />
       ) : total > 0 ? (
-        desktop ? (
+        twoColumns ? (
           // Desktop: charts (~60%, the donut growing with the window) and
           // the expenses (~30%), each column scrolling on its own.
           <View className="flex-1 flex-row gap-6 pb-6">

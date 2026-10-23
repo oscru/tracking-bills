@@ -21,7 +21,7 @@ import {
   SegmentedControl,
   type SegmentedOption,
   ICON_COLORS,
-  useIsDesktop,
+  useIsWideDesktop,
   useTabBarScrollPadding,
 } from '@repo/ui';
 import { useRouter } from 'expo-router';
@@ -65,7 +65,8 @@ const METRIC_OPTIONS: SegmentedOption<HeatmapVariant>[] = [
 
 export default function AnalyticsScreen() {
   const scrollPadding = useTabBarScrollPadding();
-  const desktop = useIsDesktop();
+  // Wide desktop: two columns (below). Compact desktop stacks them, as on phones.
+  const twoColumns = useIsWideDesktop();
   const router = useRouter();
   const { data: accounts } = useAccounts();
   const { data: profile } = useProfile();
@@ -305,7 +306,7 @@ export default function AnalyticsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: scrollPadding }}
         >
-          {desktop ? (
+          {twoColumns ? (
             // Desktop: the calendar/trend and the day on the left, the
             // period's numbers on the right.
             <View className="flex-row items-start gap-6">

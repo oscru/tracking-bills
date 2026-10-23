@@ -47,7 +47,9 @@ export { Screen, type ScreenProps } from './screen';
 export {
   DESKTOP_CONTENT_WIDTH,
   DESKTOP_MIN_WIDTH,
+  WIDE_DESKTOP_MIN_WIDTH,
   useIsDesktop,
+  useIsWideDesktop,
   type ScreenWidth,
 } from './layout-mode';
 export { Skeleton, type SkeletonProps } from './skeleton';

@@ -10,7 +10,6 @@ import {
   StaggerItem,
   TagsEmptyIllustration,
   useTabBarScrollPadding,
-  useIsDesktop,
 } from '@repo/ui';
 import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
@@ -18,7 +17,11 @@ import { useState } from 'react';
 import { ActivityIndicator, View, ScrollView } from 'react-native';
 
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
-import { MasterDetailEmpty, useInListPane } from '../../../../../features/settings/master-detail';
+import {
+  MasterDetailEmpty,
+  useInListPane,
+  useMasterDetailPanes,
+} from '../../../../../features/settings/master-detail';
 
 const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
   { value: 'active', label: 'Activas' },
@@ -27,7 +30,7 @@ const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
 
 const NO_COUNTS = { expense: 0, income: 0 };
 
-/** The section's list — on desktop, also drawn beside the open record (see `_layout`). */
+/** The section's list — on a wide desktop, also drawn beside the open record (see `_layout`). */
 export function TagsList() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
@@ -111,9 +114,9 @@ export function TagsList() {
  * list itself.
  */
 export default function TagsScreen() {
-  const desktop = useIsDesktop();
+  const panes = useMasterDetailPanes();
   const router = useRouter();
-  if (!desktop) return <TagsList />;
+  if (!panes) return <TagsList />;
   return (
     <MasterDetailEmpty
       illustration={<TagsEmptyIllustration />}

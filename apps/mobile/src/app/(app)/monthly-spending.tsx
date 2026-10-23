@@ -1,6 +1,6 @@
 import { useCategories, useMonthlyCategoryTotals } from '@repo/core/hooks';
 import { categorySpendFromSummary, todayISODate } from '@repo/core/utils';
-import { PageHeader, Screen, ICON_COLORS, useIsDesktop } from '@repo/ui';
+import { PageHeader, Screen, ICON_COLORS, useIsWideDesktop } from '@repo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChartPie } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
@@ -12,7 +12,8 @@ import { CategorySpendSkeleton } from '../../features/home/category-spend-skelet
 
 export default function MonthlySpendingScreen() {
   const router = useRouter();
-  const desktop = useIsDesktop();
+  // Two columns only on a wide desktop; a compact one stacks them, as on phones.
+  const twoColumns = useIsWideDesktop();
   const params = useLocalSearchParams<{ month?: string; label?: string }>();
   const month = params.month ?? todayISODate().slice(0, 7);
 
@@ -53,7 +54,7 @@ export default function MonthlySpendingScreen() {
     });
 
   return (
-    <Screen className="gap-5" width={desktop ? 'wide' : undefined}>
+    <Screen className="gap-5" width={twoColumns ? 'wide' : undefined}>
       <PageHeader
         title={params.label ? `Gastos · ${params.label}` : 'Gastos del mes'}
         onBack={() => router.back()}
@@ -62,7 +63,7 @@ export default function MonthlySpendingScreen() {
       {isLoading ? (
         <CategorySpendSkeleton sections={[{ title: false, rows: 4 }]} />
       ) : hasData ? (
-        desktop ? (
+        twoColumns ? (
           // Desktop: the donut takes ~60% and grows with the window; the
           // category list beside it (~30%) scrolls on its own.
           <View className="flex-1 flex-row gap-6 pb-6">

@@ -10,7 +10,6 @@ import {
   SegmentedControl,
   StaggerItem,
   useTabBarScrollPadding,
-  useIsDesktop,
 } from '@repo/ui';
 import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
@@ -20,14 +19,18 @@ import { ActivityIndicator, Text, View, ScrollView } from 'react-native';
 import { AccountIcon } from '../../../../../features/accounts/account-icon';
 import { ACCOUNT_TYPE_LABEL } from '../../../../../features/accounts/account-types';
 import { useTabBarAction } from '../../../../../features/navigation/floating-tab-bar';
-import { MasterDetailEmpty, useInListPane } from '../../../../../features/settings/master-detail';
+import {
+  MasterDetailEmpty,
+  useInListPane,
+  useMasterDetailPanes,
+} from '../../../../../features/settings/master-detail';
 
 const STATUS_OPTIONS: { value: 'active' | 'archived'; label: string }[] = [
   { value: 'active', label: 'Activas' },
   { value: 'archived', label: 'Archivadas' },
 ];
 
-/** The section's list — on desktop, also drawn beside the open record (see `_layout`). */
+/** The section's list — on a wide desktop, also drawn beside the open record (see `_layout`). */
 export function AccountsList() {
   const scrollPadding = useTabBarScrollPadding();
   const router = useRouter();
@@ -121,9 +124,9 @@ export function AccountsList() {
  * list itself.
  */
 export default function AccountsScreen() {
-  const desktop = useIsDesktop();
+  const panes = useMasterDetailPanes();
   const router = useRouter();
-  if (!desktop) return <AccountsList />;
+  if (!panes) return <AccountsList />;
   return (
     <MasterDetailEmpty
       illustration={<AccountsEmptyIllustration />}
