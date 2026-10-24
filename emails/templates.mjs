@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import {
   amountCard,
   button,
@@ -15,63 +17,65 @@ import {
 //
 // - `target: 'auth'` → written to supabase/templates/<id>.html, sent by
 //   Supabase Auth (register them in supabase/config.toml).
-// - `target: 'app'`  → written to emails/dist/<id>.html, sent by the
+// - `target: 'app'`  → written to emails/dist/<lang>/<id>.html, sent by the
 //   `send-email` Edge Function (to build), which fills the same `{{ .Var }}`.
 // `sample` fills the placeholders in the preview gallery only.
+//
+// The texts live in locales/<lang>/<group>.json (common, auth, peers) — one
+// file per group, the same set in every language. Each template here is only
+// the structure: `body(t, common)` gets the email's texts in one language.
 
-const SECURITY_NOTE =
-  'Si no fuiste tú, ignora este correo: tu cuenta sigue segura y nadie puede entrar sin tu contraseña.';
+export const LANGS = ['es', 'en'];
+
+const read = (lang, group) =>
+  JSON.parse(readFileSync(new URL(`./locales/${lang}/${group}.json`, import.meta.url), 'utf8'));
+
+/** Every language's texts: `TEXTS[lang].auth.recovery.subject`. */
+export const TEXTS = Object.fromEntries(
+  LANGS.map((lang) => [
+    lang,
+    { common: read(lang, 'common'), auth: read(lang, 'auth'), peers: read(lang, 'peers') },
+  ]),
+);
 
 export const templates = [
   // --- Auth (Supabase) -----------------------------------------------------------
   {
     id: 'confirmation',
-    group: 'Autenticación',
+    group: 'auth',
     name: 'Confirmar registro',
     target: 'auth',
-    subject: 'Confirma tu correo para empezar',
-    preheader: 'Un paso más y tu cuenta queda lista.',
-    footer: 'Recibes este correo porque alguien creó una cuenta de Genobills con esta dirección.',
-    body: () =>
+    body: (t, common) =>
       [
-        eyebrow('Bienvenido'),
-        heading('Confirma tu correo'),
-        paragraph(
-          'Gracias por crear tu cuenta. Confirma que este correo es tuyo para empezar a llevar tus finanzas en orden.',
-          { muted: true },
-        ),
-        button('Confirmar mi correo', '{{ .ConfirmationURL }}'),
-        paragraph('O escribe este código en la app:', { muted: true, last: true }),
-        codeBlock('{{ .Token }}', 'Vence en 1 hora'),
-        linkFallback('{{ .ConfirmationURL }}'),
-        note(SECURITY_NOTE),
+        eyebrow(t.eyebrow),
+        heading(t.heading),
+        paragraph(t.intro, { muted: true }),
+        button(t.button, '{{ .ConfirmationURL }}'),
+        paragraph(t.codeHint, { muted: true, last: true }),
+        codeBlock('{{ .Token }}', t.codeCaption),
+        linkFallback('{{ .ConfirmationURL }}', common.linkFallback),
+        note(common.securityNote),
       ].join('\n'),
     sample: {
-      ConfirmationURL: 'https://genobills.app/auth/confirm?token=abc123',
+      ConfirmationURL: 'https://app.genobills.com/auth/confirm?token=abc123',
       Token: '482915',
     },
   },
   {
     id: 'recovery',
-    group: 'Autenticación',
+    group: 'auth',
     name: 'Restablecer contraseña',
     target: 'auth',
-    subject: 'Tu código para restablecer tu contraseña',
-    preheader: 'Escribe este código en la app para crear una contraseña nueva.',
-    footer: 'Recibes este correo porque se pidió restablecer la contraseña de tu cuenta.',
     // Code, not link: the app's "¿Olvidaste tu contraseña?" screen asks for
     // it (apps/mobile/src/app/(auth)/forgot-password.tsx), so it works even
     // when the email is opened on another device.
-    body: () =>
+    body: (t, common) =>
       [
-        eyebrow('Seguridad'),
-        heading('Restablece tu contraseña'),
-        paragraph(
-          'Recibimos una solicitud para cambiar la contraseña de <strong>{{ .Email }}</strong>. Escribe este código en la app para crear una nueva:',
-          { muted: true, last: true },
-        ),
-        codeBlock('{{ .Token }}', 'Vence en 1 hora · solo se puede usar una vez'),
-        note(SECURITY_NOTE),
+        eyebrow(t.eyebrow),
+        heading(t.heading),
+        paragraph(t.intro, { muted: true, last: true }),
+        codeBlock('{{ .Token }}', t.codeCaption),
+        note(common.securityNote),
       ].join('\n'),
     sample: {
       Email: 'oscar@ejemplo.com',
@@ -80,55 +84,39 @@ export const templates = [
   },
   {
     id: 'email_change',
-    group: 'Autenticación',
+    group: 'auth',
     name: 'Cambio de correo',
     target: 'auth',
-    subject: 'Confirma tu nuevo correo',
-    preheader: 'Confirma el cambio para empezar a usar tu nuevo correo.',
-    footer: 'Recibes este correo porque se pidió cambiar el correo de tu cuenta.',
-    body: () =>
+    body: (t, common) =>
       [
-        eyebrow('Tu cuenta'),
-        heading('Confirma el cambio de correo'),
-        paragraph('Pediste cambiar el correo con el que entras a Genobills:', {
-          muted: true,
-          last: true,
-        }),
+        eyebrow(t.eyebrow),
+        heading(t.heading),
+        paragraph(t.intro, { muted: true, last: true }),
         detailRows([
-          ['Correo actual', '{{ .Email }}'],
-          ['Correo nuevo', '{{ .NewEmail }}'],
+          [t.current, '{{ .Email }}'],
+          [t.new, '{{ .NewEmail }}'],
         ]),
-        button('Confirmar cambio', '{{ .ConfirmationURL }}'),
-        linkFallback('{{ .ConfirmationURL }}'),
-        note(
-          'Si no pediste este cambio, no confirmes y cambia tu contraseña desde la app: tu correo actual sigue activo.',
-        ),
+        button(t.button, '{{ .ConfirmationURL }}'),
+        linkFallback('{{ .ConfirmationURL }}', common.linkFallback),
+        note(t.note),
       ].join('\n'),
     sample: {
       Email: 'oscar@ejemplo.com',
       NewEmail: 'oscar.cruz@nuevo.com',
-      ConfirmationURL: 'https://genobills.app/auth/email?token=abc123',
+      ConfirmationURL: 'https://app.genobills.com/auth/email?token=abc123',
     },
   },
   {
     id: 'password_changed',
-    group: 'Autenticación',
+    group: 'auth',
     name: 'Aviso: contraseña cambiada',
     target: 'auth',
-    subject: 'Tu contraseña cambió',
-    preheader: 'Te avisamos por seguridad.',
-    footer: 'Este es un aviso de seguridad que se envía siempre que cambia tu contraseña.',
-    body: () =>
+    body: (t) =>
       [
-        eyebrow('Aviso de seguridad'),
-        heading('Tu contraseña cambió'),
-        paragraph(
-          'La contraseña de <strong>{{ .Email }}</strong> se acaba de cambiar. Si fuiste tú, no tienes que hacer nada.',
-          { muted: true, last: true },
-        ),
-        note(
-          '¿No fuiste tú? Restablece tu contraseña desde la pantalla de inicio de sesión y escríbenos a soporte cuanto antes.',
-        ),
+        eyebrow(t.eyebrow),
+        heading(t.heading),
+        paragraph(t.intro, { muted: true, last: true }),
+        note(t.note),
       ].join('\n'),
     sample: { Email: 'oscar@ejemplo.com' },
   },
@@ -136,29 +124,19 @@ export const templates = [
   // --- App (Edge Function) ---------------------------------------------------------
   {
     id: 'peer_invite',
-    group: 'Personas',
+    group: 'peers',
     name: 'Invitación con código',
     target: 'app',
-    subject: '{{ .InviterName }} te invitó a vincularse en Genobills',
-    preheader: 'Pásense dinero sin que cuente como gasto ni ingreso.',
-    footer: 'Recibes este correo porque {{ .InviterName }} te invitó desde Genobills.',
-    body: () =>
+    body: (t) =>
       [
-        eyebrow('Invitación'),
-        heading('{{ .InviterName }} quiere vincularse contigo'),
-        paragraph(
-          'Al vincularse pueden pasarse dinero sin que cuente como gasto ni como ingreso: lo que te envíe llega directo a tu cuenta. Cada quien sigue llevando sus propias cuentas.',
-          { muted: true, last: true },
-        ),
-        codeBlock('{{ .Code }}', 'Tu código vence el {{ .ExpiresAt }}'),
-        button('Abrir en la app', '{{ .DeepLink }}'),
-        paragraph('<strong>¿Aún no tienes la app?</strong>', { last: true }),
-        steps([
-          'Descarga Genobills y crea tu cuenta.',
-          'Ve a <strong>Opciones › Personas › Tengo un código</strong>.',
-          'Escribe el código y elige en qué cuenta quieres recibir.',
-        ]),
-        note('Si no conoces a {{ .InviterName }}, ignora este correo: el código vence solo.'),
+        eyebrow(t.eyebrow),
+        heading(t.heading),
+        paragraph(t.intro, { muted: true, last: true }),
+        codeBlock('{{ .Code }}', t.codeCaption),
+        button(t.button, '{{ .DeepLink }}'),
+        paragraph(`<strong>${t.noApp}</strong>`, { last: true }),
+        steps(t.steps),
+        note(t.note),
       ].join('\n'),
     sample: {
       InviterName: 'Oscar',
@@ -169,31 +147,24 @@ export const templates = [
   },
   {
     id: 'peer_transfer_received',
-    group: 'Personas',
+    group: 'peers',
     name: 'Transferencia recibida',
     target: 'app',
-    subject: '{{ .SenderName }} te envió {{ .Amount }}',
-    preheader: 'Ya está en tu cuenta. No cuenta como ingreso.',
-    footer:
-      'Recibes este correo porque activaste los avisos de transferencias recibidas. Puedes apagarlos en Opciones › Notificaciones.',
-    body: () =>
+    body: (t) =>
       [
-        eyebrow('Transferencia recibida'),
-        heading('{{ .SenderName }} te envió dinero'),
-        paragraph('Ya está en tu cuenta y no cuenta como ingreso en tu Análisis.', {
-          muted: true,
-          last: true,
-        }),
+        eyebrow(t.eyebrow),
+        heading(t.heading),
+        paragraph(t.intro, { muted: true, last: true }),
         amountCard({
-          label: 'Recibiste',
+          label: t.label,
           amount: '{{ .Amount }}',
           rows: [
-            ['De', '{{ .SenderName }}'],
-            ['Llegó a', '{{ .AccountName }}'],
-            ['Fecha', '{{ .Date }}'],
+            [t.from, '{{ .SenderName }}'],
+            [t.account, '{{ .AccountName }}'],
+            [t.date, '{{ .Date }}'],
           ],
         }),
-        button('Ver en la app', '{{ .DeepLink }}'),
+        button(t.button, '{{ .DeepLink }}'),
       ].join('\n'),
     sample: {
       SenderName: 'Oscar',
@@ -204,3 +175,15 @@ export const templates = [
     },
   },
 ];
+
+/** A template's texts in `lang` (subject, preheader, footer, and what its body uses). */
+export const textsFor = (template, lang) => TEXTS[lang][template.group][template.id];
+
+/**
+ * Supabase Auth sends one template per email, so the auth ones carry both
+ * languages and pick with the person's `language` user metadata — which the
+ * app keeps in sync (`syncAuthLanguage` in @repo/core). Anyone without it
+ * signed up before the app spoke English, so they get Spanish.
+ */
+export const byLanguage = (render) =>
+  `{{ if and .Data .Data.language (eq .Data.language "en") }}${render('en')}{{ else }}${render('es')}{{ end }}`;

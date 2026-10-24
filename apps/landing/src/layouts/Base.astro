@@ -14,7 +14,8 @@ const lang = langOf(Astro);
 const { common } = texts(lang);
 const { page, title = common.meta.title, description = common.meta.description } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site);
+// From the page table, not the request path: pages are built as files (`en.html`).
+const canonical = new URL(PAGES[page][lang], Astro.site);
 const english = new URL(PAGES[page].en, Astro.site).href;
 const spanish = new URL(PAGES[page].es, Astro.site).href;
 ---

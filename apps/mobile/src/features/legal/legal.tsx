@@ -12,7 +12,8 @@ import { Platform, Pressable, Text, View } from 'react-native';
  * The legal documents live on the public landing site (App Store, Google
  * Play and Google/Apple sign-in all need public URLs) — the app links there.
  */
-const SITE_URL = (process.env.EXPO_PUBLIC_SITE_URL ?? 'https://genobills.vercel.app').replace(
+// Per environment: apps/mobile/.env.development / .env.production.
+const SITE_URL = (process.env.EXPO_PUBLIC_SITE_URL ?? 'https://genobills.com').replace(
   /\/$/,
   '',
 );

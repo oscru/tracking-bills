@@ -1,4 +1,3 @@
-import { i18n } from '../i18n/instance';
 import type { AuthError, Session } from '@supabase/supabase-js';
 
 import {
@@ -9,6 +8,7 @@ import {
   type SignInInput,
   type SignUpInput,
 } from '../validators';
+import { currentLanguage, i18n, type Language } from '../i18n/instance';
 import { LEGAL_VERSION } from '../legal';
 import { supabase } from './client';
 import { SupabaseError } from './internal';
@@ -50,7 +50,11 @@ export async function signUpWithPassword(input: SignUpInput): Promise<SignUpResu
     // delays having an authenticated session to update the row directly.
     // `legal_version`: what the person just accepted in the form (the
     // schema only lets this through with the checkbox ticked).
-    options: { data: { full_name: fullName, legal_version: LEGAL_VERSION } },
+    // `language`: what Supabase's emails — the confirmation one, right away —
+    // are written in (see `syncAuthLanguage`).
+    options: {
+      data: { full_name: fullName, legal_version: LEGAL_VERSION, language: currentLanguage() },
+    },
   });
   if (error) throw new AuthCallError(error);
   return {
@@ -143,4 +147,16 @@ export async function resetPasswordWithCode(input: PasswordResetInput): Promise<
 export async function deleteOwnAccount(): Promise<void> {
   const { error } = await supabase.rpc('delete_own_account');
   if (error) throw new SupabaseError(error);
+}
+
+/**
+ * Supabase's emails (confirmation, password reset, email change…) pick their
+ * language from the account's `language` user metadata — the templates are
+ * built by `pnpm emails:build`. Keeps it on the language the app is in, so
+ * they arrive in the language the person uses. No-op when it already is.
+ */
+export async function syncAuthLanguage(session: Session, language: Language): Promise<void> {
+  if (session.user.user_metadata?.language === language) return;
+  const { error } = await supabase.auth.updateUser({ data: { language } });
+  if (error) throw new AuthCallError(error);
 }

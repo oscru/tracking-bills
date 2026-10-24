@@ -24,6 +24,9 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { setSignedOutTheme } from '../settings/theme-sync';
 
+/** The desktop split screen's largest size; past it, canvas around it. */
+const DESKTOP_FRAME = { width: 1440, height: 960 };
+
 /**
  * Layout for the auth screens. Desktop web: a split screen — a lime brand
  * "poster" on the left (big ink headline + tilted movement stickers), the
@@ -36,23 +39,30 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
   if (desktop) {
     return (
-      <View className="flex-1 flex-row bg-canvas p-4 dark:bg-canvas-dark">
-        <View style={{ flex: 1.1, minHeight: 0 }}>
-          <PosterPanel />
-        </View>
-        <View className="flex-1">
-          <ScrollView
-            className="flex-1"
-            contentContainerClassName="grow items-center justify-center px-10 py-12"
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View className="w-full gap-6" style={{ maxWidth: 400 }}>
-              {children}
+      <View className="flex-1 items-center justify-center bg-canvas dark:bg-canvas-dark">
+        {/* Capped and centered: on a big monitor the poster would otherwise
+            stretch edge to edge and leave the form adrift in the other half. */}
+        <View
+          className="w-full flex-1 flex-row p-4"
+          style={{ maxWidth: DESKTOP_FRAME.width, maxHeight: DESKTOP_FRAME.height }}
+        >
+          <View style={{ flex: 1.1, minHeight: 0 }}>
+            <PosterPanel />
+          </View>
+          <View className="flex-1">
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="grow items-center justify-center px-10 py-12"
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View className="w-full gap-6" style={{ maxWidth: 400 }}>
+                {children}
+              </View>
+            </ScrollView>
+            <View className="absolute right-4 top-4">
+              <ThemeToggle />
             </View>
-          </ScrollView>
-          <View className="absolute right-4 top-4">
-            <ThemeToggle />
           </View>
         </View>
       </View>

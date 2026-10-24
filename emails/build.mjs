@@ -1,38 +1,57 @@
 #!/usr/bin/env node
-// Builds every email in templates.mjs:
-//   auth → supabase/templates/<id>.html   (Supabase Auth reads these)
-//   app  → emails/dist/<id>.html          (the send-email Edge Function will)
+// Builds every email in templates.mjs, in every language:
+//   auth → supabase/templates/<id>.html   (Supabase Auth reads these; both
+//          languages in one file, picked per person) + their subjects in
+//          supabase/config.toml
+//   app  → emails/dist/<lang>/<id>.html   (the send-email Edge Function will)
 // plus emails/dist/preview.html — a gallery with sample data, mobile/desktop
-// widths and light/dark, to review the designs in a browser.
+// widths, light/dark and both languages, to review the designs in a browser.
 //
 //   node emails/build.mjs            # build
 //   node emails/build.mjs --open     # build and open the preview
 
 import { execFile } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import mjml2html from 'mjml';
 
 import { C, layout } from './components.mjs';
-import { templates } from './templates.mjs';
+import { byLanguage, LANGS, templates, TEXTS, textsFor } from './templates.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
 const authDir = join(root, 'supabase', 'templates');
 const distDir = join(here, 'dist');
+rmSync(distDir, { recursive: true, force: true });
 mkdirSync(authDir, { recursive: true });
-mkdirSync(distDir, { recursive: true });
+for (const lang of LANGS) mkdirSync(join(distDir, lang), { recursive: true });
+
+// Every language must have every text Spanish has (the source).
+const missing = (source, other, path = '') =>
+  Object.entries(source).flatMap(([key, value]) => {
+    const here = path ? `${path}.${key}` : key;
+    if (other?.[key] === undefined) return [here];
+    return typeof value === 'object' ? missing(value, other[key], here) : [];
+  });
+for (const lang of LANGS) {
+  const gaps = missing(TEXTS.es, TEXTS[lang]);
+  if (gaps.length) throw new Error(`locales/${lang} is missing: ${gaps.join(', ')}`);
+}
 
 /** MJML → email-client HTML. Strict validation: a malformed template fails the build. */
-const render = (t, forPreview = false) => {
+const render = (t, lang, forPreview = false) => {
+  const text = textsFor(t, lang);
+  const common = TEXTS[lang].common;
   const { html, errors } = mjml2html(
     layout({
-      title: t.subject,
-      preheader: t.preheader,
-      content: t.body(),
-      footer: t.footer,
+      lang,
+      title: text.subject,
+      preheader: text.preheader,
+      content: t.body(text, common),
+      footer: text.footer,
+      support: common.support,
       forPreview,
     }),
     // `fonts: {}`: no Google Fonts <link>/@import — the system font stack
@@ -49,26 +68,45 @@ const render = (t, forPreview = false) => {
 const fill = (html, sample) =>
   html.replace(/\{\{\s*\.(\w+)\s*\}\}/g, (m, key) => (key in sample ? sample[key] : m));
 
+const configPath = join(root, 'supabase', 'config.toml');
+let config = readFileSync(configPath, 'utf8');
+
 for (const t of templates) {
-  const out = join(t.target === 'auth' ? authDir : distDir, `${t.id}.html`);
-  writeFileSync(out, render(t));
-  console.log(`✓ ${t.target.padEnd(4)} ${out.replace(`${root}/`, '')}`);
+  if (t.target === 'auth') {
+    const out = join(authDir, `${t.id}.html`);
+    writeFileSync(out, byLanguage((lang) => render(t, lang)));
+    console.log(`✓ auth ${out.replace(`${root}/`, '')}`);
+    // Its subject, in both languages too (Supabase renders subjects as templates).
+    const section = new RegExp(`(\\[auth\\.email\\.(?:template|notification)\\.${t.id}\\][^\\[]*?\\nsubject = )[^\\n]*`);
+    if (!section.test(config)) throw new Error(`${t.id}: no section with a subject in supabase/config.toml`);
+    const subject = byLanguage((lang) => textsFor(t, lang).subject);
+    config = config.replace(section, (_, head) => head + JSON.stringify(subject));
+  } else {
+    for (const lang of LANGS) {
+      const out = join(distDir, lang, `${t.id}.html`);
+      writeFileSync(out, render(t, lang));
+      console.log(`✓ app  ${out.replace(`${root}/`, '')}`);
+    }
+  }
 }
+writeFileSync(configPath, config);
+console.log('✓ subjects supabase/config.toml');
 
 // --- preview gallery --------------------------------------------------------------
 
 const escapeAttr = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 
-const cards = templates
-  .map((t) => {
-    const html = escapeAttr(fill(render(t, true), t.sample));
-    const subject = fill(t.subject, t.sample);
-    return `<section class="tpl" data-id="${t.id}">
+const GROUPS = { auth: 'Autenticación', peers: 'Personas' };
+const cards = LANGS.flatMap((lang) => templates.map((t) => ({ t, lang })))
+  .map(({ t, lang }) => {
+    const html = escapeAttr(fill(render(t, lang, true), t.sample));
+    const subject = fill(textsFor(t, lang).subject, t.sample);
+    return `<section class="tpl" data-lang="${lang}"${lang === LANGS[0] ? '' : ' hidden'}>
   <header>
-    <span class="chip">${t.group}</span>
+    <span class="chip">${GROUPS[t.group]} · ${lang.toUpperCase()}</span>
     <h2>${t.name}</h2>
     <p class="meta"><b>Asunto:</b> ${subject}<br><b>Archivo:</b> ${
-      t.target === 'auth' ? `supabase/templates/${t.id}.html` : `emails/dist/${t.id}.html`
+      t.target === 'auth' ? `supabase/templates/${t.id}.html` : `emails/dist/${lang}/${t.id}.html`
     }</p>
   </header>
   <div class="frame"><iframe title="${t.name}" srcdoc="${html}" loading="lazy"></iframe></div>
@@ -115,6 +153,9 @@ writeFileSync(
       <button data-width="mobile" aria-pressed="true">Móvil</button>
       <button data-width="desktop" aria-pressed="false">Escritorio</button>
     </div>
+    <div class="seg" role="group" aria-label="Idioma">
+      ${LANGS.map((lang, i) => `<button data-lang="${lang}" aria-pressed="${i === 0}">${lang.toUpperCase()}</button>`).join('\n      ')}
+    </div>
     <div class="seg" role="group" aria-label="Tema">
       <button data-theme="light" aria-pressed="true">Claro</button>
       <button data-theme="dark" aria-pressed="false">Oscuro</button>
@@ -134,6 +175,10 @@ ${cards}
   let dark = false;
   const applyTheme = (f) => { try { f.contentDocument.documentElement.classList.toggle('preview-dark', dark); } catch {} };
   frames().forEach((f) => f.addEventListener('load', () => applyTheme(f)));
+  document.querySelectorAll('button[data-lang]').forEach((b) => b.addEventListener('click', () => {
+    press(b.parentElement, b);
+    document.querySelectorAll('section[data-lang]').forEach((s) => (s.hidden = s.dataset.lang !== b.dataset.lang));
+  }));
   document.querySelectorAll('[data-theme]').forEach((b) => b.addEventListener('click', () => {
     press(b.parentElement, b);
     dark = b.dataset.theme === 'dark';

@@ -11,13 +11,26 @@ pnpm emails:preview   # genera y abre la galería (móvil/escritorio, claro/oscu
 - `components.mjs` — layout base y componentes en **MJML**: `eyebrow`, `heading`, `paragraph`,
   `button` (la acción, una por correo), `linkFallback`, `codeBlock` (códigos), `amountCard`
   (montos), `steps`, `detailRows`, `note`.
-- `templates.mjs` — un objeto por correo: asunto, preheader, pie (por qué lo recibes),
-  contenido y datos de ejemplo para la vista previa.
+- `locales/<idioma>/<grupo>.json` — los textos (asunto, preheader, pie y contenido), un archivo
+  por grupo (`common`, `auth`, `peers`) en cada idioma (`es`, `en`). El build falla si al inglés
+  le falta un texto que tiene el español.
+- `templates.mjs` — la estructura de cada correo (qué componentes y en qué orden) y los datos
+  de ejemplo para la vista previa.
 - `build.mjs` — escribe:
-  - `target: 'auth'` → `supabase/templates/<id>.html` (Supabase Auth; registradas en
-    `supabase/config.toml`);
-  - `target: 'app'` → `emails/dist/<id>.html` (para la Edge Function `send-email`, pendiente);
-  - `emails/dist/preview.html` (galería).
+  - `target: 'auth'` → `supabase/templates/<id>.html` con **los dos idiomas** en un solo archivo,
+    y su asunto en `supabase/config.toml` (también generado: no lo edites a mano);
+  - `target: 'app'` → `emails/dist/<idioma>/<id>.html` (para la Edge Function `send-email`,
+    pendiente);
+  - `emails/dist/preview.html` (galería, con selector de idioma).
+
+## Idiomas
+
+Supabase Auth solo acepta una plantilla por correo, así que las de autenticación llevan ambas
+versiones y eligen con el metadato `language` del usuario:
+`{{ if and .Data .Data.language (eq .Data.language "en") }}…inglés…{{ else }}…español…{{ end }}`.
+La app lo guarda al registrarse y lo mantiene igual al idioma de la app (`syncAuthLanguage` en
+`@repo/core`). Quien no lo tiene se registró cuando la app solo hablaba español, así que recibe
+español.
 
 ## Compatibilidad
 

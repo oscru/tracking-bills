@@ -1,6 +1,6 @@
 /**
  * The site's two languages. Spanish lives at the root (`/`, `/privacidad`),
- * English under `/en/` (`/en/`, `/en/privacy`). Texts are in
+ * English under `/en` (`/en`, `/en/privacy`). Texts are in
  * `locales/<lang>/<section>.json` — one file per section, the same set in
  * both languages; Spanish is the source the types follow.
  */
@@ -33,7 +33,7 @@ const DICTIONARIES: Record<Lang, typeof es> = { es, en };
 
 /** Every page, by language — the legal ones have translated slugs. */
 export const PAGES = {
-  home: { es: '/', en: '/en/' },
+  home: { es: '/', en: '/en' },
   terms: { es: '/terminos', en: '/en/terms' },
   privacy: { es: '/privacidad', en: '/en/privacy' },
   cookies: { es: '/cookies', en: '/en/cookies' },

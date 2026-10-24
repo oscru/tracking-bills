@@ -11,9 +11,9 @@ Pendiente, en orden:
 1. [ ] **SMTP propio y dominio** (bloquea todo lo demás). Lo hace el dueño, es configuración:
    - [ ] Elegir proveedor (Resend o Postmark) y configurarlo en `[auth.email.smtp]` (local) y en
          el dashboard de Supabase (producción).
-   - [ ] Dominio verificado (p. ej. `genobills.app`) con SPF, DKIM y DMARC.
-   - [ ] Remitente `no-reply@` y correo de soporte reales. Hoy `soporte@genobills.app` es
-         provisional: cambiar `SUPPORT_EMAIL` en `emails/components.mjs`.
+   - [ ] Dominio `genobills.com` verificado en el proveedor de correo, con SPF, DKIM y DMARC.
+   - [ ] Remitente `no-reply@genobills.com` y buzón `soporte@genobills.com` reales (las
+         plantillas ya usan `soporte@genobills.com`: `SUPPORT_EMAIL` en `emails/components.mjs`).
 2. [ ] **Plantillas de Auth en producción:** `db push` solo sube migraciones; las plantillas de
        `config.toml` aplican solo en local. Pegar el HTML generado en el dashboard
        (Authentication › Email Templates) o usar `supabase config push` (sube todo el
@@ -121,9 +121,10 @@ configuración, que hace el dueño:
        detecta pnpm; `vercel.json` ya trae install y build).
 2. [ ] Variables de entorno de producción en Vercel: `EXPO_PUBLIC_SUPABASE_URL` y
        `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-3. [ ] Dominio (p. ej. `app.genobills.app`).
-4. [ ] Supabase › Authentication › URL Configuration: poner el dominio web como **Site URL** y
-       agregarlo a **Redirect URLs** (lo necesita el OAuth en web).
+3. [ ] Dominio `app.genobills.com` en el proyecto de la app y `genobills.com` (+ `www`, que
+       redirige al dominio sin `www`) en el de la landing.
+4. [ ] Supabase › Authentication › URL Configuration: **Site URL** `https://app.genobills.com` y
+       en **Redirect URLs** `https://app.genobills.com/**` (lo necesita el OAuth en web).
 5. [ ] Aplicar las migraciones pendientes en producción (`pnpm supabase db push`) **antes** del
        primer despliegue: la web ya usa las vistas y funciones nuevas.
 

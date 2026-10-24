@@ -7,7 +7,8 @@ import Icon from './Icon.astro';
 import ScrollStory from './ScrollStory.astro';
 import StoreButtons from './StoreButtons.astro';
 
-const appUrl = (import.meta.env.PUBLIC_APP_URL ?? 'https://tracking-bills-mobile.vercel.app').replace(/\/$/, '');
+// Per environment: .env.development / .env.production.
+const appUrl = import.meta.env.PUBLIC_APP_URL.replace(/\/$/, '');
 const signUpUrl = `${appUrl}/sign-up`;
 const signInUrl = `${appUrl}/sign-in`;
 

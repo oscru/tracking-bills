@@ -1,0 +1,32 @@
+{
+  "peer_invite": {
+    "subject": "{{ .InviterName }} te invitó a vincularse en Genobills",
+    "preheader": "Pásense dinero sin que cuente como gasto ni ingreso.",
+    "footer": "Recibes este correo porque {{ .InviterName }} te invitó desde Genobills.",
+    "eyebrow": "Invitación",
+    "heading": "{{ .InviterName }} quiere vincularse contigo",
+    "intro": "Al vincularse pueden pasarse dinero sin que cuente como gasto ni como ingreso: lo que te envíe llega directo a tu cuenta. Cada quien sigue llevando sus propias cuentas.",
+    "codeCaption": "Tu código vence el {{ .ExpiresAt }}",
+    "button": "Abrir en la app",
+    "noApp": "¿Aún no tienes la app?",
+    "steps": [
+      "Descarga Genobills y crea tu cuenta.",
+      "Ve a <strong>Opciones › Personas › Tengo un código</strong>.",
+      "Escribe el código y elige en qué cuenta quieres recibir."
+    ],
+    "note": "Si no conoces a {{ .InviterName }}, ignora este correo: el código vence solo."
+  },
+  "peer_transfer_received": {
+    "subject": "{{ .SenderName }} te envió {{ .Amount }}",
+    "preheader": "Ya está en tu cuenta. No cuenta como ingreso.",
+    "footer": "Recibes este correo porque activaste los avisos de transferencias recibidas. Puedes apagarlos en Opciones › Notificaciones.",
+    "eyebrow": "Transferencia recibida",
+    "heading": "{{ .SenderName }} te envió dinero",
+    "intro": "Ya está en tu cuenta y no cuenta como ingreso en tu Análisis.",
+    "label": "Recibiste",
+    "from": "De",
+    "account": "Llegó a",
+    "date": "Fecha",
+    "button": "Ver en la app"
+  }
+}

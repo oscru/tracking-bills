@@ -47,7 +47,7 @@ const MONO = "'SF Mono', SFMono-Regular, Menlo, Consolas, 'Courier New', monospa
 export const BRAND = 'Genobills';
 /** Placeholder mark until there's a real logo (same as the app's launch screen). */
 export const LOGO = '💸';
-export const SUPPORT_EMAIL = 'soporte@genobills.app';
+export const SUPPORT_EMAIL = 'soporte@genobills.com';
 
 // --- dark mode -----------------------------------------------------------------
 // Class hooks (`css-class` in MJML lands on wrapper divs; inner raw HTML
@@ -77,8 +77,8 @@ function scope(rules, prefix) {
 }
 
 /** The whole email as MJML: head (preview text, styles), logo, card, footer. */
-export function layout({ title, preheader, content, footer, forPreview = false }) {
-  return `<mjml lang="es">
+export function layout({ lang, title, preheader, content, footer, support, forPreview = false }) {
+  return `<mjml lang="${lang}">
   <mj-head>
     <mj-title>${title}</mj-title>
     <mj-preview>${preheader}</mj-preview>
@@ -124,7 +124,7 @@ ${content}
     <mj-section padding="22px 20px 36px">
       <mj-column>
         <mj-text css-class="t-ink3" color="${C.ink3}" font-size="12px" line-height="18px" padding="0 0 8px">${footer}</mj-text>
-        <mj-text css-class="t-ink3" color="${C.ink3}" font-size="12px" line-height="18px">¿Dudas? Escríbenos a <a class="t-link" href="mailto:${SUPPORT_EMAIL}" style="color:${C.limeInk};font-weight:600;">${SUPPORT_EMAIL}</a><br>© ${BRAND}</mj-text>
+        <mj-text css-class="t-ink3" color="${C.ink3}" font-size="12px" line-height="18px">${support} <a class="t-link" href="mailto:${SUPPORT_EMAIL}" style="color:${C.limeInk};font-weight:600;">${SUPPORT_EMAIL}</a><br>© ${BRAND}</mj-text>
       </mj-column>
     </mj-section>
   </mj-body>
@@ -163,8 +163,8 @@ export function button(label, href) {
 }
 
 /** Plain-link fallback under a button, for clients that mangle buttons. */
-export function linkFallback(href) {
-  return `<mj-text css-class="t-ink3" color="${C.ink3}" font-size="12px" line-height="18px" padding="12px 0 0">Si el botón no funciona, copia este enlace en tu navegador:<br><a class="t-link" href="${href}" style="color:${C.limeInk};word-break:break-all;">${href}</a></mj-text>`;
+export function linkFallback(href, text) {
+  return `<mj-text css-class="t-ink3" color="${C.ink3}" font-size="12px" line-height="18px" padding="12px 0 0">${text}<br><a class="t-link" href="${href}" style="color:${C.limeInk};word-break:break-all;">${href}</a></mj-text>`;
 }
 
 /** An ink card (Outlook-safe: a table cell with bgcolor; corners round elsewhere). */
@@ -228,7 +228,7 @@ export function steps(items) {
   return `<mj-text padding="8px 0 4px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows}</table></mj-text>`;
 }
 
-/** A quiet aside — security notes, "si no fuiste tú…" — under a hairline. */
+/** A quiet aside — security notes, "if this wasn't you…" — under a hairline. */
 export function note(html) {
   return `<mj-divider border-width="1px" border-color="${C.line}" padding="24px 0 18px" css-class="b-line" />
 <mj-text css-class="t-ink2" color="${C.ink2}" font-size="13px" line-height="20px">${html}</mj-text>`;

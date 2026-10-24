@@ -1,0 +1,32 @@
+{
+  "peer_invite": {
+    "subject": "{{ .InviterName }} invited you to link up on Genobills",
+    "preheader": "Send each other money without it counting as an expense or income.",
+    "footer": "You're getting this email because {{ .InviterName }} invited you from Genobills.",
+    "eyebrow": "Invitation",
+    "heading": "{{ .InviterName }} wants to link up with you",
+    "intro": "Once linked, you can send each other money without it counting as an expense or as income: what they send lands straight in your account. Each of you keeps your own accounts.",
+    "codeCaption": "Your code expires on {{ .ExpiresAt }}",
+    "button": "Open in the app",
+    "noApp": "Don't have the app yet?",
+    "steps": [
+      "Download Genobills and create your account.",
+      "Go to <strong>Settings › People › I have a code</strong>.",
+      "Type the code and choose which account to receive into."
+    ],
+    "note": "If you don't know {{ .InviterName }}, ignore this email: the code expires on its own."
+  },
+  "peer_transfer_received": {
+    "subject": "{{ .SenderName }} sent you {{ .Amount }}",
+    "preheader": "It's already in your account. It doesn't count as income.",
+    "footer": "You're getting this email because you turned on notices for received transfers. You can turn them off in Settings › Notifications.",
+    "eyebrow": "Transfer received",
+    "heading": "{{ .SenderName }} sent you money",
+    "intro": "It's already in your account and doesn't count as income in your Insights.",
+    "label": "You received",
+    "from": "From",
+    "account": "Landed in",
+    "date": "Date",
+    "button": "View in the app"
+  }
+}
